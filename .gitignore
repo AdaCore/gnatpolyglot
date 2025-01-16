@@ -1,0 +1,4 @@
+# Java build artifacts
+target/
+dependency-reduced-pom.xml
+.mvn
