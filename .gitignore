@@ -2,3 +2,9 @@
 target/
 dependency-reduced-pom.xml
 .mvn
+
+# Python cache directory
+__pycache__
+
+# Test outputs
+out
