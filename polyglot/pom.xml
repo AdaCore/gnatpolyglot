@@ -16,10 +16,25 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
+    <!--
+      Maven Surefire does not provide a CLI argument to choose the reportsDirectory.
+      To configure this, change the value of this property (-Dmaven.surefire.reportsDirectory=...)
+    -->
+    <maven.surefire.reportsDirectory>
+      ${project.build.directory}/surefire-reports
+    </maven.surefire.reportsDirectory>
   </properties>
 
   <build>
     <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.3.0</version>
+        <configuration>
+          <reportsDirectory>${maven.surefire.reportsDirectory}</reportsDirectory>
+        </configuration>
+      </plugin>
+
       <!-- Configure the spotless Java formatter -->
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
@@ -38,7 +53,7 @@
         <configuration>
           <java>
             <includes>
-              <include>proxy/src/main/java/**/*.java</include>
+              <include>proxy/src/*/java/**/*.java</include>
             </includes>
 
             <googleJavaFormat>
