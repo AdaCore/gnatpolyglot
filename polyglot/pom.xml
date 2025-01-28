@@ -53,7 +53,7 @@
         <configuration>
           <java>
             <includes>
-              <include>proxy/src/main/java/**/*.java</include>
+              <include>proxy/src/*/java/**/*.java</include>
             </includes>
 
             <googleJavaFormat>
