@@ -21,6 +21,24 @@ public class ProxyException extends Exception {
         this.messages = messages;
     }
 
+    /** Construct an exception with a single message anda cause. */
+    public ProxyException(String message, Throwable cause) {
+        super(cause);
+        this.messages = List.of(message);
+    }
+
+    /** Construct an exception with a list of messages and a cause. */
+    public ProxyException(List<String> messages, Throwable cause) {
+        super(cause);
+        this.messages = messages;
+    }
+
+    /** Construct an exception with a cause. */
+    public ProxyException(Throwable cause) {
+        super(cause);
+        this.messages = List.of();
+    }
+
     @Override
     /** Return a single message with by joining all the contained, separated by a comma. */
     public String getMessage() {

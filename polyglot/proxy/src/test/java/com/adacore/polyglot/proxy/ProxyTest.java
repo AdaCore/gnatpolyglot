@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +21,7 @@ public class ProxyTest {
 
     @Test
     public void emptyProxy() {
-        assertThrows(JsonMappingException.class, () -> Proxy.readProxy("{}"));
+        assertThrows(ProxyException.class, () -> Proxy.readProxy("{}"));
     }
 
     @Test

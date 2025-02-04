@@ -1,11 +1,8 @@
 package com.adacore.polyglot.proxy;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.databind.DatabindException;
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
@@ -32,13 +29,19 @@ public class Proxy implements ProxyObject {
      *
      * @param json The string to read from
      * @return The proxy.
+     * @throws ProxyException When the json string could not be parsed or the json proxy is not
+     *     valid.
      */
-    public static Proxy readProxy(String json)
-            throws JsonMappingException, JsonProcessingException, ProxyException {
-        Proxy p = objectMapper.readValue(json, Proxy.class);
-        List<String> diagnostics = p.validate();
-        if (!diagnostics.isEmpty()) throw new ProxyException(diagnostics);
-        return p;
+    public static Proxy readProxy(String json) throws ProxyException {
+        try {
+            Proxy p = objectMapper.readValue(json, Proxy.class);
+            List<String> diagnostics = p.validate();
+            if (!diagnostics.isEmpty()) throw new ProxyException(diagnostics);
+            return p;
+        } catch (JacksonException e) {
+            // Wrap the JacksonException inside the ProxyException.
+            throw new ProxyException(e);
+        }
     }
 
     /**
@@ -46,14 +49,19 @@ public class Proxy implements ProxyObject {
      *
      * @param file the file to read from.
      * @return The proxy.
+     * @throws IOException When there was an error when trying to read the file.
+     * @throws ProxyException When the json string could not be parsed or the json proxy is not
+     *     valid.
      */
-    public static Proxy readProxy(File file)
-            throws StreamReadException, DatabindException, IOException {
+    public static Proxy readProxy(File file) throws IOException, ProxyException {
         try {
-            return objectMapper.readValue(file, Proxy.class);
-        } catch (DatabindException e) {
-            System.out.println(e.getMessage());
-            return null;
+            Proxy p = objectMapper.readValue(file, Proxy.class);
+            List<String> diagnostics = p.validate();
+            if (!diagnostics.isEmpty()) throw new ProxyException(diagnostics);
+            return p;
+        } catch (JacksonException e) {
+            // Wrap the JacksonException inside the ProxyException.
+            throw new ProxyException(e);
         }
     }
 
