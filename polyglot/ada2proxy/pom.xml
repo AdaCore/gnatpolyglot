@@ -45,6 +45,7 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <finalName>ada2proxy</finalName>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>

@@ -46,6 +46,7 @@
               <goal>shade</goal>
             </goals>
             <configuration>
+              <finalName>proxy</finalName>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>
