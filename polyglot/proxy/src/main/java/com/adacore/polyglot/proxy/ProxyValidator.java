@@ -1,6 +1,8 @@
 package com.adacore.polyglot.proxy;
 
 import com.adacore.polyglot.proxy.Role.RoleKind;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -184,5 +186,35 @@ public class ProxyValidator implements ProxyVisitor<Boolean> {
         validateNonNull("kind", parameter.type);
         validateNonNull("transfer", parameter.transfer);
         return Boolean.valueOf(diagnostics.isEmpty());
+    }
+
+    public static void main(String[] args) {
+        if (args.length != 1) {
+            System.err.println("Usage: ./validator json_proxy");
+            System.exit(1);
+        }
+
+        try {
+            // Read the proxy in the argument file.
+            Proxy.readProxy(new File(args[0]));
+            System.out.println("No error found in the json");
+        } catch (ProxyException e) {
+            // If the exception has no message, look at its cause.
+            if (e.getMessages().isEmpty()) {
+                System.err.print("Could not deserialize the json:");
+                System.err.println(e.getCause().getMessage());
+            } else {
+                // Print the diagnostics raised by the validator.
+                System.out.println("Errors found in the proxy:");
+                for (var m : e.getMessages()) {
+                    System.out.print(" * ");
+                    System.out.println(m);
+                }
+            }
+            System.exit(1);
+        } catch (IOException e) {
+            System.err.println("Could not read the file:" + e.getMessage());
+            System.exit(1);
+        }
     }
 }

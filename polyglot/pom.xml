@@ -10,6 +10,7 @@
   <version>0.1.0</version>
   <modules>
     <module>proxy</module>
+    <module>ada2proxy</module>
   </modules>
 
   <properties>
@@ -23,6 +24,8 @@
     <maven.surefire.reportsDirectory>
       ${project.build.directory}/surefire-reports
     </maven.surefire.reportsDirectory>
+
+    <jte.version>3.1.16</jte.version>
   </properties>
 
   <build>
@@ -54,6 +57,7 @@
           <java>
             <includes>
               <include>proxy/src/*/java/**/*.java</include>
+              <include>ada2proxy/src/*/java/**/*.java</include>
             </includes>
 
             <googleJavaFormat>

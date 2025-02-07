@@ -10,26 +10,25 @@
     <version>0.1.0</version>
   </parent>
 
-  <artifactId>proxy</artifactId>
-
-  <properties>
-    <maven.surefire.reportsDirectory>
-      ${project.parent.build.directory}/surefire-reports
-    </maven.surefire.reportsDirectory>
-  </properties>
+  <artifactId>ada2proxy</artifactId>
 
   <dependencies>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.18.0</version>
+      <groupId>com.adacore.polyglot</groupId>
+      <artifactId>proxy</artifactId>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>5.11.0</version>
-      <scope>test</scope>
+      <groupId>com.adacore</groupId>
+      <artifactId>libadalang</artifactId>
+      <version>0.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>gg.jte</groupId>
+      <artifactId>jte-maven-plugin</artifactId>
+      <version>${jte.version}</version>
     </dependency>
   </dependencies>
 
@@ -46,7 +45,7 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <finalName>proxy</finalName>
+              <finalName>ada2proxy</finalName>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>
@@ -70,6 +69,24 @@
         <configuration>
           <skip>false</skip>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>gg.jte</groupId>
+        <artifactId>jte-maven-plugin</artifactId>
+        <version>${jte.version}</version>
+        <configuration>
+          <sourceDirectory>${project.basedir}/src/main/jte</sourceDirectory>
+          <contentType>Plain</contentType>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
