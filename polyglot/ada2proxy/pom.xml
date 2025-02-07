@@ -27,12 +27,18 @@
 
     <dependency>
       <groupId>gg.jte</groupId>
-      <artifactId>jte-maven-plugin</artifactId>
+      <artifactId>jte-runtime</artifactId>
       <version>${jte.version}</version>
     </dependency>
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>${project.build.directory}/generated-resources</directory>
+      </resource>
+    </resources>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -71,12 +77,19 @@
         </configuration>
       </plugin>
 
+      <!-- Configure the template engine plugin -->
       <plugin>
         <groupId>gg.jte</groupId>
         <artifactId>jte-maven-plugin</artifactId>
         <version>${jte.version}</version>
         <configuration>
+          <extensions>
+            <extension>
+              <className>gg.jte.nativeimage.NativeResourcesExtension</className>
+            </extension>
+          </extensions>
           <sourceDirectory>${project.basedir}/src/main/jte</sourceDirectory>
+          <targetResourceDirectory>${project.build.directory}/generated-resources</targetResourceDirectory>
           <contentType>Plain</contentType>
         </configuration>
         <executions>
@@ -87,6 +100,13 @@
             </goals>
           </execution>
         </executions>
+        <dependencies>
+          <dependency>
+            <groupId>gg.jte</groupId>
+            <artifactId>jte-native-resources</artifactId>
+            <version>${jte.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
     </plugins>
   </build>
