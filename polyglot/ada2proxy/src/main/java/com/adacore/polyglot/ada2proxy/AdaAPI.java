@@ -45,10 +45,41 @@ public class AdaAPI {
         return name.toPascalWithUnderscore() + "_Proxy";
     }
 
+    /** Build a string containing the parameter specifications of a subprogram. */
+    public static String cInterfaceParameters(FunctionDecl functionDecl) {
+        return functionDecl.parameters.stream()
+                .map(
+                        (p -> {
+                            StringBuilder argBuilder = new StringBuilder();
+                            argBuilder.append(p.name.toPascalWithUnderscore());
+                            argBuilder.append(": ");
+                            argBuilder.append(cInterfaceTypename(p.type));
+                            return argBuilder.toString();
+                        }))
+                .collect(Collectors.joining("; "));
+    }
+
     /** Create a string to call a function from the proxy. */
     public static String call(FunctionDecl funDecl) {
         StringBuilder builder = new StringBuilder();
         builder.append(funDecl.name.toPascalWithUnderscore());
+        if (!funDecl.parameters.isEmpty()) {
+            builder.append(" (");
+            builder.append(
+                    funDecl.parameters.stream()
+                            .map(
+                                    p -> {
+                                        // Cast C Interface types to Ada types.
+                                        StringBuilder argBuilder = new StringBuilder();
+                                        argBuilder.append(typename(p.type));
+                                        argBuilder.append(" (");
+                                        argBuilder.append(p.name.toPascalWithUnderscore());
+                                        argBuilder.append(")");
+                                        return argBuilder.toString();
+                                    })
+                            .collect(Collectors.joining(", ")));
+            builder.append(")");
+        }
         return builder.toString();
     }
 
@@ -106,6 +137,49 @@ public class AdaAPI {
         if (reference.kind == ReferenceKind.SCALAR)
             return cInterfaceNativeTypename(
                     NativeType.valueOf(reference.name.toLower().toUpperCase()));
+        throw new UnsupportedOperationException("Only native types are supported");
+    }
+
+    /** Return the Ada name of a native type. */
+    public static String nativeTypeName(NativeType nativeType) {
+        switch (nativeType) {
+            case BOOL:
+                return "Boolean";
+            case FLOAT128:
+                return "Long_Long_Float";
+            case FLOAT32:
+                return "Float";
+            case FLOAT64:
+                return "Long_Float";
+            case UINT8:
+            case SINT8:
+                return "Short_Short_Integer";
+            case UINT16:
+            case SINT16:
+                return "Long_Integer";
+            case UINT32:
+            case SINT32:
+                return "Integer";
+            case UINT64:
+            case SINT64:
+                return "Short_Integer";
+            case UINT128:
+            case SINT128:
+                return "Long_Long_Integer";
+            case STRING:
+                return "String";
+            case VOID:
+                throw new IllegalArgumentException("Ada has no ``void`` type.");
+            default:
+                throw new UnsupportedOperationException(
+                        nativeType.toString() + " is not handled yet");
+        }
+    }
+
+    /** Return a string containing the Ada typename of the referenced type. */
+    public static String typename(Reference reference) {
+        if (reference.kind == ReferenceKind.SCALAR)
+            return nativeTypeName(NativeType.valueOf(reference.name.toLower().toUpperCase()));
         throw new UnsupportedOperationException("Only native types are supported");
     }
 

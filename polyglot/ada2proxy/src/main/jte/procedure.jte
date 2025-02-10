@@ -5,10 +5,18 @@
 @param Boolean isBody
 
 @if(!isBody)
-   procedure ${AdaAPI.proxyName(funDecl.name)};
+   procedure ${AdaAPI.proxyName(funDecl.name)}
+    @if(!funDecl.parameters.isEmpty())
+      (${AdaAPI.cInterfaceParameters(funDecl)})
+    @endif
+    ;
    pragma Export (C, ${AdaAPI.proxyName(funDecl.name)}, "${funDecl.symbol}");
 @else
-   procedure ${AdaAPI.proxyName(funDecl.name)} is
+   procedure ${AdaAPI.proxyName(funDecl.name)}
+    @if(!funDecl.parameters.isEmpty())
+      (${AdaAPI.cInterfaceParameters(funDecl)})
+    @endif
+   is
    begin
       ${AdaAPI.call(funDecl)};
    end ${AdaAPI.proxyName(funDecl.name)};

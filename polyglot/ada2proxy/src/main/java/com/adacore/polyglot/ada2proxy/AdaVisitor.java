@@ -12,6 +12,8 @@ import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Parameter;
 import com.adacore.polyglot.proxy.Reference;
 import com.adacore.polyglot.proxy.Role;
+import com.adacore.polyglot.proxy.Transfer;
+import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -149,8 +151,23 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // TODO: Handle subprograms that can be attached to a type.
         Role role = null;
 
-        // TODO: Get the list of parameters.
+        // Get the list of parameters.
         List<Parameter> parameters = new ArrayList<>();
+        if (!spec.fSubpParams().isNone()) {
+            for (var child : spec.fSubpParams().fParams().children()) {
+                Libadalang.ParamSpec paramSpec = (Libadalang.ParamSpec) child;
+                Reference paramType = makeReference(paramSpec.pFormalType(Libadalang.AdaNode.NONE));
+                // TODO: Currently, only integer types are handled: when more types are supported,
+                // we will need to update the transfer specs.
+                Transfer transfer = new Transfer(RequiredOwner.ANY);
+                for (var p : paramSpec.fIds().children())
+                    parameters.add(
+                            new Parameter(
+                                    Name.fromPascalWithUnderscore(p.getText()),
+                                    paramType,
+                                    transfer));
+            }
+        }
 
         Libadalang.BaseTypeDecl adaRetType = spec.pReturnType(Libadalang.AdaNode.NONE);
         final Reference returnType;
