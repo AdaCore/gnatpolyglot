@@ -13,7 +13,9 @@ import com.adacore.polyglot.proxy.Parameter;
 import com.adacore.polyglot.proxy.Reference;
 import com.adacore.polyglot.proxy.Role;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -21,9 +23,45 @@ import java.util.stream.Stream;
 /** Visitor class to analyze Ada spec files and generate the proxy. */
 public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
+    /** Maps Ada declarations to Reference. */
+    private static Map<Libadalang.BasicDecl, Reference> referenceMap = new HashMap<>();
+
     /** Turn a fully qualified name into a unique C symbol. */
     private static String symbolify(String fullyQualName) {
         return "__" + fullyQualName.replace(".", "_");
+    }
+
+    /** Return a Reference from an Ada BasicDecl. */
+    private static Reference makeReference(Libadalang.BasicDecl decl) {
+        // If the type has already been processed, return its memoized value.
+        if (referenceMap.containsKey(decl)) return referenceMap.get(decl);
+
+        Reference res = null;
+
+        if (decl instanceof Libadalang.SubtypeDecl typeDecl)
+            decl = typeDecl.pRootType(Libadalang.AdaNode.NONE);
+
+        // If the BasicDecl was declared in the Standard Package, it is a builtin type.
+        if (decl instanceof Libadalang.TypeDecl typeDecl
+                && decl.getUnit().equals(decl.pStandardUnit())) {
+            // TODO: Handle all builtin types
+
+            // ``Standard.Boolean`` maps to BOOL.
+            if (typeDecl.equals(typeDecl.pBoolType())) res = NativeType.BOOL.reference;
+            else if (typeDecl.pIsIntType(Libadalang.AdaNode.NONE)) {
+                // Is there a way to know the max bounds of an integer type?
+                if (typeDecl.fTypeDef() instanceof Libadalang.SignedIntTypeDef)
+                    res = NativeType.SINT32.reference;
+                else res = NativeType.UINT32.reference;
+            } else throw new UnsupportedOperationException("Type not supported yet.");
+        } else {
+            // TODO: Handle user defined types.
+            throw new UnsupportedOperationException("Type not supported yet.");
+        }
+
+        // Memoize the value.
+        referenceMap.put(decl, res);
+        return res;
     }
 
     /** List of declarations declared by the module */
@@ -118,7 +156,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         final Reference returnType;
         // If there is no return type, the subprogram is a procedure: use VOID.
         if (adaRetType.isNone()) returnType = NativeType.VOID.reference;
-        else returnType = null;
+        else returnType = makeReference(adaRetType);
 
         // TODO: Handle the Function's boolean attributes.
 

@@ -64,4 +64,21 @@ public class Reference implements ProxyObject {
     public <T> T visit(ProxyVisitor<T> v) {
         return v.visit(this);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj instanceof Reference other) {
+            boolean suffixEquals =
+                    (this.suffix == null && other.suffix == null)
+                            || (this.suffix != null && this.suffix.equals(other.suffix));
+            return suffixEquals
+                    && this.name.toLower().equals(other.name.toLower())
+                    && this.kind == other.kind
+                    && this.isConst == other.isConst
+                    && this.isPointer == other.isPointer
+                    && this.isNonNull == other.isNonNull;
+        }
+        return false;
+    }
 }

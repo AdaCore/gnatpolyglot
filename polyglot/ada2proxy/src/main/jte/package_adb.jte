@@ -13,7 +13,11 @@ with ${packageName}; use ${packageName};
 package body ${packageName}.Proxy is
 @for(Declaration decl : module.declarations) <%-- TODO: Handle more declarations --%>
     @if(decl instanceof FunctionDecl funDecl)
-        @template.procedure(funDecl, true)
+        @if(AdaAPI.isProcedure(funDecl))
+            @template.procedure(funDecl, true)
+        @else
+            @template.function(funDecl, true)
+        @endif
     @endif
 @endfor
 end ${packageName}.Proxy;

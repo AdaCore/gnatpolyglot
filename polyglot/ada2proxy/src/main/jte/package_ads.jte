@@ -12,7 +12,11 @@ with Interfaces.C;
 package ${packageName}.Proxy is
 @for(Declaration decl : module.declarations) <%-- TODO: Handle more declarations --%>
     @if(decl instanceof FunctionDecl funDecl)
-        @template.procedure(funDecl, false)
+        @if(AdaAPI.isProcedure(funDecl))
+            @template.procedure(funDecl, false)
+        @else
+            @template.function(funDecl, false)
+        @endif
     @endif
 @endfor
 end ${packageName}.Proxy;
