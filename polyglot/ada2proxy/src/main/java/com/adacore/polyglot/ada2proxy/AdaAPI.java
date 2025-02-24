@@ -1,11 +1,11 @@
 package com.adacore.polyglot.ada2proxy;
 
+import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.NativeType;
-import com.adacore.polyglot.proxy.FunctionDecl;
-import com.adacore.polyglot.proxy.Module;
+import com.adacore.polyglot.ada2proxy.proxy.Package;
+import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Reference;
-import com.adacore.polyglot.proxy.Reference.ReferenceKind;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -13,29 +13,92 @@ import java.util.stream.Collectors;
 /** Utility class that provides methods to help generate Ada code from a Proxy. */
 public class AdaAPI {
 
-    /** Return the fully qualified name of a name with its parents. */
-    public static String makeFullyQualifiedName(Reference parent, Name name) {
-        StringBuilder builder = new StringBuilder();
-        while (parent != null) {
-            builder.append(parent.name.toPascalWithUnderscore());
-            builder.append(".");
-            parent = parent.suffix;
+    /**
+     * Build the parent reference to ``decl``, with ``suffix`` as the last suffix of the chain of
+     * references.
+     */
+    private static Reference makeParentReferences(Libadalang.BasicDecl decl, Reference suffix) {
+        Libadalang.Symbol[] names = decl.pFullyQualifiedNameArray(false);
+        Reference res = suffix;
+        for (int i = names.length - 2; i >= 0; i--) {
+            res =
+                    new Reference(
+                            Name.fromLower(names[i].text),
+                            Reference.ReferenceKind.MODULE,
+                            res,
+                            false,
+                            false,
+                            false);
         }
-        builder.append(name.toPascalWithUnderscore());
-        return builder.toString();
+        return res;
+    }
+
+    /** Create a reference to decl, or its parent if ``onlyParent`` is true. */
+    public static Reference makeReferenceTo(Libadalang.BasicDecl decl, Boolean onlyParent) {
+        Reference res = null;
+        if (!onlyParent) {
+            Reference.ReferenceKind kind = null;
+            if (decl instanceof Libadalang.BaseTypeDecl) kind = Reference.ReferenceKind.CLASS;
+            else if (decl instanceof Libadalang.PackageDecl) kind = Reference.ReferenceKind.MODULE;
+            else
+                throw new UnsupportedOperationException(
+                        "Creating reference to an unsupported declaration type");
+            res =
+                    new Reference(
+                            Name.fromPascalWithUnderscore(decl.pDefiningName().getText()),
+                            kind,
+                            res,
+                            false,
+                            false,
+                            false);
+        }
+        return makeParentReferences(decl, res);
+    }
+
+    /** Return the native type corresponding to bTypeDecl, or null if the type is not native. */
+    public static NativeType checkNativeType(Libadalang.BaseTypeDecl bTypeDecl) {
+        if (bTypeDecl.isNone()) return NativeType.VOID;
+
+        bTypeDecl = bTypeDecl.pRootType(Libadalang.AdaNode.NONE);
+
+        if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl)
+            // If the BasicDecl was declared in the Standard Package, it is a builtin type.
+            if (typeDecl.getUnit().equals(typeDecl.pStandardUnit())) {
+                // TODO: Handle all builtin types
+
+                // ``Standard.Boolean`` maps to BOOL.
+                if (typeDecl.equals(typeDecl.pBoolType())) return NativeType.BOOL;
+                else if (typeDecl.pIsIntType(Libadalang.AdaNode.NONE)) {
+                    // Is there a way to know the max bounds of an integer type?
+                    if (typeDecl.fTypeDef() instanceof Libadalang.SignedIntTypeDef)
+                        return NativeType.SINT32;
+                }
+            }
+        return null;
+    }
+
+    /** Create a reference to the type referenced by typeExpr */
+    public static Reference makeReferenceTo(Libadalang.TypeExpr typeExpr) {
+        if (typeExpr.isNone()) return NativeType.VOID.reference;
+
+        Libadalang.BaseTypeDecl typeDecl = typeExpr.pDesignatedTypeDecl();
+
+        NativeType nativeType = checkNativeType(typeDecl);
+        if (nativeType != null) return nativeType.reference;
+
+        return makeReferenceTo(typeDecl, false);
     }
 
     /**
      * Create the list of strings containing the interfaces generated from the json proxy for the
      * gpr project file.
      */
-    public static String makeInterfaces(List<Module> modules) {
-        return modules.stream()
+    public static String makeInterfaces(List<Package> packages) {
+        return packages.stream()
                 .map(
-                        m -> {
+                        p -> {
                             return "\"%s.proxy\""
-                                    .formatted(
-                                            makeFullyQualifiedName(m.parent, m.name).toLowerCase());
+                                    .formatted(p.getFullyQualifiedName().toLowerCase());
                         })
                 .collect(Collectors.joining(", "));
     }
@@ -46,21 +109,21 @@ public class AdaAPI {
     }
 
     /** Build a string containing the parameter specifications of a subprogram. */
-    public static String cInterfaceParameters(FunctionDecl functionDecl) {
-        return functionDecl.parameters.stream()
+    public static String cInterfaceParameters(Subprogram subp) {
+        return subp.parameters.stream()
                 .map(
                         (p -> {
                             StringBuilder argBuilder = new StringBuilder();
                             argBuilder.append(p.name.toPascalWithUnderscore());
                             argBuilder.append(": ");
-                            argBuilder.append(cInterfaceTypename(p.type));
+                            argBuilder.append(cInterfaceTypename(p.getFormalType()));
                             return argBuilder.toString();
                         }))
                 .collect(Collectors.joining("; "));
     }
 
     /** Create a string to call a function from the proxy. */
-    public static String call(FunctionDecl funDecl) {
+    public static String call(Subprogram funDecl) {
         StringBuilder builder = new StringBuilder();
         builder.append(funDecl.name.toPascalWithUnderscore());
         if (!funDecl.parameters.isEmpty()) {
@@ -71,7 +134,7 @@ public class AdaAPI {
                                     p -> {
                                         // Cast C Interface types to Ada types.
                                         StringBuilder argBuilder = new StringBuilder();
-                                        argBuilder.append(typename(p.type));
+                                        argBuilder.append(p.getTypeExpr().getText());
                                         argBuilder.append(" (");
                                         argBuilder.append(p.name.toPascalWithUnderscore());
                                         argBuilder.append(")");
@@ -84,14 +147,9 @@ public class AdaAPI {
     }
 
     /** Return the file name of a module with a given extension. */
-    public static Path toAdaFilename(Module module, String suffix) {
+    public static Path toAdaFilename(Package pack, String suffix) {
         StringBuilder builder = new StringBuilder();
-        Reference parent = module.parent;
-        while (parent != null) {
-            builder.append(parent.name.toLower());
-            builder.append("-");
-        }
-        builder.append(module.name.toLower());
+        builder.append(pack.getFullyQualifiedName().toLowerCase().replace(".", "-"));
         if (suffix != null) builder.append(suffix);
         return Path.of(builder.toString());
     }
@@ -133,58 +191,11 @@ public class AdaAPI {
     }
 
     /** Return the C Interface typename of a type. */
-    public static String cInterfaceTypename(Reference reference) {
-        if (reference.kind == ReferenceKind.SCALAR)
-            return cInterfaceNativeTypename(
-                    NativeType.valueOf(reference.name.toLower().toUpperCase()));
-        throw new UnsupportedOperationException("Only native types are supported");
-    }
+    public static String cInterfaceTypename(Libadalang.BaseTypeDecl bTypeDecl) {
+        bTypeDecl = (Libadalang.TypeDecl) bTypeDecl.pRootType(Libadalang.AdaNode.NONE);
+        NativeType nativeType = checkNativeType(bTypeDecl);
+        if (nativeType != null) return cInterfaceNativeTypename(nativeType);
 
-    /** Return the Ada name of a native type. */
-    public static String nativeTypeName(NativeType nativeType) {
-        switch (nativeType) {
-            case BOOL:
-                return "Boolean";
-            case FLOAT128:
-                return "Long_Long_Float";
-            case FLOAT32:
-                return "Float";
-            case FLOAT64:
-                return "Long_Float";
-            case UINT8:
-            case SINT8:
-                return "Short_Short_Integer";
-            case UINT16:
-            case SINT16:
-                return "Long_Integer";
-            case UINT32:
-            case SINT32:
-                return "Integer";
-            case UINT64:
-            case SINT64:
-                return "Short_Integer";
-            case UINT128:
-            case SINT128:
-                return "Long_Long_Integer";
-            case STRING:
-                return "String";
-            case VOID:
-                throw new IllegalArgumentException("Ada has no ``void`` type.");
-            default:
-                throw new UnsupportedOperationException(
-                        nativeType.toString() + " is not handled yet");
-        }
-    }
-
-    /** Return a string containing the Ada typename of the referenced type. */
-    public static String typename(Reference reference) {
-        if (reference.kind == ReferenceKind.SCALAR)
-            return nativeTypeName(NativeType.valueOf(reference.name.toLower().toUpperCase()));
-        throw new UnsupportedOperationException("Only native types are supported");
-    }
-
-    /** Return whether ``funDecl`` is a procedure or a function. */
-    public static boolean isProcedure(FunctionDecl functionDecl) {
-        return functionDecl.returnType.equals(NativeType.VOID.reference);
+        throw new UnsupportedOperationException("Type not supported");
     }
 }

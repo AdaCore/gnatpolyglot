@@ -1,22 +1,25 @@
+@import com.adacore.libadalang.Libadalang;
 @import com.adacore.polyglot.ada2proxy.AdaAPI
-@import com.adacore.polyglot.proxy.FunctionDecl
-@param FunctionDecl funDecl
+@import com.adacore.polyglot.ada2proxy.proxy.Subprogram
+@param Subprogram subp
 @param Boolean isBody
 
+!{String returnType = AdaAPI.cInterfaceTypename(subp.getReturnType());}
+
 @if(!isBody)
-   function ${AdaAPI.proxyName(funDecl.name)}
-    @if(!funDecl.parameters.isEmpty())
-      (${AdaAPI.cInterfaceParameters(funDecl)})
+   function ${AdaAPI.proxyName(subp.name)}
+    @if(!subp.parameters.isEmpty())
+      (${AdaAPI.cInterfaceParameters(subp)})
     @endif
-      return ${AdaAPI.cInterfaceTypename(funDecl.returnType)};
-   pragma Export (C, ${AdaAPI.proxyName(funDecl.name)}, "${funDecl.symbol}");
+      return ${returnType};
+   pragma Export (C, ${AdaAPI.proxyName(subp.name)}, "${subp.symbol}");
 @else
-   function ${AdaAPI.proxyName(funDecl.name)}
-    @if(!funDecl.parameters.isEmpty())
-      (${AdaAPI.cInterfaceParameters(funDecl)})
+   function ${AdaAPI.proxyName(subp.name)}
+    @if(!subp.parameters.isEmpty())
+      (${AdaAPI.cInterfaceParameters(subp)})
     @endif
-      return ${AdaAPI.cInterfaceTypename(funDecl.returnType)} is
+      return ${returnType} is
    begin
-      return ${AdaAPI.cInterfaceTypename(funDecl.returnType)} (${AdaAPI.call(funDecl)});
-   end ${AdaAPI.proxyName(funDecl.name)};
+      return ${returnType} (${AdaAPI.call(subp)});
+   end ${AdaAPI.proxyName(subp.name)};
 @endif
