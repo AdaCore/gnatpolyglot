@@ -1,0 +1,56 @@
+{
+  "modules": [
+    {
+      "name": "module_1",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "func_1",
+          "doc": "func_1 documentation",
+          "symbol": "func_symbol",
+          "parameters": [ ],
+          "return_type": {
+            "name": "void",
+            "kind": "scalar"
+          },
+          "role": {
+            "kind": "getter",
+            "type": {
+              "kind": "module",
+              "name": "module_1",
+              "suffix": {
+                "kind": "class",
+                "name": "class_type_1"
+              }
+            },
+            "field": "non_existant"
+          },
+          "return_owner": "unknown",
+          "is_visible": false,
+          "is_final": false,
+          "is_static": false
+        },
+        {
+          "kind": "class",
+          "name": "class_type_1",
+          "size": 8,
+          "doc": "class_type_1 documentation",
+          "fields": [
+            {
+              "name": "field_1",
+              "doc": "field_1 documentation",
+              "type": {
+                "name": "sint32",
+                "kind": "scalar",
+                "is_pointer": false,
+                "is_const": false,
+                "is_nonnull": false
+              }
+            }
+          ],
+          "is_final": false
+        }
+      ]
+    }
+  ]
+}

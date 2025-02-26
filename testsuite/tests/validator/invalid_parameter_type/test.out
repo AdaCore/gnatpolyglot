@@ -1,0 +1,4 @@
+Running validator test.
+Errors found in the proxy:
+ * $.modules[0].declarations[0].parameters[0].type: reference is not a type
+Done.

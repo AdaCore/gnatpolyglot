@@ -1,0 +1,5 @@
+Running validator test.
+Errors found in the proxy:
+ * $.modules[0].declarations[0].role.type: reference is not a type
+ * $.modules[0].declarations[0].role.type: type does not exist
+Done.

@@ -1,0 +1,5 @@
+Running validator test.
+Errors found in the proxy:
+ * $.modules[0].declarations[0].items[1]: duplicate item name in enumeration
+ * $.modules[0].declarations[0].items[3]: duplicate item value in enumeration
+Done.

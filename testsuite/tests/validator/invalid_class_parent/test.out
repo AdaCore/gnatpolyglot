@@ -1,0 +1,6 @@
+Running validator test.
+Errors found in the proxy:
+ * $.modules[0].declarations[0].parent: reference is not a type
+ * $.modules[0].declarations[0].parent: must inherit from a class
+ * $.modules[0].declarations[1].parent: class inheritance is not sane
+Done.

@@ -1,0 +1,24 @@
+{
+  "modules": [
+    {
+      "name": "module_1",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "func_1",
+          "doc": "func_1 documentation",
+          "symbol": "func_symbol",
+          "parameters": [ ],
+          "return_type": {
+            "name": "module_1",
+            "kind": "module"
+          },
+          "return_owner": "unknown",
+          "is_visible": false,
+          "is_final": false,
+          "is_static": false
+        }
+      ]
+    }
+  ]
+}

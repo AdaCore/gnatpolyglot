@@ -60,6 +60,12 @@ public class Reference implements ProxyObject {
         this.isNonNull = isNonNull;
     }
 
+    public ReferenceKind getFinalKind() {
+        Reference ref = this;
+        while (ref.suffix != null) ref = ref.suffix;
+        return ref.kind;
+    }
+
     @Override
     public <T> T visit(ProxyVisitor<T> v) {
         return v.visit(this);

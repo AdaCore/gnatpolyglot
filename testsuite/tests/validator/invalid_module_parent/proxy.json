@@ -1,0 +1,12 @@
+{
+  "modules": [
+    {
+      "name": "module_1",
+      "declarations": [ ],
+      "parent": {
+        "kind": "class",
+        "name": "class_type"
+      }
+    }
+  ]
+}

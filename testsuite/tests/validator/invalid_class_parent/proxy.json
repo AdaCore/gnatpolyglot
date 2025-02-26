@@ -1,0 +1,37 @@
+{
+  "modules": [
+    {
+      "name": "module_1",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "class_type",
+          "doc": "class_type documentation",
+          "size": 8,
+          "fields": [ ],
+          "is_final": false,
+          "parent": {
+            "kind": "module",
+            "name": "invalid_kind"
+          }
+        },
+        {
+          "kind": "class",
+          "name": "inherits_self",
+          "doc": "inherits_self documentation",
+          "size": 8,
+          "fields": [ ],
+          "is_final": false,
+          "parent": {
+            "kind": "module",
+            "name": "module_1",
+            "suffix": {
+              "kind": "class",
+              "name": "inherits_self"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -93,9 +93,7 @@ public class Proxy implements ProxyObject {
      * @return The list of diagnostic found.
      */
     public List<String> validate() {
-        ProxyValidator validator = new ProxyValidator();
-        validator.visit(this);
-        return validator.getDiagnostics();
+        return ProxyValidator.validate(this);
     }
 
     @Override

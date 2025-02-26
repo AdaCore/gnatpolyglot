@@ -10,13 +10,13 @@ import org.junit.jupiter.api.Test;
 
 public class ProxyTest {
 
-    ProxyValidator validator = new ProxyValidator();
+    ProxyValidator.Validator validator = new ProxyValidator.Validator();
 
     static ObjectMapper objectMapper = Proxy.getObjectMapper();
 
     @BeforeEach
     public void setup() {
-        validator.emptyDiagnostics();
+        validator.getDiagnostics().clear();
     }
 
     @Test
