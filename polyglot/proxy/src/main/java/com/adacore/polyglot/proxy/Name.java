@@ -159,4 +159,15 @@ public class Name {
                             return mr.group().toUpperCase();
                         });
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Name other) return this.name.equals(other.name);
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
+    }
 }

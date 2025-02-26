@@ -81,4 +81,16 @@ public class Reference implements ProxyObject {
         }
         return false;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 31 * hash + name.toLower().hashCode();
+        hash = 31 * hash + kind.hashCode();
+        hash = 31 * hash + (suffix != null ? suffix.hashCode() : 0);
+        hash = 31 * hash + Boolean.hashCode(isPointer);
+        hash = 31 * hash + Boolean.hashCode(isConst);
+        hash = 31 * hash + Boolean.hashCode(isNonNull);
+        return hash;
+    }
 }
