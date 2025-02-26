@@ -4,7 +4,7 @@
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
 @param Package pack
 
-!{String packageName = pack.getullyQualifiedName();}
+!{String packageName = pack.getFullyQualifiedName();}
 
 with Interfaces.C;
 
