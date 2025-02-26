@@ -2,7 +2,8 @@ package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang.*;
 import com.adacore.polyglot.Scanner;
-import com.adacore.polyglot.proxy.Module;
+import com.adacore.polyglot.ada2proxy.proxy.AdaProxy;
+import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Proxy;
 import gg.jte.ContentType;
@@ -30,8 +31,8 @@ public class AdaScanner extends Scanner {
     /** The name of the project. */
     private String projectName;
 
-    /** The proxy. */
-    private Proxy proxy;
+    /** The Ada proxy. */
+    private AdaProxy proxy;
 
     @Override
     public void scanProject(Path projectFile) {
@@ -43,25 +44,25 @@ public class AdaScanner extends Scanner {
         // Analyze all the ``.ads`` source files.
         ProjectManager projectManager = ProjectManager.create(projectFile.toString());
         AnalysisContext ctx = projectManager.createContext(null, null, true, 8);
-        List<Module> modules =
+        List<Package> modules =
                 Stream.of(projectManager.getFiles(SourceFileMode.DEFAULT))
                         .filter(s -> s.endsWith(".ads"))
                         .map(s -> ctx.getUnitFromFile(s))
                         .map(u -> visitor.analyzeSpec(u))
                         .toList();
-        this.proxy = new Proxy(modules);
+        this.proxy = new AdaProxy(modules);
     }
 
     @Override
     public Proxy getProxy() {
-        return proxy;
+        return proxy.toPolyglotProxy();
     }
 
     @Override
     public void generate(Path path) throws IOException {
         // Write the json proxy file.
         try {
-            proxy.writeProxy(path.resolve("proxy.json").toFile());
+            proxy.toPolyglotProxy().writeProxy(path.resolve("proxy.json").toFile());
         } catch (Exception e) {
             throw new IOException(e);
         }
@@ -80,15 +81,15 @@ public class AdaScanner extends Scanner {
 
         // Create the specification and body files.
         Path proxySrc = path.resolve("src");
-        for (var module : proxy.modules) {
-            Path packageSpecFile = AdaAPI.toAdaFilename(module, "-proxy.ads");
+        for (var pack : proxy.packages) {
+            Path packageSpecFile = AdaAPI.toAdaFilename(pack, "-proxy.ads");
             try (FileOutput packageSpec = new FileOutput(proxySrc.resolve(packageSpecFile))) {
-                templateEngine.render("package_ads.jte", proxy.modules.get(0), packageSpec);
+                templateEngine.render("package_ads.jte", proxy.packages.get(0), packageSpec);
             }
 
-            Path packageBodyFile = AdaAPI.toAdaFilename(module, "-proxy.adb");
+            Path packageBodyFile = AdaAPI.toAdaFilename(pack, "-proxy.adb");
             try (FileOutput packageBody = new FileOutput(proxySrc.resolve(packageBodyFile))) {
-                templateEngine.render("package_adb.jte", proxy.modules.get(0), packageBody);
+                templateEngine.render("package_adb.jte", proxy.packages.get(0), packageBody);
             }
         }
     }

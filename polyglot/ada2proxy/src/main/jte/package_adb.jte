@@ -1,19 +1,22 @@
 @import com.adacore.polyglot.ada2proxy.AdaAPI
-@import com.adacore.polyglot.proxy.Declaration
-@import com.adacore.polyglot.proxy.FunctionDecl
-@import com.adacore.polyglot.proxy.Module
-@import com.adacore.polyglot.proxy.Proxy
-@param Module module
+@import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration
+@import com.adacore.polyglot.ada2proxy.proxy.Package
+@import com.adacore.polyglot.ada2proxy.proxy.Subprogram
+@param Package pack
 
-!{String packageName = AdaAPI.makeFullyQualifiedName(module.parent, module.name);}
+!{String packageName = pack.getFullyQualifiedName();}
 
 with Interfaces.C;
 with ${packageName}; use ${packageName};
 
 package body ${packageName}.Proxy is
-@for(Declaration decl : module.declarations) <%-- TODO: Handle more declarations --%>
-    @if(decl instanceof FunctionDecl funDecl)
-        @template.procedure(funDecl, true)
+@for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>
+    @if(decl instanceof Subprogram subp)
+        @if(subp.isProcedure())
+            @template.procedure(subp, true)
+        @else
+            @template.function(subp, true)
+        @endif
     @endif
 @endfor
 end ${packageName}.Proxy;

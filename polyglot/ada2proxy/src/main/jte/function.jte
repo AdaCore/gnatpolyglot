@@ -1,22 +1,25 @@
+@import com.adacore.libadalang.Libadalang;
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
 @param Subprogram subp
 @param Boolean isBody
 
+!{String returnType = AdaAPI.cInterfaceTypename(subp.getReturnType());}
+
 @if(!isBody)
-   procedure ${AdaAPI.proxyName(subp.name)}
+   function ${AdaAPI.proxyName(subp.name)}
     @if(!subp.parameters.isEmpty())
       (${AdaAPI.cInterfaceParameters(subp)})
     @endif
-    ;
+      return ${returnType};
    pragma Export (C, ${AdaAPI.proxyName(subp.name)}, "${subp.symbol}");
 @else
-   procedure ${AdaAPI.proxyName(subp.name)}
+   function ${AdaAPI.proxyName(subp.name)}
     @if(!subp.parameters.isEmpty())
       (${AdaAPI.cInterfaceParameters(subp)})
     @endif
-   is
+      return ${returnType} is
    begin
-      ${AdaAPI.call(subp)};
+      return ${returnType} (${AdaAPI.call(subp)});
    end ${AdaAPI.proxyName(subp.name)};
 @endif
