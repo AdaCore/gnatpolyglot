@@ -3,11 +3,13 @@ package com.adacore.polyglot.proxy2cpp;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Module;
+import com.adacore.polyglot.proxy.Parameter;
 import com.adacore.polyglot.proxy.ProxyContext;
 import com.adacore.polyglot.proxy.Reference;
 import com.adacore.polyglot.proxy.Reference.ReferenceKind;
 import java.nio.file.Path;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class CppAPI {
 
@@ -152,11 +154,44 @@ public class CppAPI {
                 context.getReference(module), r -> r.name.toLower().toUpperCase(), "", "_", "_H");
     }
 
+    /** Create a string corresponding to the C parameter. */
+    private String toCParam(Parameter parameter) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(cTypename(parameter.type)).append(" ").append(parameter.name.toLower());
+        return builder.toString();
+    }
+
+    /** Create a string corresponding to the C++ parameter. */
+    private String toCppParam(Parameter parameter) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(cTypename(parameter.type)).append(" ").append(parameter.name.toLower());
+        return builder.toString();
+    }
+
+    /** Create a string of all the C parameters of the function's symbol. */
+    public String cParameters(FunctionDecl functionDecl) {
+        return functionDecl.parameters.stream()
+                .map(p -> toCParam(p))
+                .collect(Collectors.joining(", "));
+    }
+
+    /** Create a string of all the C++ parameters of the function. */
+    public String cppParameters(FunctionDecl functionDecl) {
+        return functionDecl.parameters.stream()
+                .map(p -> toCppParam(p))
+                .collect(Collectors.joining(", "));
+    }
+
     /** Create a call to the C symbol of the funtion. */
     public String callCSymbol(FunctionDecl functionDecl) {
         StringBuilder builder = new StringBuilder();
         builder.append(functionDecl.symbol);
-        builder.append("()");
+        builder.append("(");
+        builder.append(
+                functionDecl.parameters.stream()
+                        .map(p -> p.name.toLower())
+                        .collect(Collectors.joining(", ")));
+        builder.append(")");
         return builder.toString();
     }
 }
