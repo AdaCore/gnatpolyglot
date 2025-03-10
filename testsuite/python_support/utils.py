@@ -1,11 +1,25 @@
 import sys
 import os
+import glob
 import subprocess
 from pathlib import Path
 
 POLYGLOT_HOME = os.path.realpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "polyglot")
 )
+
+def run(argv: list[str], env: dict[str, str] | None = None) -> None:
+    p = subprocess.run(
+        argv,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        encoding="utf-8",
+        env=env,
+    )
+    sys.stdout.write(p.stdout)
+    sys.stdout.flush()
+    p.check_returncode()
 
 
 def run_java(main_class: str, class_path: str, argv: list[str]) -> None:
@@ -19,17 +33,8 @@ def run_java(main_class: str, class_path: str, argv: list[str]) -> None:
         "--add-exports",
         "org.graalvm.truffle/com.oracle.truffle.api.strings=ALL-UNNAMED",
     ]
+    run([java_exec, "-cp", class_path, *extra_args, main_class, *argv])
 
-    p = subprocess.run(
-        [java_exec, "-cp", class_path, *extra_args, main_class, *argv],
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        encoding="utf-8",
-    )
-    sys.stdout.write(p.stdout)
-    sys.stdout.flush()
-    p.check_returncode()
 
 
 def run_proxy_validator(proxy_location: str) -> None:
@@ -54,6 +59,35 @@ def run_scanner(input_lang: str, project_file: str, output_path: str) -> None:
             os.path.join(POLYGLOT_HOME, "ada2proxy", "target", "ada2proxy.jar"),
             [project_file, output_path],
         )
+    else:
+        raise Exception(f"Unknown language: {input_lang}")
+
+
+def compile_main(output_lang: str, test_file: str, output_proxy: str, input_proxy: str) -> str:
+    """
+    Compile the main test file and return a path to its corresponding
+    executable.
+    """
+    if output_lang == "c++":
+        proxy_c_files = glob.glob(os.path.join(output_proxy, "*.cpp"))
+        argv = [
+            "g++",
+            f"-I{os.path.join(output_proxy, 'include')}",
+            "-Wall",
+            "-Wextra",
+            "-Werror",
+            "-std=c++11",
+            f"-L{os.path.join(input_proxy, 'lib')}",
+            f"-ltest_proxy",
+            "-o",
+            "main",
+            test_file,
+            *proxy_c_files
+        ]
+        run(argv)
+        return os.path.realpath("main")
+    else:
+        raise Exception(f"Unknown language: {output_lang}")
 
 
 def compile_lib(input_lang: str, proxy_location: str) -> None:
@@ -61,6 +95,29 @@ def compile_lib(input_lang: str, proxy_location: str) -> None:
     Compile the generated library at the given path.
     """
     if input_lang == "ada":
-        subprocess.run(
-            ["gprbuild", list(Path(proxy_location).glob("*.gpr"))[0], "-q"]
-        ).check_returncode()
+        run(["gprbuild", str(list(Path(proxy_location).glob("*.gpr"))[0]), "-q"])
+    elif input_lang == "c++":
+        run(["make", "--silent", "-B", "-C", proxy_location])
+    else:
+        raise Exception(f"Unknown language: {input_lang}")
+
+
+def run_printer(output_lang: str, proxy_file: str, output_path: str) -> None:
+    """
+    Run a scanner on ``project_file`` and generate the proxy at
+    ``output_path``.
+    """
+    if output_lang == "c++":
+        run_java(
+            "com.adacore.polyglot.proxy2cpp.Proxy2Cpp",
+            os.path.join(POLYGLOT_HOME, "proxy2cpp", "target", "proxy2cpp.jar"),
+            [proxy_file, output_path],
+        )
+    else:
+        raise Exception(f"Unknown language: {output_lang}")
+
+def add_path(env: dict[str, str], env_var: str, path: str):
+    """
+    Adds the path to the ``env_var`` path variable in ``env``
+    """
+    env[env_var] = "{}{}{}".format(path, os.path.pathsep, env.get(env_var, ""))

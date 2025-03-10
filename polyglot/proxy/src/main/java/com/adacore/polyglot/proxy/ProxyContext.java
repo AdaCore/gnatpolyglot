@@ -49,6 +49,22 @@ public class ProxyContext {
                 prefix.isNonNull);
     }
 
+    public Reference getReference(Declaration declaration) {
+        return types.entrySet().stream()
+                .filter(e -> e.getValue() == declaration)
+                .findFirst()
+                .get()
+                .getKey();
+    }
+
+    public Reference getReference(Module module) {
+        return modules.entrySet().stream()
+                .filter(e -> e.getValue() == module)
+                .findFirst()
+                .get()
+                .getKey();
+    }
+
     /** Make a reference to the module. */
     private Reference makeReference(Module module) {
         Reference res = new Reference(module.name, ReferenceKind.MODULE, null, false, false, false);

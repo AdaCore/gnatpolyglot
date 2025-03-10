@@ -61,9 +61,13 @@ public class Reference implements ProxyObject {
     }
 
     public ReferenceKind getFinalKind() {
+        return this.lastSuffix().kind;
+    }
+
+    public Reference lastSuffix() {
         Reference ref = this;
         while (ref.suffix != null) ref = ref.suffix;
-        return ref.kind;
+        return ref;
     }
 
     @Override
