@@ -3,7 +3,9 @@ package com.adacore.polyglot.proxy;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -11,13 +13,17 @@ import java.util.List;
 /** Root class of the Proxy IR */
 public class Proxy implements ProxyObject {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    static {
-        // To allow for future extension, any unknown field contained in a json object must not be
-        // interpreted as an error, but it must be ignored instead.
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
+    private static final ObjectMapper objectMapper =
+            JsonMapper.builder()
+                    // To allow for future extension, any unknown field contained in a json object
+                    // must not be
+                    // interpreted as an error, but it must be ignored instead.
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                    // Getter-like functions may be added to ease the manipulation of proxy objects.
+                    // Only fields should be included in the resulting json unless specified.
+                    .configure(MapperFeature.AUTO_DETECT_GETTERS, false)
+                    .configure(MapperFeature.AUTO_DETECT_IS_GETTERS, false)
+                    .build();
 
     /** Return the Jackson object mapper. */
     public static ObjectMapper getObjectMapper() {
