@@ -26,7 +26,7 @@ public class ClassDecl extends TypeDecl {
 
     @JsonCreator
     public ClassDecl(
-            @JsonProperty(value = "name", required = true) Name name,
+            @JsonProperty(value = "name", required = true) FullyQualifiedName name,
             @JsonProperty(value = "doc", required = true) String doc,
             @JsonProperty(value = "parent") Reference parent,
             @JsonProperty(value = "size", required = true) int size,

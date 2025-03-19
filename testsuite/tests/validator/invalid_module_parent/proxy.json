@@ -1,12 +1,30 @@
 {
   "modules": [
     {
-      "name": "module_1",
-      "declarations": [ ],
-      "parent": {
-        "kind": "class",
-        "name": "class_type"
-      }
+      "name": { "names": ["module_1"] },
+      "declarations": [
+        {
+          "kind": "class",
+          "name": { "names": ["module_1", "class_type"] },
+          "doc": "class_type documentation",
+          "size": 8,
+          "fields": [],
+          "is_final": false
+        }
+      ]
+    },
+    {
+      "name": { "names": ["module_1", "class_type", "module_2"] },
+      "declarations": [
+        {
+          "kind": "class",
+          "name": { "names": ["module_1", "class_type", "module_2", "class_type"] },
+          "doc": "class_type documentation",
+          "size": 8,
+          "fields": [],
+          "is_final": false
+        }
+      ]
     }
   ]
 }

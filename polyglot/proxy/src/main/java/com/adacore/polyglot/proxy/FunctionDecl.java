@@ -42,7 +42,7 @@ public class FunctionDecl extends Declaration {
 
     @JsonCreator
     public FunctionDecl(
-            @JsonProperty(value = "name", required = true) Name name,
+            @JsonProperty(value = "name", required = true) FullyQualifiedName name,
             @JsonProperty(value = "doc", required = true) String doc,
             @JsonProperty(value = "role") Role role,
             @JsonProperty(value = "symbol", required = true) String symbol,

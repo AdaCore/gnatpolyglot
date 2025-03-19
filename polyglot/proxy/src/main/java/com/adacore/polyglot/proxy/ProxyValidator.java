@@ -1,6 +1,5 @@
 package com.adacore.polyglot.proxy;
 
-import com.adacore.polyglot.proxy.Reference.ReferenceKind;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import java.io.File;
 import java.io.IOException;
@@ -55,10 +54,10 @@ public class ProxyValidator {
         private void validateTypeRef(String fieldName, Reference ref) {
             if (ref != null) {
                 location.add("." + fieldName);
-                if (ref.getFinalKind() != ReferenceKind.CLASS
-                        && ref.getFinalKind() != ReferenceKind.SCALAR)
-                    addDiagnostic("reference is not a type");
-                else if (context.getTypeDecl(ref) == null) addDiagnostic("type does not exist");
+                if (context.getModule(ref.name) != null)
+                    addDiagnostic("referenced entity is not a type");
+                else if (context.getTypeDecl(ref.name) == null)
+                    addDiagnostic("type does not exist");
                 location.pop();
             }
         }
@@ -151,11 +150,8 @@ public class ProxyValidator {
             }
             validateNonNull("declarations", module.declarations);
 
-            // It is not necessary to check if a parent module exists. Such cases are many
-            // languages.
-            visitOptional("parent", module.parent);
-            // It needs to be a module however
-            if (module.parent != null && module.parent.getFinalKind() != ReferenceKind.MODULE) {
+            FullyQualifiedName parentName = module.name.getParentFullyQualifiedName();
+            if (parentName != null && context.getModule(parentName) == null) {
                 addDiagnostic(".parent", "parent is not a module");
             }
 
@@ -170,7 +166,7 @@ public class ProxyValidator {
             if (functionDecl.role != null) {
                 Role role = functionDecl.role;
                 location.add(".role");
-                TypeDecl decl = context.getTypeDecl(role.type);
+                TypeDecl decl = context.getTypeDecl(role.type.name);
                 if (decl instanceof ClassDecl classDecl) {
                     if (role.field != null) {
                         if (!classDecl.fields.stream().anyMatch(f -> f.name.equals(role.field)))
@@ -179,9 +175,6 @@ public class ProxyValidator {
                     if (!context.register(functionDecl)) {
                         addDiagnostic(".kind", "a function already has a similar role");
                     }
-                } else {
-                    if (decl != null) addDiagnostic(".type", "type is not a class");
-                    else addDiagnostic(".type", "type does not exist");
                 }
                 location.pop();
             }
@@ -207,7 +200,7 @@ public class ProxyValidator {
                 added = visited.add(classDecl);
                 // Get the parent decl. If the parent does not exist, or is not a class, return true
                 // in order to ignore this error as it should be detected in an other check.
-                TypeDecl parentDecl = context.getTypeDecl(classDecl.parent);
+                TypeDecl parentDecl = context.getTypeDecl(classDecl.parent.name);
                 if (parentDecl instanceof ClassDecl parentClass) classDecl = parentClass;
                 else break;
             }
@@ -221,7 +214,7 @@ public class ProxyValidator {
             visitOptional("parent", classDecl.parent);
             if (classDecl.parent != null) {
                 validateTypeRef("parent", classDecl.parent);
-                if (classDecl.parent.getFinalKind() != ReferenceKind.CLASS)
+                if (!(context.getTypeDecl(classDecl.parent.name) instanceof ClassDecl))
                     addDiagnostic(".parent", "must inherit from a class");
                 else if (!isSaneClass(classDecl))
                     addDiagnostic(".parent", "class inheritance is not sane");
@@ -306,8 +299,6 @@ public class ProxyValidator {
         @Override
         public Boolean visit(Reference reference) {
             validateNonNull("name", reference.name);
-            validateNonNull("kind", reference.kind);
-            visitOptional("suffix", reference.suffix);
             return Boolean.valueOf(diagnostics.isEmpty());
         }
 
@@ -323,6 +314,12 @@ public class ProxyValidator {
             validateNonNull("type", parameter.type);
             validateTypeRef("type", parameter.type);
             validateNonNull("transfer", parameter.transfer);
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(FullyQualifiedName name) {
+            if (name.names.isEmpty()) addDiagnostic(".names", "cannot be empty");
             return Boolean.valueOf(diagnostics.isEmpty());
         }
     }

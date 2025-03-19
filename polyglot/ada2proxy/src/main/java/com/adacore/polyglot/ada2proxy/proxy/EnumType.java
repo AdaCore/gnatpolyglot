@@ -1,6 +1,7 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.EnumerationDecl;
 import com.adacore.polyglot.proxy.Name;
 import java.util.List;
@@ -27,6 +28,8 @@ public class EnumType extends AdaDeclaration {
     @Override
     public EnumerationDecl toPolyglotProxy() {
         return new EnumerationDecl(
-                name, origin.pDoc(), items.stream().map(EnumLiteral::toPolyglotProxy).toList());
+                AdaAPI.makeProxyFullyQualifiedName(origin, false),
+                origin.pDoc(),
+                items.stream().map(EnumLiteral::toPolyglotProxy).toList());
     }
 }

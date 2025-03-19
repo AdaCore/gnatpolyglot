@@ -1,4 +1,4 @@
 Running validator test.
 Errors found in the proxy:
- * $.modules[0].parent: parent is not a module
+ * $.modules[1].parent: parent is not a module
 Done.

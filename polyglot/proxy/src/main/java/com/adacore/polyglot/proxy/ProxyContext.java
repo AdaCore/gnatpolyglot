@@ -1,7 +1,6 @@
 package com.adacore.polyglot.proxy;
 
 import com.adacore.polyglot.NativeType;
-import com.adacore.polyglot.proxy.Reference.ReferenceKind;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,61 +21,17 @@ public class ProxyContext {
     }
 
     /** Map a reference to its corresponding module. */
-    private Map<Reference, Module> modules = new HashMap<>();
+    private Map<FullyQualifiedName, Module> modules = new HashMap<>();
 
     /** Map a reference to its corresponding type. */
-    private Map<Reference, TypeDecl> types = new HashMap<>();
+    private Map<FullyQualifiedName, TypeDecl> types = new HashMap<>();
 
     /** Map a type to its member functions. */
     private Map<TypeDecl, FunctionMembersEntry> membersEntries = new HashMap<>();
 
     public ProxyContext() {
         for (var nativeType : NativeType.values())
-            types.put(nativeType.reference, nativeType.declaration);
-    }
-
-    /** Combine two references. */
-    private Reference append(Reference prefix, Reference suffix) {
-        if (suffix == null) return prefix;
-        if (prefix == null) return suffix;
-        suffix = append(prefix.suffix, suffix);
-        return new Reference(
-                prefix.name,
-                prefix.kind,
-                suffix,
-                prefix.isPointer,
-                prefix.isConst,
-                prefix.isNonNull);
-    }
-
-    public Reference getReference(Declaration declaration) {
-        return types.entrySet().stream()
-                .filter(e -> e.getValue() == declaration)
-                .findFirst()
-                .get()
-                .getKey();
-    }
-
-    public Reference getReference(Module module) {
-        return modules.entrySet().stream()
-                .filter(e -> e.getValue() == module)
-                .findFirst()
-                .get()
-                .getKey();
-    }
-
-    /** Make a reference to the module. */
-    private Reference makeReference(Module module) {
-        Reference res = new Reference(module.name, ReferenceKind.MODULE, null, false, false, false);
-        return append(module.parent, res);
-    }
-
-    /**
-     * Make a reference to the declaration. Functions cannot be refered and will always return null.
-     */
-    private Reference makeReference(Module module, TypeDecl type) {
-        Reference res = new Reference(type.name, ReferenceKind.CLASS, null, false, false, false);
-        return append(makeReference(module), res);
+            types.put(nativeType.reference.name, nativeType.declaration);
     }
 
     /**
@@ -84,7 +39,7 @@ public class ProxyContext {
      * and parent, else return false.
      */
     public boolean register(Module module) {
-        return modules.put(makeReference(module), module) == null;
+        return modules.put(module.name, module) == null;
     }
 
     /**
@@ -96,7 +51,7 @@ public class ProxyContext {
         if (func.role == null) {
             return true;
         }
-        TypeDecl decl = this.getTypeDecl(func.role.type);
+        TypeDecl decl = this.getTypeDecl(func.role.type.name);
         if (decl == null) {
             // The goal of the function is to detect when a function's role was already occupied by
             // an other. checking if the type exists is done somewhere is in the validation of the
@@ -122,17 +77,17 @@ public class ProxyContext {
      */
     public boolean register(Module module, TypeDecl declaration) {
         membersEntries.put(declaration, new FunctionMembersEntry());
-        return types.put(makeReference(module, declaration), declaration) == null;
+        return types.put(declaration.name, declaration) == null;
     }
 
     /** Get a module from its corresponding reference. */
-    public Module getModule(Reference ref) {
-        return modules.get(ref);
+    public Module getModule(FullyQualifiedName name) {
+        return modules.get(name);
     }
 
     /** Get a type declaration from its corresponding reference. */
-    public TypeDecl getTypeDecl(Reference ref) {
-        return types.get(ref);
+    public TypeDecl getTypeDecl(FullyQualifiedName name) {
+        return types.get(name);
     }
 
     /** Get the entry containing all member functions of the given type. */

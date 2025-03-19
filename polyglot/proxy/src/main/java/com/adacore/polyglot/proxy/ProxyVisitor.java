@@ -23,4 +23,6 @@ public interface ProxyVisitor<T> {
     public abstract T visit(Transfer transfer);
 
     public abstract T visit(Parameter parameter);
+
+    public abstract T visit(FullyQualifiedName name);
 }

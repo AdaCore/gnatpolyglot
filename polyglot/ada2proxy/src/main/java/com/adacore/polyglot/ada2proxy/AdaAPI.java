@@ -4,55 +4,35 @@ import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
+import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Reference;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /** Utility class that provides methods to help generate Ada code from a Proxy. */
 public class AdaAPI {
 
-    /**
-     * Build the parent reference to ``decl``, with ``suffix`` as the last suffix of the chain of
-     * references.
-     */
-    private static Reference makeParentReferences(Libadalang.BasicDecl decl, Reference suffix) {
-        Libadalang.Symbol[] names = decl.pFullyQualifiedNameArray(false);
-        Reference res = suffix;
-        for (int i = names.length - 2; i >= 0; i--) {
-            res =
-                    new Reference(
-                            Name.fromLower(names[i].text),
-                            Reference.ReferenceKind.MODULE,
-                            res,
-                            false,
-                            false,
-                            false);
-        }
-        return res;
+    /** Create a reference to decl, or its parent if ``onlyParent`` is true. */
+    public static FullyQualifiedName makeProxyFullyQualifiedName(
+            Libadalang.BasicDecl decl, Boolean onlyParent) {
+        Libadalang.Symbol[] symbols = decl.pFullyQualifiedNameArray(false);
+        if (onlyParent && symbols.length == 1) return null;
+        return new FullyQualifiedName(
+                Stream.of(onlyParent ? Arrays.copyOf(symbols, symbols.length - 1) : symbols)
+                        .map(s -> s.text)
+                        .map(Name::fromLower)
+                        .toList());
     }
 
     /** Create a reference to decl, or its parent if ``onlyParent`` is true. */
     public static Reference makeReferenceTo(Libadalang.BasicDecl decl, Boolean onlyParent) {
-        Reference res = null;
-        if (!onlyParent) {
-            Reference.ReferenceKind kind = null;
-            if (decl instanceof Libadalang.BaseTypeDecl) kind = Reference.ReferenceKind.CLASS;
-            else if (decl instanceof Libadalang.PackageDecl) kind = Reference.ReferenceKind.MODULE;
-            else
-                throw new UnsupportedOperationException(
-                        "Creating reference to an unsupported declaration type");
-            res =
-                    new Reference(
-                            Name.fromPascalWithUnderscore(decl.pDefiningName().getText()),
-                            kind,
-                            res,
-                            false,
-                            false,
-                            false);
-        }
-        return makeParentReferences(decl, res);
+        if (onlyParent && decl.pFullyQualifiedNameArray(false).length == 1) return null;
+        return new Reference(
+                makeProxyFullyQualifiedName(decl, onlyParent), false, false, false, false);
     }
 
     /** Return the native type corresponding to bTypeDecl, or null if the type is not native. */

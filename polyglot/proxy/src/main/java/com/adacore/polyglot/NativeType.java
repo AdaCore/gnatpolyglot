@@ -1,10 +1,11 @@
 package com.adacore.polyglot;
 
+import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.ProxyVisitor;
 import com.adacore.polyglot.proxy.Reference;
-import com.adacore.polyglot.proxy.Reference.ReferenceKind;
 import com.adacore.polyglot.proxy.TypeDecl;
+import java.util.List;
 
 /** Enumeration of common native types */
 public enum NativeType {
@@ -27,8 +28,11 @@ public enum NativeType {
 
     /** Type to represent a native type declaration. */
     public static class NativeTypeDecl extends TypeDecl {
-        private NativeTypeDecl(Name name) {
+        public final NativeType nativeType;
+
+        private NativeTypeDecl(FullyQualifiedName name, NativeType nativeType) {
             super(name, null);
+            this.nativeType = nativeType;
         }
 
         @Override
@@ -46,12 +50,15 @@ public enum NativeType {
     private NativeType() {
         this.reference =
                 new Reference(
-                        Name.fromLower(this.toString().toLowerCase()),
-                        ReferenceKind.SCALAR,
-                        null,
+                        new FullyQualifiedName(
+                                List.of(Name.fromLower(this.toString().toLowerCase()))),
+                        false,
                         false,
                         false,
                         false);
-        this.declaration = new NativeTypeDecl(Name.fromLower(this.toString().toLowerCase()));
+        this.declaration =
+                new NativeTypeDecl(
+                        new FullyQualifiedName(Name.fromLower(this.toString().toLowerCase())),
+                        this);
     }
 }

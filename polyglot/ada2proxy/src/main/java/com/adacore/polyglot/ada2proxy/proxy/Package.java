@@ -3,7 +3,6 @@ package com.adacore.polyglot.ada2proxy.proxy;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.Module;
-import com.adacore.polyglot.proxy.Name;
 import java.util.List;
 
 public class Package implements AdaProxyObject {
@@ -32,8 +31,7 @@ public class Package implements AdaProxyObject {
     @Override
     public Module toPolyglotProxy() {
         return new Module(
-                Name.fromPascalWithUnderscore(origin.pRelativeName().getText()),
-                declarations.stream().map(AdaDeclaration::toPolyglotProxy).toList(),
-                AdaAPI.makeReferenceTo(origin, true));
+                AdaAPI.makeProxyFullyQualifiedName(origin, false),
+                declarations.stream().map(AdaDeclaration::toPolyglotProxy).toList());
     }
 }
