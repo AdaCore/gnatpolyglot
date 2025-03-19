@@ -16,6 +16,9 @@
       (${AdaAPI.cInterfaceParameters(subp)})
     @endif
    is
+    @for(var p : subp.parameters)
+      ${AdaAPI.makeConversion(p)};
+    @endfor
    begin
       ${AdaAPI.call(subp)};
    end ${AdaAPI.proxyName(subp.name)};

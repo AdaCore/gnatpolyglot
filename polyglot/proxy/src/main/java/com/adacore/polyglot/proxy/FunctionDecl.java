@@ -52,7 +52,7 @@ public class FunctionDecl extends Declaration {
             @JsonProperty(value = "is_visible") Boolean isVisible,
             @JsonProperty(value = "is_final") Boolean isFinal,
             @JsonProperty(value = "is_static") Boolean isStatic) {
-        super(name, symbol);
+        super(name, doc);
         this.role = role;
         this.symbol = symbol;
         this.parameters = parameters;

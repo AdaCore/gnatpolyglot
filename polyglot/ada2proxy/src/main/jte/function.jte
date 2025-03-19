@@ -19,7 +19,11 @@
       (${AdaAPI.cInterfaceParameters(subp)})
     @endif
       return ${returnType} is
+    @for(var p : subp.parameters)
+      ${AdaAPI.makeConversion(p)};
+    @endfor
+      ${AdaAPI.makeReturnTypeConverter(subp)}
    begin
-      return ${returnType} (${AdaAPI.call(subp)});
+      return ${AdaAPI.makeReturn(subp)};
    end ${AdaAPI.proxyName(subp.name)};
 @endif
