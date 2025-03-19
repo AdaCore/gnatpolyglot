@@ -9,6 +9,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Role;
+import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.Transfer;
 import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import java.util.ArrayList;
@@ -86,8 +87,20 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // Get the C symbol of the function.
         String symbol = symbolify(node.pFullyQualifiedName());
 
-        // TODO: Handle subprograms that can be attached to a type.
+        // If the function is callable with the dot notation, it is a method.
+        // TODO: When eng/libadalang/libadalang#1547 is resoled, use the new property.
         Role role = null;
+        Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
+        if (!primitiveType.isNone() && spec.pParams().length != 0) {
+            if (spec.pParams()[0]
+                    .pFormalType(Libadalang.AdaNode.NONE)
+                    .pMatchingType(primitiveType, Libadalang.AdaNode.NONE))
+                role =
+                        new Role(
+                                RoleKind.METHOD,
+                                AdaAPI.makeReferenceTo(primitiveType, false),
+                                null);
+        }
 
         // Get the list of parameters.
         List<SubpParam> parameters = new ArrayList<>();
