@@ -176,6 +176,9 @@ public class ProxyValidator {
                         if (!classDecl.fields.stream().anyMatch(f -> f.name.equals(role.field)))
                             addDiagnostic(".field", "the field does not exist");
                     }
+                    if (!context.register(functionDecl)) {
+                        addDiagnostic(".kind", "a function already has a similar role");
+                    }
                 } else {
                     if (decl != null) addDiagnostic(".type", "type is not a class");
                     else addDiagnostic(".type", "type does not exist");

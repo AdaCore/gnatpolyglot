@@ -1,0 +1,4 @@
+Running validator test.
+Errors found in the proxy:
+ * $.modules[0].declarations[1].role.kind: a function already has a similar role
+Done.
