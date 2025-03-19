@@ -4,6 +4,7 @@ import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.Module;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Package implements AdaProxyObject {
 
@@ -32,6 +33,17 @@ public class Package implements AdaProxyObject {
     public Module toPolyglotProxy() {
         return new Module(
                 AdaAPI.makeProxyFullyQualifiedName(origin, false),
-                declarations.stream().map(AdaDeclaration::toPolyglotProxy).toList());
+                declarations.stream()
+                        .flatMap(
+                                d -> {
+                                    if (d instanceof Record rec) {
+                                        return Stream.of(
+                                                rec.toPolyglotProxy(),
+                                                rec.getFreeFunction(),
+                                                rec.getAllocFunction(),
+                                                rec.getCloneFunction());
+                                    } else return Stream.of(d.toPolyglotProxy());
+                                })
+                        .toList());
     }
 }

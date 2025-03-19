@@ -8,6 +8,7 @@
 !{String packageName = pack.getFullyQualifiedName();}
 
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with Interfaces.C;
 with System;
 with System.Address_To_Access_Conversions;
