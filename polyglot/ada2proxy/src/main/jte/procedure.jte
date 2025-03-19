@@ -1,3 +1,7 @@
+<%--
+vim: filetype=jteada
+Template file to generate binded procedures.
+--%>
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
 @param Subprogram subp

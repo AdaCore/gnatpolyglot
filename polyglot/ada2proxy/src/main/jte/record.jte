@@ -1,3 +1,7 @@
+<%--
+vim: filetype=jteada
+Template file to generate bindings for record types.
+--%>
 @import com.adacore.libadalang.Libadalang;
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.Record

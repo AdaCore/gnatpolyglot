@@ -1,3 +1,7 @@
+<%--
+vim: filetype=jteada
+Template file to generate package specs.
+--%>
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration
 @import com.adacore.polyglot.ada2proxy.proxy.Package

@@ -1,3 +1,7 @@
+<%--
+vim: filetype=jteada
+Template file to generate a gprbuild specification of the Ada bindings.
+--%>
 @import com.adacore.polyglot.ada2proxy.proxy.AdaProxy
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.proxy.Name
