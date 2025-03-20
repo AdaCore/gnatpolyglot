@@ -1,3 +1,6 @@
+<%--
+vim: filetype=jtecpp
+--%>
 @import com.adacore.polyglot.proxy.ClassDecl
 @import com.adacore.polyglot.proxy.FunctionDecl
 @import com.adacore.polyglot.proxy.Module

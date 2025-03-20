@@ -1,3 +1,6 @@
+<%--
+vim: filetype=jtecpp
+--%>
 @import com.adacore.polyglot.proxy.FunctionDecl
 @import com.adacore.polyglot.proxy2cpp.CppAPI
 @param CppAPI api
