@@ -2,12 +2,14 @@ package com.adacore.polyglot.proxy2cpp;
 
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.NativeType.NativeTypeDecl;
+import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Module;
 import com.adacore.polyglot.proxy.Parameter;
 import com.adacore.polyglot.proxy.ProxyContext;
 import com.adacore.polyglot.proxy.Reference;
+import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeDecl;
 import java.nio.file.Path;
 import java.util.function.Function;
@@ -91,7 +93,14 @@ public class CppAPI {
         TypeDecl typeDecl = context.getTypeDecl(reference.name);
         if (typeDecl instanceof NativeTypeDecl nativeType)
             return nativeTypeName(nativeType.nativeType);
+        if (typeDecl instanceof ClassDecl)
+            return makeRefString(reference.name, fqn -> lastNameToCppName(fqn), "", "::", "");
         throw new UnsupportedOperationException("Unsupported Cpp type");
+    }
+
+    private String lastNameToCppName(FullyQualifiedName fqn) {
+        if (context.getTypeDecl(fqn) != null) return fqn.getLastName().toPascal();
+        return fqn.getLastName().toLower();
     }
 
     /** Return the refered C type's name. */
@@ -99,6 +108,7 @@ public class CppAPI {
         TypeDecl typeDecl = context.getTypeDecl(reference.name);
         if (typeDecl instanceof NativeTypeDecl nativeType)
             return nativeTypeName(nativeType.nativeType);
+        if (typeDecl instanceof ClassDecl) return "void *";
         throw new UnsupportedOperationException("Unsupported C type");
     }
 
@@ -116,7 +126,7 @@ public class CppAPI {
         StringBuilder builder = new StringBuilder(prefix);
         FullyQualifiedName current = new FullyQualifiedName(ref.names.subList(0, 1));
         builder.append(converter.apply(current));
-        for (int i = 1; i < ref.names.size(); i++) {
+        for (int i = 2; i <= ref.names.size(); i++) {
             current = new FullyQualifiedName(ref.names.subList(0, i));
             builder.append(separator).append(converter.apply(current));
         }
@@ -156,7 +166,10 @@ public class CppAPI {
     /** Create a string corresponding to the C++ parameter. */
     private String toCppParam(Parameter parameter) {
         StringBuilder builder = new StringBuilder();
-        builder.append(cTypename(parameter.type)).append(" ").append(parameter.name.toLower());
+        if (parameter.type.isConst) builder.append("const ");
+        builder.append(cppTypename(parameter.type)).append(" ");
+        if (parameter.type.isReference) builder.append("&");
+        builder.append(parameter.name.toLower());
         return builder.toString();
     }
 
@@ -167,9 +180,21 @@ public class CppAPI {
                 .collect(Collectors.joining(", "));
     }
 
+    public boolean isMethod(FunctionDecl functionDecl) {
+        // A method can have the role ``METHOD``, ``GETTER`` or ``SETTER``.
+        return functionDecl.role != null && functionDecl.role.kind.compareTo(RoleKind.SETTER) <= 0;
+    }
+
+    /** Return the const keyword if the function is a const method, else return an empty string. */
+    public String getConstMethod(FunctionDecl functionDecl) {
+        if (isMethod(functionDecl) && functionDecl.parameters.get(0).type.isConst) return "const";
+        return "";
+    }
+
     /** Create a string of all the C++ parameters of the function. */
     public String cppParameters(FunctionDecl functionDecl) {
         return functionDecl.parameters.stream()
+                .skip(isMethod(functionDecl) ? 1 : 0)
                 .map(p -> toCppParam(p))
                 .collect(Collectors.joining(", "));
     }
@@ -177,13 +202,41 @@ public class CppAPI {
     /** Create a call to the C symbol of the funtion. */
     public String callCSymbol(FunctionDecl functionDecl) {
         StringBuilder builder = new StringBuilder();
-        builder.append(functionDecl.symbol);
-        builder.append("(");
+        boolean funcIsMethod = isMethod(functionDecl);
+        builder.append(functionDecl.symbol).append("(");
+        // If the function is attached to a type, use ``this->data`` as the first argument.
+        if (funcIsMethod) {
+            builder.append("this->_data");
+            if (functionDecl.parameters.size() > 1) builder.append(", ");
+        }
         builder.append(
                 functionDecl.parameters.stream()
-                        .map(p -> p.name.toLower())
+                        .skip(funcIsMethod ? 1 : 0)
+                        .map(
+                                p -> {
+                                    if (context.getTypeDecl(p.type.name) instanceof ClassDecl)
+                                        return p.name.toLower() + ".data()";
+                                    else return p.name.toLower();
+                                })
                         .collect(Collectors.joining(", ")));
         builder.append(")");
         return builder.toString();
+    }
+
+    /** Return the C++ name of the function to define ``functionDecl``. */
+    public String functionDefinitionName(FunctionDecl functionDecl) {
+        String functionName = functionDecl.getLastName().toLower();
+        if (!isMethod(functionDecl)) return functionName;
+        return makeRefString(
+                functionDecl.role.type.name,
+                r -> lastNameToCppName(r),
+                "",
+                "::",
+                "::" + functionName);
+    }
+
+    /** Return the member functions of a type. */
+    public ProxyContext.FunctionMembersEntry getMembers(TypeDecl decl) {
+        return context.getMembers(decl);
     }
 }
