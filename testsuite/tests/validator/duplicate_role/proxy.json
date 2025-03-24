@@ -8,12 +8,20 @@
           "name": { "names": ["module_1", "func_1"] },
           "doc": "func_1 documentation",
           "symbol": "func_symbol",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "param_1",
+              "type": {
+                "name": { "names": ["module_1", "class_type_1"] }
+              },
+              "transfer": { "required_owner": "any" }
+            }
+          ],
           "return_type": {
             "name": { "names": ["void"] }
           },
           "role": {
-            "kind": "alloc",
+            "kind": "free",
             "type": {
               "name": { "names": ["module_1", "class_type_1"] }
             }
@@ -28,12 +36,20 @@
           "name": { "names": ["module_1", "func_2"] },
           "doc": "func_2 documentation",
           "symbol": "func_symbol_2",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "param_1",
+              "type": {
+                "name": { "names": ["module_1", "class_type_1"] }
+              },
+              "transfer": { "required_owner": "any" }
+            }
+          ],
           "return_type": {
             "name": { "names": ["void"] }
           },
           "role": {
-            "kind": "alloc",
+            "kind": "free",
             "type": {
               "name": { "names": ["module_1", "class_type_1"] }
             }

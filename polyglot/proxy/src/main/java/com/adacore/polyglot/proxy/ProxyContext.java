@@ -9,15 +9,15 @@ import java.util.Map;
 public class ProxyContext {
 
     /** Class to store the member function of a type. */
-    private static class FunctionMembersEntry {
-        /** Function to allocate the type. */
-        FunctionDecl allocFunction = null;
+    public static class FunctionMembersEntry {
+        /** Functions to allocate the type. */
+        public ArrayList<FunctionDecl> allocFunctions = new ArrayList<>();
 
         /** Function to free the type. */
-        FunctionDecl freeFunction = null;
+        public FunctionDecl freeFunction = null;
 
         /** List of all other member functions of the type (getters, setters, methods...). */
-        ArrayList<FunctionDecl> membersFunction = new ArrayList<>();
+        public ArrayList<FunctionDecl> memberFunctions = new ArrayList<>();
     }
 
     /** Map a reference to its corresponding module. */
@@ -44,8 +44,8 @@ public class ProxyContext {
 
     /**
      * Register the function as a member function if it has a role, otherwise do nothing. If the
-     * role is ``ALLOC`` or ``FREE``, and a function of that role was already registered for the
-     * type, return false.
+     * role is ``FREE``, and a function of that role was already registered for the type, return
+     * false.
      */
     public boolean register(FunctionDecl func) {
         if (func.role == null) {
@@ -60,13 +60,13 @@ public class ProxyContext {
         }
         FunctionMembersEntry entry = membersEntries.get(decl);
         if (func.role.kind == RoleKind.ALLOC) {
-            if (entry.allocFunction != null) return false;
-            entry.allocFunction = func;
+            // There can be multiple allocating function (no args, clone...)
+            entry.allocFunctions.add(func);
         } else if (func.role.kind == RoleKind.FREE) {
             if (entry.freeFunction != null) return false;
             entry.freeFunction = func;
         } else if (func.role.kind == RoleKind.METHOD) {
-            entry.membersFunction.add(func);
+            entry.memberFunctions.add(func);
         }
         return true;
     }
