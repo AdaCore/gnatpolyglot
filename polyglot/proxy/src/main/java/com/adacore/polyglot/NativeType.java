@@ -1,10 +1,10 @@
 package com.adacore.polyglot;
 
-import com.adacore.polyglot.proxy.Declaration;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.ProxyVisitor;
 import com.adacore.polyglot.proxy.Reference;
 import com.adacore.polyglot.proxy.Reference.ReferenceKind;
+import com.adacore.polyglot.proxy.TypeDecl;
 
 /** Enumeration of common native types */
 public enum NativeType {
@@ -26,7 +26,7 @@ public enum NativeType {
     FLOAT128;
 
     /** Type to represent a native type declaration. */
-    public static class NativeTypeDecl extends Declaration {
+    public static class NativeTypeDecl extends TypeDecl {
         private NativeTypeDecl(Name name) {
             super(name, null);
         }

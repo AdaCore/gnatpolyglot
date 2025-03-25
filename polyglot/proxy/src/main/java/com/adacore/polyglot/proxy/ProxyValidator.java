@@ -58,7 +58,7 @@ public class ProxyValidator {
                 if (ref.getFinalKind() != ReferenceKind.CLASS
                         && ref.getFinalKind() != ReferenceKind.SCALAR)
                     addDiagnostic("reference is not a type");
-                else if (context.getDeclaration(ref) == null) addDiagnostic("type does not exist");
+                else if (context.getTypeDecl(ref) == null) addDiagnostic("type does not exist");
                 location.pop();
             }
         }
@@ -141,10 +141,12 @@ public class ProxyValidator {
 
             if (module.declarations != null) {
                 for (int i = 0; i < module.declarations.size(); i++) {
-                    location.add("[" + i + "]");
-                    if (!context.register(module, module.declarations.get(i)))
-                        addDiagnostic("an other type exists with the same name and parent");
-                    location.pop();
+                    if (module.declarations.get(i) instanceof TypeDecl typeDecl) {
+                        location.add("[" + i + "]");
+                        if (!context.register(module, typeDecl))
+                            addDiagnostic("an other type exists with the same name and parent");
+                        location.pop();
+                    }
                 }
             }
             validateNonNull("declarations", module.declarations);
@@ -168,7 +170,7 @@ public class ProxyValidator {
             if (functionDecl.role != null) {
                 Role role = functionDecl.role;
                 location.add(".role");
-                Declaration decl = context.getDeclaration(role.type);
+                TypeDecl decl = context.getTypeDecl(role.type);
                 if (decl instanceof ClassDecl classDecl) {
                     if (role.field != null) {
                         if (!classDecl.fields.stream().anyMatch(f -> f.name.equals(role.field)))
@@ -202,7 +204,7 @@ public class ProxyValidator {
                 added = visited.add(classDecl);
                 // Get the parent decl. If the parent does not exist, or is not a class, return true
                 // in order to ignore this error as it should be detected in an other check.
-                Declaration parentDecl = context.getDeclaration(classDecl.parent);
+                TypeDecl parentDecl = context.getTypeDecl(classDecl.parent);
                 if (parentDecl instanceof ClassDecl parentClass) classDecl = parentClass;
                 else break;
             }

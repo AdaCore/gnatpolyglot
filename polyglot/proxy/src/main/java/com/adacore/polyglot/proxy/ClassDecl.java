@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /** Represent class types declaration. */
-public class ClassDecl extends Declaration {
+public class ClassDecl extends TypeDecl {
     /** Parent class type. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("parent")

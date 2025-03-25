@@ -11,7 +11,7 @@ public class ProxyContext {
     private Map<Reference, Module> modules = new HashMap<>();
 
     /** Map a reference to its corresponding type. */
-    private Map<Reference, Declaration> types = new HashMap<>();
+    private Map<Reference, TypeDecl> types = new HashMap<>();
 
     public ProxyContext() {
         for (var nativeType : NativeType.values())
@@ -41,7 +41,7 @@ public class ProxyContext {
     /**
      * Make a reference to the declaration. Functions cannot be refered and will always return null.
      */
-    private Reference makeReference(Module module, Declaration type) {
+    private Reference makeReference(Module module, TypeDecl type) {
         Reference res = new Reference(type.name, ReferenceKind.CLASS, null, false, false, false);
         return append(makeReference(module), res);
     }
@@ -56,10 +56,9 @@ public class ProxyContext {
 
     /**
      * Register the type in the context and return true if there was no type with the same name and
-     * parent, else return false. Registering a function will do nothing and always return true.
+     * parent, else return false.
      */
-    public boolean register(Module module, Declaration declaration) {
-        if (declaration instanceof FunctionDecl) return true;
+    public boolean register(Module module, TypeDecl declaration) {
         return types.put(makeReference(module, declaration), declaration) == null;
     }
 
@@ -68,8 +67,8 @@ public class ProxyContext {
         return modules.get(ref);
     }
 
-    /** Get a declaration from its corresponding reference. */
-    public Declaration getDeclaration(Reference ref) {
+    /** Get a type declaration from its corresponding reference. */
+    public TypeDecl getTypeDecl(Reference ref) {
         return types.get(ref);
     }
 }
