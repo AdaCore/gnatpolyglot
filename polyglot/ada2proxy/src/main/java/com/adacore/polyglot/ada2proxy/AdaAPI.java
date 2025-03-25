@@ -112,7 +112,10 @@ public class AdaAPI {
                             StringBuilder argBuilder = new StringBuilder();
                             argBuilder.append(p.name.toPascalWithUnderscore() + "_Arg");
                             argBuilder.append(": ");
-                            argBuilder.append(cInterfaceTypename(p.getFormalType()));
+                            // If the parameter has a Out mode, it is a reference and will be
+                            // passed as an address.
+                            if (p.isOutMode()) argBuilder.append("System.Address");
+                            else argBuilder.append(cInterfaceTypename(p.getFormalType()));
                             return argBuilder.toString();
                         }))
                 .collect(Collectors.joining("; "));
@@ -129,15 +132,17 @@ public class AdaAPI {
      * Create an entity that is the conversion of a subprogram parameter, named `${name}_Arg` in the
      * C API, to the `type` Ada type.
      */
-    private static String makeParamConversion(Name name, Libadalang.BaseTypeDecl type) {
+    private static String makeParamConversion(
+            Name name, Libadalang.BaseTypeDecl type, boolean isOutMode) {
         type = (Libadalang.BaseTypeDecl) type.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
 
         StringBuilder builder = new StringBuilder();
         builder.append(name.toPascalWithUnderscore())
                 .append("_Value : ")
                 .append(type.pFullyQualifiedName());
-        if (type.pIsRecordType(Libadalang.AdaNode.NONE)) {
-            // If the type is a record, generated the following:
+        if (type.pIsRecordType(Libadalang.AdaNode.NONE) || isOutMode) {
+            // If the type is a record or when the parameter uses an ``out`` mode, generate the
+            // following:
             // .. code::
             //
             //     ${Arg}_Value : ${Type} with Address => ${Arg}_Arg;
@@ -169,7 +174,7 @@ public class AdaAPI {
      * new value of the setter for ``component`` into the actual Ada type.
      */
     public static String makeParamConversion(Component component) {
-        return makeParamConversion(component.name, component.getType());
+        return makeParamConversion(component.name, component.getType(), false);
     }
 
     /**
@@ -177,7 +182,7 @@ public class AdaAPI {
      * type.
      */
     public static String makeParamConversion(SubpParam param) {
-        return makeParamConversion(param.name, param.getType());
+        return makeParamConversion(param.name, param.getType(), param.isOutMode());
     }
 
     /** Create a string to call a function from the proxy. */
