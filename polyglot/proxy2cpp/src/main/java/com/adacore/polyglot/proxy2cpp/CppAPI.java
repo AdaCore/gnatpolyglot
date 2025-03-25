@@ -159,9 +159,14 @@ public class CppAPI {
     /** Create a string corresponding to the C parameter. */
     private String toCParam(Parameter parameter) {
         StringBuilder builder = new StringBuilder();
-        builder.append(cTypename(parameter.type.getName()))
-                .append(" ")
-                .append(parameter.name.toLower());
+        if (parameter.type.isConst()) builder.append("const ");
+        builder.append(cTypename(parameter.type.getName())).append(" ");
+        // cTypename returns "void *" for classes, so we still need to transform native types to
+        // pointers when they're used as reference parameters.
+        if (parameter.type instanceof ReferenceTypeExpr ref
+                && context.getTypeDecl(ref.typeExpr.getName()) instanceof NativeTypeDecl)
+            builder.append("*");
+        builder.append(parameter.name.toLower());
         return builder.toString();
     }
 
@@ -218,6 +223,8 @@ public class CppAPI {
                                 p -> {
                                     if (context.getTypeDecl(p.type.getName()) instanceof ClassDecl)
                                         return p.name.toLower() + ".data()";
+                                    else if (p.type instanceof ReferenceTypeExpr)
+                                        return "&" + p.name.toLower();
                                     else return p.name.toLower();
                                 })
                         .collect(Collectors.joining(", ")));
