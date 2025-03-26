@@ -11,6 +11,7 @@
   <modules>
     <module>proxy</module>
     <module>ada2proxy</module>
+    <module>proxy2cpp</module>
   </modules>
 
   <properties>
@@ -58,6 +59,7 @@
             <includes>
               <include>proxy/src/*/java/**/*.java</include>
               <include>ada2proxy/src/*/java/**/*.java</include>
+              <include>proxy2cpp/src/*/java/**/*.java</include>
             </includes>
 
             <googleJavaFormat>

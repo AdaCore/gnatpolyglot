@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.adacore.polyglot</groupId>
+    <artifactId>polyglot</artifactId>
+    <version>0.1.0</version>
+  </parent>
+
+  <artifactId>proxy2cpp</artifactId>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.adacore.polyglot</groupId>
+      <artifactId>proxy</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>gg.jte</groupId>
+      <artifactId>jte-runtime</artifactId>
+      <version>${jte.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>${project.build.directory}/generated-resources</directory>
+      </resource>
+    </resources>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.2</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>proxy2cpp</finalName>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Skip the Spotless check because everything is handled by the parent-->
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>2.40.0</version>
+        <configuration>
+          <skip>false</skip>
+        </configuration>
+      </plugin>
+
+      <!-- Configure the template engine plugin -->
+      <plugin>
+        <groupId>gg.jte</groupId>
+        <artifactId>jte-maven-plugin</artifactId>
+        <version>${jte.version}</version>
+        <configuration>
+          <extensions>
+            <extension>
+              <className>gg.jte.nativeimage.NativeResourcesExtension</className>
+            </extension>
+          </extensions>
+          <sourceDirectory>${project.basedir}/src/main/jte</sourceDirectory>
+          <targetResourceDirectory>${project.build.directory}/generated-resources</targetResourceDirectory>
+          <contentType>Plain</contentType>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>gg.jte</groupId>
+            <artifactId>jte-native-resources</artifactId>
+            <version>${jte.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

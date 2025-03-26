@@ -16,7 +16,7 @@ class PythonDriver(DiffTestDriver):
         """
         Adds the path to the ``env_var`` path variable in ``env``
         """
-        env[env_var] = "{}{}{}".format(path, os.path.pathsep, env.get("env_var", ""))
+        env[env_var] = "{}{}{}".format(path, os.path.pathsep, env.get(env_var, ""))
 
     @property
     def script_and_args(self) -> list[str]:

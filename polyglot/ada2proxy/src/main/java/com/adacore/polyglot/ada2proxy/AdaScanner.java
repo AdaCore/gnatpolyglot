@@ -39,7 +39,10 @@ public class AdaScanner extends Scanner {
         this.projectFile = projectFile;
         // Get the name of the project
         this.projectName =
-                projectFile.toString().substring(0, projectFile.toString().lastIndexOf(".gpr"));
+                projectFile
+                        .getFileName()
+                        .toString()
+                        .substring(0, projectFile.getFileName().toString().lastIndexOf(".gpr"));
 
         // Analyze all the ``.ads`` source files.
         ProjectManager projectManager = ProjectManager.create(projectFile.toString());
