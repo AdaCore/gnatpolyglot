@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /** Represent enumeration type declarations. */
-public class EnumerationDecl extends Declaration {
+public class EnumerationDecl extends TypeDecl {
     /** List of all enumeration items. */
     @JsonProperty("items")
     public final List<EnumItem> items;

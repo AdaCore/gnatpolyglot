@@ -1,0 +1,40 @@
+{
+  "modules": [
+    {
+      "name": "module_1",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "class_type_1",
+          "doc": "class_type_1 documentation",
+          "size": 8,
+          "fields": [
+            {
+              "name": "dup_field",
+              "doc": "dup_field documentation",
+              "type": {
+                "name": "sint32",
+                "kind": "scalar",
+                "is_pointer": false,
+                "is_const": false,
+                "is_nonnull": false
+              }
+            },
+            {
+              "name": "dup_field",
+              "doc": "dup_field documentation",
+              "type": {
+                "name": "sint32",
+                "kind": "scalar",
+                "is_pointer": false,
+                "is_const": false,
+                "is_nonnull": false
+              }
+            }
+          ],
+          "is_final": false
+        }
+      ]
+    }
+  ]
+}

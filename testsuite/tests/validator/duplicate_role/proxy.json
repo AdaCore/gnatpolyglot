@@ -1,0 +1,81 @@
+{
+  "modules": [
+    {
+      "name": "module_1",
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "func_1",
+          "doc": "func_1 documentation",
+          "symbol": "func_symbol",
+          "parameters": [ ],
+          "return_type": {
+            "name": "void",
+            "kind": "scalar"
+          },
+          "role": {
+            "kind": "alloc",
+            "type": {
+              "kind": "module",
+              "name": "module_1",
+              "suffix": {
+                "kind": "class",
+                "name": "class_type_1"
+              }
+            }
+          },
+          "return_owner": "unknown",
+          "is_visible": false,
+          "is_final": false,
+          "is_static": false
+        },
+        {
+          "kind": "function",
+          "name": "func_2",
+          "doc": "func_2 documentation",
+          "symbol": "func_symbol_2",
+          "parameters": [ ],
+          "return_type": {
+            "name": "void",
+            "kind": "scalar"
+          },
+          "role": {
+            "kind": "alloc",
+            "type": {
+              "kind": "module",
+              "name": "module_1",
+              "suffix": {
+                "kind": "class",
+                "name": "class_type_1"
+              }
+            }
+          },
+          "return_owner": "unknown",
+          "is_visible": false,
+          "is_final": false,
+          "is_static": false
+        },
+        {
+          "kind": "class",
+          "name": "class_type_1",
+          "doc": "class_type_1 documentation",
+          "size": 8,
+          "fields": [
+            {
+              "name": "field_1",
+              "doc": "field_1 documentation",
+              "type": {
+                "name": "sint32",
+                "kind": "scalar",
+                "is_pointer": false,
+                "is_const": false,
+                "is_nonnull": false
+              }
+            }
+          ],
+          "is_final": false
+        }
+      ]
+    }
+  ]
+}

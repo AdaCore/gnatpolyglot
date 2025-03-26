@@ -1,0 +1,5 @@
+Running validator test.
+Errors found in the proxy:
+ * $.modules[1]: an other module exists with the same name and parent
+ * $.modules[3]: an other module exists with the same name and parent
+Done.

@@ -43,4 +43,4 @@ class PythonDriver(DiffTestDriver):
     def run(self) -> None:
         env = dict(os.environ)
         self.add_path(env, "PYTHONPATH", self.support_dir)
-        self.shell([sys.executable] + self.script_and_args)
+        self.shell([sys.executable] + self.script_and_args, env=env)

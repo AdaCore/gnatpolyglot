@@ -1,191 +1,351 @@
 package com.adacore.polyglot.proxy;
 
+import com.adacore.polyglot.proxy.Reference.ReferenceKind;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
 
 /** Inspect a Proxy and verify that values are correct according to the Proxy IR specification. */
-public class ProxyValidator implements ProxyVisitor<Boolean> {
+public class ProxyValidator {
 
-    /** List accumulating diagnostics from errors found in the proxies visited. */
-    private List<String> diagnostics;
+    public static class Validator implements ProxyVisitor<Boolean> {
 
-    /** Stack containing the path of all fields and list items traversed. */
-    private Stack<String> location;
+        /** List accumulating diagnostics from errors found in the proxies visited. */
+        private List<String> diagnostics;
 
-    public ProxyValidator() {
-        this.diagnostics = new ArrayList<>();
-        this.location = new Stack<>();
-    }
+        /** Stack containing the path of all fields and list items traversed. */
+        private Stack<String> location;
 
-    /** Return all diagnostics found. */
-    public List<String> getDiagnostics() {
-        return diagnostics;
-    }
+        /** Set of all symbols found while exploring the proxy. */
+        private Set<String> symbols;
 
-    /** Empty the list of diagnostics. */
-    public void emptyDiagnostics() {
-        diagnostics.clear();
-    }
+        /** Name resolution context. */
+        private ProxyContext context;
 
-    /** Add a new diagnostic with the following format: `{location}: {message}` */
-    private void addDiagnostic(String message) {
-        diagnostics.add(String.join("", location) + ": " + message);
-    }
+        public Validator() {
+            this.diagnostics = new ArrayList<>();
+            this.location = new Stack<>();
+            this.symbols = new HashSet<>();
+            this.context = new ProxyContext();
+        }
 
-    /** Visit an optional {@link ProxyObject} */
-    private void visitOptional(String fieldName, ProxyObject proxyObject) {
-        if (proxyObject != null) {
-            location.add("." + fieldName);
-            proxyObject.visit(this);
+        /** Return all the diagnostics emitted. */
+        public List<String> getDiagnostics() {
+            return this.diagnostics;
+        }
+
+        /** Add a new diagnostic with the following format: `{location}: {message}` */
+        private void addDiagnostic(String lastLocation, String message) {
+            location.add(lastLocation);
+            diagnostics.add(String.join("", location) + ": " + message);
             location.pop();
         }
-    }
 
-    /** Validate that a non ProxyObject value is not null. If it is, add a diagnostic instead. */
-    private <T> void validateNonNull(String fieldName, T value) {
-        if (value == null) {
-            location.add("." + fieldName);
-            addDiagnostic("cannot not be null");
-            location.pop();
+        /** Add a new diagnostic with the following format: `{location}: {message}` */
+        private void addDiagnostic(String message) {
+            diagnostics.add(String.join("", location) + ": " + message);
         }
-    }
 
-    /**
-     * Visit a non optional {@link ProxyObject}. If proxyObject is null, add a diagnostic instead.
-     */
-    private void validateNonNull(String fieldName, ProxyObject proxyObject) {
-        location.add("." + fieldName);
-        if (proxyObject == null) addDiagnostic("cannot not be null");
-        else proxyObject.visit(this);
-        location.pop();
-    }
-
-    /**
-     * Visit a non optional list of {@link ProxyObject}. If proxyObjects or one of its element is
-     * null, add a diagnostic instead.
-     */
-    private <T extends ProxyObject> void validateNonNull(String fieldName, List<T> proxyObjects) {
-        location.add("." + fieldName);
-        if (proxyObjects == null) addDiagnostic("cannot be null");
-        else {
-            for (int i = 0; i < proxyObjects.size(); i++) {
-                location.add("[" + i + "]");
-                ProxyObject proxyObject = proxyObjects.get(i);
-                if (proxyObject == null) addDiagnostic("cannot be null");
-                else proxyObject.visit(this);
+        /** Verifies if ``ref`` is a reference to a valid existing type. */
+        private void validateTypeRef(String fieldName, Reference ref) {
+            if (ref != null) {
+                location.add("." + fieldName);
+                if (ref.getFinalKind() != ReferenceKind.CLASS
+                        && ref.getFinalKind() != ReferenceKind.SCALAR)
+                    addDiagnostic("reference is not a type");
+                else if (context.getTypeDecl(ref) == null) addDiagnostic("type does not exist");
                 location.pop();
             }
         }
-        location.pop();
+
+        /** Visit an optional {@link ProxyObject} */
+        private void visitOptional(String fieldName, ProxyObject proxyObject) {
+            if (proxyObject != null) {
+                location.add("." + fieldName);
+                proxyObject.visit(this);
+                location.pop();
+            }
+        }
+
+        /**
+         * Validate that a non ProxyObject value is not null. If it is, add a diagnostic instead.
+         */
+        private <T> void validateNonNull(String fieldName, T value) {
+            if (value == null) {
+                location.add("." + fieldName);
+                addDiagnostic("cannot not be null");
+                location.pop();
+            }
+        }
+
+        /**
+         * Visit a non optional {@link ProxyObject}. If proxyObject is null, add a diagnostic
+         * instead.
+         */
+        private void validateNonNull(String fieldName, ProxyObject proxyObject) {
+            location.add("." + fieldName);
+            if (proxyObject == null) addDiagnostic("cannot not be null");
+            else proxyObject.visit(this);
+            location.pop();
+        }
+
+        /**
+         * Visit a non optional list of {@link ProxyObject}. If proxyObjects or one of its element
+         * is null, add a diagnostic instead.
+         */
+        private <T extends ProxyObject> void validateNonNull(
+                String fieldName, List<T> proxyObjects) {
+            location.add("." + fieldName);
+            if (proxyObjects == null) addDiagnostic("cannot be null");
+            else {
+                for (int i = 0; i < proxyObjects.size(); i++) {
+                    location.add("[" + i + "]");
+                    ProxyObject proxyObject = proxyObjects.get(i);
+                    if (proxyObject == null) addDiagnostic("cannot be null");
+                    else proxyObject.visit(this);
+                    location.pop();
+                }
+            }
+            location.pop();
+        }
+
+        @Override
+        public Boolean visit(Proxy proxy) {
+            // The root is represented with '$'
+            location.add("$");
+
+            if (proxy.modules != null) {
+                location.add(".modules");
+                for (int i = 0; i < proxy.modules.size(); i++) {
+                    location.add("[" + i + "]");
+                    if (!context.register(proxy.modules.get(i)))
+                        addDiagnostic("an other module exists with the same name and parent");
+                    location.pop();
+                }
+                location.pop();
+            }
+            validateNonNull("modules", proxy.modules);
+
+            location.pop();
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(Module module) {
+            validateNonNull("name", module.name);
+
+            if (module.declarations != null) {
+                for (int i = 0; i < module.declarations.size(); i++) {
+                    if (module.declarations.get(i) instanceof TypeDecl typeDecl) {
+                        location.add("[" + i + "]");
+                        if (!context.register(module, typeDecl))
+                            addDiagnostic("an other type exists with the same name and parent");
+                        location.pop();
+                    }
+                }
+            }
+            validateNonNull("declarations", module.declarations);
+
+            // It is not necessary to check if a parent module exists. Such cases are many
+            // languages.
+            visitOptional("parent", module.parent);
+            // It needs to be a module however
+            if (module.parent != null && module.parent.getFinalKind() != ReferenceKind.MODULE) {
+                addDiagnostic(".parent", "parent is not a module");
+            }
+
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(FunctionDecl functionDecl) {
+            validateNonNull("name", functionDecl.name);
+            validateNonNull("doc", functionDecl.doc);
+            visitOptional("role", functionDecl.role);
+            if (functionDecl.role != null) {
+                Role role = functionDecl.role;
+                location.add(".role");
+                TypeDecl decl = context.getTypeDecl(role.type);
+                if (decl instanceof ClassDecl classDecl) {
+                    if (role.field != null) {
+                        if (!classDecl.fields.stream().anyMatch(f -> f.name.equals(role.field)))
+                            addDiagnostic(".field", "the field does not exist");
+                    }
+                    if (!context.register(functionDecl)) {
+                        addDiagnostic(".kind", "a function already has a similar role");
+                    }
+                } else {
+                    if (decl != null) addDiagnostic(".type", "type is not a class");
+                    else addDiagnostic(".type", "type does not exist");
+                }
+                location.pop();
+            }
+
+            validateNonNull("symbol", functionDecl.symbol);
+            if (functionDecl.symbol != null && !symbols.add(functionDecl.symbol)) {
+                addDiagnostic(".symbol", "duplicate symbol");
+            }
+
+            validateNonNull("parameters", functionDecl.parameters);
+            validateNonNull("return_type", functionDecl.returnType);
+            validateTypeRef("return_type", functionDecl.returnType);
+            validateNonNull("return_owner", functionDecl.returnOwner);
+
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        /** Return whether the given class is sane (i.e. has no circular inheritance.) */
+        public Boolean isSaneClass(ClassDecl classDecl) {
+            HashSet<ClassDecl> visited = new HashSet<>();
+            boolean added = true;
+            while (added) {
+                added = visited.add(classDecl);
+                // Get the parent decl. If the parent does not exist, or is not a class, return true
+                // in order to ignore this error as it should be detected in an other check.
+                TypeDecl parentDecl = context.getTypeDecl(classDecl.parent);
+                if (parentDecl instanceof ClassDecl parentClass) classDecl = parentClass;
+                else break;
+            }
+            return added;
+        }
+
+        @Override
+        public Boolean visit(ClassDecl classDecl) {
+            validateNonNull("name", classDecl.name);
+            validateNonNull("doc", classDecl.doc);
+            visitOptional("parent", classDecl.parent);
+            if (classDecl.parent != null) {
+                validateTypeRef("parent", classDecl.parent);
+                if (classDecl.parent.getFinalKind() != ReferenceKind.CLASS)
+                    addDiagnostic(".parent", "must inherit from a class");
+                else if (!isSaneClass(classDecl))
+                    addDiagnostic(".parent", "class inheritance is not sane");
+            }
+
+            validateNonNull("fields", classDecl.fields);
+            if (classDecl.fields != null) {
+                location.add(".fields");
+                HashSet<Name> fieldNames = new HashSet<>(classDecl.fields.size());
+                for (int i = 0; i < classDecl.fields.size(); i++) {
+                    location.add("[" + i + "]");
+                    if (!fieldNames.add(classDecl.fields.get(i).name))
+                        addDiagnostic("duplicate field");
+                    location.pop();
+                }
+                location.pop();
+            }
+
+            // Negative sized class types cannot exist
+            if (classDecl.size < 0) addDiagnostic(".size", "cannot be negative");
+
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(EnumerationDecl enumerationDecl) {
+            validateNonNull("name", enumerationDecl.name);
+            validateNonNull("doc", enumerationDecl.doc);
+
+            validateNonNull("items", enumerationDecl.items);
+            if (enumerationDecl.items != null) {
+                location.add(".items");
+                HashSet<Integer> values = new HashSet<>(0);
+                HashSet<Name> names = new HashSet<>(0);
+                for (int i = 0; i < enumerationDecl.items.size(); i++) {
+                    location.add("[" + i + "]");
+                    if (!values.add(enumerationDecl.items.get(i).value))
+                        addDiagnostic("duplicate item value in enumeration");
+                    if (!names.add(enumerationDecl.items.get(i).name))
+                        addDiagnostic("duplicate item name in enumeration");
+                    location.pop();
+                }
+                location.pop();
+            }
+
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(Role role) {
+            validateNonNull("type", role.type);
+            validateTypeRef("type", role.type);
+
+            validateNonNull("kind", role.kind);
+            // The ``field`` field should only be non null when ``kind`` is ``GETTER`` or ``SETTER``
+            location.add(".field");
+            if (role.field != null && role.kind != RoleKind.GETTER && role.kind != RoleKind.SETTER)
+                addDiagnostic("must be null when role is neither `getter` nor `setter`");
+            location.pop();
+
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(Field field) {
+            validateNonNull("name", field.name);
+            validateNonNull("doc", field.doc);
+
+            validateNonNull("type", field.type);
+            validateTypeRef("type", field.type);
+
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(EnumItem enumItem) {
+            validateNonNull("name", enumItem.name);
+            validateNonNull("doc", enumItem.doc);
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(Reference reference) {
+            validateNonNull("name", reference.name);
+            validateNonNull("kind", reference.kind);
+            visitOptional("suffix", reference.suffix);
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(Transfer transfer) {
+            validateNonNull("required_owner", transfer.required_owner);
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(Parameter parameter) {
+            validateNonNull("name", parameter.name);
+            validateNonNull("type", parameter.type);
+            validateTypeRef("type", parameter.type);
+            validateNonNull("transfer", parameter.transfer);
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
     }
 
-    @Override
-    public Boolean visit(Proxy proxy) {
-        // The root is represented with '$'
-        location.add("$");
+    private ProxyValidator() {}
 
-        // ``module`` cannot be null.
-        validateNonNull("module", proxy.modules);
-
-        location.pop();
-        return Boolean.valueOf(diagnostics.isEmpty());
+    /** Run the validator on a proxy and return the list of errors found. */
+    public static List<String> validate(Proxy proxy) {
+        Validator validator = new Validator();
+        validator.visit(proxy);
+        return validator.getDiagnostics();
     }
 
-    @Override
-    public Boolean visit(Module module) {
-        validateNonNull("name", module.name);
-        validateNonNull("declarations", module.declarations);
-        visitOptional("parent", module.parent);
-
-        return Boolean.valueOf(diagnostics.isEmpty());
-    }
-
-    @Override
-    public Boolean visit(FunctionDecl functionDecl) {
-        validateNonNull("name", functionDecl.name);
-        validateNonNull("doc", functionDecl.doc);
-        visitOptional("role", functionDecl.role);
-        validateNonNull("symbol", functionDecl.symbol);
-        validateNonNull("parameters", functionDecl.parameters);
-        validateNonNull("return_type", functionDecl.returnType);
-        validateNonNull("return_owner", functionDecl.returnOwner);
-        return Boolean.valueOf(diagnostics.isEmpty());
-    }
-
-    @Override
-    public Boolean visit(ClassDecl classDecl) {
-        validateNonNull("name", classDecl.name);
-        validateNonNull("doc", classDecl.doc);
-        visitOptional("parent", classDecl.parent);
-        validateNonNull("fields", classDecl.fields);
-
-        // Negative sized class types cannot exist
-        location.add(".size");
-        if (classDecl.size < 0) addDiagnostic("cannot be negative");
-        location.pop();
-
-        return Boolean.valueOf(diagnostics.isEmpty());
-    }
-
-    @Override
-    public Boolean visit(EnumerationDecl enumerationDecl) {
-        validateNonNull("name", enumerationDecl.name);
-        validateNonNull("doc", enumerationDecl.doc);
-        validateNonNull("items", enumerationDecl.items);
-        return Boolean.valueOf(diagnostics.isEmpty());
-    }
-
-    @Override
-    public Boolean visit(Role role) {
-        validateNonNull("type", role.type);
-        validateNonNull("kind", role.kind);
-        // The ``field`` field should only be non null when ``kind`` is ``GETTER`` or ``SETTER``
-        location.add(".field");
-        if (role.field != null && role.kind != RoleKind.GETTER && role.kind != RoleKind.SETTER)
-            addDiagnostic("must be null when role is neither `GETTER` nor `SETTER`");
-        location.pop();
-        return Boolean.valueOf(diagnostics.isEmpty());
-    }
-
-    @Override
-    public Boolean visit(Field field) {
-        validateNonNull("name", field.name);
-        validateNonNull("doc", field.doc);
-        validateNonNull("type", field.type);
-        return Boolean.valueOf(diagnostics.isEmpty());
-    }
-
-    @Override
-    public Boolean visit(EnumItem enumItem) {
-        validateNonNull("name", enumItem.name);
-        validateNonNull("doc", enumItem.doc);
-        return Boolean.valueOf(diagnostics.isEmpty());
-    }
-
-    @Override
-    public Boolean visit(Reference reference) {
-        validateNonNull("name", reference.name);
-        validateNonNull("kind", reference.kind);
-        visitOptional("suffix", reference.suffix);
-        return Boolean.valueOf(diagnostics.isEmpty());
-    }
-
-    @Override
-    public Boolean visit(Transfer transfer) {
-        validateNonNull("required_owner", transfer.required_owner);
-        return Boolean.valueOf(diagnostics.isEmpty());
-    }
-
-    @Override
-    public Boolean visit(Parameter parameter) {
-        validateNonNull("name", parameter.name);
-        validateNonNull("kind", parameter.type);
-        validateNonNull("transfer", parameter.transfer);
-        return Boolean.valueOf(diagnostics.isEmpty());
+    /**
+     * Run the validator on a proxy and return a {@link ProxyContext}. If any error was found,
+     * throws a {@link ProxyException}.
+     */
+    public static ProxyContext validateAndGetContext(Proxy proxy) throws ProxyException {
+        Validator validator = new Validator();
+        validator.visit(proxy);
+        if (!validator.getDiagnostics().isEmpty())
+            throw new ProxyException(validator.getDiagnostics());
+        return validator.context;
     }
 
     public static void main(String[] args) {

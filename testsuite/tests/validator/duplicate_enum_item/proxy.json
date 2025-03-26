@@ -1,0 +1,36 @@
+{
+  "modules": [
+    {
+      "name": "module_1",
+      "declarations": [
+        {
+          "kind": "enum",
+          "name": "enum_type",
+          "doc": "enum_type documentation",
+          "items": [
+            {
+              "name": "dup_name",
+              "doc": "item_1 documentation",
+              "value": 1
+            },
+            {
+              "name": "dup_name",
+              "doc": "item_1 documentation",
+              "value": 2
+            },
+            {
+              "name": "dup_value_1",
+              "doc": "item_1 documentation",
+              "value": 3
+            },
+            {
+              "name": "dup_value_2",
+              "doc": "item_1 documentation",
+              "value": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

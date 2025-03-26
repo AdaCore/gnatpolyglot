@@ -1,0 +1,36 @@
+{
+  "modules": [
+    {
+      "name": "dup_root",
+      "declarations": [ ]
+    },
+    {
+      "name": "dup_root",
+      "declarations": [ ]
+    },
+    {
+      "name": "dup_parent",
+      "declarations": [ ],
+      "parent": {
+        "kind": "module",
+        "name": "parent_1",
+        "suffix": {
+          "kind": "module",
+          "name": "parent_2"
+        }
+      }
+    },
+    {
+      "name": "dup_parent",
+      "declarations": [ ],
+      "parent": {
+        "kind": "module",
+        "name": "parent_1",
+        "suffix": {
+          "kind": "module",
+          "name": "parent_2"
+        }
+      }
+    }
+  ]
+}
