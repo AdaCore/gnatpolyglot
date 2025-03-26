@@ -121,3 +121,13 @@ def add_path(env: dict[str, str], env_var: str, path: str):
     Adds the path to the ``env_var`` path variable in ``env``
     """
     env[env_var] = "{}{}{}".format(path, os.path.pathsep, env.get(env_var, ""))
+
+def valgrind_cmd(argv: list[str]):
+    return [
+        "valgrind",
+        "-q",
+        "--leak-check=full",
+        "--track-origins=yes",
+        "--error-exitcode=2",
+        *argv
+    ]

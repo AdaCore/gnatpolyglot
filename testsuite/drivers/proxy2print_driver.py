@@ -11,7 +11,10 @@ class Proxy2Print(PythonDriver):
 
     @property
     def script_and_args(self) -> list[str]:
-        return [os.path.join(self.support_dir, "polyglot_test_printer.py")]
+        res = [os.path.join(self.support_dir, "polyglot_test_printer.py")]
+        if self.env.options.valgrind:
+            res.append("--enable-valgrind")
+        return res
 
     def set_up(self) -> None:
         super().set_up()

@@ -5,7 +5,10 @@ import yaml
 
 from e3.fs import mkdir
 
-from utils import add_path, compile_lib, run_scanner, run_printer, compile_main, run
+from utils import (
+    add_path, compile_lib, run_scanner, run_printer, compile_main, run,
+    valgrind_cmd
+)
 
 try:
     with open(os.path.join("input_proxy", "test.yaml")) as f:
@@ -53,7 +56,10 @@ print()
 env = dict(os.environ)
 add_path(env, "LD_LIBRARY_PATH", f"{os.path.join(input_proxy_location, 'lib')}")
 add_path(env, "LD_LIBRARY_PATH", f"{os.path.join(output_proxy_location)}")
-run([res], env)
+main_argv = [res]
+if "--enable-valgrind" in sys.argv:
+    main_argv = valgrind_cmd(main_argv)
+run(main_argv, env)
 
 print()
 print("Done.")
