@@ -2,7 +2,9 @@ package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
+import com.adacore.polyglot.proxy.Declaration;
 import com.adacore.polyglot.proxy.Module;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -37,11 +39,16 @@ public class Package implements AdaProxyObject {
                         .flatMap(
                                 d -> {
                                     if (d instanceof Record rec) {
-                                        return Stream.of(
-                                                rec.toPolyglotProxy(),
-                                                rec.getFreeFunction(),
-                                                rec.getAllocFunction(),
-                                                rec.getCloneFunction());
+
+                                        List<Declaration> decls =
+                                                new ArrayList<>(
+                                                        List.of(
+                                                                rec.toPolyglotProxy(),
+                                                                rec.getAllocFunction(),
+                                                                rec.getFreeFunction(),
+                                                                rec.getCloneFunction()));
+                                        decls.addAll(rec.getGettersAndSetters());
+                                        return decls.stream();
                                     } else return Stream.of(d.toPolyglotProxy());
                                 })
                         .toList());

@@ -18,6 +18,11 @@ public class Component implements AdaProxyObject {
         this.name = name;
     }
 
+    /** Return the type of the component. */
+    public Libadalang.BaseTypeDecl getType() {
+        return this.origin.pFormalType(Libadalang.AdaNode.NONE);
+    }
+
     @Override
     public <T> T accept(AdaProxyVisitor<T> visitor) {
         return visitor.visit(this);

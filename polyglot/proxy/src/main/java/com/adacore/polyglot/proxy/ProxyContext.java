@@ -65,7 +65,7 @@ public class ProxyContext {
         } else if (func.role.kind == RoleKind.FREE) {
             if (entry.freeFunction != null) return false;
             entry.freeFunction = func;
-        } else if (func.role.kind == RoleKind.METHOD) {
+        } else if (func.role.kind.compareTo(RoleKind.SETTER) <= 0) {
             entry.memberFunctions.add(func);
         }
         return true;

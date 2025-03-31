@@ -2,6 +2,7 @@ package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration;
+import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
@@ -169,7 +170,33 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         declarations.add(
                 new Record(
                         parentDecl,
-                        Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText())));
+                        Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
+                        List.of()));
+
+        return null;
+    }
+
+    public Void visit(Libadalang.RecordTypeDef node) {
+        Libadalang.ConcreteTypeDecl parentDecl =
+                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
+
+        // Get the components of the record.
+        ArrayList<Component> components = new ArrayList<>();
+        for (var c : node.fRecordDef().fComponents().fComponents().children()) {
+            Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
+            for (var name : componentDecl.fIds().children()) {
+                components.add(
+                        new Component(
+                                componentDecl, Name.fromPascalWithUnderscore(name.getText())));
+            }
+        }
+
+        // Add a new Record containing the ada record type.
+        declarations.add(
+                new Record(
+                        parentDecl,
+                        Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
+                        components));
 
         return null;
     }

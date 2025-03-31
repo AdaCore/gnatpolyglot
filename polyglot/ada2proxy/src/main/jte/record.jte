@@ -4,8 +4,11 @@ Template file to generate bindings for record types.
 --%>
 @import com.adacore.libadalang.Libadalang;
 @import com.adacore.polyglot.ada2proxy.AdaAPI
+@import com.adacore.polyglot.ada2proxy.proxy.Component
 @import com.adacore.polyglot.ada2proxy.proxy.Record
 @import com.adacore.polyglot.proxy.FunctionDecl
+@import com.adacore.polyglot.proxy.Role
+@import com.adacore.polyglot.proxy.Role.RoleKind
 @param Record rec
 @param Boolean isBody
 
@@ -18,6 +21,7 @@ Template file to generate bindings for record types.
 }
 
 @if(!isBody)
+   <%-- Declare the allocation/freeing functions --%>
    procedure ${freeFunc.getLastName().toPascalWithUnderscore()} (Self: System.Address);
    pragma Export (C, ${freeFunc.getLastName().toPascalWithUnderscore()}, "${freeFunc.symbol}");
 
@@ -27,9 +31,26 @@ Template file to generate bindings for record types.
    function ${cloneFunc.getLastName().toPascalWithUnderscore()}
      (Self: System.Address) return System.Address;
    pragma Export (C, ${cloneFunc.getLastName().toPascalWithUnderscore()}, "${cloneFunc.symbol}");
+
+   <%-- Declare the getter and setter functions --%>
+   @for(var f : rec.getGettersAndSetters())
+      !{Component component = rec.getComponent(f.role.field);}
+      @if(f.role.kind == RoleKind.GETTER)
+         function ${f.getLastName().toPascalWithUnderscore()}
+           (Self: System.Address) return ${AdaAPI.cInterfaceTypename(component.getType())};
+      @else
+         procedure ${f.getLastName().toPascalWithUnderscore()}
+           (Self: System.Address;
+            ${component.name.toPascalWithUnderscore()}_Arg:
+               ${AdaAPI.cInterfaceTypename(component.getType())});
+      @endif
+      pragma Export (C, ${f.getLastName().toPascalWithUnderscore()}, "${f.symbol}");
+    @endfor
 @else
+   <%-- Define an Access type for the record --%>
    type ${recordAccessName} is access all ${recordName};
 
+   <%-- Define the allocation/freeing functions --%>
    procedure ${freeFunc.getLastName().toPascalWithUnderscore()} (Self: System.Address) is
       function Convert_Self is new Ada.Unchecked_Conversion
         (System.Address, ${recordAccessName});
@@ -54,4 +75,37 @@ Template file to generate bindings for record types.
    begin
       return Converter.To_Address (new ${recordName}'(Tmp));
    end ${cloneFunc.getLastName().toPascalWithUnderscore()};
+
+   <%-- Define the getter and setter functions --%>
+   @for(var f : rec.getGettersAndSetters())
+      !{
+         Component component = rec.getComponent(f.role.field);
+         Libadalang.BaseTypeDecl componentType = component.getType();
+         String componentTypename = componentType.pFullyQualifiedName();
+         String componentAccess = "Self_Value." + component.name.toPascalWithUnderscore();
+      }
+      @if(f.role.kind == RoleKind.GETTER)
+         function ${f.getLastName().toPascalWithUnderscore()}
+           (Self: System.Address) return ${AdaAPI.cInterfaceTypename(componentType)}
+         is
+            Self_Value : ${recordName} with Address => Self;
+            pragma Import(Ada, Self_Value);
+            ${AdaAPI.makeReturnTypeConverter(componentType)}
+         begin
+            return ${AdaAPI.makeReturnConversion(componentType, componentAccess)};
+         end ${f.getLastName().toPascalWithUnderscore()};
+      @else
+         procedure ${f.getLastName().toPascalWithUnderscore()}
+           (Self: System.Address;
+            ${component.name.toPascalWithUnderscore()}_Arg:
+               ${AdaAPI.cInterfaceTypename(component.getType())})
+         is
+            Self_Value : ${recordName} with Address => Self;
+            pragma Import(Ada, Self_Value);
+            ${AdaAPI.makeParamConversion(component)};
+         begin
+            ${componentAccess} := ${component.name.toPascalWithUnderscore()}_Value;
+         end ${f.getLastName().toPascalWithUnderscore()};
+      @endif
+    @endfor
 @endif
