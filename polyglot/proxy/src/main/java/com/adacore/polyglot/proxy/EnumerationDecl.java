@@ -12,7 +12,7 @@ public class EnumerationDecl extends TypeDecl {
 
     @JsonCreator
     public EnumerationDecl(
-            @JsonProperty(value = "name", required = true) Name name,
+            @JsonProperty(value = "name", required = true) FullyQualifiedName name,
             @JsonProperty(value = "doc", required = true) String doc,
             @JsonProperty(value = "items", required = true) List<EnumItem> items) {
         super(name, doc);

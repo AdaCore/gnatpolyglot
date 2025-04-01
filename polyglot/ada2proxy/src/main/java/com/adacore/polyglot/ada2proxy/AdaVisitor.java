@@ -1,15 +1,15 @@
 package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
-import com.adacore.libadalang.Libadalang.AdaNode;
-import com.adacore.libadalang.Libadalang.SubpSpec;
 import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
+import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Role;
+import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.Transfer;
 import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     }
 
     @Override
-    protected Function<AdaNode, Void> createDefaultBehavior() {
+    protected Function<Libadalang.AdaNode, Void> createDefaultBehavior() {
         return (node) -> {
             Stream.of(node.children())
                     .filter(Predicate.not(Libadalang.AdaNode::isNone))
@@ -82,23 +82,39 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.SubpDecl node) {
-        SubpSpec spec = node.fSubpSpec();
+        Libadalang.SubpSpec spec = node.fSubpSpec();
 
         // Get the C symbol of the function.
         String symbol = symbolify(node.pFullyQualifiedName());
 
-        // TODO: Handle subprograms that can be attached to a type.
+        // If the function is callable with the dot notation, it is a method.
+        // TODO: When eng/libadalang/libadalang#1547 is resoled, use the new property.
         Role role = null;
+        Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
+        if (!primitiveType.isNone() && spec.pParams().length != 0) {
+            if (spec.pParams()[0]
+                    .pFormalType(Libadalang.AdaNode.NONE)
+                    .pMatchingType(primitiveType, Libadalang.AdaNode.NONE))
+                role =
+                        new Role(
+                                RoleKind.METHOD,
+                                AdaAPI.makeReferenceTo(primitiveType, false),
+                                null);
+        }
 
         // Get the list of parameters.
         List<SubpParam> parameters = new ArrayList<>();
         if (!spec.fSubpParams().isNone()) {
             for (var child : spec.fSubpParams().fParams().children()) {
                 Libadalang.ParamSpec paramSpec = (Libadalang.ParamSpec) child;
-                // TODO: Currently, only integer types are handled: when more types are supported,
-                // we will need to update the transfer specs.
 
+                // Record value types are given through an address, but later **copied** into the
+                // arguments, so the ownership does not matter.
+                // TODO Access types: Ownership informations will be necessary when access types are
+                // handled.
                 Transfer transfer = new Transfer(RequiredOwner.ANY);
+
+                // For each parameter declared in the spec, add a parameter.
                 for (var p : paramSpec.fIds().children())
                     parameters.add(
                             new SubpParam(
@@ -108,6 +124,32 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             }
         }
 
+        // Get the most visible part of the type of the parameter. The TypeExpr may refer to
+        // an incomplete type:
+        // .. code::
+        //
+        //    type T is private;
+        //
+        //    function Foo return T; -- ``T`` refers to the TypeDecl above, but it holds
+        //                           -- close to no information.
+        //
+        //  private
+        //     type T is record
+        //        ...
+        //     end record;
+        //
+        Libadalang.BaseTypeDecl returnType = spec.pReturnType(Libadalang.AdaNode.NONE);
+        if (!returnType.isNone())
+            returnType =
+                    (Libadalang.BaseTypeDecl)
+                            returnType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+
+        // Record value type are allocated on the heap before being returned. If a function returns
+        // one, it is copied to a heap address before being returned to the user.
+        Owner returnOwner = Owner.UNKNOWN;
+        if (!returnType.isNone() && returnType.pIsRecordType(Libadalang.AdaNode.NONE))
+            returnOwner = Owner.LIBRARY;
+
         Subprogram subProg =
                 new Subprogram(
                         node,
@@ -115,8 +157,20 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                         parameters,
                         symbol,
                         role,
-                        Owner.UNKNOWN);
+                        returnOwner);
         declarations.add(subProg);
+        return null;
+    }
+
+    public Void visit(Libadalang.PrivateTypeDef node) {
+        Libadalang.ConcreteTypeDecl parentDecl =
+                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
+        // Add a new record containing the private type.
+        declarations.add(
+                new Record(
+                        parentDecl,
+                        Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText())));
+
         return null;
     }
 }

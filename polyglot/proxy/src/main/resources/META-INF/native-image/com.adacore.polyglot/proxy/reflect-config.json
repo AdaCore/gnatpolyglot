@@ -83,7 +83,7 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","com.adacore.polyglot.proxy.Reference$ReferenceKind","com.adacore.polyglot.proxy.Reference","boolean","boolean","boolean"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","com.adacore.polyglot.proxy.Reference$ReferenceKind","com.adacore.polyglot.proxy.Reference","boolean","boolean","boolean","boolean"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.Reference$ReferenceKind",

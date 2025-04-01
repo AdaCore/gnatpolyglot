@@ -14,14 +14,18 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 public abstract class Declaration implements ProxyObject {
     /** Name of the declaration. */
     @JsonProperty("name")
-    public final Name name;
+    public final FullyQualifiedName name;
 
     /** Documentation of the declaration. */
     @JsonProperty("doc")
     public final String doc;
 
-    public Declaration(Name name, String doc) {
+    public Declaration(FullyQualifiedName name, String doc) {
         this.name = name;
         this.doc = doc;
+    }
+
+    public Name getLastName() {
+        return name.getLastName();
     }
 }

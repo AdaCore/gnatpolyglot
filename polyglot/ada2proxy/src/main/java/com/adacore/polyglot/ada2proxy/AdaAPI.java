@@ -3,56 +3,37 @@ package com.adacore.polyglot.ada2proxy;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
+import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
+import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Reference;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /** Utility class that provides methods to help generate Ada code from a Proxy. */
 public class AdaAPI {
 
-    /**
-     * Build the parent reference to ``decl``, with ``suffix`` as the last suffix of the chain of
-     * references.
-     */
-    private static Reference makeParentReferences(Libadalang.BasicDecl decl, Reference suffix) {
-        Libadalang.Symbol[] names = decl.pFullyQualifiedNameArray(false);
-        Reference res = suffix;
-        for (int i = names.length - 2; i >= 0; i--) {
-            res =
-                    new Reference(
-                            Name.fromLower(names[i].text),
-                            Reference.ReferenceKind.MODULE,
-                            res,
-                            false,
-                            false,
-                            false);
-        }
-        return res;
+    /** Create a reference to decl, or its parent if ``onlyParent`` is true. */
+    public static FullyQualifiedName makeProxyFullyQualifiedName(
+            Libadalang.BasicDecl decl, Boolean onlyParent) {
+        Libadalang.Symbol[] symbols = decl.pFullyQualifiedNameArray(false);
+        if (onlyParent && symbols.length == 1) return null;
+        return new FullyQualifiedName(
+                Stream.of(onlyParent ? Arrays.copyOf(symbols, symbols.length - 1) : symbols)
+                        .map(s -> s.text)
+                        .map(Name::fromLower)
+                        .toList());
     }
 
     /** Create a reference to decl, or its parent if ``onlyParent`` is true. */
     public static Reference makeReferenceTo(Libadalang.BasicDecl decl, Boolean onlyParent) {
-        Reference res = null;
-        if (!onlyParent) {
-            Reference.ReferenceKind kind = null;
-            if (decl instanceof Libadalang.BaseTypeDecl) kind = Reference.ReferenceKind.CLASS;
-            else if (decl instanceof Libadalang.PackageDecl) kind = Reference.ReferenceKind.MODULE;
-            else
-                throw new UnsupportedOperationException(
-                        "Creating reference to an unsupported declaration type");
-            res =
-                    new Reference(
-                            Name.fromPascalWithUnderscore(decl.pDefiningName().getText()),
-                            kind,
-                            res,
-                            false,
-                            false,
-                            false);
-        }
-        return makeParentReferences(decl, res);
+        if (onlyParent && decl.pFullyQualifiedNameArray(false).length == 1) return null;
+        return new Reference(
+                makeProxyFullyQualifiedName(decl, onlyParent), false, false, false, false);
     }
 
     /** Return the native type corresponding to bTypeDecl, or null if the type is not native. */
@@ -114,7 +95,7 @@ public class AdaAPI {
                 .map(
                         (p -> {
                             StringBuilder argBuilder = new StringBuilder();
-                            argBuilder.append(p.name.toPascalWithUnderscore());
+                            argBuilder.append(p.name.toPascalWithUnderscore() + "_Arg");
                             argBuilder.append(": ");
                             argBuilder.append(cInterfaceTypename(p.getFormalType()));
                             return argBuilder.toString();
@@ -122,27 +103,114 @@ public class AdaAPI {
                 .collect(Collectors.joining("; "));
     }
 
-    /** Create a string to call a function from the proxy. */
-    public static String call(Subprogram funDecl) {
+    /** Create a string that refers to the type pointed by typeExpr as an access type. */
+    public static String asAccess(Libadalang.TypeExpr typeExpr) {
+        Libadalang.BaseTypeDecl typeDecl = typeExpr.pDesignatedTypeDecl();
+        if (typeDecl.pIsAccessType(Libadalang.AdaNode.NONE)) return typeExpr.getText();
+        else return typeExpr.getText() + "_Access";
+    }
+
+    /** Create an entity that is the conversion of the C interface into the actual Ada type. */
+    public static String makeConversion(SubpParam param) {
+        Libadalang.BaseTypeDecl retType =
+                (Libadalang.BaseTypeDecl)
+                        param.getType().pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+
         StringBuilder builder = new StringBuilder();
-        builder.append(funDecl.name.toPascalWithUnderscore());
-        if (!funDecl.parameters.isEmpty()) {
-            builder.append(" (");
-            builder.append(
-                    funDecl.parameters.stream()
-                            .map(
-                                    p -> {
-                                        // Cast C Interface types to Ada types.
-                                        StringBuilder argBuilder = new StringBuilder();
-                                        argBuilder.append(p.getTypeExpr().getText());
-                                        argBuilder.append(" (");
-                                        argBuilder.append(p.name.toPascalWithUnderscore());
-                                        argBuilder.append(")");
-                                        return argBuilder.toString();
-                                    })
-                            .collect(Collectors.joining(", ")));
-            builder.append(")");
+        builder.append(param.name.toPascalWithUnderscore())
+                .append("_Value : ")
+                .append(param.getType().pFullyQualifiedName());
+        if (retType.pIsRecordType(Libadalang.AdaNode.NONE)) {
+            // If the type is a record, generated the following:
+            // .. code::
+            //
+            //     ${Arg}_Value : ${Type} with Address => ${Arg}_Arg;
+            //     pragma Import (Ada, ${Arg}_Value);
+            //
+            // The pragma is used to avoid calling the default initializer of the subparam's type,
+            // which would overwrite the argument's data.
+            builder.append(" with Address => ")
+                    .append(param.name.toPascalWithUnderscore())
+                    .append("_Arg; pragma Import (Ada, ")
+                    .append(param.name.toPascalWithUnderscore())
+                    .append("_Value)");
+        } else {
+            // Otherwise, the type should convertible with a simple cast:
+            // .. code::
+            //
+            //     ${Arg}_Value : ${Type} := ${Type} (${Arg}_Arg);
+            builder.append(" := ")
+                    .append(param.getType().pFullyQualifiedName())
+                    .append(" (")
+                    .append(param.name.toPascalWithUnderscore())
+                    .append("_Arg)");
         }
+        return builder.toString();
+    }
+
+    /** Create a string to call a function from the proxy. */
+    public static String call(Subprogram subp) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(subp.name.toPascalWithUnderscore());
+        if (!subp.parameters.isEmpty()) {
+            builder.append(" (")
+                    .append(
+                            subp.parameters.stream()
+                                    .map(p -> p.name.toPascalWithUnderscore() + "_Value")
+                                    .collect(Collectors.joining(", ")))
+                    .append(")");
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Create a string of the value returned by functions, with the necessary cast to the C
+     * interface type.
+     */
+    public static String makeReturn(Subprogram subp) {
+        StringBuilder builder = new StringBuilder();
+        Libadalang.BaseTypeDecl retType =
+                (Libadalang.BaseTypeDecl)
+                        subp.getReturnType().pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+
+        if (retType.pIsScalarType(Libadalang.AdaNode.NONE)) {
+            // If the value is a scalar, simply cast to the C interface type.
+            builder.append(cInterfaceTypename(retType)).append(" (");
+        } else {
+            // If the type returned is an address (i.e. not a scalar), convert the returned value to
+            // ``System.Address`` using the entity created by ``makeReturnTypeConverter``.
+            //
+            // TODO: For the moment, it considers that only value types are returned, and creates a
+            // dynamically allocated copy of the value. When access types are supported, do not copy
+            // the value to the heap.
+            builder.append("Return_Type_Converter.To_Address(new ")
+                    .append(retType.pFullyQualifiedName())
+                    .append("'(");
+        }
+        // Build the call to the binded subprogram.
+        builder.append(call(subp)).append(")");
+        if (retType.pIsRecordType(Libadalang.AdaNode.NONE)) builder.append(")");
+        return builder.toString();
+    }
+
+    /**
+     * Create a string to declare an entity to convert the value returned by the binded function if
+     * necessary.
+     */
+    public static String makeReturnTypeConverter(Subprogram subp) {
+        StringBuilder builder = new StringBuilder();
+        Libadalang.BaseTypeDecl retType =
+                (Libadalang.BaseTypeDecl)
+                        subp.getReturnType().pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+
+        if (retType.pIsRecordType(Libadalang.AdaNode.NONE)) {
+            builder.append(
+                            "package Return_Type_Converter is new"
+                                    + " System.Address_To_Access_Conversions(")
+                    .append(retType.pFullyQualifiedName())
+                    .append(");");
+        }
+
         return builder.toString();
     }
 
@@ -195,6 +263,7 @@ public class AdaAPI {
         bTypeDecl = (Libadalang.TypeDecl) bTypeDecl.pRootType(Libadalang.AdaNode.NONE);
         NativeType nativeType = checkNativeType(bTypeDecl);
         if (nativeType != null) return cInterfaceNativeTypename(nativeType);
+        if (bTypeDecl.pIsPrivate()) return "System.Address";
 
         throw new UnsupportedOperationException("Type not supported");
     }

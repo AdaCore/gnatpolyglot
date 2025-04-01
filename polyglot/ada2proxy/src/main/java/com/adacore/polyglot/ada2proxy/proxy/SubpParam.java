@@ -1,9 +1,11 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Parameter;
+import com.adacore.polyglot.proxy.Reference;
 import com.adacore.polyglot.proxy.Transfer;
 
 public class SubpParam implements AdaProxyObject {
@@ -42,6 +44,12 @@ public class SubpParam implements AdaProxyObject {
 
     @Override
     public Parameter toPolyglotProxy() {
-        return new Parameter(name, AdaAPI.makeReferenceTo(origin.fTypeExpr()), transfer);
+        Reference typeRef = AdaAPI.makeReferenceTo(origin.fTypeExpr());
+        NativeType type = AdaAPI.checkNativeType(origin.pFormalType(Libadalang.AdaNode.NONE));
+        if (origin.fMode() instanceof Libadalang.ModeIn
+                || origin.fMode() instanceof Libadalang.ModeDefault)
+            typeRef = typeRef.withIsConst(true);
+        if (type == null) typeRef = typeRef.withIsReference(true);
+        return new Parameter(name, typeRef, transfer);
     }
 }

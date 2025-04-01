@@ -1,36 +1,20 @@
 {
   "modules": [
     {
-      "name": "dup_root",
-      "declarations": [ ]
+      "name": { "names": ["dup_root"] },
+      "declarations": []
     },
     {
-      "name": "dup_root",
-      "declarations": [ ]
+      "name": { "names": ["dup_root"] },
+      "declarations": []
     },
     {
-      "name": "dup_parent",
-      "declarations": [ ],
-      "parent": {
-        "kind": "module",
-        "name": "parent_1",
-        "suffix": {
-          "kind": "module",
-          "name": "parent_2"
-        }
-      }
+      "name": { "names": ["dup_root", "dup_parent"] },
+      "declarations": []
     },
     {
-      "name": "dup_parent",
-      "declarations": [ ],
-      "parent": {
-        "kind": "module",
-        "name": "parent_1",
-        "suffix": {
-          "kind": "module",
-          "name": "parent_2"
-        }
-      }
+      "name": { "names": ["dup_root", "dup_parent"] },
+      "declarations": []
     }
   ]
 }

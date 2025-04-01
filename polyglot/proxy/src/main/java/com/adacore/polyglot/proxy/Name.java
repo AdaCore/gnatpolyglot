@@ -160,6 +160,13 @@ public class Name {
                         });
     }
 
+    /**
+     * Return a new name that is the concatenation of this and rhs with an underscore in between.
+     */
+    public Name concat(Name rhs) {
+        return Name.fromLower(this.name + "_" + rhs.name);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Name other) return this.name.equals(other.name);

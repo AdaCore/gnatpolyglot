@@ -4,30 +4,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Reference to a type or module with a possible suffix. */
+/** Reference to a type or module. */
 public class Reference implements ProxyObject {
-    /** Represent the different kind of element that can be referenced. */
-    public enum ReferenceKind {
-        @JsonProperty("module")
-        MODULE,
-        @JsonProperty("class")
-        CLASS,
-        @JsonProperty("scalar")
-        SCALAR,
-    }
 
-    /** Name of the refered type or module. */
-    @JsonProperty("name")
-    public final Name name;
-
-    /** The kind of the refered instance. */
-    @JsonProperty("kind")
-    public final ReferenceKind kind;
-
-    /** The suffix of the reference, if any. */
+    /** The prefix of the reference, if any. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("suffix")
-    public final Reference suffix;
+    @JsonProperty("name")
+    public final FullyQualifiedName name;
 
     /** If the refered instance is a {@link ReferenceKind#CLASS}, whether the type is a pointer. */
     @JsonProperty("is_pointer")
@@ -38,6 +21,12 @@ public class Reference implements ProxyObject {
     public final boolean isConst;
 
     /**
+     * If the refered instance is a {@link ReferenceKind#CLASS}, whether the type is a reference.
+     */
+    @JsonProperty("is_reference")
+    public final boolean isReference;
+
+    /**
      * If the refered instance is a pointer to a {@link ReferenceKind#CLASS}, whether it can be
      * null.
      */
@@ -46,28 +35,40 @@ public class Reference implements ProxyObject {
 
     @JsonCreator
     public Reference(
-            @JsonProperty(value = "name", required = true) Name name,
-            @JsonProperty(value = "kind", required = true) ReferenceKind kind,
-            @JsonProperty(value = "suffix") Reference suffix,
+            @JsonProperty(value = "name", required = true) FullyQualifiedName name,
             @JsonProperty(value = "is_pointer") boolean isPointer,
             @JsonProperty(value = "is_const") boolean isConst,
-            @JsonProperty(value = "is_nonnull") boolean isNonNull) {
+            @JsonProperty(value = "is_nonnull") boolean isNonNull,
+            @JsonProperty(value = "is_reference") boolean isReference) {
         this.name = name;
-        this.kind = kind;
-        this.suffix = suffix;
         this.isPointer = isPointer;
         this.isConst = isConst;
         this.isNonNull = isNonNull;
+        this.isReference = isReference;
     }
 
-    public ReferenceKind getFinalKind() {
-        return this.lastSuffix().kind;
+    /** Return a copy of the reference and modify its isPointer attribute. */
+    public Reference withIsPointer(boolean newIsPointer) {
+        return new Reference(
+                this.name, newIsPointer, this.isConst, this.isNonNull, this.isReference);
     }
 
-    public Reference lastSuffix() {
-        Reference ref = this;
-        while (ref.suffix != null) ref = ref.suffix;
-        return ref;
+    /** Return a copy of the reference and change its isConst attribute. */
+    public Reference withIsConst(boolean newIsConst) {
+        return new Reference(
+                this.name, this.isPointer, newIsConst, this.isNonNull, this.isReference);
+    }
+
+    /** Return a copy of the reference and modify isNonNull attribute. */
+    public Reference withIsNonNull(boolean newIsNonNull) {
+        return new Reference(
+                this.name, this.isPointer, this.isConst, newIsNonNull, this.isReference);
+    }
+
+    /** Return a copy of the reference and modify isReference attribute. */
+    public Reference withIsReference(boolean newIsReference) {
+        return new Reference(
+                this.name, this.isPointer, this.isConst, this.isNonNull, newIsReference);
     }
 
     @Override
@@ -79,15 +80,12 @@ public class Reference implements ProxyObject {
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj instanceof Reference other) {
-            boolean suffixEquals =
-                    (this.suffix == null && other.suffix == null)
-                            || (this.suffix != null && this.suffix.equals(other.suffix));
-            return suffixEquals
-                    && this.name.toLower().equals(other.name.toLower())
-                    && this.kind == other.kind
+            return name.equals(other.name)
+                    && this.name.equals(other.name)
                     && this.isConst == other.isConst
                     && this.isPointer == other.isPointer
-                    && this.isNonNull == other.isNonNull;
+                    && this.isNonNull == other.isNonNull
+                    && this.isReference == other.isReference;
         }
         return false;
     }
@@ -95,12 +93,11 @@ public class Reference implements ProxyObject {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 31 * hash + name.toLower().hashCode();
-        hash = 31 * hash + kind.hashCode();
-        hash = 31 * hash + (suffix != null ? suffix.hashCode() : 0);
+        hash = 31 * hash + name.hashCode();
         hash = 31 * hash + Boolean.hashCode(isPointer);
         hash = 31 * hash + Boolean.hashCode(isConst);
         hash = 31 * hash + Boolean.hashCode(isNonNull);
+        hash = 31 * hash + Boolean.hashCode(isReference);
         return hash;
     }
 }

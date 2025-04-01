@@ -1,3 +1,7 @@
+<%--
+vim: filetype=jteada
+Template file to generate binded procedures.
+--%>
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
 @param Subprogram subp
@@ -16,6 +20,9 @@
       (${AdaAPI.cInterfaceParameters(subp)})
     @endif
    is
+    @for(var p : subp.parameters)
+      ${AdaAPI.makeConversion(p)};
+    @endfor
    begin
       ${AdaAPI.call(subp)};
    end ${AdaAPI.proxyName(subp.name)};

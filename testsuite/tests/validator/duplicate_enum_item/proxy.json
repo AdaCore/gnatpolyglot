@@ -1,11 +1,11 @@
 {
   "modules": [
     {
-      "name": "module_1",
+      "name": { "names": ["module_1"] },
       "declarations": [
         {
           "kind": "enum",
-          "name": "enum_type",
+          "name": { "names": ["module_1", "enum_type"] },
           "doc": "enum_type documentation",
           "items": [
             {

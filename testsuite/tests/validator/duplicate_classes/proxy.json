@@ -1,11 +1,11 @@
 {
   "modules": [
     {
-      "name": "module_1",
+      "name": { "names": ["module_1"] },
       "declarations": [
         {
           "kind": "class",
-          "name": "class_type",
+          "name": { "names": ["module_1", "class_type"] },
           "doc": "class_type documentation",
           "size": 8,
           "fields": [],
@@ -13,7 +13,7 @@
         },
         {
           "kind": "class",
-          "name": "class_type",
+          "name": { "names": ["module_1", "class_type"] },
           "doc": "class_type documentation",
           "size": 8,
           "fields": [],

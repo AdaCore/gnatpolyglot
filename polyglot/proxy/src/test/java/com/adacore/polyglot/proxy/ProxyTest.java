@@ -42,11 +42,11 @@ public class ProxyTest {
                 """
             {
                 "kind": "function",
-                "name": "function_0",
+                "name": { "names": ["function_0"] },
                 "doc": "doc function_0",
                 "symbol": "__symbol_function_0",
                 "parameters": [],
-                "return_type": { "name": "uint8", "kind": "scalar" },
+                "return_type": { "name": { "names": [ "uint8" ] } },
                 "return_owner": "unknown"
             }
         """;
@@ -62,7 +62,7 @@ public class ProxyTest {
                 """
             {
                 "kind": "class",
-                "name": "class_0",
+                "name": { "names": ["class_0"] },
                 "doc": "doc",
                 "size": -8,
                 "is_final": true,
@@ -81,7 +81,7 @@ public class ProxyTest {
                 """
             {
                 "kind": "method",
-                "type": { "name": "uint8", "kind": "scalar" },
+                "type": { "name": { "names": [ "uint8" ] } },
                 "field": "f"
             }
         """;
