@@ -99,7 +99,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 role =
                         new Role(
                                 RoleKind.METHOD,
-                                AdaAPI.makeReferenceTo(primitiveType, false),
+                                AdaAPI.makeProxyFullyQualifiedName(primitiveType),
                                 null);
         }
 

@@ -28,7 +28,7 @@ public class EnumType extends AdaDeclaration {
     @Override
     public EnumerationDecl toPolyglotProxy() {
         return new EnumerationDecl(
-                AdaAPI.makeProxyFullyQualifiedName(origin, false),
+                AdaAPI.makeProxyFullyQualifiedName(origin),
                 origin.pDoc(),
                 items.stream().map(EnumLiteral::toPolyglotProxy).toList());
     }

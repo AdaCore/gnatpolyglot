@@ -10,13 +10,12 @@
           "symbol": "func_symbol",
           "parameters": [],
           "return_type": {
+            "kind": "typename",
             "name": { "names": ["void"] }
           },
           "role": {
             "kind": "alloc",
-            "type": {
-              "name": { "names": [ "module_1", "class_type_1" ] }
-            },
+            "type": { "names": ["module_1", "class_type_1"] },
             "field": "field_1"
           },
           "return_owner": "unknown",
@@ -34,10 +33,8 @@
               "name": "field_1",
               "doc": "field_1 documentation",
               "type": {
-                "name": { "names": ["sint32"] },
-                "is_pointer": false,
-                "is_const": false,
-                "is_nonnull": false
+                "kind": "typename",
+                "name": { "names": ["sint32"] }
               }
             }
           ],

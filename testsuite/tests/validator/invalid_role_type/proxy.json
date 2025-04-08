@@ -10,13 +10,12 @@
           "symbol": "func_symbol",
           "parameters": [],
           "return_type": {
+            "kind": "typename",
             "name": { "names": ["void"] }
           },
           "role": {
             "kind": "getter",
-            "type": {
-              "name": { "names": ["module_1"] }
-            }
+            "type": { "names": ["module_1"] }
           },
           "return_owner": "unknown",
           "is_visible": false,
@@ -33,10 +32,8 @@
               "name": "field_1",
               "doc": "field_1 documentation",
               "type": {
-                "name": { "names": ["sint32"] },
-                "is_pointer": false,
-                "is_const": false,
-                "is_nonnull": false
+                "kind": "typename",
+                "name": { "names": ["sint32"] }
               }
             }
           ],

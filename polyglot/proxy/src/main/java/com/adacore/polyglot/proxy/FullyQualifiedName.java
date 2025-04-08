@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Prefix of a reference. */
+/** Fully qualified name of a declaration. */
 public class FullyQualifiedName implements ProxyObject {
     /** Name of the refered type or module. */
     @JsonProperty("names")
@@ -20,19 +20,27 @@ public class FullyQualifiedName implements ProxyObject {
         this.names = List.of(name);
     }
 
+    /** Create a new {@link FullyQualifiedName} and adds ``name`` to it. */
     public FullyQualifiedName append(Name name) {
         List<Name> newNames = new ArrayList<>(names);
         newNames.add(name);
         return new FullyQualifiedName(newNames);
     }
 
+    /** Return the last name of the {@link FullyQualifiedName}. */
     public Name getLastName() {
         return names.get(names.size() - 1);
     }
 
+    /** Create a new {@link FullyQualifiedName} without the last name. */
     public FullyQualifiedName getParentFullyQualifiedName() {
         if (names.size() == 1) return null;
         return new FullyQualifiedName(names.subList(0, names.size() - 1));
+    }
+
+    /** Create a {@link NameTypeExpr} from the current fully qualified name. */
+    public NameTypeExpr asTypeExpr() {
+        return new NameTypeExpr(this);
     }
 
     @Override

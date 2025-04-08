@@ -13,20 +13,16 @@
               "name": "dup_field",
               "doc": "dup_field documentation",
               "type": {
-                "name": { "names": [ "sint32" ] },
-                "is_pointer": false,
-                "is_const": false,
-                "is_nonnull": false
+                "kind": "typename",
+                "name": { "names": ["sint32"] }
               }
             },
             {
               "name": "dup_field",
               "doc": "dup_field documentation",
               "type": {
-                "name": { "names": [ "sint32"] },
-                "is_pointer": false,
-                "is_const": false,
-                "is_nonnull": false
+                "kind": "typename",
+                "name": { "names": ["sint32"] }
               }
             }
           ],

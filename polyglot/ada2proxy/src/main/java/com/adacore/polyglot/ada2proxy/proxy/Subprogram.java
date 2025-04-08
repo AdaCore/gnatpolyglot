@@ -58,12 +58,12 @@ public class Subprogram extends AdaDeclaration {
     @Override
     public FunctionDecl toPolyglotProxy() {
         return new FunctionDecl(
-                AdaAPI.makeProxyFullyQualifiedName(origin, false),
+                AdaAPI.makeProxyFullyQualifiedName(origin),
                 origin.pDoc(),
                 role,
                 symbol,
                 parameters.stream().map(SubpParam::toPolyglotProxy).toList(),
-                AdaAPI.makeReferenceTo(origin.fSubpSpec().fSubpReturns()),
+                AdaAPI.makeTypeExpr(origin.fSubpSpec().fSubpReturns()),
                 owner,
                 false,
                 false,

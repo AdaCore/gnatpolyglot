@@ -12,16 +12,15 @@
             {
               "name": "param_1",
               "type": {
+                "kind": "typename",
                 "name": { "names": ["module_1"] }
               },
               "transfer": { "required_owner": "any" }
             }
           ],
           "return_type": {
-            "name": { "names": ["void"] },
-            "is_pointer": false,
-            "is_const": false,
-            "is_nonnull": false
+            "kind": "typename",
+            "name": { "names": ["void"] }
           },
           "return_owner": "unknown",
           "is_visible": false,

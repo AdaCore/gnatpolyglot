@@ -51,13 +51,12 @@ public class ProxyValidator {
         }
 
         /** Verifies if ``ref`` is a reference to a valid existing type. */
-        private void validateTypeRef(String fieldName, Reference ref) {
+        private void validateTypeRef(String fieldName, FullyQualifiedName ref) {
             if (ref != null) {
                 location.add("." + fieldName);
-                if (context.getModule(ref.name) != null)
+                if (context.getModule(ref) != null)
                     addDiagnostic("referenced entity is not a type");
-                else if (context.getTypeDecl(ref.name) == null)
-                    addDiagnostic("type does not exist");
+                else if (context.getTypeDecl(ref) == null) addDiagnostic("type does not exist");
                 location.pop();
             }
         }
@@ -166,7 +165,7 @@ public class ProxyValidator {
             if (functionDecl.role != null) {
                 Role role = functionDecl.role;
                 location.add(".role");
-                TypeDecl decl = context.getTypeDecl(role.type.name);
+                TypeDecl decl = context.getTypeDecl(role.type);
                 if (decl instanceof ClassDecl classDecl) {
                     if (role.field != null) {
                         if (!classDecl.fields.stream().anyMatch(f -> f.name.equals(role.field)))
@@ -186,7 +185,6 @@ public class ProxyValidator {
 
             validateNonNull("parameters", functionDecl.parameters);
             validateNonNull("return_type", functionDecl.returnType);
-            validateTypeRef("return_type", functionDecl.returnType);
             validateNonNull("return_owner", functionDecl.returnOwner);
 
             return Boolean.valueOf(diagnostics.isEmpty());
@@ -200,7 +198,7 @@ public class ProxyValidator {
                 added = visited.add(classDecl);
                 // Get the parent decl. If the parent does not exist, or is not a class, return true
                 // in order to ignore this error as it should be detected in an other check.
-                TypeDecl parentDecl = context.getTypeDecl(classDecl.parent.name);
+                TypeDecl parentDecl = context.getTypeDecl(classDecl.parent);
                 if (parentDecl instanceof ClassDecl parentClass) classDecl = parentClass;
                 else break;
             }
@@ -214,7 +212,7 @@ public class ProxyValidator {
             visitOptional("parent", classDecl.parent);
             if (classDecl.parent != null) {
                 validateTypeRef("parent", classDecl.parent);
-                if (!(context.getTypeDecl(classDecl.parent.name) instanceof ClassDecl))
+                if (!(context.getTypeDecl(classDecl.parent) instanceof ClassDecl))
                     addDiagnostic(".parent", "must inherit from a class");
                 else if (!isSaneClass(classDecl))
                     addDiagnostic(".parent", "class inheritance is not sane");
@@ -284,7 +282,6 @@ public class ProxyValidator {
             validateNonNull("doc", field.doc);
 
             validateNonNull("type", field.type);
-            validateTypeRef("type", field.type);
 
             return Boolean.valueOf(diagnostics.isEmpty());
         }
@@ -293,12 +290,6 @@ public class ProxyValidator {
         public Boolean visit(EnumItem enumItem) {
             validateNonNull("name", enumItem.name);
             validateNonNull("doc", enumItem.doc);
-            return Boolean.valueOf(diagnostics.isEmpty());
-        }
-
-        @Override
-        public Boolean visit(Reference reference) {
-            validateNonNull("name", reference.name);
             return Boolean.valueOf(diagnostics.isEmpty());
         }
 
@@ -312,7 +303,6 @@ public class ProxyValidator {
         public Boolean visit(Parameter parameter) {
             validateNonNull("name", parameter.name);
             validateNonNull("type", parameter.type);
-            validateTypeRef("type", parameter.type);
             validateNonNull("transfer", parameter.transfer);
             return Boolean.valueOf(diagnostics.isEmpty());
         }
@@ -321,6 +311,31 @@ public class ProxyValidator {
         public Boolean visit(FullyQualifiedName name) {
             if (name.names.isEmpty()) addDiagnostic(".names", "cannot be empty");
             return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(ArrayTypeExpr arrayTypeExpr) {
+            validateNonNull("type_expr", arrayTypeExpr.typeExpr);
+            return null;
+        }
+
+        @Override
+        public Boolean visit(NameTypeExpr nameTypeExpr) {
+            validateNonNull("name", nameTypeExpr.name);
+            validateTypeRef("name", nameTypeExpr.name);
+            return null;
+        }
+
+        @Override
+        public Boolean visit(ReferenceTypeExpr referenceTypeExpr) {
+            validateNonNull("type_expr", referenceTypeExpr.typeExpr);
+            return null;
+        }
+
+        @Override
+        public Boolean visit(PointerTypeExpr pointerTypeExpr) {
+            validateNonNull("type_expr", pointerTypeExpr.typeExpr);
+            return null;
         }
     }
 

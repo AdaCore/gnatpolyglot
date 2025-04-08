@@ -10,7 +10,7 @@ public class ClassDecl extends TypeDecl {
     /** Parent class type. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("parent")
-    public final Reference parent;
+    public final FullyQualifiedName parent;
 
     /** Size in bits of the type. */
     @JsonProperty("size")
@@ -28,7 +28,7 @@ public class ClassDecl extends TypeDecl {
     public ClassDecl(
             @JsonProperty(value = "name", required = true) FullyQualifiedName name,
             @JsonProperty(value = "doc", required = true) String doc,
-            @JsonProperty(value = "parent") Reference parent,
+            @JsonProperty(value = "parent") FullyQualifiedName parent,
             @JsonProperty(value = "size", required = true) int size,
             @JsonProperty(value = "is_final", required = true) boolean isFinal,
             @JsonProperty(value = "fields", required = true) List<Field> fields) {

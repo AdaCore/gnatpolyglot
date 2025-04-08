@@ -38,7 +38,7 @@ public class Role implements ProxyObject {
 
     /** The type the function should be a member of. */
     @JsonProperty("type")
-    public final Reference type;
+    public final FullyQualifiedName type;
 
     /**
      * When the role is {@link RoleKind#GETTER} or {@link RoleKind#SETTER}, the field of type it is
@@ -51,7 +51,7 @@ public class Role implements ProxyObject {
     @JsonCreator
     public Role(
             @JsonProperty(value = "kind", required = true) RoleKind kind,
-            @JsonProperty(value = "type", required = true) Reference type,
+            @JsonProperty(value = "type", required = true) FullyQualifiedName type,
             @JsonProperty(value = "field") Name field) {
         this.kind = kind;
         this.type = type;

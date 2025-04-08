@@ -18,11 +18,17 @@ public interface ProxyVisitor<T> {
 
     public abstract T visit(EnumItem enumItem);
 
-    public abstract T visit(Reference reference);
-
     public abstract T visit(Transfer transfer);
 
     public abstract T visit(Parameter parameter);
 
     public abstract T visit(FullyQualifiedName name);
+
+    public abstract T visit(ArrayTypeExpr arrayTypeExpr);
+
+    public abstract T visit(NameTypeExpr nameTypeExpr);
+
+    public abstract T visit(ReferenceTypeExpr referenceTypeExpr);
+
+    public abstract T visit(PointerTypeExpr pointerTypeExpr);
 }

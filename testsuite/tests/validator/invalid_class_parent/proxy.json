@@ -10,9 +10,7 @@
           "size": 8,
           "fields": [],
           "is_final": false,
-          "parent": {
-            "name": { "names": ["module_1"] }
-          }
+          "parent": { "names": ["module_1"] }
         },
         {
           "kind": "class",
@@ -21,9 +19,7 @@
           "size": 8,
           "fields": [],
           "is_final": false,
-          "parent": {
-            "name": { "names": ["module_1", "inherits_self"] }
-          }
+          "parent": { "names": ["module_1", "inherits_self"] }
         }
       ]
     }

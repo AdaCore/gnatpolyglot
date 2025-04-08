@@ -11,7 +11,7 @@ public class Parameter implements ProxyObject {
 
     /** The type of the parameter. */
     @JsonProperty("type")
-    public final Reference type;
+    public final TypeExpr type;
 
     /** Transfer informations. */
     @JsonProperty("transfer")
@@ -20,7 +20,7 @@ public class Parameter implements ProxyObject {
     @JsonCreator
     public Parameter(
             @JsonProperty(value = "name", required = true) Name name,
-            @JsonProperty(value = "type", required = true) Reference type,
+            @JsonProperty(value = "type", required = true) TypeExpr type,
             @JsonProperty(value = "transfer", required = true) Transfer transfer) {
         this.name = name;
         this.type = type;

@@ -22,7 +22,7 @@ public class FunctionDecl extends Declaration {
 
     /** Type of the returned value. */
     @JsonProperty("return_type")
-    public final Reference returnType;
+    public final TypeExpr returnType;
 
     /** Owner of the returned value. */
     @JsonProperty("return_owner")
@@ -47,7 +47,7 @@ public class FunctionDecl extends Declaration {
             @JsonProperty(value = "role") Role role,
             @JsonProperty(value = "symbol", required = true) String symbol,
             @JsonProperty(value = "parameters", required = true) List<Parameter> parameters,
-            @JsonProperty(value = "return_type", required = true) Reference returnType,
+            @JsonProperty(value = "return_type", required = true) TypeExpr returnType,
             @JsonProperty(value = "return_owner", required = true) Owner returnOwner,
             @JsonProperty(value = "is_visible") Boolean isVisible,
             @JsonProperty(value = "is_final") Boolean isFinal,

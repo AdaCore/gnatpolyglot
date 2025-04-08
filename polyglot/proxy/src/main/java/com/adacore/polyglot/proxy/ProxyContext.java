@@ -20,10 +20,10 @@ public class ProxyContext {
         public ArrayList<FunctionDecl> memberFunctions = new ArrayList<>();
     }
 
-    /** Map a reference to its corresponding module. */
+    /** Map a {@link FullyQualifiedName} to its corresponding {@link Module}. */
     private Map<FullyQualifiedName, Module> modules = new HashMap<>();
 
-    /** Map a reference to its corresponding type. */
+    /** Map a {@link FullyQualifiedName} to its corresponding {@link TypeDecl}. */
     private Map<FullyQualifiedName, TypeDecl> types = new HashMap<>();
 
     /** Map a type to its member functions. */
@@ -31,7 +31,7 @@ public class ProxyContext {
 
     public ProxyContext() {
         for (var nativeType : NativeType.values())
-            types.put(nativeType.reference.name, nativeType.declaration);
+            types.put(nativeType.typeExpr.getName(), nativeType.declaration);
     }
 
     /**
@@ -51,7 +51,7 @@ public class ProxyContext {
         if (func.role == null) {
             return true;
         }
-        TypeDecl decl = this.getTypeDecl(func.role.type.name);
+        TypeDecl decl = this.getTypeDecl(func.role.type);
         if (decl == null) {
             // The goal of the function is to detect when a function's role was already occupied by
             // an other. checking if the type exists is done somewhere is in the validation of the

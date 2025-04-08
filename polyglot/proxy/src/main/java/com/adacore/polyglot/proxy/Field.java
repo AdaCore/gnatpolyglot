@@ -15,13 +15,13 @@ public class Field implements ProxyObject {
 
     /** Type of the field. */
     @JsonProperty("type")
-    public final Reference type;
+    public final TypeExpr type;
 
     @JsonCreator
     public Field(
             @JsonProperty(value = "name", required = true) Name name,
             @JsonProperty(value = "doc", required = true) String doc,
-            @JsonProperty(value = "type", required = true) Reference type) {
+            @JsonProperty(value = "type", required = true) TypeExpr type) {
         this.name = name;
         this.doc = doc;
         this.type = type;

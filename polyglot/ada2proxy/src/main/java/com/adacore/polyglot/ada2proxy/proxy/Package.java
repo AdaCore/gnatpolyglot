@@ -34,7 +34,7 @@ public class Package implements AdaProxyObject {
     @Override
     public Module toPolyglotProxy() {
         return new Module(
-                AdaAPI.makeProxyFullyQualifiedName(origin, false),
+                AdaAPI.makeProxyFullyQualifiedName(origin),
                 declarations.stream()
                         .flatMap(
                                 d -> {

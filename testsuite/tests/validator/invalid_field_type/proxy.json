@@ -13,6 +13,7 @@
               "name": "field_1",
               "doc": "field_1 documentation",
               "type": {
+                "kind": "typename",
                 "name": { "names": ["module_1"] }
               }
             }

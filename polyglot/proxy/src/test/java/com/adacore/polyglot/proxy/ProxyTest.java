@@ -46,7 +46,7 @@ public class ProxyTest {
                 "doc": "doc function_0",
                 "symbol": "__symbol_function_0",
                 "parameters": [],
-                "return_type": { "name": { "names": [ "uint8" ] } },
+                "return_type": { "kind": "typename", "name": { "names": [ "uint8" ] } },
                 "return_owner": "unknown"
             }
         """;
@@ -81,7 +81,7 @@ public class ProxyTest {
                 """
             {
                 "kind": "method",
-                "type": { "name": { "names": [ "uint8" ] } },
+                "type": { "names": [ "uint8" ] },
                 "field": "f"
             }
         """;
