@@ -26,6 +26,12 @@ class PolyglotTestsuite(Testsuite):
             help="Rewrite test baselines according to current output.",
         )
 
+        parser.add_argument(
+            "--valgrind",
+            action="store_true",
+            help="Run test executables with Valgrind to check memory issues.",
+        )
+
     def set_up(self) -> None:
         super().set_up()
 

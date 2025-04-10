@@ -80,12 +80,12 @@ public class ProxyContext {
         return types.put(declaration.name, declaration) == null;
     }
 
-    /** Get a module from its corresponding reference. */
+    /** Get a module from its corresponding name. */
     public Module getModule(FullyQualifiedName name) {
         return modules.get(name);
     }
 
-    /** Get a type declaration from its corresponding reference. */
+    /** Get a type declaration from its corresponding name. */
     public TypeDecl getTypeDecl(FullyQualifiedName name) {
         return types.get(name);
     }
