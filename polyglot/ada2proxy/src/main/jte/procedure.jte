@@ -21,7 +21,7 @@ Template file to generate binded procedures.
     @endif
    is
     @for(var p : subp.parameters)
-      ${AdaAPI.makeConversion(p)};
+      ${AdaAPI.makeParamConversion(p)};
     @endfor
    begin
       ${AdaAPI.call(subp)};

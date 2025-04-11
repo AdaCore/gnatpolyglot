@@ -2,6 +2,7 @@ package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.NativeType;
+import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
@@ -20,6 +21,10 @@ public class AdaAPI {
     /** Create a reference to decl, or its parent if ``onlyParent`` is true. */
     public static FullyQualifiedName makeProxyFullyQualifiedName(
             Libadalang.BasicDecl decl, Boolean onlyParent) {
+        if (decl instanceof Libadalang.BaseTypeDecl typeDecl) {
+            NativeType nativeType = checkNativeType(typeDecl);
+            if (nativeType != null) return nativeType.reference.name;
+        }
         Libadalang.Symbol[] symbols = decl.pFullyQualifiedNameArray(false);
         if (onlyParent && symbols.length == 1) return null;
         return new FullyQualifiedName(
@@ -61,13 +66,7 @@ public class AdaAPI {
     /** Create a reference to the type referenced by typeExpr */
     public static Reference makeReferenceTo(Libadalang.TypeExpr typeExpr) {
         if (typeExpr.isNone()) return NativeType.VOID.reference;
-
-        Libadalang.BaseTypeDecl typeDecl = typeExpr.pDesignatedTypeDecl();
-
-        NativeType nativeType = checkNativeType(typeDecl);
-        if (nativeType != null) return nativeType.reference;
-
-        return makeReferenceTo(typeDecl, false);
+        return makeReferenceTo(typeExpr.pDesignatedTypeDecl(), false);
     }
 
     /**
@@ -110,17 +109,18 @@ public class AdaAPI {
         else return typeExpr.getText() + "_Access";
     }
 
-    /** Create an entity that is the conversion of the C interface into the actual Ada type. */
-    public static String makeConversion(SubpParam param) {
-        Libadalang.BaseTypeDecl retType =
-                (Libadalang.BaseTypeDecl)
-                        param.getType().pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+    /**
+     * Create an entity that is the conversion of a subprogram parameter, named `${name}_Arg` in the
+     * C API, to the `type` Ada type.
+     */
+    private static String makeParamConversion(Name name, Libadalang.BaseTypeDecl type) {
+        type = (Libadalang.BaseTypeDecl) type.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
 
         StringBuilder builder = new StringBuilder();
-        builder.append(param.name.toPascalWithUnderscore())
+        builder.append(name.toPascalWithUnderscore())
                 .append("_Value : ")
-                .append(param.getType().pFullyQualifiedName());
-        if (retType.pIsRecordType(Libadalang.AdaNode.NONE)) {
+                .append(type.pFullyQualifiedName());
+        if (type.pIsRecordType(Libadalang.AdaNode.NONE)) {
             // If the type is a record, generated the following:
             // .. code::
             //
@@ -130,9 +130,9 @@ public class AdaAPI {
             // The pragma is used to avoid calling the default initializer of the subparam's type,
             // which would overwrite the argument's data.
             builder.append(" with Address => ")
-                    .append(param.name.toPascalWithUnderscore())
+                    .append(name.toPascalWithUnderscore())
                     .append("_Arg; pragma Import (Ada, ")
-                    .append(param.name.toPascalWithUnderscore())
+                    .append(name.toPascalWithUnderscore())
                     .append("_Value)");
         } else {
             // Otherwise, the type should convertible with a simple cast:
@@ -140,12 +140,28 @@ public class AdaAPI {
             //
             //     ${Arg}_Value : ${Type} := ${Type} (${Arg}_Arg);
             builder.append(" := ")
-                    .append(param.getType().pFullyQualifiedName())
+                    .append(type.pFullyQualifiedName())
                     .append(" (")
-                    .append(param.name.toPascalWithUnderscore())
+                    .append(name.toPascalWithUnderscore())
                     .append("_Arg)");
         }
         return builder.toString();
+    }
+
+    /**
+     * Create an entity that is the conversion of a C interface type parameter that represent the
+     * new value of the setter for ``component`` into the actual Ada type.
+     */
+    public static String makeParamConversion(Component component) {
+        return makeParamConversion(component.name, component.getType());
+    }
+
+    /**
+     * Create an entity that is the conversion from a C interface type parameter into the actual Ada
+     * type.
+     */
+    public static String makeParamConversion(SubpParam param) {
+        return makeParamConversion(param.name, param.getType());
     }
 
     /** Create a string to call a function from the proxy. */
@@ -167,15 +183,16 @@ public class AdaAPI {
      * Create a string of the value returned by functions, with the necessary cast to the C
      * interface type.
      */
-    public static String makeReturn(Subprogram subp) {
+    public static String makeReturnConversion(
+            Libadalang.BaseTypeDecl returnedType, String returnedValue) {
         StringBuilder builder = new StringBuilder();
-        Libadalang.BaseTypeDecl retType =
+        returnedType =
                 (Libadalang.BaseTypeDecl)
-                        subp.getReturnType().pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+                        returnedType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
 
-        if (retType.pIsScalarType(Libadalang.AdaNode.NONE)) {
+        if (returnedType.pIsScalarType(Libadalang.AdaNode.NONE)) {
             // If the value is a scalar, simply cast to the C interface type.
-            builder.append(cInterfaceTypename(retType)).append(" (");
+            builder.append(cInterfaceTypename(returnedType)).append(" (");
         } else {
             // If the type returned is an address (i.e. not a scalar), convert the returned value to
             // ``System.Address`` using the entity created by ``makeReturnTypeConverter``.
@@ -184,12 +201,13 @@ public class AdaAPI {
             // dynamically allocated copy of the value. When access types are supported, do not copy
             // the value to the heap.
             builder.append("Return_Type_Converter.To_Address(new ")
-                    .append(retType.pFullyQualifiedName())
+                    .append(returnedType.pFullyQualifiedName())
                     .append("'(");
         }
         // Build the call to the binded subprogram.
-        builder.append(call(subp)).append(")");
-        if (retType.pIsRecordType(Libadalang.AdaNode.NONE)) builder.append(")");
+        builder.append(returnedValue);
+        builder.append(")");
+        if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)) builder.append(")");
         return builder.toString();
     }
 
@@ -197,16 +215,14 @@ public class AdaAPI {
      * Create a string to declare an entity to convert the value returned by the binded function if
      * necessary.
      */
-    public static String makeReturnTypeConverter(Subprogram subp) {
+    public static String makeReturnTypeConverter(Libadalang.BaseTypeDecl retType) {
         StringBuilder builder = new StringBuilder();
-        Libadalang.BaseTypeDecl retType =
-                (Libadalang.BaseTypeDecl)
-                        subp.getReturnType().pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+        retType =
+                (Libadalang.BaseTypeDecl) retType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
 
         if (retType.pIsRecordType(Libadalang.AdaNode.NONE)) {
-            builder.append(
-                            "package Return_Type_Converter is new"
-                                    + " System.Address_To_Access_Conversions(")
+            builder.append("package Return_Type_Converter is new")
+                    .append(" System.Address_To_Access_Conversions(")
                     .append(retType.pFullyQualifiedName())
                     .append(");");
         }
@@ -260,10 +276,12 @@ public class AdaAPI {
 
     /** Return the C Interface typename of a type. */
     public static String cInterfaceTypename(Libadalang.BaseTypeDecl bTypeDecl) {
-        bTypeDecl = (Libadalang.TypeDecl) bTypeDecl.pRootType(Libadalang.AdaNode.NONE);
         NativeType nativeType = checkNativeType(bTypeDecl);
         if (nativeType != null) return cInterfaceNativeTypename(nativeType);
-        if (bTypeDecl.pIsPrivate()) return "System.Address";
+        Libadalang.TypeDef typeDef =
+                ((Libadalang.TypeDecl) bTypeDecl.pRootType(Libadalang.AdaNode.NONE)).fTypeDef();
+        if (typeDef instanceof Libadalang.PrivateTypeDef
+                || typeDef instanceof Libadalang.RecordTypeDef) return "System.Address";
 
         throw new UnsupportedOperationException("Type not supported");
     }

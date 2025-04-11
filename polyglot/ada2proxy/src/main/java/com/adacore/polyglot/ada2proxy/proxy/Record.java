@@ -13,12 +13,16 @@ import com.adacore.polyglot.proxy.Role;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.Transfer;
 import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Record extends AdaDeclaration {
 
     /** Origin node in the LAL tree. */
     private final Libadalang.TypeDecl origin;
+
+    /** List of all components. */
+    public List<Component> components;
 
     /** Reference to the record. */
     private Reference ref;
@@ -32,9 +36,13 @@ public class Record extends AdaDeclaration {
     /** Default cloning function of the type. */
     private FunctionDecl cloneFunction;
 
-    public Record(Libadalang.TypeDecl origin, Name name) {
+    /** Default getter and setter functions of the type. */
+    private ArrayList<FunctionDecl> componentAccessors;
+
+    public Record(Libadalang.TypeDecl origin, Name name, List<Component> components) {
         super(name);
         this.origin = origin;
+        this.components = components;
     }
 
     /** Return the fully qualified name of the type. */
@@ -46,6 +54,11 @@ public class Record extends AdaDeclaration {
     public Reference getReference() {
         if (this.ref == null) this.ref = AdaAPI.makeReferenceTo(this.origin, false);
         return this.ref;
+    }
+
+    /** Return the component with the given name. */
+    public Component getComponent(Name name) {
+        return components.stream().filter(c -> c.name.equals(name)).findFirst().get();
     }
 
     /** Create a symbol for generated member functions. */
@@ -124,6 +137,66 @@ public class Record extends AdaDeclaration {
         return this.cloneFunction;
     }
 
+    /** Return the getters and setters of the type, or generate them if necessary. */
+    public List<FunctionDecl> getGettersAndSetters() {
+        if (componentAccessors == null) {
+            componentAccessors = new ArrayList<>(components.size() * 2);
+
+            for (var c : components) {
+                Reference componentTypeRef = AdaAPI.makeReferenceTo(c.getType(), false);
+                // Create the getter function.
+                componentAccessors.add(
+                        new FunctionDecl(
+                                AdaAPI.makeProxyFullyQualifiedName(origin, false)
+                                        .append(Name.fromLower("get").concat(c.name)),
+                                "Return the value of " + c.name.toPascalWithUnderscore(),
+                                new Role(RoleKind.GETTER, getReference(), c.name),
+                                buildMemberSymbol("_Getter_" + c.name.toPascalWithUnderscore()),
+                                List.of(
+                                        new Parameter(
+                                                Name.fromLower("self"),
+                                                getReference()
+                                                        .withIsReference(true)
+                                                        .withIsConst(true),
+                                                new Transfer(RequiredOwner.ANY))),
+                                componentTypeRef,
+                                Owner.USER,
+                                false,
+                                false,
+                                false));
+
+                // Get the type of the setter's new value.
+                Reference setterType = componentTypeRef;
+                if (!c.getType().pIsScalarType(Libadalang.AdaNode.NONE))
+                    // If the argument is not a scalar, get a const reference to the new value.
+                    setterType = setterType.withIsConst(true).withIsReference(true);
+                // Create the setter function.
+                componentAccessors.add(
+                        new FunctionDecl(
+                                AdaAPI.makeProxyFullyQualifiedName(origin, false)
+                                        .append(Name.fromLower("set").concat(c.name)),
+                                "Sets the value of " + c.name.toPascalWithUnderscore(),
+                                new Role(RoleKind.SETTER, getReference(), c.name),
+                                buildMemberSymbol("_Setter_" + c.name.toPascalWithUnderscore()),
+                                List.of(
+                                        new Parameter(
+                                                Name.fromLower("self"),
+                                                getReference().withIsReference(true),
+                                                new Transfer(RequiredOwner.ANY)),
+                                        new Parameter(
+                                                Name.fromLower("new").concat(c.name),
+                                                setterType,
+                                                new Transfer(RequiredOwner.ANY))),
+                                NativeType.VOID.reference,
+                                Owner.UNKNOWN,
+                                false,
+                                false,
+                                false));
+            }
+        }
+        return componentAccessors;
+    }
+
     @Override
     public <T> T accept(AdaProxyVisitor<T> visitor) {
         return visitor.visit(this);
@@ -139,6 +212,15 @@ public class Record extends AdaDeclaration {
                     8,
                     false,
                     List.of());
+        }
+        if (this.origin.fTypeDef() instanceof Libadalang.RecordTypeDef def) {
+            return new ClassDecl(
+                    AdaAPI.makeProxyFullyQualifiedName(origin, false),
+                    this.origin.pDoc(),
+                    null,
+                    8,
+                    false,
+                    this.components.stream().map(Component::toPolyglotProxy).toList());
         }
         throw new UnsupportedOperationException(
                 "Unsupported Ada type:" + this.origin.fTypeDef().getImage());
