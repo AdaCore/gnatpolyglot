@@ -40,6 +40,11 @@ public class Subprogram extends AdaDeclaration {
         this.owner = owner;
     }
 
+    /** Return the fully qualified name of the declaration of origin. */
+    public String getOriginName() {
+        return origin.pFullyQualifiedName();
+    }
+
     /** Return whether ``funDecl`` is a procedure or a function. */
     public boolean isProcedure() {
         return origin.fSubpSpec().fSubpReturns().isNone();

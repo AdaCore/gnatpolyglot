@@ -1,6 +1,7 @@
 package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
@@ -14,17 +15,49 @@ import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.Transfer;
 import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Visitor class to analyze Ada spec files and generate the proxy. */
 public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
+    private Set<String> symbols = new HashSet<>();
+
     /** Turn a fully qualified name into a unique C symbol. */
-    private static String symbolify(String fullyQualName) {
-        return "__" + fullyQualName.replace(".", "_");
+    private String symbolify(Libadalang.SubpSpec spec) {
+        StringBuilder builder = new StringBuilder();
+        // Symbols starting with a "_", followed by either a capital letter or an other
+        // "_" are considered reserved identifier.
+        // The prefix of the symbols:
+        // - starts with the 2 same first characters ("_P") to reduce the risk of clashing with
+        // other external symbols as much as possible
+        // - has a third character to differentiate binded ``U``ser functions from the polyglot
+        // ``G``enerated functions such as getters or setters.
+        builder.append("_PU").append(spec.pName().pFullyQualifiedName().replace(".", "_"));
+        if (spec.fSubpReturns().isNone()) {
+            builder.append("Void");
+        } else {
+            builder.append(
+                    spec.pReturnType(Libadalang.AdaNode.NONE)
+                            .pFullyQualifiedName()
+                            .replace(".", "_"));
+        }
+        String res = builder.toString();
+        int count = 0;
+        // While the symbol is not unique, keep trying with a new one.
+        while (symbols.contains(res)) {
+            StringBuilder b = new StringBuilder(builder);
+            res = b.append(count).toString();
+        }
+        // Register the new symbol.
+        symbols.add(res);
+        return res;
     }
 
     /** List of declarations declared by the module */
@@ -86,7 +119,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         Libadalang.SubpSpec spec = node.fSubpSpec();
 
         // Get the C symbol of the function.
-        String symbol = symbolify(node.pFullyQualifiedName());
+        String symbol = symbolify(spec);
 
         // If the function is callable with the dot notation, it is a method.
         // TODO: When eng/libadalang/libadalang#1547 is resoled, use the new property.
