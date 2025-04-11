@@ -26,5 +26,38 @@ package body Test is
       return Res;
    end Overloaded_Fun;
 
+   procedure Overloaded_Ret is
+   begin
+      Put_Line("Hello from Ada overloaded return type 1");
+   end Overloaded_Ret;
+
+   function Overloaded_Ret return Integer is
+   begin
+      Put_Line("Hello from Ada overloaded return type 2");
+      return 2;
+   end Overloaded_Ret;
+
+   function Overloaded_Ret return T1 is
+   begin
+      Put_Line("Hello from Ada overloaded return type 3");
+      return (V => 3);
+   end Overloaded_Ret;
+
+   function Overloaded_Ret(I: Integer) return Integer is
+   begin
+      Put_Line("Hello from Ada overloaded return type 4");
+      return -I;
+   end Overloaded_Ret;
+
+   function No_Rename (I: Integer) return Integer is
+   begin
+      return I * 2;
+   end No_Rename;
+
+   function No_Rename (F: Long_Integer) return Long_Integer is
+   begin
+      return F * 4;
+   end No_Rename;
+
 end Test;
 

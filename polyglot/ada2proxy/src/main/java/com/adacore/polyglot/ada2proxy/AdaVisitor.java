@@ -104,12 +104,78 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return null;
     }
 
+    /**
+     * Group subprograms of the current package by name and ignore any subprogram that are not
+     * overloaded.
+     */
+    private List<List<Subprogram>> getOverloads() {
+        return declarations.stream()
+                .filter(d -> d instanceof Subprogram)
+                .map(d -> (Subprogram) d)
+                // Group functions by their name
+                .collect(Collectors.groupingBy(d -> d.name))
+                .entrySet()
+                .stream()
+                // Ignore functions that have no overloads
+                .filter(e -> e.getValue().size() > 1)
+                .map(Entry::getValue)
+                .toList();
+    }
+
+    /**
+     * Return whether lhs and rhs have a naming conflict and their parameters are similar, but not
+     * their return type.
+     */
+    public boolean hasNamingConflict(Subprogram lhs, Subprogram rhs) {
+        if (!lhs.name.equals(rhs.name) || lhs.parameters.size() != lhs.parameters.size())
+            return false;
+        for (int i = 0; i < lhs.parameters.size(); i++) {
+            if (!lhs.parameters.get(i).equals(rhs.parameters.get(i))) return false;
+        }
+        return !lhs.getReturnType().equals(rhs.getReturnType());
+    }
+
+    /**
+     * Resolve naming conflicts among the subprograms found in the current package.
+     *
+     * <p>Ada supports return type overloading. As this is not very common among other programming
+     * languages, the Ada scanner resolves naming conflicts itself when it occurs.
+     */
+    public void resolveNameConflicts() {
+        for (var overloads : getOverloads()) {
+            Subprogram firstSubp = overloads.get(0);
+            boolean needsRenaming =
+                    overloads.stream().skip(1).anyMatch(sp -> hasNamingConflict(firstSubp, sp));
+            // If any subprogram return type differ in the list of overload, add the return type as
+            // the prefix of the subprogram's name in the proxy.
+            //
+            // :: code:
+            //      procedure Func;              => "void_func"
+            //      function Func return Integer => "standard_integer_func"
+            if (needsRenaming) {
+                for (var subp : overloads) {
+                    Name prefix;
+                    if (subp.getReturnType().isNone()) {
+                        prefix = NativeType.VOID.declaration.name.getLastName();
+                    } else {
+                        prefix =
+                                Name.fromPascalWithUnderscore(
+                                        subp.getReturnType()
+                                                .pFullyQualifiedName()
+                                                .replace(".", "_"));
+                    }
+                    subp.name = prefix.concat(subp.name);
+                }
+            }
+        }
+    }
+
     @Override
     public Void visit(Libadalang.PackageDecl node) {
-        node.fPublicPart().fDecls().accept(this);
-
-        // The name of the current package is the last symbol in the array.
         this.analyzedPackage = node;
+
+        node.fPublicPart().fDecls().accept(this);
+        resolveNameConflicts();
 
         return null;
     }

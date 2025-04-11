@@ -10,4 +10,12 @@ package Test is
    function Overloaded_Fun(A, B: Integer; C: Integer) return Integer;
    function Overloaded_Fun(A: Integer; B, C: T1) return Integer;
 
+   procedure Overloaded_Ret;
+   function Overloaded_Ret return Integer;
+   function Overloaded_Ret return T1;
+   function Overloaded_Ret(I: Integer) return Integer;
+
+   function No_Rename (I: Integer) return Integer;
+   function No_Rename (F: Long_Integer) return Long_Integer;
+
 end Test;
