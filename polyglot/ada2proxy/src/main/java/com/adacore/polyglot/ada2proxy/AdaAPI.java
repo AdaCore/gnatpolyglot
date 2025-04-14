@@ -137,9 +137,8 @@ public class AdaAPI {
         type = (Libadalang.BaseTypeDecl) type.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
 
         StringBuilder builder = new StringBuilder();
-        builder.append(name.toPascalWithUnderscore())
-                .append("_Value : ")
-                .append(type.pFullyQualifiedName());
+        String argName = name.toPascalWithUnderscore();
+        builder.append(argName).append("_Value : ").append(type.pFullyQualifiedName());
         if (type.pIsRecordType(Libadalang.AdaNode.NONE) || isOutMode) {
             // If the type is a record or when the parameter uses an ``out`` mode, generate the
             // following:
@@ -151,9 +150,9 @@ public class AdaAPI {
             // The pragma is used to avoid calling the default initializer of the subparam's type,
             // which would overwrite the argument's data.
             builder.append(" with Address => ")
-                    .append(name.toPascalWithUnderscore())
+                    .append(argName)
                     .append("_Arg; pragma Import (Ada, ")
-                    .append(name.toPascalWithUnderscore())
+                    .append(argName)
                     .append("_Value)");
         } else {
             // Otherwise, the type should convertible with a simple cast:
@@ -163,7 +162,7 @@ public class AdaAPI {
             builder.append(" := ")
                     .append(type.pFullyQualifiedName())
                     .append(" (")
-                    .append(name.toPascalWithUnderscore())
+                    .append(argName)
                     .append("_Arg)");
         }
         return builder.toString();
@@ -200,6 +199,23 @@ public class AdaAPI {
         return builder.toString();
     }
 
+    /** Create the necessary declarations for the return statement. */
+    public static String makeReturnDeclarations(Libadalang.BaseTypeDecl returnedType) {
+        StringBuilder builder = new StringBuilder();
+        returnedType =
+                (Libadalang.BaseTypeDecl)
+                        returnedType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+        if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)) {
+            // When returning records, we need to convert an access to `System.Address`: declare a
+            // converter.
+            builder.append("package Return_Type_Converter is new")
+                    .append(" System.Address_To_Access_Conversions(")
+                    .append(returnedType.pFullyQualifiedName())
+                    .append(");");
+        }
+        return builder.toString();
+    }
+
     /**
      * Create a string of the value returned by functions, with the necessary cast to the C
      * interface type.
@@ -211,45 +227,29 @@ public class AdaAPI {
                 (Libadalang.BaseTypeDecl)
                         returnedType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
 
+        String typeName = returnedType.pFullyQualifiedName();
         if (returnedType.pIsScalarType(Libadalang.AdaNode.NONE)) {
             // If the value is a scalar, simply cast to the C interface type.
-            builder.append(cInterfaceTypename(returnedType)).append(" (");
-        } else {
+            builder.append("return ")
+                    .append(cInterfaceTypename(returnedType))
+                    .append(" (")
+                    .append(typeName)
+                    .append("'(")
+                    .append(returnedValue)
+                    .append("))");
+        } else if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)) {
             // If the type returned is an address (i.e. not a scalar), convert the returned value to
             // ``System.Address`` using the entity created by ``makeReturnTypeConverter``.
             //
             // TODO: For the moment, it considers that only value types are returned, and creates a
             // dynamically allocated copy of the value. When access types are supported, do not copy
             // the value to the heap.
-            builder.append("Return_Type_Converter.To_Address(new ")
-                    .append(returnedType.pFullyQualifiedName())
-                    .append("'(");
+            builder.append("return Return_Type_Converter.To_Address(new ")
+                    .append(typeName)
+                    .append("'(")
+                    .append(returnedValue)
+                    .append("))");
         }
-        // Build the call to the binded subprogram.
-        builder.append(returnedType.pFullyQualifiedName())
-                .append("'(")
-                .append(returnedValue)
-                .append("))");
-        if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)) builder.append(")");
-        return builder.toString();
-    }
-
-    /**
-     * Create a string to declare an entity to convert the value returned by the binded function if
-     * necessary.
-     */
-    public static String makeReturnTypeConverter(Libadalang.BaseTypeDecl retType) {
-        StringBuilder builder = new StringBuilder();
-        retType =
-                (Libadalang.BaseTypeDecl) retType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
-
-        if (retType.pIsRecordType(Libadalang.AdaNode.NONE)) {
-            builder.append("package Return_Type_Converter is new")
-                    .append(" System.Address_To_Access_Conversions(")
-                    .append(retType.pFullyQualifiedName())
-                    .append(");");
-        }
-
         return builder.toString();
     }
 

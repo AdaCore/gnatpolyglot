@@ -90,9 +90,12 @@ Template file to generate bindings for record types.
          is
             Self_Value : ${recordName} with Address => Self;
             pragma Import(Ada, Self_Value);
-            ${AdaAPI.makeReturnTypeConverter(componentType)}
          begin
-            return ${AdaAPI.makeReturnConversion(componentType, componentAccess)};
+            declare
+               ${AdaAPI.makeDeclarations(componentType)}
+            begin
+               ${AdaAPI.makeReturnConversion(componentType, componentAccess)};
+            end;
          end ${f.getLastName().toPascalWithUnderscore()};
       @else
          procedure ${f.getLastName().toPascalWithUnderscore()}
