@@ -10,10 +10,8 @@
           "symbol": "dup_symbol",
           "parameters": [],
           "return_type": {
-            "name": { "names": ["void"] },
-            "is_pointer": false,
-            "is_const": false,
-            "is_nonnull": false
+            "kind": "typename",
+            "name": { "names": ["void"] }
           },
           "return_owner": "unknown",
           "is_visible": false,
@@ -27,10 +25,8 @@
           "symbol": "dup_symbol",
           "parameters": [],
           "return_type": {
-            "name": { "names": ["void"] },
-            "is_pointer": false,
-            "is_const": false,
-            "is_nonnull": false
+            "kind": "typename",
+            "name": { "names": ["void"] }
           },
           "return_owner": "unknown",
           "is_visible": false,

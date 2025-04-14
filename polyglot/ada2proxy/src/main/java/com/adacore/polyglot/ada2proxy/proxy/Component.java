@@ -30,6 +30,6 @@ public class Component implements AdaProxyObject {
 
     @Override
     public Field toPolyglotProxy() {
-        return new Field(name, origin.pDoc(), AdaAPI.makeReferenceTo(origin.pTypeExpression()));
+        return new Field(name, origin.pDoc(), AdaAPI.makeTypeExpr(origin.pTypeExpression()));
     }
 }

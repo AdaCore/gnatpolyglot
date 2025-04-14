@@ -8,7 +8,7 @@ import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Module;
 import com.adacore.polyglot.proxy.Parameter;
 import com.adacore.polyglot.proxy.ProxyContext;
-import com.adacore.polyglot.proxy.Reference;
+import com.adacore.polyglot.proxy.ReferenceTypeExpr;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeDecl;
 import java.nio.file.Path;
@@ -89,12 +89,12 @@ public class CppAPI {
     }
 
     /** Return the refered C++ type's name. */
-    public String cppTypename(Reference reference) {
-        TypeDecl typeDecl = context.getTypeDecl(reference.name);
+    public String cppTypename(FullyQualifiedName name) {
+        TypeDecl typeDecl = context.getTypeDecl(name);
         if (typeDecl instanceof NativeTypeDecl nativeType)
             return nativeTypeName(nativeType.nativeType);
         if (typeDecl instanceof ClassDecl)
-            return makeRefString(reference.name, fqn -> lastNameToCppName(fqn), "", "::", "");
+            return makeRefString(name, fqn -> lastNameToCppName(fqn), "", "::", "");
         throw new UnsupportedOperationException("Unsupported Cpp type");
     }
 
@@ -104,8 +104,8 @@ public class CppAPI {
     }
 
     /** Return the refered C type's name. */
-    public String cTypename(Reference reference) {
-        TypeDecl typeDecl = context.getTypeDecl(reference.name);
+    public String cTypename(FullyQualifiedName name) {
+        TypeDecl typeDecl = context.getTypeDecl(name);
         if (typeDecl instanceof NativeTypeDecl nativeType)
             return nativeTypeName(nativeType.nativeType);
         if (typeDecl instanceof ClassDecl) return "void *";
@@ -113,9 +113,9 @@ public class CppAPI {
     }
 
     /**
-     * Join all the reference names with a prefix, suffix and separator, using a function to convert
-     * the names to strings. The converter is run on every sub-FullyQualifiedName and should return
-     * a conversion of the last name only.
+     * Join all the names with a prefix, suffix and separator, using a function to convert the names
+     * to strings. The converter is run on every sub-FullyQualifiedName and should return a
+     * conversion of the last name only.
      */
     public String makeRefString(
             FullyQualifiedName ref,
@@ -159,16 +159,18 @@ public class CppAPI {
     /** Create a string corresponding to the C parameter. */
     private String toCParam(Parameter parameter) {
         StringBuilder builder = new StringBuilder();
-        builder.append(cTypename(parameter.type)).append(" ").append(parameter.name.toLower());
+        builder.append(cTypename(parameter.type.getName()))
+                .append(" ")
+                .append(parameter.name.toLower());
         return builder.toString();
     }
 
     /** Create a string corresponding to the C++ parameter. */
     private String toCppParam(Parameter parameter) {
         StringBuilder builder = new StringBuilder();
-        if (parameter.type.isConst) builder.append("const ");
-        builder.append(cppTypename(parameter.type)).append(" ");
-        if (parameter.type.isReference) builder.append("&");
+        if (parameter.type.isConst()) builder.append("const ");
+        builder.append(cppTypename(parameter.type.getName())).append(" ");
+        if (parameter.type instanceof ReferenceTypeExpr) builder.append("&");
         builder.append(parameter.name.toLower());
         return builder.toString();
     }
@@ -187,7 +189,7 @@ public class CppAPI {
 
     /** Return the const keyword if the function is a const method, else return an empty string. */
     public String getConstMethod(FunctionDecl functionDecl) {
-        if (isMethod(functionDecl) && functionDecl.parameters.get(0).type.isConst) return "const";
+        if (isMethod(functionDecl) && functionDecl.parameters.get(0).type.isConst()) return "const";
         return "";
     }
 
@@ -214,7 +216,7 @@ public class CppAPI {
                         .skip(funcIsMethod ? 1 : 0)
                         .map(
                                 p -> {
-                                    if (context.getTypeDecl(p.type.name) instanceof ClassDecl)
+                                    if (context.getTypeDecl(p.type.getName()) instanceof ClassDecl)
                                         return p.name.toLower() + ".data()";
                                     else return p.name.toLower();
                                 })
@@ -228,11 +230,7 @@ public class CppAPI {
         String functionName = functionDecl.getLastName().toLower();
         if (!isMethod(functionDecl)) return functionName;
         return makeRefString(
-                functionDecl.role.type.name,
-                r -> lastNameToCppName(r),
-                "",
-                "::",
-                "::" + functionName);
+                functionDecl.role.type, r -> lastNameToCppName(r), "", "::", "::" + functionName);
     }
 
     /** Return the member functions of a type. */

@@ -2,10 +2,9 @@ package com.adacore.polyglot;
 
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.Name;
+import com.adacore.polyglot.proxy.NameTypeExpr;
 import com.adacore.polyglot.proxy.ProxyVisitor;
-import com.adacore.polyglot.proxy.Reference;
 import com.adacore.polyglot.proxy.TypeDecl;
-import java.util.List;
 
 /** Enumeration of common native types */
 public enum NativeType {
@@ -41,21 +40,16 @@ public enum NativeType {
         }
     }
 
-    /** Default reference to a native type. */
-    public final Reference reference;
+    /** Default TypeExpr to a native type. */
+    public final NameTypeExpr typeExpr;
 
     /** Declaration object of the native type. */
     public final NativeTypeDecl declaration;
 
     private NativeType() {
-        this.reference =
-                new Reference(
-                        new FullyQualifiedName(
-                                List.of(Name.fromLower(this.toString().toLowerCase()))),
-                        false,
-                        false,
-                        false,
-                        false);
+        this.typeExpr =
+                new NameTypeExpr(
+                        new FullyQualifiedName(Name.fromLower(this.toString().toLowerCase())));
         this.declaration =
                 new NativeTypeDecl(
                         new FullyQualifiedName(Name.fromLower(this.toString().toLowerCase())),

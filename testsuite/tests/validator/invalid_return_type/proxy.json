@@ -10,6 +10,7 @@
           "symbol": "func_symbol",
           "parameters": [],
           "return_type": {
+            "kind": "typename",
             "name": { "names": ["module_1"] }
           },
           "return_owner": "unknown",

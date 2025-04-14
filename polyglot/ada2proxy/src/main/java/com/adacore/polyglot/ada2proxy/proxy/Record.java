@@ -6,13 +6,14 @@ import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Name;
+import com.adacore.polyglot.proxy.NameTypeExpr;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Parameter;
-import com.adacore.polyglot.proxy.Reference;
 import com.adacore.polyglot.proxy.Role;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.Transfer;
 import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
+import com.adacore.polyglot.proxy.TypeExpr;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,8 +25,8 @@ public class Record extends AdaDeclaration {
     /** List of all components. */
     public List<Component> components;
 
-    /** Reference to the record. */
-    private Reference ref;
+    /** TypeExpr to the record. */
+    private NameTypeExpr ref;
 
     /** Default freeing function of the type. */
     private FunctionDecl freeFunction;
@@ -50,9 +51,9 @@ public class Record extends AdaDeclaration {
         return this.origin.pFullyQualifiedName();
     }
 
-    /** Create a reference to the current type. */
-    public Reference getReference() {
-        if (this.ref == null) this.ref = AdaAPI.makeReferenceTo(this.origin, false);
+    /** Get a {@link TypeExpr} to the current type. */
+    public NameTypeExpr getTypeExpr() {
+        if (this.ref == null) this.ref = AdaAPI.makeTypeExpr(this.origin);
         return this.ref;
     }
 
@@ -73,17 +74,17 @@ public class Record extends AdaDeclaration {
         if (this.freeFunction == null)
             this.freeFunction =
                     new FunctionDecl(
-                            AdaAPI.makeProxyFullyQualifiedName(origin, false)
+                            AdaAPI.makeProxyFullyQualifiedName(origin)
                                     .append(name.concat(Name.fromLower("default_free"))),
                             "Generated function to free ``Self``",
-                            new Role(RoleKind.FREE, getReference(), null),
+                            new Role(RoleKind.FREE, getTypeExpr().name, null),
                             buildMemberSymbol("_Default_Free"),
                             List.of(
                                     new Parameter(
                                             Name.fromLower("self"),
-                                            getReference().withIsPointer(true),
+                                            getTypeExpr().makePointer(false, false),
                                             new Transfer(RequiredOwner.USER))),
-                            NativeType.VOID.reference,
+                            NativeType.VOID.typeExpr,
                             Owner.UNKNOWN,
                             false,
                             false,
@@ -94,13 +95,13 @@ public class Record extends AdaDeclaration {
     /** Return the allocating function of the type, or generate a new one if necessary. */
     public FunctionDecl getAllocFunction() {
         if (this.allocFunction == null) {
-            Reference type = getReference();
+            NameTypeExpr type = getTypeExpr();
             this.allocFunction =
                     new FunctionDecl(
-                            AdaAPI.makeProxyFullyQualifiedName(origin, false)
+                            AdaAPI.makeProxyFullyQualifiedName(origin)
                                     .append(name.concat(Name.fromLower("default_alloc"))),
                             "Generated function to alloc a " + name.toPascalWithUnderscore(),
-                            new Role(RoleKind.ALLOC, type, null),
+                            new Role(RoleKind.ALLOC, type.name, null),
                             buildMemberSymbol("_Default_Alloc"),
                             List.of(),
                             type,
@@ -115,18 +116,18 @@ public class Record extends AdaDeclaration {
     /** Return the cloning function of the type, or generate a new one if necessary. */
     public FunctionDecl getCloneFunction() {
         if (this.cloneFunction == null) {
-            Reference type = getReference();
+            NameTypeExpr type = getTypeExpr();
             this.cloneFunction =
                     new FunctionDecl(
-                            AdaAPI.makeProxyFullyQualifiedName(origin, false)
+                            AdaAPI.makeProxyFullyQualifiedName(origin)
                                     .append(name.concat(Name.fromLower("default_clone"))),
                             "Generated function to clone a " + name.toPascalWithUnderscore(),
-                            new Role(RoleKind.ALLOC, type, null),
+                            new Role(RoleKind.ALLOC, type.name, null),
                             buildMemberSymbol("_Default_Clone"),
                             List.of(
                                     new Parameter(
                                             Name.fromLower("self"),
-                                            type.withIsReference(true).withIsConst(true),
+                                            type.makeReference(true),
                                             new Transfer(RequiredOwner.USER))),
                             type,
                             Owner.USER,
@@ -143,21 +144,19 @@ public class Record extends AdaDeclaration {
             componentAccessors = new ArrayList<>(components.size() * 2);
 
             for (var c : components) {
-                Reference componentTypeRef = AdaAPI.makeReferenceTo(c.getType(), false);
+                TypeExpr componentTypeRef = AdaAPI.makeTypeExpr(c.getType());
                 // Create the getter function.
                 componentAccessors.add(
                         new FunctionDecl(
-                                AdaAPI.makeProxyFullyQualifiedName(origin, false)
+                                AdaAPI.makeProxyFullyQualifiedName(origin)
                                         .append(Name.fromLower("get").concat(c.name)),
                                 "Return the value of " + c.name.toPascalWithUnderscore(),
-                                new Role(RoleKind.GETTER, getReference(), c.name),
+                                new Role(RoleKind.GETTER, getTypeExpr().name, c.name),
                                 buildMemberSymbol("_Getter_" + c.name.toPascalWithUnderscore()),
                                 List.of(
                                         new Parameter(
                                                 Name.fromLower("self"),
-                                                getReference()
-                                                        .withIsReference(true)
-                                                        .withIsConst(true),
+                                                getTypeExpr().makeReference(true),
                                                 new Transfer(RequiredOwner.ANY))),
                                 componentTypeRef,
                                 Owner.USER,
@@ -166,28 +165,28 @@ public class Record extends AdaDeclaration {
                                 false));
 
                 // Get the type of the setter's new value.
-                Reference setterType = componentTypeRef;
+                TypeExpr setterType = componentTypeRef;
                 if (!c.getType().pIsScalarType(Libadalang.AdaNode.NONE))
                     // If the argument is not a scalar, get a const reference to the new value.
-                    setterType = setterType.withIsConst(true).withIsReference(true);
+                    setterType = setterType.makeReference(true);
                 // Create the setter function.
                 componentAccessors.add(
                         new FunctionDecl(
-                                AdaAPI.makeProxyFullyQualifiedName(origin, false)
+                                AdaAPI.makeProxyFullyQualifiedName(origin)
                                         .append(Name.fromLower("set").concat(c.name)),
                                 "Sets the value of " + c.name.toPascalWithUnderscore(),
-                                new Role(RoleKind.SETTER, getReference(), c.name),
+                                new Role(RoleKind.SETTER, getTypeExpr().name, c.name),
                                 buildMemberSymbol("_Setter_" + c.name.toPascalWithUnderscore()),
                                 List.of(
                                         new Parameter(
                                                 Name.fromLower("self"),
-                                                getReference().withIsReference(true),
+                                                getTypeExpr().makeReference(false),
                                                 new Transfer(RequiredOwner.ANY)),
                                         new Parameter(
                                                 Name.fromLower("new").concat(c.name),
                                                 setterType,
                                                 new Transfer(RequiredOwner.ANY))),
-                                NativeType.VOID.reference,
+                                NativeType.VOID.typeExpr,
                                 Owner.UNKNOWN,
                                 false,
                                 false,
@@ -206,7 +205,7 @@ public class Record extends AdaDeclaration {
     public ClassDecl toPolyglotProxy() {
         if (this.origin.fTypeDef() instanceof Libadalang.PrivateTypeDef def) {
             return new ClassDecl(
-                    AdaAPI.makeProxyFullyQualifiedName(origin, false),
+                    AdaAPI.makeProxyFullyQualifiedName(origin),
                     this.origin.pDoc(),
                     null,
                     8,
@@ -215,7 +214,7 @@ public class Record extends AdaDeclaration {
         }
         if (this.origin.fTypeDef() instanceof Libadalang.RecordTypeDef def) {
             return new ClassDecl(
-                    AdaAPI.makeProxyFullyQualifiedName(origin, false),
+                    AdaAPI.makeProxyFullyQualifiedName(origin),
                     this.origin.pDoc(),
                     null,
                     8,

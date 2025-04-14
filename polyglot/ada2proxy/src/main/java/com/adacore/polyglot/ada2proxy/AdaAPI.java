@@ -8,9 +8,9 @@ import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.Name;
-import com.adacore.polyglot.proxy.Reference;
+import com.adacore.polyglot.proxy.NameTypeExpr;
+import com.adacore.polyglot.proxy.TypeExpr;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,27 +18,20 @@ import java.util.stream.Stream;
 /** Utility class that provides methods to help generate Ada code from a Proxy. */
 public class AdaAPI {
 
-    /** Create a reference to decl, or its parent if ``onlyParent`` is true. */
-    public static FullyQualifiedName makeProxyFullyQualifiedName(
-            Libadalang.BasicDecl decl, Boolean onlyParent) {
+    /** Create a {@link FullyQualifiedName} to decl, or its parent if ``onlyParent`` is true. */
+    public static FullyQualifiedName makeProxyFullyQualifiedName(Libadalang.BasicDecl decl) {
         if (decl instanceof Libadalang.BaseTypeDecl typeDecl) {
             NativeType nativeType = checkNativeType(typeDecl);
-            if (nativeType != null) return nativeType.reference.name;
+            if (nativeType != null) return nativeType.typeExpr.name;
         }
         Libadalang.Symbol[] symbols = decl.pFullyQualifiedNameArray(false);
-        if (onlyParent && symbols.length == 1) return null;
         return new FullyQualifiedName(
-                Stream.of(onlyParent ? Arrays.copyOf(symbols, symbols.length - 1) : symbols)
-                        .map(s -> s.text)
-                        .map(Name::fromLower)
-                        .toList());
+                Stream.of(symbols).map(s -> s.text).map(Name::fromLower).toList());
     }
 
-    /** Create a reference to decl, or its parent if ``onlyParent`` is true. */
-    public static Reference makeReferenceTo(Libadalang.BasicDecl decl, Boolean onlyParent) {
-        if (onlyParent && decl.pFullyQualifiedNameArray(false).length == 1) return null;
-        return new Reference(
-                makeProxyFullyQualifiedName(decl, onlyParent), false, false, false, false);
+    /** Create a {@link TypeExpr} to ``decl`` , or its parent if ``onlyParent`` is true. */
+    public static NameTypeExpr makeTypeExpr(Libadalang.BasicDecl decl) {
+        return makeProxyFullyQualifiedName(decl).asTypeExpr();
     }
 
     /** Return the native type corresponding to bTypeDecl, or null if the type is not native. */
@@ -63,10 +56,10 @@ public class AdaAPI {
         return null;
     }
 
-    /** Create a reference to the type referenced by typeExpr */
-    public static Reference makeReferenceTo(Libadalang.TypeExpr typeExpr) {
-        if (typeExpr.isNone()) return NativeType.VOID.reference;
-        return makeReferenceTo(typeExpr.pDesignatedTypeDecl(), false);
+    /** Create a {@link TypeExpr} to the type referenced by typeExpr */
+    public static TypeExpr makeTypeExpr(Libadalang.TypeExpr typeExpr) {
+        if (typeExpr.isNone()) return NativeType.VOID.typeExpr;
+        return makeTypeExpr(typeExpr.pDesignatedTypeDecl());
     }
 
     /**
