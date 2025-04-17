@@ -115,7 +115,7 @@ public class AdaAPI {
                             // If the parameter has a Out mode, it is a reference and will be
                             // passed as an address.
                             if (p.isOutMode()) argBuilder.append("System.Address");
-                            else argBuilder.append(cInterfaceTypename(p.getFormalType()));
+                            else argBuilder.append(cInterfaceTypename(p.getType()));
                             return argBuilder.toString();
                         }))
                 .collect(Collectors.joining("; "));

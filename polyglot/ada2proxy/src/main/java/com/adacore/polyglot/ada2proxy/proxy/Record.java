@@ -1,9 +1,10 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.libadalang.Libadalang.TypeDef;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
-import com.adacore.polyglot.proxy.ClassDecl;
+import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.NameTypeExpr;
@@ -75,7 +76,7 @@ public class Record extends AdaDeclaration {
         if (this.freeFunction == null)
             this.freeFunction =
                     new FunctionDecl(
-                            AdaAPI.makeProxyFullyQualifiedName(origin)
+                            getProxyFullyQualifiedName()
                                     .append(name.concat(Name.fromLower("default_free"))),
                             "Generated function to free ``Self``",
                             new Role(RoleKind.FREE, getTypeExpr().name, null),
@@ -99,7 +100,7 @@ public class Record extends AdaDeclaration {
             NameTypeExpr type = getTypeExpr();
             this.allocFunction =
                     new FunctionDecl(
-                            AdaAPI.makeProxyFullyQualifiedName(origin)
+                            getProxyFullyQualifiedName()
                                     .append(name.concat(Name.fromLower("default_alloc"))),
                             "Generated function to alloc a " + name.toPascalWithUnderscore(),
                             new Role(RoleKind.ALLOC, type.name, null),
@@ -120,7 +121,7 @@ public class Record extends AdaDeclaration {
             NameTypeExpr type = getTypeExpr();
             this.cloneFunction =
                     new FunctionDecl(
-                            AdaAPI.makeProxyFullyQualifiedName(origin)
+                            getProxyFullyQualifiedName()
                                     .append(name.concat(Name.fromLower("default_clone"))),
                             "Generated function to clone a " + name.toPascalWithUnderscore(),
                             new Role(RoleKind.ALLOC, type.name, null),
@@ -149,7 +150,7 @@ public class Record extends AdaDeclaration {
                 // Create the getter function.
                 componentAccessors.add(
                         new FunctionDecl(
-                                AdaAPI.makeProxyFullyQualifiedName(origin)
+                                getProxyFullyQualifiedName()
                                         .append(Name.fromLower("get").concat(c.name)),
                                 "Return the value of " + c.name.toPascalWithUnderscore(),
                                 new Role(RoleKind.GETTER, getTypeExpr().name, c.name),
@@ -173,7 +174,7 @@ public class Record extends AdaDeclaration {
                 // Create the setter function.
                 componentAccessors.add(
                         new FunctionDecl(
-                                AdaAPI.makeProxyFullyQualifiedName(origin)
+                                getProxyFullyQualifiedName()
                                         .append(Name.fromLower("set").concat(c.name)),
                                 "Sets the value of " + c.name.toPascalWithUnderscore(),
                                 new Role(RoleKind.SETTER, getTypeExpr().name, c.name),
@@ -202,27 +203,16 @@ public class Record extends AdaDeclaration {
         return visitor.visit(this);
     }
 
+    public FullyQualifiedName getProxyFullyQualifiedName() {
+        return AdaAPI.makeProxyFullyQualifiedName(origin);
+    }
+
+    public TypeDef getTypeDef() {
+        return origin.fTypeDef();
+    }
+
     @Override
-    public ClassDecl toPolyglotProxy() {
-        if (this.origin.fTypeDef() instanceof Libadalang.PrivateTypeDef def) {
-            return new ClassDecl(
-                    AdaAPI.makeProxyFullyQualifiedName(origin),
-                    this.origin.pDoc(),
-                    null,
-                    8,
-                    false,
-                    List.of());
-        }
-        if (this.origin.fTypeDef() instanceof Libadalang.RecordTypeDef def) {
-            return new ClassDecl(
-                    AdaAPI.makeProxyFullyQualifiedName(origin),
-                    this.origin.pDoc(),
-                    null,
-                    8,
-                    false,
-                    this.components.stream().map(Component::toPolyglotProxy).toList());
-        }
-        throw new UnsupportedOperationException(
-                "Unsupported Ada type:" + this.origin.fTypeDef().getImage());
+    public String getDoc() {
+        return origin.pDoc();
     }
 }

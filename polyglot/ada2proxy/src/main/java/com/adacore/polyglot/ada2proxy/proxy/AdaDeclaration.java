@@ -1,6 +1,5 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
-import com.adacore.polyglot.proxy.Declaration;
 import com.adacore.polyglot.proxy.Name;
 
 public abstract class AdaDeclaration implements AdaProxyObject {
@@ -12,6 +11,5 @@ public abstract class AdaDeclaration implements AdaProxyObject {
         this.name = name;
     }
 
-    @Override
-    public abstract Declaration toPolyglotProxy();
+    public abstract String getDoc();
 }

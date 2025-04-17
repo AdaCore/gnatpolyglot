@@ -1,6 +1,5 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
-import com.adacore.polyglot.proxy.Proxy;
 import java.util.List;
 
 public class AdaProxy implements AdaProxyObject {
@@ -15,10 +14,5 @@ public class AdaProxy implements AdaProxyObject {
     @Override
     public <T> T accept(AdaProxyVisitor<T> visitor) {
         return visitor.visit(this);
-    }
-
-    @Override
-    public Proxy toPolyglotProxy() {
-        return new Proxy(packages.stream().map(Package::toPolyglotProxy).toList());
     }
 }

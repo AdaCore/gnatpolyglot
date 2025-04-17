@@ -1,12 +1,9 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
-import com.adacore.polyglot.NativeType;
-import com.adacore.polyglot.ada2proxy.AdaAPI;
+import com.adacore.libadalang.Libadalang.Mode;
 import com.adacore.polyglot.proxy.Name;
-import com.adacore.polyglot.proxy.Parameter;
 import com.adacore.polyglot.proxy.Transfer;
-import com.adacore.polyglot.proxy.TypeExpr;
 
 public class SubpParam implements AdaProxyObject {
 
@@ -33,13 +30,8 @@ public class SubpParam implements AdaProxyObject {
         return origin.fTypeExpr();
     }
 
-    public Libadalang.BaseTypeDecl getFormalType() {
-        return origin.pFormalType(Libadalang.AdaNode.NONE);
-    }
-
     public boolean isOutMode() {
-        return origin.fMode() instanceof Libadalang.ModeOut
-                || origin.fMode() instanceof Libadalang.ModeInOut;
+        return getMode() instanceof Libadalang.ModeOut || getMode() instanceof Libadalang.ModeInOut;
     }
 
     @Override
@@ -47,17 +39,7 @@ public class SubpParam implements AdaProxyObject {
         return visitor.visit(this);
     }
 
-    @Override
-    public Parameter toPolyglotProxy() {
-        TypeExpr typeRef = AdaAPI.makeTypeExpr(origin.fTypeExpr());
-        NativeType type = AdaAPI.checkNativeType(origin.pFormalType(Libadalang.AdaNode.NONE));
-        boolean isConst = false;
-        // If the parameter has the mode ``in`` or default, it is constant.
-        if (origin.fMode() instanceof Libadalang.ModeIn
-                || origin.fMode() instanceof Libadalang.ModeDefault) isConst = true;
-        // If the parameter is not a scalar, or has ``out`` or ``in out`` mode, it must be a
-        // reference.
-        if (type == null || isOutMode()) typeRef = typeRef.makeReference(isConst);
-        return new Parameter(name, typeRef, transfer);
+    public Mode getMode() {
+        return origin.fMode();
     }
 }

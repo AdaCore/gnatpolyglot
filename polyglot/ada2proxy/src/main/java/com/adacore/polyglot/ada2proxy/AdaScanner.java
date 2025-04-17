@@ -62,14 +62,14 @@ public class AdaScanner extends Scanner {
 
     @Override
     public Proxy getProxy() {
-        return proxy.toPolyglotProxy();
+        return AdaProxyTranslator.translate(proxy);
     }
 
     @Override
     public void generate(Path path) throws IOException {
         // Write the json proxy file.
         try {
-            proxy.toPolyglotProxy().writeProxy(path.resolve("proxy.json").toFile());
+            getProxy().writeProxy(path.resolve("proxy.json").toFile());
         } catch (Exception e) {
             throw new IOException(e);
         }
