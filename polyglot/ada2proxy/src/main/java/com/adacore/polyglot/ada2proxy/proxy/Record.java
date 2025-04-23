@@ -79,7 +79,7 @@ public class Record extends AdaDeclaration {
                             getProxyFullyQualifiedName()
                                     .append(name.concat(Name.fromLower("default_free"))),
                             "Generated function to free ``Self``",
-                            new Role(RoleKind.FREE, getTypeExpr().name, null),
+                            new Role(RoleKind.FREE, getTypeExpr(), null),
                             buildMemberSymbol("_Default_Free"),
                             List.of(
                                     new Parameter(
@@ -103,7 +103,7 @@ public class Record extends AdaDeclaration {
                             getProxyFullyQualifiedName()
                                     .append(name.concat(Name.fromLower("default_alloc"))),
                             "Generated function to alloc a " + name.toPascalWithUnderscore(),
-                            new Role(RoleKind.ALLOC, type.name, null),
+                            new Role(RoleKind.ALLOC, type, null),
                             buildMemberSymbol("_Default_Alloc"),
                             List.of(),
                             type,
@@ -124,7 +124,7 @@ public class Record extends AdaDeclaration {
                             getProxyFullyQualifiedName()
                                     .append(name.concat(Name.fromLower("default_clone"))),
                             "Generated function to clone a " + name.toPascalWithUnderscore(),
-                            new Role(RoleKind.ALLOC, type.name, null),
+                            new Role(RoleKind.ALLOC, type, null),
                             buildMemberSymbol("_Default_Clone"),
                             List.of(
                                     new Parameter(
@@ -153,7 +153,7 @@ public class Record extends AdaDeclaration {
                                 getProxyFullyQualifiedName()
                                         .append(Name.fromLower("get").concat(c.name)),
                                 "Return the value of " + c.name.toPascalWithUnderscore(),
-                                new Role(RoleKind.GETTER, getTypeExpr().name, c.name),
+                                new Role(RoleKind.GETTER, getTypeExpr(), c.name),
                                 buildMemberSymbol("_Getter_" + c.name.toPascalWithUnderscore()),
                                 List.of(
                                         new Parameter(
@@ -177,7 +177,7 @@ public class Record extends AdaDeclaration {
                                 getProxyFullyQualifiedName()
                                         .append(Name.fromLower("set").concat(c.name)),
                                 "Sets the value of " + c.name.toPascalWithUnderscore(),
-                                new Role(RoleKind.SETTER, getTypeExpr().name, c.name),
+                                new Role(RoleKind.SETTER, getTypeExpr(), c.name),
                                 buildMemberSymbol("_Setter_" + c.name.toPascalWithUnderscore()),
                                 List.of(
                                         new Parameter(

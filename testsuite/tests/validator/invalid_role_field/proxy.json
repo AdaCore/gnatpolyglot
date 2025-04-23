@@ -15,7 +15,10 @@
           },
           "role": {
             "kind": "getter",
-            "type": { "names": ["module_1", "class_type_1"] },
+            "type": {
+              "kind": "typename",
+              "name": { "names": ["module_1", "class_type_1"] }
+            },
             "field": "non_existant"
           },
           "return_owner": "unknown",

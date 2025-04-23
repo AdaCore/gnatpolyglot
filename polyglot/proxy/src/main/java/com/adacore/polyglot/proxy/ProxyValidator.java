@@ -145,7 +145,7 @@ public class ProxyValidator implements Callable<Integer> {
                 for (int i = 0; i < module.declarations.size(); i++) {
                     if (module.declarations.get(i) instanceof TypeDecl typeDecl) {
                         location.add("[" + i + "]");
-                        if (!context.register(module, typeDecl))
+                        if (!context.register(typeDecl))
                             addDiagnostic("an other type exists with the same name and parent");
                         location.pop();
                     }
@@ -169,7 +169,7 @@ public class ProxyValidator implements Callable<Integer> {
             if (functionDecl.role != null) {
                 Role role = functionDecl.role;
                 location.add(".role");
-                TypeDecl decl = context.getTypeDecl(role.type);
+                TypeDecl decl = context.getTypeDecl(role.type.getName());
                 if (decl instanceof ClassDecl classDecl) {
                     if (role.field != null) {
                         if (!classDecl.fields.stream().anyMatch(f -> f.name.equals(role.field)))
@@ -268,7 +268,13 @@ public class ProxyValidator implements Callable<Integer> {
         @Override
         public Boolean visit(Role role) {
             validateNonNull("type", role.type);
-            validateTypeRef("type", role.type);
+            // Verify that there are no TypeExpr other than ArrayTypeExpr and NameTypeExpr in the
+            // role's type.
+            TypeExpr roleType = role.type;
+            while (roleType instanceof ArrayTypeExpr arrayType) roleType = arrayType.typeExpr;
+            if (!(roleType instanceof NameTypeExpr))
+                addDiagnostic(
+                        ".type", "the type of a role can only be comprised of arrays and names");
 
             validateNonNull("kind", role.kind);
             // The ``field`` field should only be non null when ``kind`` is ``GETTER`` or ``SETTER``

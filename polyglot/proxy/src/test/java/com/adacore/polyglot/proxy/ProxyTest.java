@@ -81,7 +81,7 @@ public class ProxyTest {
                 """
             {
                 "kind": "method",
-                "type": { "names": [ "uint8" ] },
+                "type": { "kind": "typename", "name": { "names": [ "uint8" ] } },
                 "field": "f"
             }
         """;

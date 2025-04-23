@@ -227,11 +227,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             if (spec.pParams()[0]
                     .pFormalType(Libadalang.AdaNode.NONE)
                     .pMatchingType(primitiveType, Libadalang.AdaNode.NONE))
-                role =
-                        new Role(
-                                RoleKind.METHOD,
-                                AdaAPI.makeProxyFullyQualifiedName(primitiveType),
-                                null);
+                role = new Role(RoleKind.METHOD, AdaAPI.makeTypeExpr(primitiveType), null);
         }
 
         // Get the list of parameters.

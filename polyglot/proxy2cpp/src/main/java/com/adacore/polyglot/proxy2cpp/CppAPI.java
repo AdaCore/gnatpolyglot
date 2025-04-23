@@ -264,12 +264,15 @@ public class CppAPI {
     public String functionDefinitionName(FunctionDecl functionDecl) {
         String functionName = functionDecl.getLastName().toLower();
         if (!isMethod(functionDecl)) return functionName;
-        return functionDecl.role.type.join(
-                r -> lastNameToCppName(r), "", "::", "::" + functionName);
+        return functionDecl
+                .role
+                .type
+                .getName()
+                .join(r -> lastNameToCppName(r), "", "::", "::" + functionName);
     }
 
     /** Return the member functions of a type. */
     public ProxyContext.FunctionMembersEntry getMembers(TypeDecl decl) {
-        return context.getMembers(decl);
+        return context.getMembers(decl.name.asTypeExpr());
     }
 }

@@ -36,9 +36,13 @@ public class Role implements ProxyObject {
     @JsonProperty("kind")
     public final RoleKind kind;
 
-    /** The type the function should be a member of. */
+    /**
+     * The type the function should be a member of.
+     *
+     * <p>This TypeExpr can only be composed of ArrayTypeExprs or NameTypeExprs.
+     */
     @JsonProperty("type")
-    public final FullyQualifiedName type;
+    public final TypeExpr type;
 
     /**
      * When the role is {@link RoleKind#GETTER} or {@link RoleKind#SETTER}, the field of type it is
@@ -51,7 +55,7 @@ public class Role implements ProxyObject {
     @JsonCreator
     public Role(
             @JsonProperty(value = "kind", required = true) RoleKind kind,
-            @JsonProperty(value = "type", required = true) FullyQualifiedName type,
+            @JsonProperty(value = "type", required = true) TypeExpr type,
             @JsonProperty(value = "field") Name field) {
         this.kind = kind;
         this.type = type;
