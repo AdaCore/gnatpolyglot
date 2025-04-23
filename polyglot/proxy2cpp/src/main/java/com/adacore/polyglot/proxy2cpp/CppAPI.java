@@ -12,7 +12,6 @@ import com.adacore.polyglot.proxy.ReferenceTypeExpr;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeDecl;
 import java.nio.file.Path;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CppAPI {
@@ -94,7 +93,7 @@ public class CppAPI {
         if (typeDecl instanceof NativeTypeDecl nativeType)
             return nativeTypeName(nativeType.nativeType);
         if (typeDecl instanceof ClassDecl)
-            return makeRefString(name, fqn -> lastNameToCppName(fqn), "", "::", "");
+            return name.join(fqn -> lastNameToCppName(fqn), "", "::", "");
         throw new UnsupportedOperationException("Unsupported Cpp type");
     }
 
@@ -112,48 +111,25 @@ public class CppAPI {
         throw new UnsupportedOperationException("Unsupported C type");
     }
 
-    /**
-     * Join all the names with a prefix, suffix and separator, using a function to convert the names
-     * to strings. The converter is run on every sub-FullyQualifiedName and should return a
-     * conversion of the last name only.
-     */
-    public String makeRefString(
-            FullyQualifiedName ref,
-            Function<FullyQualifiedName, String> converter,
-            String prefix,
-            String separator,
-            String suffix) {
-        StringBuilder builder = new StringBuilder(prefix);
-        FullyQualifiedName current = new FullyQualifiedName(ref.names.subList(0, 1));
-        builder.append(converter.apply(current));
-        for (int i = 2; i <= ref.names.size(); i++) {
-            current = new FullyQualifiedName(ref.names.subList(0, i));
-            builder.append(separator).append(converter.apply(current));
-        }
-        return builder.append(suffix).toString();
-    }
-
     /** Create the string of the C++ namespace of the corresponding module. */
     public String namespacePath(Module module) {
-        return makeRefString(module.name, r -> r.getLastName().toLower(), "", "::", "");
+        return module.name.join(r -> r.getLastName().toLower(), "", "::", "");
     }
 
     /** Return the path to the source file of the corresponing module. */
     public Path sourceFilePath(Module module) {
         return outputPath.resolve(
-                makeRefString(module.name, r -> r.getLastName().toLower(), "", "_", ".cpp"));
+                module.name.join(r -> r.getLastName().toLower(), "", "_", ".cpp"));
     }
 
     /** Return the path to the header file of the corresponing module. */
     public Path headerFilePath(Module module) {
-        return headerDir.resolve(
-                makeRefString(module.name, r -> r.getLastName().toLower(), "", "_", ".h"));
+        return headerDir.resolve(module.name.join(r -> r.getLastName().toLower(), "", "_", ".h"));
     }
 
     /** Create a string for the name of the header guard macro. */
     public String headerGuard(Module module) {
-        return makeRefString(
-                module.name, r -> r.getLastName().toLower().toUpperCase(), "", "_", "_H");
+        return module.name.join(r -> r.getLastName().toLower().toUpperCase(), "", "_", "_H");
     }
 
     /** Create a string corresponding to the C parameter. */
@@ -236,8 +212,8 @@ public class CppAPI {
     public String functionDefinitionName(FunctionDecl functionDecl) {
         String functionName = functionDecl.getLastName().toLower();
         if (!isMethod(functionDecl)) return functionName;
-        return makeRefString(
-                functionDecl.role.type, r -> lastNameToCppName(r), "", "::", "::" + functionName);
+        return functionDecl.role.type.join(
+                r -> lastNameToCppName(r), "", "::", "::" + functionName);
     }
 
     /** Return the member functions of a type. */
