@@ -8,9 +8,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.Callable;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
 
 /** Inspect a Proxy and verify that values are correct according to the Proxy IR specification. */
-public class ProxyValidator {
+@Command(name = "validator", description = "validate a json proxy")
+public class ProxyValidator implements Callable<Integer> {
 
     public static class Validator implements ProxyVisitor<Boolean> {
 
@@ -339,6 +343,9 @@ public class ProxyValidator {
         }
     }
 
+    @Parameters(index = "0", paramLabel = "json_proxy", description = "json file of the proxy")
+    private File jsonProxy;
+
     private ProxyValidator() {}
 
     /** Run the validator on a proxy and return the list of errors found. */
@@ -360,16 +367,13 @@ public class ProxyValidator {
         return validator.context;
     }
 
-    public static void main(String[] args) {
-        if (args.length != 1) {
-            System.err.println("Usage: ./validator json_proxy");
-            System.exit(1);
-        }
-
+    @Override
+    public Integer call() throws Exception {
         try {
             // Read the proxy in the argument file.
-            Proxy.readProxy(new File(args[0]));
+            Proxy.readProxy(jsonProxy);
             System.out.println("No error found in the json");
+            return 0;
         } catch (ProxyException e) {
             // If the exception has no message, look at its cause.
             if (e.getMessages().isEmpty()) {
@@ -383,10 +387,10 @@ public class ProxyValidator {
                     System.out.println(m);
                 }
             }
-            System.exit(1);
+            return 1;
         } catch (IOException e) {
             System.err.println("Could not read the file:" + e.getMessage());
-            System.exit(1);
+            return 1;
         }
     }
 }
