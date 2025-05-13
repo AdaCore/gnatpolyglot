@@ -2,6 +2,7 @@ package com.adacore.polyglot.proxy;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 
 public class NameTypeExpr extends TypeExpr {
 
@@ -21,5 +22,19 @@ public class NameTypeExpr extends TypeExpr {
     @Override
     public FullyQualifiedName getName() {
         return name;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj instanceof NameTypeExpr other) {
+            return Objects.deepEquals(this.name, other.name);
+        }
+        return false;
     }
 }

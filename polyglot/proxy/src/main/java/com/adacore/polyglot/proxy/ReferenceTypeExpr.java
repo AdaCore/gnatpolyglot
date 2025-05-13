@@ -2,6 +2,7 @@ package com.adacore.polyglot.proxy;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 
 /** Type expression that represents references. */
 public class ReferenceTypeExpr extends TypeExpr {
@@ -30,5 +31,20 @@ public class ReferenceTypeExpr extends TypeExpr {
     @Override
     public FullyQualifiedName getName() {
         return typeExpr.getName();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(typeExpr, isConst);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj instanceof ReferenceTypeExpr other) {
+            return this.isConst == other.isConst
+                    && Objects.deepEquals(this.typeExpr, other.typeExpr);
+        }
+        return false;
     }
 }
