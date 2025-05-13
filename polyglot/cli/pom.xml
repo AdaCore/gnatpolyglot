@@ -78,6 +78,27 @@
         </configuration>
       </plugin>
 
+      <plugin>
+          <artifactId>exec-maven-plugin</artifactId>
+          <groupId>org.codehaus.mojo</groupId>
+          <version>3.0.0</version>
+          <executions>
+            <execution>
+              <id>make_native</id>
+              <phase>package</phase>
+              <goals>
+                <goal>exec</goal>
+              </goals>
+              <configuration>
+                <executable>${config.python}</executable>
+                <arguments>
+                  <argument>${basedir}/make.py</argument>
+                </arguments>
+              </configuration>
+            </execution>
+          </executions>
+      </plugin>
+
       <!-- Skip the Spotless check because everything is handled by the parent-->
       <plugin>
         <groupId>com.diffplug.spotless</groupId>

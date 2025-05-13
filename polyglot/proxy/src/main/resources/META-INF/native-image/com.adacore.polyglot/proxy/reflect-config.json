@@ -4,7 +4,7 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","java.lang.String","com.adacore.polyglot.proxy.Reference","int","boolean","java.util.List"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.polyglot.proxy.FullyQualifiedName","int","boolean","java.util.List"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.Declaration",
@@ -24,28 +24,35 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","java.lang.String","java.util.List"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","java.util.List"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.Field",
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","java.lang.String","com.adacore.polyglot.proxy.Reference"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","java.lang.String","com.adacore.polyglot.proxy.TypeExpr"] }]
+},
+{
+  "name":"com.adacore.polyglot.proxy.FullyQualifiedName",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.util.List"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.FunctionDecl",
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","java.lang.String","com.adacore.polyglot.proxy.Role","java.lang.String","java.util.List","com.adacore.polyglot.proxy.Reference","com.adacore.polyglot.proxy.Owner","java.lang.Boolean","java.lang.Boolean","java.lang.Boolean"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.polyglot.proxy.Role","java.lang.String","java.util.List","com.adacore.polyglot.proxy.TypeExpr","com.adacore.polyglot.proxy.Owner","java.lang.Boolean","java.lang.Boolean","java.lang.Boolean"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.Module",
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","java.util.List","com.adacore.polyglot.proxy.Reference"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.util.List"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.Name$NameJsonDeserializer",
@@ -54,6 +61,13 @@
 {
   "name":"com.adacore.polyglot.proxy.Name$NameJsonSerializer",
   "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.adacore.polyglot.proxy.NameTypeExpr",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.Owner",
@@ -65,7 +79,28 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","com.adacore.polyglot.proxy.Reference","com.adacore.polyglot.proxy.Transfer"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","com.adacore.polyglot.proxy.TypeExpr","com.adacore.polyglot.proxy.Transfer"] }]
+},
+{
+  "name":"com.adacore.polyglot.proxy.PointerTypeExpr",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.TypeExpr","boolean","boolean"] }]
+},
+{
+  "name":"com.adacore.polyglot.proxy.ReferenceTypeExpr",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.TypeExpr","boolean"] }]
+},
+{
+  "name":"com.adacore.polyglot.proxy.ArrayTypeExpr",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.TypeExpr"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.Proxy",
@@ -79,23 +114,11 @@
   "queryAllDeclaredMethods":true
 },
 {
-  "name":"com.adacore.polyglot.proxy.Reference",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true,
-  "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","com.adacore.polyglot.proxy.Reference$ReferenceKind","com.adacore.polyglot.proxy.Reference","boolean","boolean","boolean","boolean"] }]
-},
-{
-  "name":"com.adacore.polyglot.proxy.Reference$ReferenceKind",
-  "allDeclaredFields":true,
-  "queryAllDeclaredMethods":true
-},
-{
   "name":"com.adacore.polyglot.proxy.Role",
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Role$RoleKind","com.adacore.polyglot.proxy.Reference","com.adacore.polyglot.proxy.Name"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Role$RoleKind","com.adacore.polyglot.proxy.FullyQualifiedName","com.adacore.polyglot.proxy.Name"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.Role$RoleKind",
@@ -113,6 +136,17 @@
   "name":"com.adacore.polyglot.proxy.Transfer$RequiredOwner",
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true
+},
+{
+  "name":"com.adacore.polyglot.proxy.TypeDecl",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"com.adacore.polyglot.proxy.TypeExpr",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true
 },
 {
   "name":"com.fasterxml.jackson.databind.ext.Java7SupportImpl",

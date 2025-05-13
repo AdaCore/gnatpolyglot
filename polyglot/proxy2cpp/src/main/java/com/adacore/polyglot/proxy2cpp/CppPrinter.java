@@ -13,7 +13,11 @@ public class CppPrinter extends Printer {
 
     /** The template rendering engine. */
     private final TemplateEngine templateEngine =
-            TemplateEngine.createPrecompiled(Path.of("jte-classes"), ContentType.Plain);
+            TemplateEngine.createPrecompiled(
+                    Path.of("jte-classes"),
+                    ContentType.Plain,
+                    CppPrinter.class.getClassLoader(),
+                    "gg.jte.generate.precompiled.proxy2cpp");
 
     public CppPrinter(Path path) throws IOException, ProxyException {
         super(path);

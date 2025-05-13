@@ -27,12 +27,6 @@
   </dependencies>
 
   <build>
-    <resources>
-      <resource>
-        <directory>${project.build.directory}/generated-resources</directory>
-      </resource>
-    </resources>
-
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -83,8 +77,9 @@
             </extension>
           </extensions>
           <sourceDirectory>${project.basedir}/src/main/jte</sourceDirectory>
-          <targetResourceDirectory>${project.build.directory}/generated-resources</targetResourceDirectory>
+          <targetResourceDirectory>${project.build.directory}/classes/</targetResourceDirectory>
           <contentType>Plain</contentType>
+          <packageName>gg.jte.generate.precompiled.proxy2cpp</packageName>
         </configuration>
         <executions>
           <execution>

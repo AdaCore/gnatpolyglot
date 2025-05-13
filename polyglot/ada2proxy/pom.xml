@@ -89,8 +89,9 @@
             </extension>
           </extensions>
           <sourceDirectory>${project.basedir}/src/main/jte</sourceDirectory>
-          <targetResourceDirectory>${project.build.directory}/generated-resources</targetResourceDirectory>
+          <targetResourceDirectory>${project.build.directory}/classes/</targetResourceDirectory>
           <contentType>Plain</contentType>
+          <packageName>gg.jte.generate.precompiled.ada2proxy</packageName>
         </configuration>
         <executions>
           <execution>
