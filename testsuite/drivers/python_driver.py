@@ -43,4 +43,6 @@ class PythonDriver(DiffTestDriver):
     def run(self) -> None:
         env = dict(os.environ)
         self.add_path(env, "PYTHONPATH", self.support_dir)
+        if (self.env.options.native):
+            os.environ["POLYGLOT_NATIVE"] = ""
         self.shell([sys.executable] + self.script_and_args, env=env)

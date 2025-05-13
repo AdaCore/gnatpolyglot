@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+import os
 import sys
 
 from e3.testsuite import Testsuite
@@ -30,6 +31,12 @@ class PolyglotTestsuite(Testsuite):
             "--valgrind",
             action="store_true",
             help="Run test executables with Valgrind to check memory issues.",
+        )
+
+        parser.add_argument(
+            "--native",
+            action="store_true",
+            help="Run polyglot using the native-image build.",
         )
 
     def set_up(self) -> None:
