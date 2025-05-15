@@ -28,6 +28,21 @@ vim: filetype=jtecpp
 
         void *data() const;
 
+    public:
+        struct view {
+            view(void *data) : _data(data) {}
+
+            ${className} *operator->() {
+                return (${className} *)this;
+            }
+
+            operator ${className}&() {
+                return *(${className} *)this;
+            }
+        private:
+            void *_data;
+        };
+
     private:
         void *_data;
     };

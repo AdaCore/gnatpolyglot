@@ -37,7 +37,7 @@ Template file to generate bindings for record types.
       !{Component component = rec.getComponent(f.role.field);}
       @if(f.role.kind == RoleKind.GETTER)
          function ${f.getLastName().toPascalWithUnderscore()}
-           (Self: System.Address) return ${AdaAPI.cInterfaceTypename(component.getType())};
+           (Self: System.Address) return System.Address;
       @else
          procedure ${f.getLastName().toPascalWithUnderscore()}
            (Self: System.Address;
@@ -86,16 +86,12 @@ Template file to generate bindings for record types.
       }
       @if(f.role.kind == RoleKind.GETTER)
          function ${f.getLastName().toPascalWithUnderscore()}
-           (Self: System.Address) return ${AdaAPI.cInterfaceTypename(componentType)}
+           (Self: System.Address) return System.Address
          is
             Self_Value : ${recordName} with Address => Self;
             pragma Import(Ada, Self_Value);
          begin
-            declare
-               ${AdaAPI.makeDeclarations(componentType)}
-            begin
-               ${AdaAPI.makeReturnConversion(componentType, componentAccess)};
-            end;
+            ${AdaAPI.makeGetterReturnConversion(componentAccess)};
          end ${f.getLastName().toPascalWithUnderscore()};
       @else
          procedure ${f.getLastName().toPascalWithUnderscore()}

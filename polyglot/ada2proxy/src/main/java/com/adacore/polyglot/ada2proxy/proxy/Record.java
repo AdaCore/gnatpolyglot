@@ -157,10 +157,10 @@ public class Record extends AdaDeclaration {
                                 List.of(
                                         new Parameter(
                                                 Name.fromLower("self"),
-                                                getTypeExpr().makeReference(true),
+                                                getTypeExpr().makeReference(false),
                                                 new Transfer(RequiredOwner.ANY))),
-                                componentTypeRef,
-                                Owner.USER,
+                                componentTypeRef.makeReference(false),
+                                Owner.STATIC,
                                 false,
                                 false,
                                 false));

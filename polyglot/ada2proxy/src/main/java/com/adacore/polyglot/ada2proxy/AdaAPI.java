@@ -253,6 +253,13 @@ public class AdaAPI {
         return builder.toString();
     }
 
+    /** Create a string of the return statement for value returned by component getter functions. */
+    public static String makeGetterReturnConversion(String componentAccess) {
+        StringBuilder builder = new StringBuilder("return ");
+        builder.append(componentAccess).append("'Address");
+        return builder.toString();
+    }
+
     /** Return the file name of a module with a given extension. */
     public static Path toAdaFilename(Package pack, String suffix) {
         StringBuilder builder = new StringBuilder();

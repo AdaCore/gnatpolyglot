@@ -112,6 +112,20 @@ public class CppAPI {
         throw new UnsupportedOperationException("Unsupported Cpp type");
     }
 
+    /**
+     * Create a string that represents the C++ typename when returning a value of type `typeExpr`
+     */
+    public String cppReturnTypename(TypeExpr typeExpr) {
+        // When returning a reference to a non-native type, we cannot allocate a new proxy object
+        // and return a real C++ reference to it. Instead, return a `view` to the returned pointer
+        // that acts as a reference and that won't free the underlying pointer when destroyed.
+        if (typeExpr instanceof ReferenceTypeExpr ref
+                && !(context.getTypeDecl(ref.typeExpr.getName()) instanceof NativeTypeDecl)) {
+            return cppTypename(ref.typeExpr).concat("::view");
+        }
+        return cppTypename(typeExpr);
+    }
+
     private String lastNameToCppName(FullyQualifiedName fqn) {
         if (context.getTypeDecl(fqn) != null) return fqn.getLastName().toPascal();
         return fqn.getLastName().toLower();
@@ -125,10 +139,16 @@ public class CppAPI {
                 return nativeTypeName(nativeType.nativeType);
             // Classes are mapped as pointers in C.
             if (typeDecl instanceof ClassDecl) return "void *";
-        } else if (typeExpr instanceof ReferenceTypeExpr) {
+        } else if (typeExpr instanceof ReferenceTypeExpr ref) {
             // References are mapped as pointers in C.
+            if (ref.typeExpr instanceof NameTypeExpr name
+                    && context.getTypeDecl(name.name) instanceof NativeTypeDecl nativeType)
+                return nativeTypeName(nativeType.nativeType) + "*";
             return "void *";
-        } else if (typeExpr instanceof PointerTypeExpr) {
+        } else if (typeExpr instanceof PointerTypeExpr ptr) {
+            if (ptr.typeExpr instanceof NameTypeExpr name
+                    && context.getTypeDecl(name.name) instanceof NativeTypeDecl nativeType)
+                return nativeTypeName(nativeType.nativeType) + "*";
             return "void *";
         }
         throw new UnsupportedOperationException("Unsupported C type");
@@ -218,6 +238,25 @@ public class CppAPI {
                                 })
                         .collect(Collectors.joining(", ")));
         builder.append(")");
+        return builder.toString();
+    }
+
+    /** Create a string of the return statement. */
+    public String makeReturnStatement(FunctionDecl functionDecl) {
+        StringBuilder builder = new StringBuilder("return ");
+        if (functionDecl.returnType instanceof ReferenceTypeExpr ref
+                && ref.typeExpr instanceof NameTypeExpr name
+                && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
+            // When returning a reference to a native type, get the address returned by the `extern
+            // "C"` function and dereference it to create a reference.
+            // Note that unlike class types that require a wrapping proxy objects, native types can
+            // be directely addressed, thus we can return real C++ references.
+            builder.append("*");
+        } else {
+            // Otherwise, create a new object that wraps the returned pointer.
+            builder.append(cppReturnTypename(functionDecl.returnType));
+        }
+        builder.append("(").append(callCSymbol(functionDecl)).append(")");
         return builder.toString();
     }
 
