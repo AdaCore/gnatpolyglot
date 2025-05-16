@@ -1,6 +1,7 @@
 package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.libadalang.Libadalang.Expr;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
@@ -40,19 +41,41 @@ public class AdaAPI {
 
         bTypeDecl = bTypeDecl.pRootType(Libadalang.AdaNode.NONE);
 
-        if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl)
-            // If the BasicDecl was declared in the Standard Package, it is a builtin type.
-            if (typeDecl.getUnit().equals(typeDecl.pStandardUnit())) {
-                // TODO: Handle all builtin types
-
-                // ``Standard.Boolean`` maps to BOOL.
-                if (typeDecl.equals(typeDecl.pBoolType())) return NativeType.BOOL;
-                else if (typeDecl.pIsIntType(Libadalang.AdaNode.NONE)) {
-                    // Is there a way to know the max bounds of an integer type?
-                    if (typeDecl.fTypeDef() instanceof Libadalang.SignedIntTypeDef)
-                        return NativeType.SINT32;
+        if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl) {
+            if (typeDecl.equals(typeDecl.pBoolType())) return NativeType.BOOL;
+            if (typeDecl.equals(typeDecl.pStdCharType())) return NativeType.UINT8;
+            if (typeDecl.pIsIntType(Libadalang.AdaNode.NONE)) {
+                // Compute the number of required bits to hold the values of the type and
+                // find the smallest type able to hold it.
+                if (typeDecl.fTypeDef() instanceof Libadalang.SignedIntTypeDef signed) {
+                    Expr expr = signed.fRange().fRange();
+                    if (expr instanceof Libadalang.BinOp binop) {
+                        int bitLength =
+                                Math.max(
+                                                binop.fLeft().pEvalAsInt().bitLength(),
+                                                binop.fRight().pEvalAsInt().bitLength())
+                                        + 1;
+                        if (bitLength <= 8) return NativeType.SINT8;
+                        if (bitLength <= 16) return NativeType.SINT16;
+                        if (bitLength <= 32) return NativeType.SINT32;
+                        if (bitLength <= 64) return NativeType.SINT64;
+                        if (bitLength <= 128) return NativeType.SINT128;
+                    } else {
+                        throw new IllegalArgumentException(
+                                "Illegal integer type definition: " + expr.getImage());
+                    }
                 }
             }
+            if (typeDecl.fTypeDef() instanceof Libadalang.ModIntTypeDef unsigned) {
+                int bitLength = unsigned.fExpr().pEvalAsInt().bitLength();
+                if (bitLength <= 8) return NativeType.UINT8;
+                if (bitLength <= 16) return NativeType.UINT16;
+                if (bitLength <= 32) return NativeType.UINT32;
+                if (bitLength <= 64) return NativeType.UINT64;
+                if (bitLength <= 128) return NativeType.UINT128;
+            }
+        }
+
         return null;
     }
 
