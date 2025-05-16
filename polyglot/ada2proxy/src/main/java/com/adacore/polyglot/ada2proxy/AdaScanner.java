@@ -23,7 +23,11 @@ public class AdaScanner extends Scanner {
 
     /** The template rendering engine. */
     private final TemplateEngine templateEngine =
-            TemplateEngine.createPrecompiled(Path.of("jte-classes"), ContentType.Plain);
+            TemplateEngine.createPrecompiled(
+                    Path.of("jte-classes").resolve("ada2proxy"),
+                    ContentType.Plain,
+                    AdaScanner.class.getClassLoader(),
+                    "gg.jte.generate.precompiled.ada2proxy");
 
     /** The path to the Gpr project file. */
     private Path projectFile;

@@ -9,6 +9,7 @@
   <packaging>pom</packaging>
   <version>0.1.0</version>
   <modules>
+    <module>cli</module>
     <module>proxy</module>
     <module>ada2proxy</module>
     <module>proxy2cpp</module>
@@ -27,7 +28,17 @@
     </maven.surefire.reportsDirectory>
 
     <jte.version>3.1.16</jte.version>
+
+    <config.python>python</config.python>
   </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
+      <version>4.7.7</version>
+    </dependency>
+  </dependencies>
 
   <build>
     <plugins>

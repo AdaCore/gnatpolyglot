@@ -89,8 +89,9 @@
             </extension>
           </extensions>
           <sourceDirectory>${project.basedir}/src/main/jte</sourceDirectory>
-          <targetResourceDirectory>${project.build.directory}/generated-resources</targetResourceDirectory>
+          <targetResourceDirectory>${project.build.directory}/classes/</targetResourceDirectory>
           <contentType>Plain</contentType>
+          <packageName>gg.jte.generate.precompiled.ada2proxy</packageName>
         </configuration>
         <executions>
           <execution>
@@ -107,6 +108,24 @@
             <version>${jte.version}</version>
           </dependency>
         </dependencies>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.5</version>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>info.picocli</groupId>
+              <artifactId>picocli-codegen</artifactId>
+              <version>4.7.7</version>
+            </path>
+          </annotationProcessorPaths>
+          <compilerArgs>
+            <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
+          </compilerArgs>
+        </configuration>
       </plugin>
     </plugins>
   </build>

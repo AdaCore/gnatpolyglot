@@ -8,6 +8,8 @@ POLYGLOT_HOME = os.path.realpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "polyglot")
 )
 
+NATIVE_RUN = "POLYGLOT_NATIVE" in os.environ
+
 def run(argv: list[str], env: dict[str, str] | None = None) -> None:
     p = subprocess.run(
         argv,
@@ -35,17 +37,22 @@ def run_java(main_class: str, class_path: str, argv: list[str]) -> None:
     ]
     run([java_exec, "-cp", class_path, *extra_args, main_class, *argv])
 
-
+def run_native(subcommand: str, argv: list[str]):
+    polyglot = os.path.join(POLYGLOT_HOME, "bin", "polyglot")
+    run([polyglot, subcommand, *argv])
 
 def run_proxy_validator(proxy_location: str) -> None:
     """
     Run the proxy validator on the given proxy json file.
     """
-    run_java(
-        "com.adacore.polyglot.proxy.ProxyValidator",
-        os.path.join(POLYGLOT_HOME, "proxy", "target", "proxy.jar"),
-        [proxy_location],
-    )
+    if NATIVE_RUN:
+        run_native("validator", [proxy_location])
+    else:
+        run_java(
+            "com.adacore.polyglot.cli.PolyglotMain",
+            os.path.join(POLYGLOT_HOME, "cli", "target", "cli.jar"),
+            ["validator", proxy_location],
+        )
 
 
 def run_scanner(input_lang: str, project_file: str, output_path: str) -> None:
@@ -54,11 +61,14 @@ def run_scanner(input_lang: str, project_file: str, output_path: str) -> None:
     ``output_path``.
     """
     if input_lang == "ada":
-        run_java(
-            "com.adacore.polyglot.ada2proxy.Ada2Proxy",
-            os.path.join(POLYGLOT_HOME, "ada2proxy", "target", "ada2proxy.jar"),
-            [project_file, output_path],
-        )
+        if NATIVE_RUN:
+            run_native("ada2proxy", [project_file, "-o", output_path])
+        else:
+            run_java(
+                "com.adacore.polyglot.cli.PolyglotMain",
+                os.path.join(POLYGLOT_HOME, "cli", "target", "cli.jar"),
+                ["ada2proxy", project_file, "-o", output_path],
+            )
     else:
         raise Exception(f"Unknown language: {input_lang}")
 
@@ -108,11 +118,14 @@ def run_printer(output_lang: str, proxy_file: str, output_path: str) -> None:
     ``output_path``.
     """
     if output_lang == "c++":
-        run_java(
-            "com.adacore.polyglot.proxy2cpp.Proxy2Cpp",
-            os.path.join(POLYGLOT_HOME, "proxy2cpp", "target", "proxy2cpp.jar"),
-            [proxy_file, output_path],
-        )
+        if NATIVE_RUN:
+            run_native("proxy2cpp", [proxy_file, "-o", output_path])
+        else:
+            run_java(
+                "com.adacore.polyglot.cli.PolyglotMain",
+                os.path.join(POLYGLOT_HOME, "cli", "target", "cli.jar"),
+                ["proxy2cpp", proxy_file, "-o", output_path],
+            )
     else:
         raise Exception(f"Unknown language: {output_lang}")
 
