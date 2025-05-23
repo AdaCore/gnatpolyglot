@@ -20,5 +20,7 @@ Got from ada :Hello from Ada overloaded return type 4
 -4
 10 * 2 = 20
 10L * 4 = 40
+Hello from Ada overloaded Integer  1
+Hello from Ada overloaded My_Int  2
 
 Done.

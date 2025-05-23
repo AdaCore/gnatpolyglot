@@ -19,4 +19,8 @@ int main() {
     // Functions with different return type and arguments should not be renamed
     std::cout << "10 * 2 = " << test::no_rename(10) << "\n"
               << "10L * 4 = " << test::no_rename(10L) << "\n";
+
+    // Overlaoded_Int should have mapped to two differently named functions.
+    test::overloaded_int(1);
+    test::overloaded_int_1(2);
 }

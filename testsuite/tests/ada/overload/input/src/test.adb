@@ -59,5 +59,15 @@ package body Test is
       return F * 4;
    end No_Rename;
 
+   procedure Overloaded_Int (I: Integer) is
+   begin
+      Put_Line("Hello from Ada overloaded Integer " & I'Image);
+   end Overloaded_Int;
+
+   procedure Overloaded_Int (I: My_Int) is
+   begin
+      Put_Line("Hello from Ada overloaded My_Int " & I'Image);
+   end Overloaded_Int;
+
 end Test;
 

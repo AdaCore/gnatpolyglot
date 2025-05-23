@@ -168,6 +168,36 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 }
             }
         }
+
+        // If, once translated to the proxy, the names match and the parameters type expr are still
+        // similar after the previous loop, rename ``other`` to a unique name.
+        //
+        // :: code:
+        //      type My_Int is new Integer;
+        //      procedure Func (I: My_Int);  => "func"
+        //      procedure Func (I: Integer); => "func_1"
+        for (var overloads : getOverloads()) {
+            int renameNum = 1;
+            for (int i = 0; i < overloads.size(); i++) {
+                Subprogram subp = overloads.get(i);
+                for (var other : overloads.stream().skip(i + 1).toList()) {
+                    var subpParams =
+                            subp.parameters.stream()
+                                    .map(p -> AdaAPI.makeTypeExpr(p.getTypeExpr()))
+                                    .toList();
+                    var otherParams =
+                            other.parameters.stream()
+                                    .map(p -> AdaAPI.makeTypeExpr(p.getTypeExpr()))
+                                    .toList();
+                    if (subp.name.equals(other.name) && subpParams.equals(otherParams)) {
+                        other.name =
+                                Name.fromLower(
+                                        other.name.toLower() + "_" + String.valueOf(renameNum));
+                        renameNum += 1;
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -191,7 +221,9 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // TODO: When eng/libadalang/libadalang#1547 is resoled, use the new property.
         Role role = null;
         Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
-        if (!primitiveType.isNone() && spec.pParams().length != 0) {
+        if (!primitiveType.isNone()
+                && AdaAPI.checkNativeType(primitiveType) == null
+                && spec.pParams().length != 0) {
             if (spec.pParams()[0]
                     .pFormalType(Libadalang.AdaNode.NONE)
                     .pMatchingType(primitiveType, Libadalang.AdaNode.NONE))
