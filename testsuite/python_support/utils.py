@@ -7,6 +7,7 @@ from pathlib import Path
 POLYGLOT_HOME = os.path.realpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "polyglot")
 )
+RUNTIME_DIR = os.path.join(POLYGLOT_HOME, "runtimes")
 
 NATIVE_RUN = "--native" in sys.argv
 
@@ -79,19 +80,27 @@ def compile_main(output_lang: str, test_file: str, output_proxy: str, input_prox
     """
     if output_lang == "c++":
         proxy_c_files = glob.glob(os.path.join(output_proxy, "*.cpp"))
-        argv = [
-            "g++",
-            f"-I{os.path.join(output_proxy, 'include')}",
+        C_FLAGS = [
             "-Wall",
             "-Wextra",
             "-Werror",
             "-std=c++11",
-            f"-L{os.path.join(input_proxy, 'lib')}",
-            f"-ltest_proxy",
+        ]
+
+        LD_FLAGS = [
+            f"-L{os.path.join(input_proxy, 'lib_agg', 'static', 'dev')}",
+            f"-ltest_proxy_agg",
+            f"-ldl",
+        ]
+        argv = [
+            "g++",
+            f"-I{os.path.join(output_proxy, 'include')}",
             "-o",
             "main",
             test_file,
-            *proxy_c_files
+            *proxy_c_files,
+            *C_FLAGS,
+            *LD_FLAGS,
         ]
         run(argv)
         return os.path.realpath("main")
@@ -104,7 +113,12 @@ def compile_lib(input_lang: str, proxy_location: str) -> None:
     Compile the generated library at the given path.
     """
     if input_lang == "ada":
-        run(["gprbuild", str(list(Path(proxy_location).glob("*.gpr"))[0]), "-q"])
+        run([
+            "gprbuild",
+            str(list(Path(proxy_location).glob("*agg.gpr"))[0]),
+            "-q",
+            "-XLIBRARY_TYPE=static",
+        ])
     elif input_lang == "c++":
         run(["make", "--silent", "-B", "-C", proxy_location])
     else:

@@ -89,13 +89,33 @@ public class AdaAPI {
      * Create the list of strings containing the interfaces generated from the json proxy for the
      * gpr project file.
      */
-    public static String makeInterfaces(List<Package> packages) {
+    public static String getProxyInterfaces(List<Package> packages) {
         return packages.stream()
-                .map(
+                .flatMap(
                         p -> {
-                            return "\"%s.proxy\""
-                                    .formatted(p.getFullyQualifiedName().toLowerCase());
+                            return Stream.of(
+                                    AdaAPI.toAdaFilename(p, "-proxy.ads").toString(),
+                                    AdaAPI.toAdaFilename(p, "-proxy.adb").toString());
                         })
+                .map(s -> "\"%s\"".formatted(s))
+                .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Create the list of strings containing the interfaces generated from the json proxy for the
+     * gpr project file and the original files binded from the library for aggregate libraries.
+     */
+    public static String getAggregateInterfaces(List<Package> packages) {
+        return packages.stream()
+                .flatMap(
+                        p -> {
+                            return Stream.of(
+                                    AdaAPI.toAdaFilename(p, ".ads").toString(),
+                                    AdaAPI.toAdaFilename(p, ".adb").toString(),
+                                    AdaAPI.toAdaFilename(p, "-proxy.ads").toString(),
+                                    AdaAPI.toAdaFilename(p, "-proxy.adb").toString());
+                        })
+                .map(s -> "\"%s\"".formatted(s))
                 .collect(Collectors.joining(", "));
     }
 

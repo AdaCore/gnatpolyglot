@@ -68,14 +68,15 @@ public class AdaScanner extends Scanner {
     @Override
     public void generate(Path path) throws IOException {
         // Write the json proxy file.
+        Proxy jsonProxy = getProxy();
         try {
-            getProxy().writeProxy(path.resolve("proxy.json").toFile());
+            jsonProxy.writeProxy(path.resolve("proxy.json").toFile());
         } catch (Exception e) {
             throw new IOException(e);
         }
 
         // Generate the Gpr file for the proxy.
-        Path proxyGprFile = Path.of(projectName + "_proxy.gpr");
+        Path proxyGprFile = Path.of(projectName + "-proxy.gpr");
         try (FileOutput gprOutput = new FileOutput(path.resolve(proxyGprFile))) {
             templateEngine.render(
                     "proxy_gpr.jte",
@@ -83,6 +84,17 @@ public class AdaScanner extends Scanner {
                             "relLibPath", path.relativize(projectFile).toString(),
                             "projectName", Name.fromLower(projectName),
                             "proxy", proxy),
+                    gprOutput);
+        }
+        Path aggGprFile = Path.of(projectName + "-proxy-agg.gpr");
+        try (FileOutput gprOutput = new FileOutput(path.resolve(aggGprFile))) {
+            templateEngine.render(
+                    "proxy_agg_gpr.jte",
+                    Map.of(
+                            "relLibPath", path.relativize(projectFile).toString(),
+                            "projectName", Name.fromLower(projectName),
+                            "proxy", proxy,
+                            "runtimeLocation", getRuntimeLocation()),
                     gprOutput);
         }
 

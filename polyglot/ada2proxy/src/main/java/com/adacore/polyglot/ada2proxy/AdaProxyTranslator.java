@@ -15,8 +15,10 @@ import com.adacore.polyglot.proxy.Declaration;
 import com.adacore.polyglot.proxy.EnumItem;
 import com.adacore.polyglot.proxy.EnumerationDecl;
 import com.adacore.polyglot.proxy.Field;
+import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Module;
+import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Parameter;
 import com.adacore.polyglot.proxy.Proxy;
 import com.adacore.polyglot.proxy.ProxyObject;
@@ -36,6 +38,12 @@ public class AdaProxyTranslator {
             for (var pack : proxy.packages) {
                 modules.add((Module) pack.accept(this));
             }
+            modules.add(new Module(new FullyQualifiedName(Name.fromLower("polyglot")), List.of()));
+            modules.add(
+                    new Module(
+                            new FullyQualifiedName(
+                                    Name.fromLower("polyglot"), Name.fromLower("ada")),
+                            List.of()));
             return new Proxy(modules);
         }
 
