@@ -57,7 +57,7 @@ public class AdaScanner extends Scanner {
                         .map(s -> ctx.getUnitFromFile(s))
                         .map(u -> visitor.analyzeSpec(u))
                         .toList();
-        this.proxy = new AdaProxy(modules);
+        this.proxy = new AdaProxy(modules, visitor.getArrayTypes());
     }
 
     @Override
@@ -109,6 +109,14 @@ public class AdaScanner extends Scanner {
             Path packageBodyFile = AdaAPI.toAdaFilename(pack, "-proxy.adb");
             try (FileOutput packageBody = new FileOutput(proxySrc.resolve(packageBodyFile))) {
                 templateEngine.render("package_adb.jte", proxy.packages.get(0), packageBody);
+            }
+        }
+
+        // Create the array specific functions
+        if (!proxy.arrayTypes.isEmpty()) {
+            Path arraySpecFile = Path.of("polyglot-ada-arrays-non_native.ads");
+            try (FileOutput arraysSpec = new FileOutput(proxySrc.resolve(arraySpecFile))) {
+                templateEngine.render("arrays_ads.jte", proxy.arrayTypes, arraysSpec);
             }
         }
     }

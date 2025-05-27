@@ -39,6 +39,9 @@ library project ${projectName.toPascalWithUnderscore()}.Proxy is
    for Library_Standalone use Library_Standalone;
    for Library_Auto_Init use "true";
    for Interfaces use (
+      @if (!proxy.arrayTypes.isEmpty())
+         "polyglot-ada-arrays-non_native.ads",
+      @endif
       ${AdaAPI.getProxyInterfaces(proxy.packages)}
    );
 

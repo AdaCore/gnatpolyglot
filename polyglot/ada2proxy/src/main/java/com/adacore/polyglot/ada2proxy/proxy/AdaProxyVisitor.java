@@ -16,4 +16,6 @@ public interface AdaProxyVisitor<T> {
     T visit(Record rec);
 
     T visit(Component component);
+
+    T visit(Array array);
 }

@@ -18,18 +18,18 @@ public class Role implements ProxyObject {
         /** The function sets the value of {@link Role#field}. */
         @JsonProperty("setter")
         SETTER,
-        /** The function allocates a new instance of type {@link Role#type}. */
-        @JsonProperty("alloc")
-        ALLOC,
         /** The function initializes the field of an instance of type {@link Role#type}. */
         @JsonProperty("construct")
         CONSTRUCT,
-        /** The function frees an instance of type {@link Role#type}. */
-        @JsonProperty("free")
-        FREE,
         /** The function destructs an instance of type {@link Role#type}. */
         @JsonProperty("destruct")
         DESTRUCT,
+        /** The function allocates a new instance of type {@link Role#type}. */
+        @JsonProperty("alloc")
+        ALLOC,
+        /** The function frees an instance of type {@link Role#type}. */
+        @JsonProperty("free")
+        FREE,
     }
 
     /** The kind of role. */

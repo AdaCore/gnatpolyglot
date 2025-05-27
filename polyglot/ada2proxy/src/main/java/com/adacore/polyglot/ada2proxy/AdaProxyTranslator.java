@@ -3,6 +3,7 @@ package com.adacore.polyglot.ada2proxy;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxy;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxyVisitor;
+import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.EnumLiteral;
 import com.adacore.polyglot.ada2proxy.proxy.EnumType;
@@ -44,6 +45,18 @@ public class AdaProxyTranslator {
                             new FullyQualifiedName(
                                     Name.fromLower("polyglot"), Name.fromLower("ada")),
                             List.of()));
+            modules.add(
+                    new Module(
+                            new FullyQualifiedName(
+                                    Name.fromLower("polyglot"),
+                                    Name.fromLower("ada"),
+                                    Name.fromLower("arrays")),
+                            proxy.arrayTypes.stream()
+                                    .flatMap(
+                                            a ->
+                                                    a.memberFunctions().stream()
+                                                            .map(f -> (Declaration) f))
+                                    .toList()));
             return new Proxy(modules);
         }
 
@@ -124,6 +137,12 @@ public class AdaProxyTranslator {
         public Field visit(Component component) {
             return new Field(
                     component.name, component.getDoc(), AdaAPI.makeTypeExpr(component.getType()));
+        }
+
+        @Override
+        public ProxyObject visit(Array array) {
+            // Nothing to do
+            return null;
         }
     }
 

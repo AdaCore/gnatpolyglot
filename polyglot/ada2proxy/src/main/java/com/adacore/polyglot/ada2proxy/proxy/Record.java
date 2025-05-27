@@ -54,7 +54,7 @@ public class Record extends AdaDeclaration {
 
     /** Get a {@link TypeExpr} to the current type. */
     public NameTypeExpr getTypeExpr() {
-        if (this.ref == null) this.ref = AdaAPI.makeTypeExpr(this.origin);
+        if (this.ref == null) this.ref = (NameTypeExpr) AdaAPI.makeTypeExpr(this.origin);
         return this.ref;
     }
 
