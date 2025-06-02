@@ -6,11 +6,14 @@ import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Module;
+import com.adacore.polyglot.proxy.NameTypeExpr;
 import com.adacore.polyglot.proxy.Parameter;
+import com.adacore.polyglot.proxy.PointerTypeExpr;
 import com.adacore.polyglot.proxy.ProxyContext;
 import com.adacore.polyglot.proxy.ReferenceTypeExpr;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeDecl;
+import com.adacore.polyglot.proxy.TypeExpr;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 
@@ -88,12 +91,24 @@ public class CppAPI {
     }
 
     /** Return the refered C++ type's name. */
-    public String cppTypename(FullyQualifiedName name) {
-        TypeDecl typeDecl = context.getTypeDecl(name);
-        if (typeDecl instanceof NativeTypeDecl nativeType)
-            return nativeTypeName(nativeType.nativeType);
-        if (typeDecl instanceof ClassDecl)
-            return name.join(fqn -> lastNameToCppName(fqn), "", "::", "");
+    public String cppTypename(TypeExpr typeExpr) {
+        if (typeExpr instanceof NameTypeExpr name) {
+            TypeDecl typeDecl = context.getTypeDecl(name.name);
+            if (typeDecl instanceof NativeTypeDecl nativeType)
+                return nativeTypeName(nativeType.nativeType);
+            if (typeDecl instanceof ClassDecl)
+                return name.name.join(fqn -> lastNameToCppName(fqn), "", "::", "");
+        } else if (typeExpr instanceof ReferenceTypeExpr ref) {
+            StringBuilder builder = new StringBuilder();
+            if (ref.isConst) builder.append("const ");
+            builder.append(cppTypename(ref.typeExpr)).append(" &");
+            return builder.toString();
+        } else if (typeExpr instanceof PointerTypeExpr pointer) {
+            StringBuilder builder = new StringBuilder();
+            if (pointer.isConst) builder.append("const ");
+            builder.append(cppTypename(pointer.typeExpr)).append(" *");
+            return builder.toString();
+        }
         throw new UnsupportedOperationException("Unsupported Cpp type");
     }
 
@@ -103,11 +118,19 @@ public class CppAPI {
     }
 
     /** Return the refered C type's name. */
-    public String cTypename(FullyQualifiedName name) {
-        TypeDecl typeDecl = context.getTypeDecl(name);
-        if (typeDecl instanceof NativeTypeDecl nativeType)
-            return nativeTypeName(nativeType.nativeType);
-        if (typeDecl instanceof ClassDecl) return "void *";
+    public String cTypename(TypeExpr typeExpr) {
+        if (typeExpr instanceof NameTypeExpr name) {
+            TypeDecl typeDecl = context.getTypeDecl(name.name);
+            if (typeDecl instanceof NativeTypeDecl nativeType)
+                return nativeTypeName(nativeType.nativeType);
+            // Classes are mapped as pointers in C.
+            if (typeDecl instanceof ClassDecl) return "void *";
+        } else if (typeExpr instanceof ReferenceTypeExpr) {
+            // References are mapped as pointers in C.
+            return "void *";
+        } else if (typeExpr instanceof PointerTypeExpr) {
+            return "void *";
+        }
         throw new UnsupportedOperationException("Unsupported C type");
     }
 
@@ -135,24 +158,14 @@ public class CppAPI {
     /** Create a string corresponding to the C parameter. */
     private String toCParam(Parameter parameter) {
         StringBuilder builder = new StringBuilder();
-        if (parameter.type.isConst()) builder.append("const ");
-        builder.append(cTypename(parameter.type.getName())).append(" ");
-        // cTypename returns "void *" for classes, so we still need to transform native types to
-        // pointers when they're used as reference parameters.
-        if (parameter.type instanceof ReferenceTypeExpr ref
-                && context.getTypeDecl(ref.typeExpr.getName()) instanceof NativeTypeDecl)
-            builder.append("*");
-        builder.append(parameter.name.toLower());
+        builder.append(cTypename(parameter.type)).append(" ").append(parameter.name.toLower());
         return builder.toString();
     }
 
     /** Create a string corresponding to the C++ parameter. */
     private String toCppParam(Parameter parameter) {
         StringBuilder builder = new StringBuilder();
-        if (parameter.type.isConst()) builder.append("const ");
-        builder.append(cppTypename(parameter.type.getName())).append(" ");
-        if (parameter.type instanceof ReferenceTypeExpr) builder.append("&");
-        builder.append(parameter.name.toLower());
+        builder.append(cppTypename(parameter.type)).append(" ").append(parameter.name.toLower());
         return builder.toString();
     }
 
