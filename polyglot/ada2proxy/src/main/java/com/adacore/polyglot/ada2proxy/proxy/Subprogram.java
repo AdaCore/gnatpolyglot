@@ -40,6 +40,22 @@ public class Subprogram extends AdaDeclaration {
         this.owner = owner;
     }
 
+    public String getDoc() {
+        StringBuilder builder = new StringBuilder(origin.pDoc());
+        // If the function has a different name when binded in the proxy, add documentation to
+        // inform the origin.
+        if (!name.toPascalWithUnderscore().equals(origin.pRelativeName().getText())) {
+            if (!builder.isEmpty()) builder.append("\n\n");
+            builder.append("Binds to ").append(origin.pUniqueIdentifyingName());
+        }
+        return builder.toString();
+    }
+
+    /** Return the fully qualified name of the declaration of origin. */
+    public String getOriginName() {
+        return origin.pFullyQualifiedName();
+    }
+
     /** Return whether ``funDecl`` is a procedure or a function. */
     public boolean isProcedure() {
         return origin.fSubpSpec().fSubpReturns().isNone();
@@ -58,8 +74,10 @@ public class Subprogram extends AdaDeclaration {
     @Override
     public FunctionDecl toPolyglotProxy() {
         return new FunctionDecl(
-                AdaAPI.makeProxyFullyQualifiedName(origin),
-                origin.pDoc(),
+                AdaAPI.makeProxyFullyQualifiedName(origin)
+                        .getParentFullyQualifiedName()
+                        .append(name),
+                getDoc(),
                 role,
                 symbol,
                 parameters.stream().map(SubpParam::toPolyglotProxy).toList(),

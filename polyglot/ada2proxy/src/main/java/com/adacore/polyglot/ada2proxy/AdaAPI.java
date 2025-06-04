@@ -183,7 +183,7 @@ public class AdaAPI {
     /** Create a string to call a function from the proxy. */
     public static String call(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
-        builder.append(subp.name.toPascalWithUnderscore());
+        builder.append(subp.getOriginName());
         if (!subp.parameters.isEmpty()) {
             builder.append(" (")
                     .append(
@@ -221,8 +221,10 @@ public class AdaAPI {
                     .append("'(");
         }
         // Build the call to the binded subprogram.
-        builder.append(returnedValue);
-        builder.append(")");
+        builder.append(returnedType.pFullyQualifiedName())
+                .append("'(")
+                .append(returnedValue)
+                .append("))");
         if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)) builder.append(")");
         return builder.toString();
     }

@@ -64,7 +64,8 @@ public class Record extends AdaDeclaration {
 
     /** Create a symbol for generated member functions. */
     private String buildMemberSymbol(String suffix) {
-        StringBuilder symbolBuilder = new StringBuilder("_P_");
+        // The 3rd character of symbols for polyglot genererated functions is "G" (for Generated)
+        StringBuilder symbolBuilder = new StringBuilder("_PG");
         symbolBuilder.append(getFullyQualifiedName().replace(".", "_")).append(suffix);
         return symbolBuilder.toString();
     }

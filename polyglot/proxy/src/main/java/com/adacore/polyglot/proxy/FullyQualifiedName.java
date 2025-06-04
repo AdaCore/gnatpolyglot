@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /** Fully qualified name of a declaration. */
 public class FullyQualifiedName implements ProxyObject {
@@ -54,9 +55,7 @@ public class FullyQualifiedName implements ProxyObject {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 31 * hash + names.hashCode();
-        return hash;
+        return Objects.hash(names);
     }
 
     @Override

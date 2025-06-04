@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -175,6 +176,6 @@ public class Name {
 
     @Override
     public int hashCode() {
-        return this.name.hashCode();
+        return Objects.hash(name.hashCode());
     }
 }

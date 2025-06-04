@@ -1,6 +1,7 @@
 package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
@@ -14,17 +15,49 @@ import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.Transfer;
 import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Visitor class to analyze Ada spec files and generate the proxy. */
 public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
+    private Set<String> symbols = new HashSet<>();
+
     /** Turn a fully qualified name into a unique C symbol. */
-    private static String symbolify(String fullyQualName) {
-        return "__" + fullyQualName.replace(".", "_");
+    private String symbolify(Libadalang.SubpSpec spec) {
+        StringBuilder builder = new StringBuilder();
+        // Symbols starting with a "_", followed by either a capital letter or an other
+        // "_" are considered reserved identifier.
+        // The prefix of the symbols:
+        // - starts with the 2 same first characters ("_P") to reduce the risk of clashing with
+        // other external symbols as much as possible
+        // - has a third character to differentiate binded ``U``ser functions from the polyglot
+        // ``G``enerated functions such as getters or setters.
+        builder.append("_PU").append(spec.pName().pFullyQualifiedName().replace(".", "_"));
+        if (spec.fSubpReturns().isNone()) {
+            builder.append("Void");
+        } else {
+            builder.append(
+                    spec.pReturnType(Libadalang.AdaNode.NONE)
+                            .pFullyQualifiedName()
+                            .replace(".", "_"));
+        }
+        String res = builder.toString();
+        int count = 0;
+        // While the symbol is not unique, keep trying with a new one.
+        while (symbols.contains(res)) {
+            StringBuilder b = new StringBuilder(builder);
+            res = b.append(count).toString();
+        }
+        // Register the new symbol.
+        symbols.add(res);
+        return res;
     }
 
     /** List of declarations declared by the module */
@@ -71,12 +104,108 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return null;
     }
 
+    /**
+     * Group subprograms of the current package by name and ignore any subprogram that are not
+     * overloaded.
+     */
+    private List<List<Subprogram>> getOverloads() {
+        return declarations.stream()
+                .filter(d -> d instanceof Subprogram)
+                .map(d -> (Subprogram) d)
+                // Group functions by their name
+                .collect(Collectors.groupingBy(d -> d.name))
+                .entrySet()
+                .stream()
+                // Ignore functions that have no overloads
+                .filter(e -> e.getValue().size() > 1)
+                .map(Entry::getValue)
+                .toList();
+    }
+
+    /**
+     * Return whether lhs and rhs have a naming conflict and their parameters are similar, but not
+     * their return type.
+     */
+    public boolean hasNamingConflict(Subprogram lhs, Subprogram rhs) {
+        if (!lhs.name.equals(rhs.name) || lhs.parameters.size() != lhs.parameters.size())
+            return false;
+        for (int i = 0; i < lhs.parameters.size(); i++) {
+            if (!lhs.parameters.get(i).equals(rhs.parameters.get(i))) return false;
+        }
+        return !lhs.getReturnType().equals(rhs.getReturnType());
+    }
+
+    /**
+     * Resolve naming conflicts among the subprograms found in the current package.
+     *
+     * <p>Ada supports return type overloading. As this is not very common among other programming
+     * languages, the Ada scanner resolves naming conflicts itself when it occurs.
+     */
+    public void resolveNameConflicts() {
+        for (var overloads : getOverloads()) {
+            Subprogram firstSubp = overloads.get(0);
+            boolean needsRenaming =
+                    overloads.stream().skip(1).anyMatch(sp -> hasNamingConflict(firstSubp, sp));
+            // If any subprogram return type differ in the list of overload, add the return type as
+            // the prefix of the subprogram's name in the proxy.
+            //
+            // :: code:
+            //      procedure Func;              => "void_func"
+            //      function Func return Integer => "standard_integer_func"
+            if (needsRenaming) {
+                for (var subp : overloads) {
+                    Name prefix;
+                    if (subp.getReturnType().isNone()) {
+                        prefix = NativeType.VOID.declaration.name.getLastName();
+                    } else {
+                        prefix =
+                                Name.fromPascalWithUnderscore(
+                                        subp.getReturnType()
+                                                .pFullyQualifiedName()
+                                                .replace(".", "_"));
+                    }
+                    subp.name = prefix.concat(subp.name);
+                }
+            }
+        }
+
+        // If, once translated to the proxy, the names match and the parameters type expr are still
+        // similar after the previous loop, rename ``other`` to a unique name.
+        //
+        // :: code:
+        //      type My_Int is new Integer;
+        //      procedure Func (I: My_Int);  => "func"
+        //      procedure Func (I: Integer); => "func_1"
+        for (var overloads : getOverloads()) {
+            int renameNum = 1;
+            for (int i = 0; i < overloads.size(); i++) {
+                Subprogram subp = overloads.get(i);
+                for (var other : overloads.stream().skip(i + 1).toList()) {
+                    var subpParams =
+                            subp.parameters.stream()
+                                    .map(p -> AdaAPI.makeTypeExpr(p.getTypeExpr()))
+                                    .toList();
+                    var otherParams =
+                            other.parameters.stream()
+                                    .map(p -> AdaAPI.makeTypeExpr(p.getTypeExpr()))
+                                    .toList();
+                    if (subp.name.equals(other.name) && subpParams.equals(otherParams)) {
+                        other.name =
+                                Name.fromLower(
+                                        other.name.toLower() + "_" + String.valueOf(renameNum));
+                        renameNum += 1;
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     public Void visit(Libadalang.PackageDecl node) {
-        node.fPublicPart().fDecls().accept(this);
-
-        // The name of the current package is the last symbol in the array.
         this.analyzedPackage = node;
+
+        node.fPublicPart().fDecls().accept(this);
+        resolveNameConflicts();
 
         return null;
     }
@@ -86,13 +215,15 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         Libadalang.SubpSpec spec = node.fSubpSpec();
 
         // Get the C symbol of the function.
-        String symbol = symbolify(node.pFullyQualifiedName());
+        String symbol = symbolify(spec);
 
         // If the function is callable with the dot notation, it is a method.
         // TODO: When eng/libadalang/libadalang#1547 is resoled, use the new property.
         Role role = null;
         Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
-        if (!primitiveType.isNone() && spec.pParams().length != 0) {
+        if (!primitiveType.isNone()
+                && AdaAPI.checkNativeType(primitiveType) == null
+                && spec.pParams().length != 0) {
             if (spec.pParams()[0]
                     .pFormalType(Libadalang.AdaNode.NONE)
                     .pMatchingType(primitiveType, Libadalang.AdaNode.NONE))

@@ -2,6 +2,7 @@ package com.adacore.polyglot.proxy;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 
 /** Type expression that represents pointers. */
 public class PointerTypeExpr extends TypeExpr {
@@ -36,5 +37,21 @@ public class PointerTypeExpr extends TypeExpr {
     @Override
     public FullyQualifiedName getName() {
         return typeExpr.getName();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(isConst, typeExpr, isNonNull);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj instanceof PointerTypeExpr other) {
+            return this.isConst == other.isConst
+                    && this.isNonNull == other.isNonNull
+                    && Objects.deepEquals(other, obj);
+        }
+        return false;
     }
 }
