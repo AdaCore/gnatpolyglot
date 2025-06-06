@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 /** Fully qualified name of a declaration. */
 public class FullyQualifiedName implements ProxyObject {
@@ -42,6 +43,26 @@ public class FullyQualifiedName implements ProxyObject {
     /** Create a {@link NameTypeExpr} from the current fully qualified name. */
     public NameTypeExpr asTypeExpr() {
         return new NameTypeExpr(this);
+    }
+
+    /**
+     * Join all the names with a prefix, suffix and separator, using a function to convert the names
+     * to strings. The converter is run on every sub-FullyQualifiedName and should return a
+     * conversion of the last name only.
+     */
+    public String join(
+            Function<FullyQualifiedName, String> converter,
+            String prefix,
+            String separator,
+            String suffix) {
+        StringBuilder builder = new StringBuilder(prefix);
+        FullyQualifiedName current = new FullyQualifiedName(names.subList(0, 1));
+        builder.append(converter.apply(current));
+        for (int i = 2; i <= names.size(); i++) {
+            current = new FullyQualifiedName(names.subList(0, i));
+            builder.append(separator).append(converter.apply(current));
+        }
+        return builder.append(suffix).toString();
     }
 
     @Override

@@ -37,6 +37,11 @@ public class SubpParam implements AdaProxyObject {
         return origin.pFormalType(Libadalang.AdaNode.NONE);
     }
 
+    public boolean isOutMode() {
+        return origin.fMode() instanceof Libadalang.ModeOut
+                || origin.fMode() instanceof Libadalang.ModeInOut;
+    }
+
     @Override
     public <T> T accept(AdaProxyVisitor<T> visitor) {
         return visitor.visit(this);
@@ -47,9 +52,12 @@ public class SubpParam implements AdaProxyObject {
         TypeExpr typeRef = AdaAPI.makeTypeExpr(origin.fTypeExpr());
         NativeType type = AdaAPI.checkNativeType(origin.pFormalType(Libadalang.AdaNode.NONE));
         boolean isConst = false;
+        // If the parameter has the mode ``in`` or default, it is constant.
         if (origin.fMode() instanceof Libadalang.ModeIn
                 || origin.fMode() instanceof Libadalang.ModeDefault) isConst = true;
-        if (type == null) typeRef = typeRef.makeReference(isConst);
+        // If the parameter is not a scalar, or has ``out`` or ``in out`` mode, it must be a
+        // reference.
+        if (type == null || isOutMode()) typeRef = typeRef.makeReference(isConst);
         return new Parameter(name, typeRef, transfer);
     }
 }
