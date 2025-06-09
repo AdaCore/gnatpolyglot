@@ -22,13 +22,13 @@
     <dependency>
       <groupId>com.adacore</groupId>
       <artifactId>libadalang</artifactId>
-      <version>0.1</version>
+      <version>${config.libadalang.version}</version>
     </dependency>
 
     <dependency>
       <groupId>gg.jte</groupId>
       <artifactId>jte-runtime</artifactId>
-      <version>${jte.version}</version>
+      <version>${config.jte.version}</version>
     </dependency>
   </dependencies>
 
@@ -81,7 +81,7 @@
       <plugin>
         <groupId>gg.jte</groupId>
         <artifactId>jte-maven-plugin</artifactId>
-        <version>${jte.version}</version>
+        <version>${config.jte.version}</version>
         <configuration>
           <extensions>
             <extension>
@@ -105,7 +105,7 @@
           <dependency>
             <groupId>gg.jte</groupId>
             <artifactId>jte-native-resources</artifactId>
-            <version>${jte.version}</version>
+            <version>${config.jte.version}</version>
           </dependency>
         </dependencies>
       </plugin>

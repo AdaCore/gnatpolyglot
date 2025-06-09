@@ -27,7 +27,9 @@
       ${project.build.directory}/surefire-reports
     </maven.surefire.reportsDirectory>
 
-    <jte.version>3.1.16</jte.version>
+    <config.jte.version>3.1.16</config.jte.version>
+
+    <config.libadalang.version>0.1</config.libadalang.version>
 
     <config.python>python</config.python>
   </properties>
