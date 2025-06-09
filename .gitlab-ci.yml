@@ -1,0 +1,32 @@
+stages:
+  - single
+
+check_issue:
+  stage: single
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  services:
+    - image:e3
+    - cpu:1
+  variables:
+    GIT_STRATEGY: none # do not checkout the current repo, not needed
+  script:
+    - require_issue
+
+build_and_test:
+  stage: single
+  interruptible: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  services:
+    - image:pe-base
+    - cpu:8
+  script:
+    - generic_anod_ci
+    - . /tmp/ci_env.sh
+    # The testsuite is fast enough that we can always run it with valgrind
+    - anod test polyglot --qualifier=valgrind
+    - testsuite_reports
+  artifacts:
+    reports:
+      junit: xunit-*.xml
