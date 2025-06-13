@@ -275,4 +275,8 @@ public class CppAPI {
     public ProxyContext.FunctionMembersEntry getMembers(TypeDecl decl) {
         return context.getMembers(decl.name.asTypeExpr());
     }
+
+    public List<String> getIncludes(Module module) {
+        return IncludeCollector.getIncludes(module);
+    }
 }

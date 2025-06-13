@@ -8,7 +8,9 @@ vim: filetype=jtecpp
 @param CppAPI api
 @param Module module
 
-#include "${api.headerFilePath(module).getFileName().toString()}"
+@for (var include : api.getIncludes(module))
+#include "${include}"
+@endfor
 
 namespace ${api.namespacePath(module)} {
 
