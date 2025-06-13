@@ -39,6 +39,24 @@ class PolyglotTestsuite(Testsuite):
             help="Run polyglot using the native-image build.",
         )
 
+        parser.add_argument(
+            "--maven-executable",
+            help="Specify the Maven executable to use. The default one is"
+            ' "mvn".'
+        )
+
+        parser.add_argument(
+            "--maven-local-repo",
+            help="Specify the Maven repository to use. The default one is the"
+            " user's repository (~/.m2).",
+        )
+
+        parser.add_argument(
+            "--lal_version",
+            help="Specify the version of Libadalang to use. The default one is"
+            ' "0.1".'
+        )
+
     def set_up(self) -> None:
         super().set_up()
 

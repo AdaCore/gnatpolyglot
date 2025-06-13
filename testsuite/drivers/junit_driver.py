@@ -35,25 +35,32 @@ class JunitDriver(ClassicTestDriver):
         pass
 
     def run(self) -> None:
-        mvn = "mvn" if os.name != "nt" else "mvn.cmd"
+        argv = [
+            self.env.options.maven_executable or "mvn",
+            "test",
+            "-q",
+            "-f",
+            self.polyglot_java_root_dir,
+            # Do not print the summary.
+            f"-DprintSummary=false",
+            # Custom argument to change Surefire's report directory.
+            f"-Dmaven.surefire.reportsDirectory={self.results_dir}",
+            # If a test fails, maven will exit with != 0, ending the
+            # current test and preventing the analysis of the test results.
+            f"-Dmaven.test.failure.ignore=true",
+        ]
+
+        if self.env.options.maven_local_repo is not None:
+            argv.append(
+                "-Dmaven.repo.local=" + self.env.options.maven_local_repo
+            )
+        if self.env.options.lal_version is not None:
+            argv.append(
+                "-Dconfig.libadalang.version=" + self.env.options.lal_version
+            )
 
         # Run the Junit testsuites
-        self.shell(
-            [
-                mvn,
-                "test",
-                "-q",
-                "-f",
-                self.polyglot_java_root_dir,
-                # Do not print the summary.
-                f"-DprintSummary=false",
-                # Custom argument to change Surefire's report directory.
-                f"-Dmaven.surefire.reportsDirectory={self.results_dir}",
-                # If a test fails, maven will exit with != 0, ending the
-                # current test and preventing the analysis of the test results.
-                f"-Dmaven.test.failure.ignore=true",
-            ]
-        )
+        self.shell(argv)
 
         # Aggregate all the results.
         #

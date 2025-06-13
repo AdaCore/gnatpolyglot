@@ -4,6 +4,7 @@
 
 int main() {
     test::T1 t;
+    t.set_v(0);
 
     test::overloaded_proc();
     test::overloaded_proc(1);

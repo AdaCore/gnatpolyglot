@@ -8,7 +8,7 @@ POLYGLOT_HOME = os.path.realpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "polyglot")
 )
 
-NATIVE_RUN = "POLYGLOT_NATIVE" in os.environ
+NATIVE_RUN = "--native" in sys.argv
 
 def run(argv: list[str], env: dict[str, str] | None = None) -> None:
     p = subprocess.run(
@@ -38,8 +38,7 @@ def run_java(main_class: str, class_path: str, argv: list[str]) -> None:
     run([java_exec, "-cp", class_path, *extra_args, main_class, *argv])
 
 def run_native(subcommand: str, argv: list[str]):
-    polyglot = os.path.join(POLYGLOT_HOME, "bin", "polyglot")
-    run([polyglot, subcommand, *argv])
+    run(["polyglot", subcommand, *argv])
 
 def run_proxy_validator(proxy_location: str) -> None:
     """
