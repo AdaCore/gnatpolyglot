@@ -230,6 +230,10 @@ public class AdaAPI {
                     .append("_Arg; pragma Import (Ada, ")
                     .append(argName)
                     .append("_Value)");
+        } else if (type.equals(type.pBoolType())) {
+            // Boolean types do not exist in the Interfaces.C package: they are instead binded as
+            // Ints.
+            builder.append(" := ").append(argName).append("_Arg /= 0");
         } else {
             // Otherwise, the type should convertible with a simple cast:
             // .. code::
@@ -315,7 +319,9 @@ public class AdaAPI {
                         returnedType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
 
         String typeName = returnedType.pFullyQualifiedName();
-        if (returnedType.pIsScalarType(Libadalang.AdaNode.NONE)) {
+        if (returnedType.equals(returnedType.pBoolType())) {
+            builder.append("return (if ").append(returnedValue).append(" then 1 else 0)");
+        } else if (returnedType.pIsScalarType(Libadalang.AdaNode.NONE)) {
             // If the value is a scalar, simply cast to the C interface type.
             builder.append("return ")
                     .append(cInterfaceTypename(returnedType))

@@ -14,6 +14,7 @@ Template file to generate package bodies.
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Interfaces.C;
+use all type Interfaces.C.int;
 with System;
 with System.Address_To_Access_Conversions;
 
