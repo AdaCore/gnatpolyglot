@@ -34,10 +34,23 @@ public class AdaAPI {
     public static TypeExpr makeTypeExpr(Libadalang.BasicDecl decl) {
         if (decl instanceof Libadalang.TypeDecl typeDecl) {
             if (typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
+                if (isStringType(typeDecl)) return NativeType.STRING.typeExpr;
                 return makeTypeExpr(arrayTypeDef.fComponentType().fTypeExpr()).makeArray();
             }
         }
         return makeProxyFullyQualifiedName(decl).asTypeExpr();
+    }
+
+    public static boolean isStringType(Libadalang.BaseTypeDecl bTypeDecl) {
+        if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl
+                && typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
+            return arrayTypeDef
+                    .fComponentType()
+                    .fTypeExpr()
+                    .pDesignatedTypeDecl()
+                    .equals(typeDecl.pStdCharType());
+        }
+        return bTypeDecl.equals(bTypeDecl.pStdStringType());
     }
 
     /** Return the native type corresponding to bTypeDecl, or null if the type is not native. */
@@ -48,6 +61,7 @@ public class AdaAPI {
 
         if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl) {
             if (typeDecl.equals(typeDecl.pBoolType())) return NativeType.BOOL;
+            if (isStringType(typeDecl)) return NativeType.STRING;
             if (typeDecl.equals(typeDecl.pStdCharType())) return NativeType.UINT8;
             if (typeDecl.pIsIntType(Libadalang.AdaNode.NONE)) {
                 // Compute the number of required bits to hold the values of the type and
@@ -389,7 +403,7 @@ public class AdaAPI {
             case SINT128:
                 return "Interfaces.C.long";
             case STRING:
-                return "Interfaces.C.char_array";
+                return "Polyglot.Ada.Strings.Polyglot_String";
             case VOID:
                 throw new IllegalArgumentException("Ada has no ``void`` type.");
             default:

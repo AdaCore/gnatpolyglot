@@ -1,4 +1,5 @@
-with Interfaces.C;
+with Interfaces.C; use Interfaces.C;
+with Interfaces.C.Strings;
 with System;
 
 package Polyglot.Ada.Arrays is
@@ -42,5 +43,8 @@ package Polyglot.Ada.Arrays is
       type C is private;
    procedure Set
      (Self : Polyglot_Array; Index : Interfaces.C.Int; New_Val : C);
+
+   function Length (Arr : Polyglot_Array) return Interfaces.C.int
+   is (Arr.Last - Arr.First + 1);
 
 end Polyglot.Ada.Arrays;
