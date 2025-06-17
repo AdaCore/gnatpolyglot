@@ -2,6 +2,7 @@
 vim: filetype=jtecpp
 --%>
 @import com.adacore.polyglot.proxy.FunctionDecl
+@import com.adacore.polyglot.proxy.ArrayTypeExpr
 @import com.adacore.polyglot.proxy2cpp.CppAPI
 @param CppAPI api
 @param FunctionDecl functionDecl

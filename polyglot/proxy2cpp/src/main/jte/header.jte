@@ -13,6 +13,8 @@ vim: filetype=jtecpp
 #ifndef ${headerGuardMacro}
 #define ${headerGuardMacro}
 
+#include <polyglot_ada_arrays.h>
+
 #include <cstdint>
 
 namespace ${api.namespacePath(module)} {

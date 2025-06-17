@@ -15,7 +15,7 @@ package body Polyglot.Ada.Arrays is
       with Size => Standard'Address_Size;
       Arr : Arr_Type_Access := new Arr_Type (First .. Last);
    begin
-      return (First => First, Last => Last, Data => Arr'Address);
+      return (First => First, Last => Last, Data => Arr.all'Address);
    end Alloc;
 
    ---------------
@@ -32,7 +32,7 @@ package body Polyglot.Ada.Arrays is
       Self_Value : Polyglot_Array
       with Address => Self;
    begin
-      Self_Value := (First => First, Last => Last, Data => Arr'Address);
+      Self_Value := (First => First, Last => Last, Data => Arr.all'Address);
    end Construct;
 
    -----------
@@ -50,7 +50,7 @@ package body Polyglot.Ada.Arrays is
 
       Arr : Arr_Type_Access := new Arr_Type'(Data_Access.all);
       Res : Polyglot_Array :=
-        (First => Self.First, Last => Self.Last, Data => Arr'Address);
+        (First => Self.First, Last => Self.Last, Data => Arr.all'Address);
    begin
       return Res;
    end Clone;
@@ -75,7 +75,7 @@ package body Polyglot.Ada.Arrays is
    begin
       To_Value.First := From.First;
       To_Value.Last := From.Last;
-      To_Value.Data := Arr'Address;
+      To_Value.Data := Arr.all'Address;
    end Copy;
 
    ----------
@@ -106,13 +106,15 @@ package body Polyglot.Ada.Arrays is
    -- Get --
    ---------
 
-   function Get (Self : Polyglot_Array; Index : Interfaces.C.Int) return C is
+   function Get
+     (Self : Polyglot_Array; Index : Interfaces.C.Int) return System.Address
+   is
       type Arr_Type is array (Interfaces.C.Int range <>) of C;
       Self_Value : Arr_Type (Self.First .. Self.Last)
       with Address => Self.Data;
       pragma Import (Ada, Self_Value);
    begin
-      return Self_Value (Index);
+      return Self_Value (Index)'Address;
    end Get;
 
    ---------

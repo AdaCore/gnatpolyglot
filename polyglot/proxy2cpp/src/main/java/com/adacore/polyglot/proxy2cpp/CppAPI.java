@@ -2,6 +2,7 @@ package com.adacore.polyglot.proxy2cpp;
 
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.NativeType.NativeTypeDecl;
+import com.adacore.polyglot.proxy.ArrayTypeExpr;
 import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
@@ -15,6 +16,7 @@ import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeDecl;
 import com.adacore.polyglot.proxy.TypeExpr;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class CppAPI {
@@ -98,6 +100,8 @@ public class CppAPI {
                 return nativeTypeName(nativeType.nativeType);
             if (typeDecl instanceof ClassDecl)
                 return name.name.join(fqn -> lastNameToCppName(fqn), "", "::", "");
+        } else if (typeExpr instanceof ArrayTypeExpr array) {
+            return "polyglot::ada::arrays::polyglot_array<" + cppTypename(array.typeExpr) + ">";
         } else if (typeExpr instanceof ReferenceTypeExpr ref) {
             StringBuilder builder = new StringBuilder();
             if (ref.isConst) builder.append("const ");
@@ -139,8 +143,11 @@ public class CppAPI {
                 return nativeTypeName(nativeType.nativeType);
             // Classes are mapped as pointers in C.
             if (typeDecl instanceof ClassDecl) return "void *";
+        } else if (typeExpr instanceof ArrayTypeExpr) {
+            return "polyglot::ada::arrays::array_data";
         } else if (typeExpr instanceof ReferenceTypeExpr ref) {
             // References are mapped as pointers in C.
+            if (ref.typeExpr instanceof ArrayTypeExpr) return cTypename(ref.typeExpr);
             if (ref.typeExpr instanceof NameTypeExpr name
                     && context.getTypeDecl(name.name) instanceof NativeTypeDecl nativeType)
                 return nativeTypeName(nativeType.nativeType) + "*";
@@ -197,8 +204,10 @@ public class CppAPI {
     }
 
     public boolean isMethod(FunctionDecl functionDecl) {
-        // A method can have the role ``METHOD``, ``GETTER`` or ``SETTER``.
-        return functionDecl.role != null && functionDecl.role.kind.compareTo(RoleKind.SETTER) <= 0;
+        // A method can have the role ``METHOD``, ``GETTER``, ``SETTER``, ``CONSTRUCT``, or
+        // ``DESTRUCT``.
+        return functionDecl.role != null
+                && functionDecl.role.kind.compareTo(RoleKind.DESTRUCT) <= 0;
     }
 
     /** Return the const keyword if the function is a const method, else return an empty string. */
@@ -222,19 +231,32 @@ public class CppAPI {
         builder.append(functionDecl.symbol).append("(");
         // If the function is attached to a type, use ``this->data`` as the first argument.
         if (funcIsMethod) {
+            if (functionDecl.role.type instanceof ArrayTypeExpr
+                    && functionDecl.parameters.get(0).type instanceof PointerTypeExpr)
+                builder.append("&");
             builder.append("this->_data");
             if (functionDecl.parameters.size() > 1) builder.append(", ");
         }
+
         builder.append(
                 functionDecl.parameters.stream()
                         .skip(funcIsMethod ? 1 : 0)
                         .map(
                                 p -> {
-                                    if (context.getTypeDecl(p.type.getName()) instanceof ClassDecl)
-                                        return p.name.toLower() + ".data()";
-                                    else if (p.type instanceof ReferenceTypeExpr)
+                                    // When the parameter is a reference to a scalar, get
+                                    // the correspondign address.
+                                    if (p.type instanceof ReferenceTypeExpr ref
+                                            && ref.typeExpr instanceof NameTypeExpr name
+                                            && context.getTypeDecl(name.name)
+                                                    instanceof NativeTypeDecl)
                                         return "&" + p.name.toLower();
-                                    else return p.name.toLower();
+                                    if ((p.type instanceof ReferenceTypeExpr ref
+                                                    && ref.typeExpr instanceof ArrayTypeExpr)
+                                            || p.type instanceof ArrayTypeExpr
+                                            || context.getTypeDecl(p.type.getName())
+                                                    instanceof ClassDecl)
+                                        return p.name.toLower() + ".data()";
+                                    return p.name.toLower();
                                 })
                         .collect(Collectors.joining(", ")));
         builder.append(")");
@@ -264,11 +286,9 @@ public class CppAPI {
     public String functionDefinitionName(FunctionDecl functionDecl) {
         String functionName = functionDecl.getLastName().toLower();
         if (!isMethod(functionDecl)) return functionName;
-        return functionDecl
-                .role
-                .type
-                .getName()
-                .join(r -> lastNameToCppName(r), "", "::", "::" + functionName);
+        StringBuilder builder = new StringBuilder();
+        builder.append(cppTypename(functionDecl.role.type)).append("::").append(functionName);
+        return builder.toString();
     }
 
     /** Return the member functions of a type. */

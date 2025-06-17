@@ -35,7 +35,8 @@ package Polyglot.Ada.Arrays is
 
    generic
       type C is private;
-   function Get (Self : Polyglot_Array; Index : Interfaces.C.Int) return C;
+   function Get
+     (Self : Polyglot_Array; Index : Interfaces.C.Int) return System.Address;
 
    generic
       type C is private;
