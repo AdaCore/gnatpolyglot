@@ -2,6 +2,7 @@
 vim: filetype=jteada
 Template file to generate bindings for record types.
 --%>
+@import java.util.List;
 @import com.adacore.libadalang.Libadalang;
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.Component
@@ -17,7 +18,7 @@ Template file to generate bindings for record types.
     String recordPrefix = recordName.replace(".", "_");
     String recordAccessName = rec.name.toPascalWithUnderscore() + "_Access";
     FunctionDecl freeFunc = rec.getFreeFunction();
-    FunctionDecl allocFunc = rec.getAllocFunction();
+    List<FunctionDecl> allocFuncs = rec.getAllocFunctions();
     FunctionDecl cloneFunc = rec.getCloneFunction();
 }
 
@@ -26,8 +27,14 @@ Template file to generate bindings for record types.
    procedure ${freeFunc.getLastName().toPascalWithUnderscore()} (Self: System.Address);
    pragma Export (C, ${freeFunc.getLastName().toPascalWithUnderscore()}, "${freeFunc.symbol}");
 
-   function ${allocFunc.getLastName().toPascalWithUnderscore()} return System.Address;
-   pragma Export (C, ${allocFunc.getLastName().toPascalWithUnderscore()}, "${allocFunc.symbol}");
+   @for(var allocFunc : allocFuncs)
+      function ${allocFunc.getLastName().toPascalWithUnderscore()}
+      @if(!allocFunc.parameters.isEmpty())
+         (${AdaAPI.cInterfaceParameters(rec, allocFunc)})
+      @endif
+         return System.Address;
+      pragma Export (C, ${allocFunc.getLastName().toPascalWithUnderscore()}, "${allocFunc.symbol}");
+   @endfor
 
    function ${cloneFunc.getLastName().toPascalWithUnderscore()}
      (Self: System.Address) return System.Address;
@@ -64,14 +71,27 @@ Template file to generate bindings for record types.
       Free (Local_Self);
    end ${freeFunc.getLastName().toPascalWithUnderscore()};
 
-   function ${allocFunc.getLastName().toPascalWithUnderscore()}
-      return System.Address
-   is
-      package Converter is new System.Address_To_Access_Conversions (${recordName});
-      Tmp : ${recordAccessName} := new ${recordName}'(others => <>);
-   begin
-      return Converter.To_Address (Converter.Object_Pointer (Tmp));
-   end ${allocFunc.getLastName().toPascalWithUnderscore()};
+   @for(var allocFunc : allocFuncs)
+      function ${allocFunc.getLastName().toPascalWithUnderscore()}
+      @if(!allocFunc.parameters.isEmpty())
+         (${AdaAPI.cInterfaceParameters(rec, allocFunc)})
+      @endif
+         return System.Address
+      is
+         @for(var p : allocFunc.parameters)
+           ${AdaAPI.makeParamConversion(rec.getComponent(p.name))};
+         @endfor
+         package Converter is new System.Address_To_Access_Conversions (${recordName});
+         Tmp : ${recordAccessName} := new ${recordName}'(
+            @for(var p : allocFunc.parameters)
+               ${p.name.toPascalWithUnderscore()}_Value,
+            @endfor
+            others => <>
+         );
+      begin
+         return Converter.To_Address (Converter.Object_Pointer (Tmp));
+      end ${allocFunc.getLastName().toPascalWithUnderscore()};
+   @endfor
 
    function ${cloneFunc.getLastName().toPascalWithUnderscore()}
      (Self: System.Address) return System.Address

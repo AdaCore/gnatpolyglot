@@ -33,7 +33,7 @@ public class Record extends AdaDeclaration {
     private FunctionDecl freeFunction;
 
     /** Default allocating function of the type. */
-    private FunctionDecl allocFunction;
+    private ArrayList<FunctionDecl> allocFunctions;
 
     /** Default cloning function of the type. */
     private FunctionDecl cloneFunction;
@@ -94,25 +94,64 @@ public class Record extends AdaDeclaration {
         return this.freeFunction;
     }
 
-    /** Return the allocating function of the type, or generate a new one if necessary. */
-    public FunctionDecl getAllocFunction() {
-        if (this.allocFunction == null) {
+    /** Return the allocating functions of the type, or generate a new one if necessary. */
+    public List<FunctionDecl> getAllocFunctions() {
+        if (this.allocFunctions == null) {
+            this.allocFunctions = new ArrayList<>(2);
             NameTypeExpr type = getTypeExpr();
-            this.allocFunction =
+            this.allocFunctions.add(
                     new FunctionDecl(
                             getProxyFullyQualifiedName()
                                     .append(name.concat(Name.fromLower("default_alloc"))),
                             "Generated function to alloc a " + name.toPascalWithUnderscore(),
                             new Role(RoleKind.ALLOC, type, null),
                             buildMemberSymbol("_Default_Alloc"),
-                            List.of(),
+                            components.stream()
+                                    .map(
+                                            c ->
+                                                    new Parameter(
+                                                            c.name,
+                                                            c.getSetterType(),
+                                                            new Transfer(RequiredOwner.USER)))
+                                    .toList(),
                             type,
                             Owner.USER,
                             false,
                             false,
-                            false);
+                            false));
+
+            // Private types and types that do not thave default values for any of their component
+            // do not need a second specialized constructor.
+            if (!origin.pIsPrivate() && components.stream().anyMatch(c -> c.hasDefaultValue())) {
+                this.allocFunctions.add(
+                        new FunctionDecl(
+                                getProxyFullyQualifiedName()
+                                        .append(
+                                                name.concat(
+                                                        Name.fromLower(
+                                                                "default_alloc_default_values"))),
+                                "Generated function to alloc a "
+                                        + name.toPascalWithUnderscore()
+                                        + " with default values",
+                                new Role(RoleKind.ALLOC, type, null),
+                                buildMemberSymbol("_Default_Alloc_1"),
+                                components.stream()
+                                        .filter(c -> !c.hasDefaultValue())
+                                        .map(
+                                                c ->
+                                                        new Parameter(
+                                                                c.name,
+                                                                c.getSetterType(),
+                                                                new Transfer(RequiredOwner.USER)))
+                                        .toList(),
+                                type,
+                                Owner.USER,
+                                false,
+                                false,
+                                false));
+            }
         }
-        return this.allocFunction;
+        return this.allocFunctions;
     }
 
     /** Return the cloning function of the type, or generate a new one if necessary. */
@@ -165,13 +204,8 @@ public class Record extends AdaDeclaration {
                                 false,
                                 false,
                                 false));
-
-                // Get the type of the setter's new value.
-                TypeExpr setterType = componentTypeRef;
-                if (!c.getType().pIsScalarType(Libadalang.AdaNode.NONE))
-                    // If the argument is not a scalar, get a const reference to the new value.
-                    setterType = setterType.makeReference(true);
                 // Create the setter function.
+                TypeExpr setterType = c.getSetterType();
                 componentAccessors.add(
                         new FunctionDecl(
                                 getProxyFullyQualifiedName()

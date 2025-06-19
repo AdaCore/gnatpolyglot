@@ -6,9 +6,11 @@ import com.adacore.libadalang.Libadalang.Expr;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
+import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
+import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.TypeExpr;
 import java.nio.file.Path;
@@ -164,6 +166,23 @@ public class AdaAPI {
                                     .append(cInterfaceParamTypename(p));
                             return argBuilder.toString();
                         }))
+                .collect(Collectors.joining("; "));
+    }
+
+    /** Build a string containing the parameter specifications of the constructor of a record. */
+    public static String cInterfaceParameters(Record rec, FunctionDecl function) {
+        return function.parameters.stream()
+                .map(
+                        p -> {
+                            // Get the component corresponding to the constuctor's argument.
+                            Component component = rec.getComponent(p.name);
+                            StringBuilder argBuilder = new StringBuilder();
+                            argBuilder
+                                    .append(p.name.toPascalWithUnderscore())
+                                    .append("_Arg : ")
+                                    .append(cInterfaceTypename(component.getType()));
+                            return argBuilder.toString();
+                        })
                 .collect(Collectors.joining("; "));
     }
 

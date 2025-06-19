@@ -1,7 +1,9 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.Name;
+import com.adacore.polyglot.proxy.TypeExpr;
 
 public class Component implements AdaProxyObject {
 
@@ -14,6 +16,23 @@ public class Component implements AdaProxyObject {
     public Component(Libadalang.ComponentDecl origin, Name name) {
         this.origin = origin;
         this.name = name;
+    }
+
+    public boolean hasDefaultValue() {
+        return !origin.fDefaultExpr().isNone();
+    }
+
+    /**
+     * Return the type that the will be use to set this component's value in constructors and
+     * setters.
+     */
+    public TypeExpr getSetterType() {
+        // Get the type of the setter's new value.
+        TypeExpr setterType = AdaAPI.makeTypeExpr(getType());
+        if (!getType().pIsScalarType(Libadalang.AdaNode.NONE))
+            // If the argument is not a scalar, get a const reference to the new value.
+            setterType = setterType.makeReference(true);
+        return setterType;
     }
 
     /** Return the type of the component. */
