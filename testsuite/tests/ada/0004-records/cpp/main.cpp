@@ -26,4 +26,8 @@ int main() {
   test::Value::view val_view_2 = p.get_v_2();
   val_view_2->set_v(8);
   p.print();
+
+  test::ValueBis bis;
+  bis.set_v(42);
+  bis.print_bis();
 }

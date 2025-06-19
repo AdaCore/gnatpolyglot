@@ -122,7 +122,8 @@ public class AdaProxyTranslator {
             declarations.add(rec.getCloneFunction());
             declarations.addAll(rec.getGettersAndSetters());
             if (rec.getTypeDef() instanceof Libadalang.RecordTypeDef
-                    || rec.getTypeDef() instanceof Libadalang.PrivateTypeDef) {
+                    || rec.getTypeDef() instanceof Libadalang.PrivateTypeDef
+                    || rec.getTypeDef() instanceof Libadalang.DerivedTypeDef) {
                 return new ClassDecl(
                         rec.getProxyFullyQualifiedName(),
                         rec.getDoc(),

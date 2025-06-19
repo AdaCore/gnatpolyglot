@@ -14,6 +14,7 @@ Template file to generate bindings for record types.
 
 !{
     String recordName = rec.getFullyQualifiedName();
+    String recordPrefix = recordName.replace(".", "_");
     String recordAccessName = rec.name.toPascalWithUnderscore() + "_Access";
     FunctionDecl freeFunc = rec.getFreeFunction();
     FunctionDecl allocFunc = rec.getAllocFunction();
@@ -36,22 +37,24 @@ Template file to generate bindings for record types.
    @for(var f : rec.getGettersAndSetters())
       !{Component component = rec.getComponent(f.role.field);}
       @if(f.role.kind == RoleKind.GETTER)
-         function ${f.getLastName().toPascalWithUnderscore()}
+         function ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
            (Self: System.Address) return System.Address;
       @else
-         procedure ${f.getLastName().toPascalWithUnderscore()}
+         procedure ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
            (Self: System.Address;
             ${component.name.toPascalWithUnderscore()}_Arg:
                ${AdaAPI.cInterfaceTypename(component.getType())});
       @endif
-      pragma Export (C, ${f.getLastName().toPascalWithUnderscore()}, "${f.symbol}");
+      pragma Export (C, ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}, "${f.symbol}");
     @endfor
 @else
    <%-- Define an Access type for the record --%>
    type ${recordAccessName} is access all ${recordName};
 
    <%-- Define the allocation/freeing functions --%>
-   procedure ${freeFunc.getLastName().toPascalWithUnderscore()} (Self: System.Address) is
+   procedure ${freeFunc.getLastName().toPascalWithUnderscore()}
+     (Self: System.Address)
+   is
       function Convert_Self is new Ada.Unchecked_Conversion
         (System.Address, ${recordAccessName});
       procedure Free is new Ada.Unchecked_Deallocation
@@ -61,14 +64,18 @@ Template file to generate bindings for record types.
       Free (Local_Self);
    end ${freeFunc.getLastName().toPascalWithUnderscore()};
 
-   function ${allocFunc.getLastName().toPascalWithUnderscore()} return System.Address is
+   function ${allocFunc.getLastName().toPascalWithUnderscore()}
+      return System.Address
+   is
       package Converter is new System.Address_To_Access_Conversions (${recordName});
+      Tmp : ${recordAccessName} := new ${recordName}'(others => <>);
    begin
-      return Converter.To_Address (new ${recordName});
+      return Converter.To_Address (Converter.Object_Pointer (Tmp));
    end ${allocFunc.getLastName().toPascalWithUnderscore()};
 
-   function ${cloneFunc.getLastName().toPascalWithUnderscore()} (Self: System.Address)
-   return System.Address is
+   function ${cloneFunc.getLastName().toPascalWithUnderscore()}
+     (Self: System.Address) return System.Address
+   is
       Tmp : ${recordName} with Address => Self;
       pragma Import (Ada, Tmp);
       package Converter is new System.Address_To_Access_Conversions (${recordName});
@@ -85,16 +92,16 @@ Template file to generate bindings for record types.
          String componentAccess = "Self_Value." + component.name.toPascalWithUnderscore();
       }
       @if(f.role.kind == RoleKind.GETTER)
-         function ${f.getLastName().toPascalWithUnderscore()}
+         function ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
            (Self: System.Address) return System.Address
          is
             Self_Value : ${recordName} with Address => Self;
             pragma Import(Ada, Self_Value);
          begin
             ${AdaAPI.makeGetterReturnConversion(componentAccess)};
-         end ${f.getLastName().toPascalWithUnderscore()};
+         end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
       @else
-         procedure ${f.getLastName().toPascalWithUnderscore()}
+         procedure ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
            (Self: System.Address;
             ${component.name.toPascalWithUnderscore()}_Arg:
                ${AdaAPI.cInterfaceTypename(component.getType())})
@@ -104,7 +111,7 @@ Template file to generate bindings for record types.
             ${AdaAPI.makeParamConversion(component)};
          begin
             ${componentAccess} := ${component.name.toPascalWithUnderscore()}_Value;
-         end ${f.getLastName().toPascalWithUnderscore()};
+         end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
       @endif
     @endfor
 @endif

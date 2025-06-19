@@ -312,14 +312,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return null;
     }
 
-    @Override
-    public Void visit(Libadalang.RecordTypeDef node) {
-        Libadalang.ConcreteTypeDecl parentDecl =
-                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
-
+    public Record makeRecord(
+            Libadalang.BaseRecordDef recordDef, Libadalang.ConcreteTypeDecl parentDecl) {
         // Get the components of the record.
         ArrayList<Component> components = new ArrayList<>();
-        for (var c : node.fRecordDef().fComponents().fComponents().children()) {
+        for (var c : recordDef.fComponents().fComponents().children()) {
             Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
             for (var name : componentDecl.fIds().children()) {
                 components.add(
@@ -327,13 +324,36 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                                 componentDecl, Name.fromPascalWithUnderscore(name.getText())));
             }
         }
+        return new Record(
+                parentDecl,
+                Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
+                components);
+    }
+
+    @Override
+    public Void visit(Libadalang.RecordTypeDef node) {
+        Libadalang.ConcreteTypeDecl parentDecl =
+                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
 
         // Add a new Record containing the ada record type.
-        declarations.add(
-                new Record(
-                        parentDecl,
-                        Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
-                        components));
+        declarations.add(makeRecord(node.fRecordDef(), parentDecl));
+
+        return null;
+    }
+
+    public Void visit(Libadalang.DerivedTypeDef node) {
+        Libadalang.ConcreteTypeDecl parentDecl =
+                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
+
+        if (node.fRecordExtension().isNone()
+                && node.fHasWithPrivate() instanceof Libadalang.WithPrivateAbsent) {
+            Libadalang.TypeDecl decl =
+                    (Libadalang.TypeDecl) node.fSubtypeIndication().pDesignatedTypeDecl();
+            if (decl.fTypeDef() instanceof Libadalang.RecordTypeDef recordDef) {
+                declarations.add(makeRecord(recordDef.fRecordDef(), parentDecl));
+            }
+        } else
+            throw new IllegalArgumentException("Derivation of tagged types is not yet supported");
 
         return null;
     }
