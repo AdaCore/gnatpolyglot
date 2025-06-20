@@ -11,10 +11,16 @@ vim: filetype=jtecpp
 !{
     FunctionMembersEntry members = api.getMembers(classDecl);
     String className = classDecl.getLastName().toPascal();
+    String inherits = "";
+    String parent = "";
+    if (classDecl.parent != null) {
+        parent = api.cppTypename(classDecl.parent.asTypeExpr());
+        inherits = ": public " + parent;
+    }
 }
 
 @if(!isSource)
-    class ${className} {
+    class ${className} ${inherits}{
     public:
         explicit ${className}(void *data);
     @for(var alloc : members.allocFunctions)
@@ -43,20 +49,30 @@ vim: filetype=jtecpp
             void *_data;
         };
 
-    private:
+    @if(classDecl.parent == null)
+    protected:
         void *_data;
+    @endif
     };
 @else
     @for(var alloc : members.allocFunctions)
         extern "C" void *${alloc.symbol}
             (${api.cParameters(alloc)});
         ${className}::${className}(${api.cppParameters(alloc)})
+        @if(classDecl.parent == null)
             : _data(${api.callCSymbol(alloc)})
+        @else
+            : ${parent}(${api.callCSymbol(alloc)})
+        @endif
         {}
     @endfor
 
     ${className}::${className}(void *data)
+    @if(classDecl.parent == null)
         : _data(data)
+    @else
+        : ${parent}(data)
+    @endif
     {}
 
     extern "C" void ${members.freeFunction.symbol}

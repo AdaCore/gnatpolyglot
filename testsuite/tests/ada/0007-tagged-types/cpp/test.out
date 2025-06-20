@@ -1,0 +1,20 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling test main program...
+Running test main program...
+
+(A => 1, B => 2)
+(A => 3, B => 4)
+(A => 1, B => 2), (A => 1, B => 2)
+(A => 3, B => 4, C => 5), (A => 3, B => 4, C => 5)
+(A => 3, B => 4, D => 5)
+(A => 3, B => 4, D => 5)
+TEST.ROOT
+TEST.CHILD
+TEST.OTHER_CHILD
+Private
+Public
+
+Done.
