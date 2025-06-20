@@ -17,6 +17,7 @@ import com.adacore.polyglot.proxy.Transfer;
 import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.polyglot.proxy.TypeExpr;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Record extends AdaDeclaration {
@@ -26,6 +27,9 @@ public class Record extends AdaDeclaration {
 
     /** List of all components. */
     public List<Component> components;
+
+    /** Parent type. */
+    public Record parent;
 
     /** TypeExpr to the record. */
     private NameTypeExpr ref;
@@ -46,6 +50,7 @@ public class Record extends AdaDeclaration {
         super(name);
         this.origin = origin;
         this.components = components;
+        this.parent = null;
     }
 
     /** Return the fully qualified name of the type. */
@@ -61,7 +66,19 @@ public class Record extends AdaDeclaration {
 
     /** Return the component with the given name. */
     public Component getComponent(Name name) {
-        return components.stream().filter(c -> c.name.equals(name)).findFirst().get();
+        return getAllComponents().stream().filter(c -> c.name.equals(name)).findFirst().get();
+    }
+
+    /**
+     * Return a list of all the components of the record, defined by the record and its parent type.
+     */
+    public List<Component> getAllComponents() {
+        List<Component> res;
+        if (parent != null) {
+            res = parent.getAllComponents();
+        } else res = new ArrayList<>(components.size());
+        res.addAll(components);
+        return res;
     }
 
     /** Create a symbol for generated member functions. */
@@ -101,6 +118,7 @@ public class Record extends AdaDeclaration {
         if (this.allocFunctions == null) {
             this.allocFunctions = new ArrayList<>(2);
             NameTypeExpr type = getTypeExpr();
+            List<Component> allComponents = getAllComponents();
             this.allocFunctions.add(
                     new FunctionDecl(
                             getProxyFullyQualifiedName()
@@ -109,7 +127,7 @@ public class Record extends AdaDeclaration {
                             new Role(RoleKind.ALLOC, type, null),
                             buildMemberSymbol("_Default_Alloc"),
                             new FunctionTypeExpr(
-                                    components.stream()
+                                    allComponents.stream()
                                             .map(
                                                     c ->
                                                             new Parameter(
@@ -126,7 +144,7 @@ public class Record extends AdaDeclaration {
 
             // Private types and types that do not thave default values for any of their component
             // do not need a second specialized constructor.
-            if (!origin.pIsPrivate() && components.stream().anyMatch(c -> c.hasDefaultValue())) {
+            if (!origin.pIsPrivate() && allComponents.stream().anyMatch(c -> c.hasDefaultValue())) {
                 this.allocFunctions.add(
                         new FunctionDecl(
                                 getProxyFullyQualifiedName()
@@ -140,7 +158,7 @@ public class Record extends AdaDeclaration {
                                 new Role(RoleKind.ALLOC, type, null),
                                 buildMemberSymbol("_Default_Alloc_1"),
                                 new FunctionTypeExpr(
-                                        components.stream()
+                                        allComponents.stream()
                                                 .filter(c -> !c.hasDefaultValue())
                                                 .map(
                                                         c ->
@@ -258,5 +276,17 @@ public class Record extends AdaDeclaration {
     @Override
     public String getDoc() {
         return origin.pDoc();
+    }
+
+    /**
+     * Return a string of the extension aggrate necessary to construct a record when inheriting from
+     * a private type, or an empty string.
+     */
+    public String extensionAggregate() {
+        return Arrays.stream(origin.pFullView().pBaseTypes(Libadalang.AdaNode.NONE))
+                .filter(b -> b.pIsPrivate())
+                .findFirst()
+                .map((b) -> b.pFullyQualifiedName() + " with")
+                .orElse("");
     }
 }

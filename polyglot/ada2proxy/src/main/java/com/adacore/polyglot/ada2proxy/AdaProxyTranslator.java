@@ -128,10 +128,12 @@ public class AdaProxyTranslator {
             if (rec.getTypeDef() instanceof Libadalang.RecordTypeDef
                     || rec.getTypeDef() instanceof Libadalang.PrivateTypeDef
                     || rec.getTypeDef() instanceof Libadalang.DerivedTypeDef) {
+                FullyQualifiedName parentType =
+                        rec.parent == null ? null : rec.parent.getProxyFullyQualifiedName();
                 return new ClassDecl(
                         rec.getProxyFullyQualifiedName(),
                         rec.getDoc(),
-                        null,
+                        parentType,
                         8,
                         false,
                         rec.components.stream().map(c -> (Field) c.accept(this)).toList(),

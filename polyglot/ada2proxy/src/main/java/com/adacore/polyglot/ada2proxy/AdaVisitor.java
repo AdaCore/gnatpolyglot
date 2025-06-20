@@ -1,6 +1,7 @@
 package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.libadalang.Libadalang.BaseRecordDef;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration;
 import com.adacore.polyglot.ada2proxy.proxy.Array;
@@ -16,6 +17,7 @@ import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.Transfer;
 import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -72,6 +74,9 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     /** The current type being derived. */
     private Libadalang.TypeDecl derivedType = null;
+
+    /** Map Ada declarations to their AdaProxy objects. */
+    private HashMap<Libadalang.TypeDecl, AdaDeclaration> mappedTypes = new HashMap<>();
 
     /** Analyse an Ada specification file. */
     public Package analyzeSpec(Libadalang.AnalysisUnit unit) {
@@ -323,35 +328,52 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     }
 
     @Override
-    public Void visit(Libadalang.PrivateTypeDef node) {
-        Libadalang.ConcreteTypeDecl parentDecl =
-                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
-        // Add a new record containing the private type.
-        declarations.add(
-                new Record(
-                        parentDecl,
-                        Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
-                        List.of()));
-
+    public Void visit(Libadalang.ConcreteTypeDecl node) {
+        AdaDeclaration decl = mappedTypes.get(node);
+        // The type could have been (partially) processed when processing a child type.
+        // IFF it was not already processed and is not a derived type, then process it.
+        if (decl == null || node.fTypeDef() instanceof Libadalang.DerivedTypeDef) {
+            node.fTypeDef().accept(this);
+        } else {
+            declarations.add(decl);
+        }
         return null;
     }
 
     public Record makeRecord(
             Libadalang.BaseRecordDef recordDef, Libadalang.ConcreteTypeDecl parentDecl) {
+        Record rec = (Record) mappedTypes.get(parentDecl);
+        if (rec != null) return rec;
         // Get the components of the record.
         ArrayList<Component> components = new ArrayList<>();
-        for (var c : recordDef.fComponents().fComponents().children()) {
-            Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
-            for (var name : componentDecl.fIds().children()) {
-                components.add(
-                        new Component(
-                                componentDecl, Name.fromPascalWithUnderscore(name.getText())));
+        if (!recordDef.isNone()) {
+            for (var c : recordDef.fComponents().fComponents().children()) {
+                Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
+                for (var name : componentDecl.fIds().children()) {
+                    components.add(
+                            new Component(
+                                    componentDecl, Name.fromPascalWithUnderscore(name.getText())));
+                }
             }
         }
-        return new Record(
-                parentDecl,
-                Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
-                components);
+        rec =
+                new Record(
+                        parentDecl,
+                        Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
+                        components);
+        mappedTypes.put(parentDecl, rec);
+        return rec;
+    }
+
+    @Override
+    public Void visit(Libadalang.PrivateTypeDef node) {
+        Libadalang.ConcreteTypeDecl parentDecl =
+                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
+        // Add a new record containing the private type.
+        Record res = makeRecord(Libadalang.BaseRecordDef.NONE, parentDecl);
+        declarations.add(res);
+
+        return null;
     }
 
     @Override
@@ -365,15 +387,30 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visit(Libadalang.DerivedTypeDef node) {
         Libadalang.ConcreteTypeDecl parentDecl =
                 (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
 
-        if (node.fRecordExtension().isNone()
-                && node.fHasWithPrivate() instanceof Libadalang.WithPrivateAbsent) {
-            Libadalang.TypeDecl decl =
-                    (Libadalang.TypeDecl) node.fSubtypeIndication().pDesignatedTypeDecl();
-            if (decl.fTypeDef() instanceof Libadalang.RecordTypeDef recordDef) {
+        if (parentDecl.pIsTaggedType(Libadalang.AdaNode.NONE)) {
+            // The parent type could be located in an ada unit that was not already processed. If
+            // that is the case, then process the parent type, but do not register it.
+            Record rec = makeRecord(node.fRecordExtension(), parentDecl);
+            Libadalang.ConcreteTypeDecl subtype =
+                    (Libadalang.ConcreteTypeDecl) node.fSubtypeIndication().pDesignatedTypeDecl();
+            if (subtype.fTypeDef() instanceof Libadalang.DerivedTypeDef derived)
+                rec.parent = makeRecord(derived.fRecordExtension(), subtype);
+            else if (subtype.fTypeDef() instanceof Libadalang.RecordTypeDef subrec)
+                rec.parent = makeRecord(subrec.fRecordDef(), subtype);
+            else if (subtype.pIsRecordType(Libadalang.AdaNode.NONE) || subtype.pIsPrivate())
+                rec.parent = makeRecord(BaseRecordDef.NONE, subtype);
+            else throw new RuntimeException("Could not process parent type");
+            declarations.add(rec);
+        } else if (parentDecl.pIsRecordType(Libadalang.AdaNode.NONE)) {
+            // If the parent is a non-tagged record, simply copy the fields of the root type.
+            Libadalang.TypeDecl rootType =
+                    (Libadalang.TypeDecl) parentDecl.pRootType(Libadalang.AdaNode.NONE);
+            if (rootType.fTypeDef() instanceof Libadalang.RecordTypeDef recordDef) {
                 declarations.add(makeRecord(recordDef.fRecordDef(), parentDecl));
             }
 
@@ -386,8 +423,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                     primitive.accept(this);
             }
             this.derivedType = null;
-        } else
-            throw new IllegalArgumentException("Derivation of tagged types is not yet supported");
+        } else if (!parentDecl.pIsScalarType(Libadalang.AdaNode.NONE))
+            throw new IllegalArgumentException("Unsupported derivation of types " + node);
 
         return null;
     }

@@ -83,6 +83,10 @@ Template file to generate bindings for record types.
          @endfor
          package Converter is new System.Address_To_Access_Conversions (${recordName});
          Tmp : ${recordAccessName} := new ${recordName}'(
+            <%-- When the type inherits from a private type (directly, or indirectly)
+              -- an extension aggregate is required.
+              --%>
+            ${rec.extensionAggregate()}
             @for(var p : allocFunc.type.parameters)
                ${p.name.toPascalWithUnderscore()}_Value,
             @endfor
