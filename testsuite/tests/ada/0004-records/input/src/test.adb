@@ -12,9 +12,9 @@ package body Test is
       Put_Line ("(" & P.V_1.V'Image & " ," & P.V_2.V'Image & " )");
    end Print;
 
-   procedure Print_Bis(V: Value_Bis) is
+   procedure Print_Bis(P: Pair_Bis) is
    begin
-      Put_Line ("(" & V.V'Image & " )");
+      Put_Line ("(" & P.V_2.V'Image & " ," & P.V_1.V'Image & " )");
    end Print_Bis;
 
 end Test;

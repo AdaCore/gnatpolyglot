@@ -8,14 +8,14 @@ Template file to generate binded procedures.
 @param Boolean isBody
 
 @if(!isBody)
-   procedure ${AdaAPI.proxyName(subp.name)}
+   procedure ${AdaAPI.proxyName(subp)}
     @if(!subp.parameters.isEmpty())
       (${AdaAPI.cInterfaceParameters(subp)})
     @endif
     ;
-   pragma Export (C, ${AdaAPI.proxyName(subp.name)}, "${subp.symbol}");
+   pragma Export (C, ${AdaAPI.proxyName(subp)}, "${subp.symbol}");
 @else
-   procedure ${AdaAPI.proxyName(subp.name)}
+   procedure ${AdaAPI.proxyName(subp)}
     @if(!subp.parameters.isEmpty())
       (${AdaAPI.cInterfaceParameters(subp)})
     @endif
@@ -25,5 +25,5 @@ Template file to generate binded procedures.
     @endfor
    begin
       ${AdaAPI.call(subp)};
-   end ${AdaAPI.proxyName(subp.name)};
+   end ${AdaAPI.proxyName(subp)};
 @endif

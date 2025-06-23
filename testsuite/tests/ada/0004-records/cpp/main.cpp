@@ -31,7 +31,9 @@ int main() {
   test::Pair ctor(test::Value(4), test::Value(2));
   ctor.print();
 
-  test::ValueBis bis;
-  bis.set_v(42);
+  test::PairBis bis(test::Value(0), test::Value(0));
+  bis.get_v_1()->set_v(2);
+  bis.get_v_2()->set_v(4);
   bis.print_bis();
+  bis.print();
 }

@@ -16,18 +16,27 @@ public class SubpParam implements AdaProxyObject {
     /** Parameter ownership transfer information. */
     public Transfer transfer;
 
+    /**
+     * Type to use instead of the origin's type.
+     *
+     * <p>When a primitive is duplicated to be available on derived types, we need to override the
+     * type of parameter to the derived type instead of the base type.
+     */
+    private Libadalang.BaseTypeDecl type;
+
     public SubpParam(Libadalang.ParamSpec origin, Name name, Transfer transfer) {
         this.origin = origin;
         this.name = name;
         this.transfer = transfer;
+        this.type = origin.pFormalType(Libadalang.AdaNode.NONE);
     }
 
     public Libadalang.BaseTypeDecl getType() {
-        return origin.pFormalType(Libadalang.AdaNode.NONE);
+        return type;
     }
 
-    public Libadalang.TypeExpr getTypeExpr() {
-        return origin.fTypeExpr();
+    public void setType(Libadalang.BaseTypeDecl type) {
+        this.type = type;
     }
 
     public boolean isOutMode() {

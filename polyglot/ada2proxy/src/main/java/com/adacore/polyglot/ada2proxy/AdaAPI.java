@@ -145,6 +145,19 @@ public class AdaAPI {
         return name.toPascalWithUnderscore() + "_Proxy";
     }
 
+    /**
+     * Return name with the correct Ada syntax with ``_Proxy`` as a suffix and the parameter type
+     * names to avoid conflicts with duplicated subprograms.
+     */
+    public static String proxyName(Subprogram subp) {
+        StringBuilder builder = new StringBuilder(proxyName(subp.name));
+        for (var p : subp.parameters) {
+            builder.append("_").append(p.getType().pRelativeNameText().toString());
+        }
+
+        return builder.toString();
+    }
+
     /** Return the typename of the parameter */
     private static String cInterfaceParamTypename(SubpParam p) {
         // If the parameter has a Out mode, it is a reference and will be passed as an address.

@@ -64,9 +64,14 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     /** List of declarations declared by the module */
     private List<AdaDeclaration> declarations = new ArrayList<>();
 
+    /** List of array component types encountered while analyzing ada units */
     private Set<Libadalang.BaseTypeDecl> arrayComponentTypes = new HashSet<>();
 
+    /** The current package being analyzed */
     private Libadalang.PackageDecl analyzedPackage;
+
+    /** The current type being derived. */
+    private Libadalang.TypeDecl derivedType = null;
 
     /** Analyse an Ada specification file. */
     public Package analyzeSpec(Libadalang.AnalysisUnit unit) {
@@ -190,11 +195,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 for (var other : overloads.stream().skip(i + 1).toList()) {
                     var subpParams =
                             subp.parameters.stream()
-                                    .map(p -> AdaAPI.makeTypeExpr(p.getTypeExpr()))
+                                    .map(p -> AdaAPI.makeTypeExpr(p.getType()))
                                     .toList();
                     var otherParams =
                             other.parameters.stream()
-                                    .map(p -> AdaAPI.makeTypeExpr(p.getTypeExpr()))
+                                    .map(p -> AdaAPI.makeTypeExpr(p.getType()))
                                     .toList();
                     if (subp.name.equals(other.name) && subpParams.equals(otherParams)) {
                         other.name =
@@ -217,6 +222,25 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return null;
     }
 
+    /** Return whether ``subp`` is dot callable with ``type``. */
+    private boolean isDotCallable(Libadalang.SubpSpec spec, Libadalang.BaseTypeDecl type) {
+        Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
+
+        return !primitiveType.isNone()
+                // Native and array types do not create new types in the proxy, so we cannot attach
+                // methods
+                && AdaAPI.checkNativeType(primitiveType) == null
+                && !primitiveType.pIsArrayType(Libadalang.AdaNode.NONE)
+                // The first argument of the subprogram must be compatible with the primitive type.
+                && spec.pParams().length != 0
+                && (spec.pParams()[0]
+                                .pFormalType(Libadalang.AdaNode.NONE)
+                                .pMatchingType(primitiveType, Libadalang.AdaNode.NONE)
+                        || type.pIsDerivedType(
+                                spec.pParams()[0].pFormalType(Libadalang.AdaNode.NONE),
+                                Libadalang.AdaNode.NONE));
+    }
+
     @Override
     public Void visit(Libadalang.SubpDecl node) {
         Libadalang.SubpSpec spec = node.fSubpSpec();
@@ -225,18 +249,14 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         String symbol = symbolify(spec);
 
         // If the function is callable with the dot notation, it is a method.
+        // The subprogram may be visited when exploring inherited primitive subprograms: if so, use
+        // the current derived type.
         // TODO: When eng/libadalang/libadalang#1547 is resoled, use the new property.
         Role role = null;
-        Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
-        if (!primitiveType.isNone()
-                && AdaAPI.checkNativeType(primitiveType) == null
-                && !primitiveType.pIsArrayType(Libadalang.AdaNode.NONE)
-                && spec.pParams().length != 0) {
-            if (spec.pParams()[0]
-                    .pFormalType(Libadalang.AdaNode.NONE)
-                    .pMatchingType(primitiveType, Libadalang.AdaNode.NONE))
-                role = new Role(RoleKind.METHOD, AdaAPI.makeTypeExpr(primitiveType), null);
-        }
+        Libadalang.BaseTypeDecl primitiveType =
+                derivedType == null ? spec.pPrimitiveSubpFirstType(false) : derivedType;
+        if (isDotCallable(spec, primitiveType))
+            role = new Role(RoleKind.METHOD, AdaAPI.makeTypeExpr(primitiveType), null);
 
         // Get the list of parameters.
         List<SubpParam> parameters = new ArrayList<>();
@@ -259,6 +279,10 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                                     transfer));
             }
         }
+
+        // When the subprogram is an inherited primitive of a derived type, we need to update its
+        // first parameter's type.
+        if (derivedType != null && role != null) parameters.get(0).setType(primitiveType);
 
         // Get the most visible part of the type of the parameter. The TypeExpr may refer to
         // an incomplete type:
@@ -352,6 +376,16 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             if (decl.fTypeDef() instanceof Libadalang.RecordTypeDef recordDef) {
                 declarations.add(makeRecord(recordDef.fRecordDef(), parentDecl));
             }
+
+            // When derivating from a record, we need to get the primitives of said record too.
+            // The primitives directly explicited on this type will be visited at an other time,
+            // so only treat the inherited ones.
+            this.derivedType = parentDecl;
+            for (var primitive : parentDecl.pGetPrimitives(true, false)) {
+                if (isDotCallable(((Libadalang.SubpDecl) primitive).fSubpSpec(), parentDecl))
+                    primitive.accept(this);
+            }
+            this.derivedType = null;
         } else
             throw new IllegalArgumentException("Derivation of tagged types is not yet supported");
 

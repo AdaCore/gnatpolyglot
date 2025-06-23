@@ -12,8 +12,8 @@ package Test is
    function Init_Pair(L, R: Integer) return Pair;
    procedure Print(P: Pair);
 
-   type Value_Bis is new Value;
+   type Pair_Bis is new Pair;
 
-   procedure Print_Bis(V: Value_Bis);
+   procedure Print_Bis(P: Pair_Bis);
 
 end Test;
