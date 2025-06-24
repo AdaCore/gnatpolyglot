@@ -26,8 +26,10 @@ Template file to generate binded functions.
     @for(var p : subp.parameters)
       ${AdaAPI.makeParamConversion(p)};
     @endfor
-      ${AdaAPI.makeReturnTypeConverter(subp.getReturnType())}
+      ${AdaAPI.makeReturnDeclarations(subp.getReturnType())}
+      Value_Returned : ${subp.getReturnType().pFullyQualifiedName()} :=
+         ${AdaAPI.call(subp)};
    begin
-      return ${AdaAPI.makeReturnConversion(subp.getReturnType(), AdaAPI.call(subp))};
+      ${AdaAPI.makeReturnConversion(subp.getReturnType(), "Value_Returned")};
    end ${AdaAPI.proxyName(subp.name)};
 @endif

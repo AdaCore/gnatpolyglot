@@ -3,6 +3,9 @@ target/
 dependency-reduced-pom.xml
 .mvn
 
+# Native image build artifacts
+/polyglot/cli/sources
+
 # Python cache directory
 __pycache__
 
@@ -12,3 +15,4 @@ out
 # Ada/C compiling results
 lib
 obj
+bin
