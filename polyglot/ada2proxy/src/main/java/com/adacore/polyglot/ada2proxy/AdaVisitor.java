@@ -48,6 +48,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         } else {
             builder.append(
                     spec.pReturnType(Libadalang.AdaNode.NONE)
+                            .pSpecificType()
                             .pFullyQualifiedName()
                             .replace(".", "_"));
         }
@@ -57,6 +58,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         while (symbols.contains(res)) {
             StringBuilder b = new StringBuilder(builder);
             res = b.append(count).toString();
+            count++;
         }
         // Register the new symbol.
         symbols.add(res);
@@ -231,6 +233,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     private boolean isDotCallable(Libadalang.SubpSpec spec, Libadalang.BaseTypeDecl type) {
         Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
 
+        // TODO: When eng/libadalang/libadalang#1547 is resoled, use the new property.
         return !primitiveType.isNone()
                 // Native and array types do not create new types in the proxy, so we cannot attach
                 // methods
@@ -256,7 +259,6 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // If the function is callable with the dot notation, it is a method.
         // The subprogram may be visited when exploring inherited primitive subprograms: if so, use
         // the current derived type.
-        // TODO: When eng/libadalang/libadalang#1547 is resoled, use the new property.
         Role role = null;
         Libadalang.BaseTypeDecl primitiveType =
                 derivedType == null ? spec.pPrimitiveSubpFirstType(false) : derivedType;

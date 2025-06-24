@@ -26,13 +26,15 @@ public class AdaAPI {
         if (decl instanceof Libadalang.BaseTypeDecl typeDecl) {
             NativeType nativeType = checkNativeType(typeDecl);
             if (nativeType != null) return nativeType.typeExpr.name;
+            // We must not show class wide types in the proxy.
+            decl = typeDecl.pSpecificType();
         }
         Libadalang.Symbol[] symbols = decl.pFullyQualifiedNameArray(false);
         return new FullyQualifiedName(
                 Stream.of(symbols).map(s -> s.text).map(Name::fromLower).toList());
     }
 
-    /** Create a {@link TypeExpr} to ``decl`` , or its parent if ``onlyParent`` is true. */
+    /** Create a {@link TypeExpr} to ``decl``. */
     public static TypeExpr makeTypeExpr(Libadalang.BasicDecl decl) {
         if (decl instanceof Libadalang.TypeDecl typeDecl) {
             if (typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
@@ -213,10 +215,35 @@ public class AdaAPI {
     public static String makeParamConversion(
             Name name, Libadalang.BaseTypeDecl type, boolean isOutMode) {
         type = (Libadalang.BaseTypeDecl) type.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+        String valueVarTypename = type.pFullyQualifiedName();
 
         StringBuilder builder = new StringBuilder();
         String argName = name.toPascalWithUnderscore();
-        builder.append(argName).append("_Value : ").append(type.pFullyQualifiedName());
+        // Class wide types need a pointer conversion function.
+        if (type instanceof Libadalang.ClasswideTypeDecl) {
+            Libadalang.BaseTypeDecl specificType = type.pSpecificType();
+            String accessType =
+                    name.toPascalWithUnderscore().concat("_").concat(asAccess(specificType));
+            builder.append("type ")
+                    .append(accessType)
+                    .append(" is access all ")
+                    .append(type.pFullyQualifiedName())
+                    .append("; function ")
+                    .append(argName)
+                    .append("_Converter is new Ada.Unchecked_Conversion (System.Address, ")
+                    .append(accessType)
+                    .append(");\n")
+                    .append(name.toPascalWithUnderscore())
+                    .append("_Access : ")
+                    .append(accessType)
+                    .append(":= ")
+                    .append(argName)
+                    .append("_Converter (")
+                    .append(argName)
+                    .append("_Arg);");
+        }
+        // Begin the declaration of the value.
+        builder.append(argName).append("_Value : ").append(valueVarTypename);
         if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
             // If the type is an array, generate the following:
             // .. code::
@@ -247,6 +274,8 @@ public class AdaAPI {
                     .append("_Arg.Data; pragma Import (Ada, ")
                     .append(argName)
                     .append("_Value)");
+        } else if (type instanceof Libadalang.ClasswideTypeDecl) {
+            builder.append(" renames ").append(argName).append("_Access.all");
         } else if (type.pIsRecordType(Libadalang.AdaNode.NONE) || isOutMode) {
             // If the type is a record or when the parameter uses an ``out`` mode, generate the
             // following:
@@ -272,7 +301,7 @@ public class AdaAPI {
             //
             //     ${Arg}_Value : ${Type} := ${Type} (${Arg}_Arg);
             builder.append(" := ")
-                    .append(type.pFullyQualifiedName())
+                    .append(valueVarTypename)
                     .append(" (")
                     .append(argName)
                     .append("_Arg)");
@@ -300,14 +329,37 @@ public class AdaAPI {
     public static String call(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
         builder.append(subp.getOriginName());
+
         if (!subp.parameters.isEmpty()) {
             builder.append(" (")
                     .append(
                             subp.parameters.stream()
-                                    .map(p -> p.name.toPascalWithUnderscore() + "_Value")
+                                    .map(p -> p.name.toPascalWithUnderscore().concat("_Value"))
                                     .collect(Collectors.joining(", ")))
                     .append(")");
         }
+        return builder.toString();
+    }
+
+    /**
+     * Create a call to the subprogram for when a shadow type does not override the subprogram.
+     *
+     * <p>Parameters with the same type as the first (controlling) parameter will be cast to the
+     * non-shadow type.
+     */
+    public static String callParent(Subprogram subp) {
+        StringBuilder builder = new StringBuilder();
+        Libadalang.BaseTypeDecl controllingType = subp.parameters.get(0).getType();
+        builder.append(subp.getOriginName()).append("(");
+        for (int i = 0; i < subp.parameters.size(); i++) {
+            SubpParam param = subp.parameters.get(i);
+            if (i != 0) builder.append(", ");
+            boolean needsCast = param.getType().equals(controllingType);
+            if (needsCast) builder.append(controllingType.pFullyQualifiedName()).append(" (");
+            builder.append(param.name.toPascalWithUnderscore());
+            if (needsCast) builder.append(")");
+        }
+        builder.append(")");
         return builder.toString();
     }
 
@@ -454,6 +506,7 @@ public class AdaAPI {
     public static String cInterfaceTypename(Libadalang.BaseTypeDecl bTypeDecl) {
         NativeType nativeType = checkNativeType(bTypeDecl);
         if (nativeType != null) return cInterfaceNativeTypename(nativeType);
+        if (bTypeDecl instanceof Libadalang.ClasswideTypeDecl) return "System.Address";
         Libadalang.TypeDef typeDef =
                 ((Libadalang.TypeDecl) bTypeDecl.pRootType(Libadalang.AdaNode.NONE)).fTypeDef();
         if (typeDef instanceof Libadalang.PrivateTypeDef
