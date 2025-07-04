@@ -1,8 +1,6 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
-import com.adacore.polyglot.ada2proxy.AdaAPI;
-import com.adacore.polyglot.proxy.Field;
 import com.adacore.polyglot.proxy.Name;
 
 public class Component implements AdaProxyObject {
@@ -28,8 +26,7 @@ public class Component implements AdaProxyObject {
         return visitor.visit(this);
     }
 
-    @Override
-    public Field toPolyglotProxy() {
-        return new Field(name, origin.pDoc(), AdaAPI.makeTypeExpr(origin.pTypeExpression()));
+    public String getDoc() {
+        return origin.pDoc();
     }
 }

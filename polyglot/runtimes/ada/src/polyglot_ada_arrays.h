@@ -1,0 +1,77 @@
+#ifndef POLYGLOT_ADA_ARRAYS_H
+#define POLYGLOT_ADA_ARRAYS_H
+
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
+#include <type_traits>
+
+namespace polyglot::ada::arrays {
+
+extern "C" struct array_data {
+  int begin;
+  int end;
+  void *data;
+};
+
+static_assert(std::is_standard_layout<array_data>::value,
+              "array_data type is not C compatible");
+
+// Helper to get references or view types if T is scalar or not.
+template <typename T, bool = std::is_scalar<T>::value> struct ref_selector;
+
+// Specialization for scalar types: R is T&
+template <typename T> struct ref_selector<T, true> {
+  using type = T &;
+};
+
+// Specialization for non-scalar types: R is T::ref
+template <typename T> struct ref_selector<T, false> {
+  using type = typename T::view;
+};
+
+template <typename T> class polyglot_array {
+public:
+    class view {
+    public:
+        view(const array_data &data) : _data(data) {}
+
+        operator polyglot_array<T>&() {
+            return *(polyglot_array<T>*)this;
+        }
+
+        polyglot_array<T>* operator->() {
+            return (polyglot_array<T>*)this;
+        }
+
+    private:
+        array_data _data;
+    };
+
+public:
+  polyglot_array(array_data data) :_data(data) {}
+  polyglot_array(int begin, int end);
+  ~polyglot_array();
+
+  polyglot_array(const polyglot_array<T> &other);
+  polyglot_array &operator=(const polyglot_array<T> &other);
+
+  // Define R: if T is scalar, R is T&; otherwise, R is T::view
+  using R = typename ref_selector<T>::type;
+
+  R get(std::int32_t index) const;
+  void set(std::int32_t index, const T &new_val);
+
+  int get_begin() const { return this->_data.begin; }
+
+  int get_end() const { return this->_data.end; }
+
+  array_data data() const { return this->_data; }
+
+private:
+  array_data _data;
+};
+
+} // namespace polyglot::ada::arrays
+
+#endif /* ! POLYGLOT_ADA_ARRAYS_H */

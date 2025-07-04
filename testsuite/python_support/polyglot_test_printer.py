@@ -54,7 +54,7 @@ print("Running test main program...")
 print()
 
 env = dict(os.environ)
-add_path(env, "LD_LIBRARY_PATH", f"{os.path.join(input_proxy_location, 'lib')}")
+add_path(env, "LD_LIBRARY_PATH", f"{os.path.join(input_proxy_location, 'lib', 'relocatable')}")
 add_path(env, "LD_LIBRARY_PATH", f"{os.path.join(output_proxy_location)}")
 main_argv = [res]
 if "--enable-valgrind" in sys.argv:

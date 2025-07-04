@@ -1,6 +1,8 @@
 package com.adacore.polyglot.proxy2cpp;
 
 import com.adacore.polyglot.Printer;
+import com.adacore.polyglot.proxy.Module;
+import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.ProxyException;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
@@ -8,6 +10,7 @@ import gg.jte.output.FileOutput;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 public class CppPrinter extends Printer {
 
@@ -28,6 +31,8 @@ public class CppPrinter extends Printer {
         CppAPI api = new CppAPI(context, outputPath);
 
         for (var module : proxy.modules) {
+            if (module.name.names.get(0).equals(Name.fromLower("polyglot"))) continue;
+
             Path headerFilename = api.headerFilePath(module);
             try (FileOutput packageSpec = new FileOutput(headerFilename)) {
                 templateEngine.render(
@@ -38,6 +43,23 @@ public class CppPrinter extends Printer {
             try (FileOutput packageSpec = new FileOutput(sourceFilename)) {
                 templateEngine.render(
                         "source.jte", Map.of("api", api, "module", module), packageSpec);
+            }
+        }
+
+        Optional<Module> arrayModule =
+                proxy.modules.stream()
+                        .filter(
+                                m ->
+                                        m.name.names.get(0).equals(Name.fromLower("polyglot"))
+                                                && m.name.getLastName()
+                                                        .equals(Name.fromLower("arrays")))
+                        .findFirst();
+        if (arrayModule.isPresent()) {
+            Module module = arrayModule.get();
+            Path sourceFilename = api.sourceFilePath(module);
+            try (FileOutput packageSpec = new FileOutput(sourceFilename)) {
+                templateEngine.render(
+                        "arrays.jte", Map.of("api", api, "module", module), packageSpec);
             }
         }
     }

@@ -3,6 +3,7 @@ package com.adacore.polyglot.ada2proxy;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration;
+import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
@@ -63,6 +64,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     /** List of declarations declared by the module */
     private List<AdaDeclaration> declarations = new ArrayList<>();
 
+    private Set<Libadalang.BaseTypeDecl> arrayComponentTypes = new HashSet<>();
+
     private Libadalang.PackageDecl analyzedPackage;
 
     /** Analyse an Ada specification file. */
@@ -78,6 +81,10 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
         // Return the module.
         return new Package(analyzedPackage, declarations);
+    }
+
+    public List<Array> getArrayTypes() {
+        return arrayComponentTypes.stream().map(Array::new).toList();
     }
 
     @Override
@@ -223,15 +230,12 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
         if (!primitiveType.isNone()
                 && AdaAPI.checkNativeType(primitiveType) == null
+                && !primitiveType.pIsArrayType(Libadalang.AdaNode.NONE)
                 && spec.pParams().length != 0) {
             if (spec.pParams()[0]
                     .pFormalType(Libadalang.AdaNode.NONE)
                     .pMatchingType(primitiveType, Libadalang.AdaNode.NONE))
-                role =
-                        new Role(
-                                RoleKind.METHOD,
-                                AdaAPI.makeProxyFullyQualifiedName(primitiveType),
-                                null);
+                role = new Role(RoleKind.METHOD, AdaAPI.makeTypeExpr(primitiveType), null);
         }
 
         // Get the list of parameters.
@@ -294,6 +298,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visit(Libadalang.PrivateTypeDef node) {
         Libadalang.ConcreteTypeDecl parentDecl =
                 (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
@@ -307,6 +312,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visit(Libadalang.RecordTypeDef node) {
         Libadalang.ConcreteTypeDecl parentDecl =
                 (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
@@ -329,6 +335,20 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                         Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
                         components));
 
+        return null;
+    }
+
+    @Override
+    public Void visit(Libadalang.ArrayTypeDef node) {
+        Libadalang.ConcreteTypeDecl parentDecl =
+                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
+        Libadalang.BaseTypeDecl componentType =
+                node.fComponentType().fTypeExpr().pDesignatedTypeDecl();
+        if (!parentDecl.pGetAspectAssoc(Libadalang.Symbol.create("pack")).isNone()) {
+            // TODO: create a record
+        } else if (AdaAPI.checkNativeType(componentType) == null) {
+            arrayComponentTypes.add(componentType);
+        }
         return null;
     }
 }

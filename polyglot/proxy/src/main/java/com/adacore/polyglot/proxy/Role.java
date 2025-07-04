@@ -18,27 +18,31 @@ public class Role implements ProxyObject {
         /** The function sets the value of {@link Role#field}. */
         @JsonProperty("setter")
         SETTER,
-        /** The function allocates a new instance of type {@link Role#type}. */
-        @JsonProperty("alloc")
-        ALLOC,
         /** The function initializes the field of an instance of type {@link Role#type}. */
         @JsonProperty("construct")
         CONSTRUCT,
-        /** The function frees an instance of type {@link Role#type}. */
-        @JsonProperty("free")
-        FREE,
         /** The function destructs an instance of type {@link Role#type}. */
         @JsonProperty("destruct")
         DESTRUCT,
+        /** The function allocates a new instance of type {@link Role#type}. */
+        @JsonProperty("alloc")
+        ALLOC,
+        /** The function frees an instance of type {@link Role#type}. */
+        @JsonProperty("free")
+        FREE,
     }
 
     /** The kind of role. */
     @JsonProperty("kind")
     public final RoleKind kind;
 
-    /** The type the function should be a member of. */
+    /**
+     * The type the function should be a member of.
+     *
+     * <p>This TypeExpr can only be composed of ArrayTypeExprs or NameTypeExprs.
+     */
     @JsonProperty("type")
-    public final FullyQualifiedName type;
+    public final TypeExpr type;
 
     /**
      * When the role is {@link RoleKind#GETTER} or {@link RoleKind#SETTER}, the field of type it is
@@ -51,7 +55,7 @@ public class Role implements ProxyObject {
     @JsonCreator
     public Role(
             @JsonProperty(value = "kind", required = true) RoleKind kind,
-            @JsonProperty(value = "type", required = true) FullyQualifiedName type,
+            @JsonProperty(value = "type", required = true) TypeExpr type,
             @JsonProperty(value = "field") Name field) {
         this.kind = kind;
         this.type = type;

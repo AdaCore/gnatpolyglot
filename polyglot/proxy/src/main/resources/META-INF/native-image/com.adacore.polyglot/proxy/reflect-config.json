@@ -118,7 +118,7 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Role$RoleKind","com.adacore.polyglot.proxy.FullyQualifiedName","com.adacore.polyglot.proxy.Name"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Role$RoleKind","com.adacore.polyglot.proxy.TypeExpr","com.adacore.polyglot.proxy.Name"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.Role$RoleKind",

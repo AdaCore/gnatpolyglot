@@ -1,6 +1,7 @@
 package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import com.adacore.libadalang.Libadalang.Expr;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
@@ -9,7 +10,6 @@ import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.Name;
-import com.adacore.polyglot.proxy.NameTypeExpr;
 import com.adacore.polyglot.proxy.TypeExpr;
 import java.nio.file.Path;
 import java.util.List;
@@ -31,7 +31,12 @@ public class AdaAPI {
     }
 
     /** Create a {@link TypeExpr} to ``decl`` , or its parent if ``onlyParent`` is true. */
-    public static NameTypeExpr makeTypeExpr(Libadalang.BasicDecl decl) {
+    public static TypeExpr makeTypeExpr(Libadalang.BasicDecl decl) {
+        if (decl instanceof Libadalang.TypeDecl typeDecl) {
+            if (typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
+                return makeTypeExpr(arrayTypeDef.fComponentType().fTypeExpr()).makeArray();
+            }
+        }
         return makeProxyFullyQualifiedName(decl).asTypeExpr();
     }
 
@@ -89,13 +94,33 @@ public class AdaAPI {
      * Create the list of strings containing the interfaces generated from the json proxy for the
      * gpr project file.
      */
-    public static String makeInterfaces(List<Package> packages) {
+    public static String getProxyInterfaces(List<Package> packages) {
         return packages.stream()
-                .map(
+                .flatMap(
                         p -> {
-                            return "\"%s.proxy\""
-                                    .formatted(p.getFullyQualifiedName().toLowerCase());
+                            return Stream.of(
+                                    AdaAPI.toAdaFilename(p, "-proxy.ads").toString(),
+                                    AdaAPI.toAdaFilename(p, "-proxy.adb").toString());
                         })
+                .map(s -> "\"%s\"".formatted(s))
+                .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Create the list of strings containing the interfaces generated from the json proxy for the
+     * gpr project file and the original files binded from the library for aggregate libraries.
+     */
+    public static String getAggregateInterfaces(List<Package> packages) {
+        return packages.stream()
+                .flatMap(
+                        p -> {
+                            return Stream.of(
+                                    AdaAPI.toAdaFilename(p, ".ads").toString(),
+                                    AdaAPI.toAdaFilename(p, ".adb").toString(),
+                                    AdaAPI.toAdaFilename(p, "-proxy.ads").toString(),
+                                    AdaAPI.toAdaFilename(p, "-proxy.adb").toString());
+                        })
+                .map(s -> "\"%s\"".formatted(s))
                 .collect(Collectors.joining(", "));
     }
 
@@ -104,42 +129,79 @@ public class AdaAPI {
         return name.toPascalWithUnderscore() + "_Proxy";
     }
 
+    /** Return the typename of the parameter */
+    private static String cInterfaceParamTypename(SubpParam p) {
+        // If the parameter has a Out mode, it is a reference and will be passed as an address.
+        if (p.isOutMode() && !p.getType().pIsArrayType(Libadalang.AdaNode.NONE))
+            return "System.Address";
+        else return cInterfaceTypename(p.getType());
+    }
+
     /** Build a string containing the parameter specifications of a subprogram. */
     public static String cInterfaceParameters(Subprogram subp) {
         return subp.parameters.stream()
                 .map(
                         (p -> {
                             StringBuilder argBuilder = new StringBuilder();
-                            argBuilder.append(p.name.toPascalWithUnderscore() + "_Arg");
-                            argBuilder.append(": ");
-                            // If the parameter has a Out mode, it is a reference and will be
-                            // passed as an address.
-                            if (p.isOutMode()) argBuilder.append("System.Address");
-                            else argBuilder.append(cInterfaceTypename(p.getFormalType()));
+                            argBuilder
+                                    .append(p.name.toPascalWithUnderscore())
+                                    .append("_Arg")
+                                    .append(": ")
+                                    .append(cInterfaceParamTypename(p));
                             return argBuilder.toString();
                         }))
                 .collect(Collectors.joining("; "));
     }
 
     /** Create a string that refers to the type pointed by typeExpr as an access type. */
-    public static String asAccess(Libadalang.TypeExpr typeExpr) {
-        Libadalang.BaseTypeDecl typeDecl = typeExpr.pDesignatedTypeDecl();
-        if (typeDecl.pIsAccessType(Libadalang.AdaNode.NONE)) return typeExpr.getText();
-        else return typeExpr.getText() + "_Access";
+    public static String asAccess(Libadalang.BaseTypeDecl typeDecl) {
+        if (typeDecl.pIsAccessType(Libadalang.AdaNode.NONE))
+            return typeDecl.pRelativeName().getText();
+        else return typeDecl.pRelativeName().getText() + "_Access";
     }
 
     /**
      * Create an entity that is the conversion of a subprogram parameter, named `${name}_Arg` in the
      * C API, to the `type` Ada type.
      */
-    private static String makeParamConversion(
+    public static String makeParamConversion(
             Name name, Libadalang.BaseTypeDecl type, boolean isOutMode) {
         type = (Libadalang.BaseTypeDecl) type.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
 
         StringBuilder builder = new StringBuilder();
         String argName = name.toPascalWithUnderscore();
         builder.append(argName).append("_Value : ").append(type.pFullyQualifiedName());
-        if (type.pIsRecordType(Libadalang.AdaNode.NONE) || isOutMode) {
+        if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
+            // If the type is an array, generate the following:
+            // .. code::
+            //     ${Arg}_Value : ${Type}
+            //       (${indexType} ({Arg}_Arg.First) .. ${indexType} ({Arg}_Arg.Last))
+            //       with Address => ${Arg}_Arg;
+            //     pragma Import (Ada, ${Arg}_Value);
+            //
+            // If the array type is not unconstrained, the bounds will not be generated.
+            Libadalang.ArrayTypeDef typeDef =
+                    (Libadalang.ArrayTypeDef) ((Libadalang.TypeDecl) type).fTypeDef();
+            if (typeDef.fIndices() instanceof Libadalang.UnconstrainedArrayIndices indices) {
+                Libadalang.UnconstrainedArrayIndex index =
+                        (Libadalang.UnconstrainedArrayIndex) indices.fTypes().getChild(0);
+                BaseTypeDecl indexType = index.fSubtypeName().pNameDesignatedType();
+                builder.append(" (")
+                        .append(indexType.pFullyQualifiedName())
+                        .append(" (")
+                        .append(argName)
+                        .append("_Arg.First) .. ")
+                        .append(indexType.pFullyQualifiedName())
+                        .append(" (")
+                        .append(argName)
+                        .append("_Arg.Last))");
+            }
+            builder.append(" with Address => ")
+                    .append(argName)
+                    .append("_Arg.Data; pragma Import (Ada, ")
+                    .append(argName)
+                    .append("_Value)");
+        } else if (type.pIsRecordType(Libadalang.AdaNode.NONE) || isOutMode) {
             // If the type is a record or when the parameter uses an ``out`` mode, generate the
             // following:
             // .. code::
@@ -205,13 +267,24 @@ public class AdaAPI {
         returnedType =
                 (Libadalang.BaseTypeDecl)
                         returnedType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+        String typename = returnedType.pFullyQualifiedName();
         if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)) {
             // When returning records, we need to convert an access to `System.Address`: declare a
             // converter.
             builder.append("package Return_Type_Converter is new")
                     .append(" System.Address_To_Access_Conversions(")
-                    .append(returnedType.pFullyQualifiedName())
+                    .append(typename)
                     .append(");");
+        } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
+            String accessType = asAccess(returnedType);
+            builder.append("type ")
+                    .append(accessType)
+                    .append(" is access all ")
+                    .append(typename)
+                    .append(" with Size => Standard'Address_Size;\n")
+                    .append("Returned_Array : ")
+                    .append(accessType)
+                    .append(";");
         }
         return builder.toString();
     }
@@ -249,6 +322,27 @@ public class AdaAPI {
                     .append("'(")
                     .append(returnedValue)
                     .append("))");
+        } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
+            // If the return type is an array, generate the following:
+            // :: code:
+            //    declare
+            //       type ${accessType} is access all ${typeName}
+            //          with Size => Standard'Address_Size;
+            //       Returned_Array : ${accessType} :=
+            //          new ${typeName}'(${returnedValue});
+            //    begin
+            //    return (First => Returned_Array'First,
+            //            Last  => Returned_Array'Last,
+            //            Data  => Returned_Array.all'Address);
+            //    end
+            builder.append("Returned_Array := new ")
+                    .append(typeName)
+                    .append("'(")
+                    .append(returnedValue)
+                    .append(");\n")
+                    .append("return (First => Interfaces.C.Int (Returned_Array.all'First),")
+                    .append("Last => Interfaces.C.Int (Returned_Array.all'Last), ")
+                    .append("Data => Returned_Array.all'Address)");
         }
         return builder.toString();
     }
@@ -312,6 +406,7 @@ public class AdaAPI {
                 ((Libadalang.TypeDecl) bTypeDecl.pRootType(Libadalang.AdaNode.NONE)).fTypeDef();
         if (typeDef instanceof Libadalang.PrivateTypeDef
                 || typeDef instanceof Libadalang.RecordTypeDef) return "System.Address";
+        if (typeDef instanceof Libadalang.ArrayTypeDef) return "Polyglot.Ada.Arrays.Polyglot_Array";
 
         throw new UnsupportedOperationException("Type not supported");
     }

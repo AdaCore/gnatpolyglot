@@ -57,25 +57,26 @@ public class AdaScanner extends Scanner {
                         .map(s -> ctx.getUnitFromFile(s))
                         .map(u -> visitor.analyzeSpec(u))
                         .toList();
-        this.proxy = new AdaProxy(modules);
+        this.proxy = new AdaProxy(modules, visitor.getArrayTypes());
     }
 
     @Override
     public Proxy getProxy() {
-        return proxy.toPolyglotProxy();
+        return AdaProxyTranslator.translate(proxy);
     }
 
     @Override
     public void generate(Path path) throws IOException {
         // Write the json proxy file.
+        Proxy jsonProxy = getProxy();
         try {
-            proxy.toPolyglotProxy().writeProxy(path.resolve("proxy.json").toFile());
+            jsonProxy.writeProxy(path.resolve("proxy.json").toFile());
         } catch (Exception e) {
             throw new IOException(e);
         }
 
         // Generate the Gpr file for the proxy.
-        Path proxyGprFile = Path.of(projectName + "_proxy.gpr");
+        Path proxyGprFile = Path.of(projectName + "-proxy.gpr");
         try (FileOutput gprOutput = new FileOutput(path.resolve(proxyGprFile))) {
             templateEngine.render(
                     "proxy_gpr.jte",
@@ -83,6 +84,17 @@ public class AdaScanner extends Scanner {
                             "relLibPath", path.relativize(projectFile).toString(),
                             "projectName", Name.fromLower(projectName),
                             "proxy", proxy),
+                    gprOutput);
+        }
+        Path aggGprFile = Path.of(projectName + "-proxy-agg.gpr");
+        try (FileOutput gprOutput = new FileOutput(path.resolve(aggGprFile))) {
+            templateEngine.render(
+                    "proxy_agg_gpr.jte",
+                    Map.of(
+                            "relLibPath", path.relativize(projectFile).toString(),
+                            "projectName", Name.fromLower(projectName),
+                            "proxy", proxy,
+                            "runtimeLocation", getRuntimeLocation()),
                     gprOutput);
         }
 
@@ -97,6 +109,14 @@ public class AdaScanner extends Scanner {
             Path packageBodyFile = AdaAPI.toAdaFilename(pack, "-proxy.adb");
             try (FileOutput packageBody = new FileOutput(proxySrc.resolve(packageBodyFile))) {
                 templateEngine.render("package_adb.jte", proxy.packages.get(0), packageBody);
+            }
+        }
+
+        // Create the array specific functions
+        if (!proxy.arrayTypes.isEmpty()) {
+            Path arraySpecFile = Path.of("polyglot-ada-arrays-non_native.ads");
+            try (FileOutput arraysSpec = new FileOutput(proxySrc.resolve(arraySpecFile))) {
+                templateEngine.render("arrays_ads.jte", proxy.arrayTypes, arraysSpec);
             }
         }
     }

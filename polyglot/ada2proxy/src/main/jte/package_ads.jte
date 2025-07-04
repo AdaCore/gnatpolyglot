@@ -14,6 +14,8 @@ Template file to generate package specs.
 with Interfaces.C;
 with System;
 
+with Polyglot.Ada.Arrays;
+
 package ${packageName}.Proxy is
 @for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>
     @if(decl instanceof Subprogram subp)

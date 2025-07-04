@@ -17,6 +17,8 @@ with Interfaces.C;
 with System;
 with System.Address_To_Access_Conversions;
 
+with Polyglot.Ada.Arrays;
+
 with ${packageName}; use ${packageName};
 
 package body ${packageName}.Proxy is

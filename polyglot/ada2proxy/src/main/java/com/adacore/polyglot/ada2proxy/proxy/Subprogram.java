@@ -2,7 +2,7 @@ package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
-import com.adacore.polyglot.proxy.FunctionDecl;
+import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Role;
@@ -40,6 +40,7 @@ public class Subprogram extends AdaDeclaration {
         this.owner = owner;
     }
 
+    @Override
     public String getDoc() {
         StringBuilder builder = new StringBuilder(origin.pDoc());
         // If the function has a different name when binded in the proxy, add documentation to
@@ -71,20 +72,9 @@ public class Subprogram extends AdaDeclaration {
         return visitor.visit(this);
     }
 
-    @Override
-    public FunctionDecl toPolyglotProxy() {
-        return new FunctionDecl(
-                AdaAPI.makeProxyFullyQualifiedName(origin)
-                        .getParentFullyQualifiedName()
-                        .append(name),
-                getDoc(),
-                role,
-                symbol,
-                parameters.stream().map(SubpParam::toPolyglotProxy).toList(),
-                AdaAPI.makeTypeExpr(origin.fSubpSpec().fSubpReturns()),
-                owner,
-                false,
-                false,
-                false);
+    public FullyQualifiedName getProxyFullyQualifiedName() {
+        return AdaAPI.makeProxyFullyQualifiedName(origin)
+                .getParentFullyQualifiedName()
+                .append(name);
     }
 }

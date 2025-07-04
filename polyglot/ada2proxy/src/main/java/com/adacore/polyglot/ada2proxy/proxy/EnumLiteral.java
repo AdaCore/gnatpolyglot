@@ -1,7 +1,6 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
-import com.adacore.polyglot.proxy.EnumItem;
 import com.adacore.polyglot.proxy.Name;
 
 public class EnumLiteral implements AdaProxyObject {
@@ -26,8 +25,7 @@ public class EnumLiteral implements AdaProxyObject {
         return visitor.visit(this);
     }
 
-    @Override
-    public EnumItem toPolyglotProxy() {
-        return new EnumItem(name, value, origin.pDoc());
+    public String getDoc() {
+        return origin.pDoc();
     }
 }

@@ -3,6 +3,8 @@
 import os
 import sys
 
+from e3.os import process
+from e3.os.fs import which
 from e3.testsuite import Testsuite
 
 from drivers import (
@@ -63,6 +65,20 @@ class PolyglotTestsuite(Testsuite):
         args = self.main.args
 
         self.env.rewrite_baselines = args.rewrite
+
+        # Make sure the runtime is built before running the tests
+        try:
+            runtime_dir = os.environ["POLYGLOT_RUNTIME"]
+        except KeyError:
+            runtime_dir = os.path.join(
+                os.path.dirname(which("polyglot")), "..", "polyglot", "runtimes"
+            )
+
+        for gpr_file in [
+            os.path.join(runtime_dir, "polyglot", "polyglot.gpr"),
+            os.path.join(runtime_dir, "ada", "polyglot-ada.gpr"),
+        ]:
+            process.Run(["gprbuild", "-P", gpr_file, "-p", "-f"])
 
 
 sys.exit(PolyglotTestsuite().testsuite_main())

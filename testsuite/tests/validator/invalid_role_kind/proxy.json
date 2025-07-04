@@ -15,7 +15,10 @@
           },
           "role": {
             "kind": "alloc",
-            "type": { "names": ["module_1", "class_type_1"] },
+            "type": {
+              "kind": "typename",
+              "name": { "names": ["module_1", "class_type_1"] }
+            },
             "field": "field_1"
           },
           "return_owner": "unknown",

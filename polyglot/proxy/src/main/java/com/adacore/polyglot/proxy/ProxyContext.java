@@ -27,7 +27,7 @@ public class ProxyContext {
     private Map<FullyQualifiedName, TypeDecl> types = new HashMap<>();
 
     /** Map a type to its member functions. */
-    private Map<TypeDecl, FunctionMembersEntry> membersEntries = new HashMap<>();
+    private Map<TypeExpr, FunctionMembersEntry> membersEntries = new HashMap<>();
 
     public ProxyContext() {
         for (var nativeType : NativeType.values())
@@ -51,14 +51,11 @@ public class ProxyContext {
         if (func.role == null) {
             return true;
         }
-        TypeDecl decl = this.getTypeDecl(func.role.type);
-        if (decl == null) {
-            // The goal of the function is to detect when a function's role was already occupied by
-            // an other. checking if the type exists is done somewhere is in the validation of the
-            // proxy.
-            return true;
+        FunctionMembersEntry entry = membersEntries.get(func.role.type);
+        if (entry == null) {
+            entry = new FunctionMembersEntry();
+            membersEntries.put(func.role.type, entry);
         }
-        FunctionMembersEntry entry = membersEntries.get(decl);
         if (func.role.kind == RoleKind.ALLOC) {
             // There can be multiple allocating function (no args, clone...)
             entry.allocFunctions.add(func);
@@ -75,8 +72,8 @@ public class ProxyContext {
      * Register the type in the context and return true if there was no type with the same name and
      * parent, else return false.
      */
-    public boolean register(Module module, TypeDecl declaration) {
-        membersEntries.put(declaration, new FunctionMembersEntry());
+    public boolean register(TypeDecl declaration) {
+        membersEntries.put(declaration.name.asTypeExpr(), new FunctionMembersEntry());
         return types.put(declaration.name, declaration) == null;
     }
 
@@ -91,7 +88,7 @@ public class ProxyContext {
     }
 
     /** Get the entry containing all member functions of the given type. */
-    public FunctionMembersEntry getMembers(TypeDecl decl) {
-        return membersEntries.get(decl);
+    public FunctionMembersEntry getMembers(TypeExpr typeExpr) {
+        return membersEntries.get(typeExpr);
     }
 }
