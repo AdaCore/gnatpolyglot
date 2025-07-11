@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value = EnumerationDecl.class, name = "enum"),
     @JsonSubTypes.Type(value = FunctionDecl.class, name = "function"),
     @JsonSubTypes.Type(value = ClassDecl.class, name = "class"),
+    @JsonSubTypes.Type(value = ExceptionDecl.class, name = "exception"),
 })
 public abstract class Declaration implements ProxyObject {
     /** Name of the declaration. */

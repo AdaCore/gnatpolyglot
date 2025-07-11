@@ -4,6 +4,7 @@ import com.adacore.polyglot.proxy.ArrayTypeExpr;
 import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.EnumItem;
 import com.adacore.polyglot.proxy.EnumerationDecl;
+import com.adacore.polyglot.proxy.ExceptionDecl;
 import com.adacore.polyglot.proxy.Field;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
@@ -125,6 +126,10 @@ public class IncludeCollector {
 
         @Override
         public Void visit(VTableEntry vTableEntry) {
+            throw new UnsupportedOperationException("Unreachable");
+        }
+
+        public Void visit(ExceptionDecl exceptionDecl) {
             throw new UnsupportedOperationException("Unreachable");
         }
     }
