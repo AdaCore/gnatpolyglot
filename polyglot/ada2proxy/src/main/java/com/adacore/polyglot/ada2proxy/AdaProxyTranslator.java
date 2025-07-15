@@ -2,6 +2,7 @@ package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.NativeType;
+import com.adacore.polyglot.ada2proxy.proxy.AdaException;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxy;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxyVisitor;
 import com.adacore.polyglot.ada2proxy.proxy.Array;
@@ -16,6 +17,7 @@ import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.Declaration;
 import com.adacore.polyglot.proxy.EnumItem;
 import com.adacore.polyglot.proxy.EnumerationDecl;
+import com.adacore.polyglot.proxy.ExceptionDecl;
 import com.adacore.polyglot.proxy.Field;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
@@ -186,6 +188,14 @@ public class AdaProxyTranslator {
         public ProxyObject visit(Array array) {
             // Nothing to do
             return null;
+        }
+
+        @Override
+        public ProxyObject visit(AdaException adaException) {
+            return new ExceptionDecl(
+                    adaException.getProxyFullyQualifiedName(),
+                    adaException.getDoc(),
+                    adaException.getValue());
         }
     }
 

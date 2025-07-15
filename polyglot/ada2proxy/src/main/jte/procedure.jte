@@ -26,5 +26,12 @@ Template file to generate binded procedures.
     @endfor
    begin
       ${api.call(subp)};
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Clear_Last_Exception (Polyglot.Get_Kernel);
+         Polyglot.Exceptions.Raise_Exception
+           (Polyglot.Get_Kernel,
+            Ada.Exceptions.Save_Occurrence (E),
+            Polyglot.Exceptions.Test.Identify_Exception'Access);
    end ${api.proxyName(subp)};
 @endif

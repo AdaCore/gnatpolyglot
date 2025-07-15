@@ -18,4 +18,6 @@ public interface AdaProxyVisitor<T> {
     T visit(Component component);
 
     T visit(Array array);
+
+    T visit(AdaException adaException);
 }

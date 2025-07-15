@@ -158,5 +158,37 @@ public class AdaScanner extends Scanner {
                         arraysSpec);
             }
         }
+
+        // Create the exception specific functions
+        Path exceptionSpecFile = Path.of("polyglot-exceptions-%s.ads".formatted(projectName));
+        try (FileOutput exceptionSpec = new FileOutput(proxySrc.resolve(exceptionSpecFile))) {
+            templateEngine.render(
+                    "exceptions.jte",
+                    Map.of(
+                            "api",
+                            api,
+                            "proxy",
+                            proxy,
+                            "projectName",
+                            Name.fromLower(projectName),
+                            "isSource",
+                            false),
+                    exceptionSpec);
+        }
+        Path exceptionBodyFile = Path.of("polyglot-exceptions-%s.adb".formatted(projectName));
+        try (FileOutput exceptionBody = new FileOutput(proxySrc.resolve(exceptionBodyFile))) {
+            templateEngine.render(
+                    "exceptions.jte",
+                    Map.of(
+                            "api",
+                            api,
+                            "proxy",
+                            proxy,
+                            "projectName",
+                            Name.fromLower(projectName),
+                            "isSource",
+                            true),
+                    exceptionBody);
+        }
     }
 }

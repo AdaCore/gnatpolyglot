@@ -698,4 +698,16 @@ public class AdaAPI {
 
         return builder.toString();
     }
+
+    public String makeDefaultReturn(Subprogram subp) {
+        BaseTypeDecl returnType = subp.getReturnType();
+        if (returnType.equals(returnType.pStdCharType()))
+            return "return Interfaces.C.To_C ( Character'Val(0))";
+        if (returnType.pIsScalarType(Libadalang.AdaNode.NONE)) return "return 0";
+        if (returnType.pIsRecordType(Libadalang.AdaNode.NONE) || returnType.pIsPrivate())
+            return "return System.Null_Address";
+        if (returnType.pIsArrayType(Libadalang.AdaNode.NONE))
+            return " return(0, 0, System.Null_Address)";
+        return "return (others => <>)";
+    }
 }

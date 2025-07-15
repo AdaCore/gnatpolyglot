@@ -32,5 +32,14 @@ Template file to generate binded functions.
          ${api.call(subp)};
    begin
       ${api.makeReturnConversion(subp.getReturnType(), "Value_Returned")};
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Clear_Last_Exception (Polyglot.Get_Kernel);
+         Polyglot.Exceptions.Raise_Exception
+           (Polyglot.Get_Kernel,
+            Ada.Exceptions.Save_Occurrence (E),
+            Polyglot.Exceptions.${api.getProjectName().toPascalWithUnderscore()}
+               .Identify_Exception'Access);
+      ${api.makeDefaultReturn(subp)};
    end ${api.proxyName(subp)};
 @endif
