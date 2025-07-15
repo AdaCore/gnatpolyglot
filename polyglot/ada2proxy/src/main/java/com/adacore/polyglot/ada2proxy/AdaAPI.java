@@ -22,6 +22,16 @@ import java.util.stream.Stream;
 /** Utility class that provides methods to help generate Ada code from a Proxy. */
 public class AdaAPI {
 
+    private Name projectName;
+
+    public AdaAPI(Name projectName) {
+        this.projectName = projectName;
+    }
+
+    public Name getProjectName() {
+        return projectName;
+    }
+
     /** Create a {@link FullyQualifiedName} to decl, or its parent if ``onlyParent`` is true. */
     public static FullyQualifiedName makeProxyFullyQualifiedName(Libadalang.BasicDecl decl) {
         if (decl instanceof Libadalang.BaseTypeDecl typeDecl) {
@@ -113,7 +123,7 @@ public class AdaAPI {
      * Create the list of strings containing the interfaces generated from the json proxy for the
      * gpr project file.
      */
-    public static String getProxyInterfaces(List<Package> packages) {
+    public String getProxyInterfaces(List<Package> packages) {
         return packages.stream()
                 .flatMap(
                         p -> {
@@ -129,7 +139,7 @@ public class AdaAPI {
      * Create the list of strings containing the interfaces generated from the json proxy for the
      * gpr project file and the original files binded from the library for aggregate libraries.
      */
-    public static String getAggregateInterfaces(List<Package> packages) {
+    public String getAggregateInterfaces(List<Package> packages) {
         return packages.stream()
                 .flatMap(
                         p -> {
@@ -144,7 +154,7 @@ public class AdaAPI {
     }
 
     /** Return name with the correct Ada syntax with ``_Proxy`` as a suffix. */
-    public static String proxyName(Name name) {
+    public String proxyName(Name name) {
         return name.toPascalWithUnderscore() + "_Proxy";
     }
 
@@ -152,7 +162,8 @@ public class AdaAPI {
      * Return name with the correct Ada syntax with ``_Proxy`` as a suffix and the parameter type
      * names to avoid conflicts with duplicated subprograms.
      */
-    public static String proxyName(Subprogram subp) {
+    /** Return name with the correct Ada syntax with ``_Proxy`` as a suffix. */
+    public String proxyName(Subprogram subp) {
         StringBuilder builder = new StringBuilder(proxyName(subp.name));
         for (var p : subp.parameters) {
             builder.append("_").append(p.getType().pRelativeNameText().toString());
@@ -162,7 +173,7 @@ public class AdaAPI {
     }
 
     /** Return the typename of the parameter */
-    private static String cInterfaceParamTypename(SubpParam p) {
+    private String cInterfaceParamTypename(SubpParam p) {
         // If the parameter has a Out mode, it is a reference and will be passed as an address.
         if (p.isOutMode() && !p.getType().pIsArrayType(Libadalang.AdaNode.NONE))
             return "System.Address";
@@ -170,7 +181,7 @@ public class AdaAPI {
     }
 
     /** Build a string containing the parameter specifications of a subprogram. */
-    public static String cInterfaceParameters(Subprogram subp) {
+    public String cInterfaceParameters(Subprogram subp) {
         return subp.parameters.stream()
                 .map(
                         (p -> {
@@ -189,7 +200,7 @@ public class AdaAPI {
      * Build a string containing the parameter specifications of the constructor of a record. If the
      * function's role is {@link RoleKind#SHADOW_ALLOC}, also add the self and vtable arguments
      */
-    public static String cInterfaceParameters(Record rec, FunctionDecl function) {
+    public String cInterfaceParameters(Record rec, FunctionDecl function) {
         StringBuilder res = new StringBuilder();
         res.append(
                 function.type.parameters.stream()
@@ -226,7 +237,7 @@ public class AdaAPI {
     }
 
     /** Create a string that refers to the type pointed by typeExpr as an access type. */
-    public static String asAccess(Libadalang.BaseTypeDecl typeDecl) {
+    public String asAccess(Libadalang.BaseTypeDecl typeDecl) {
         if (typeDecl.pIsAccessType(Libadalang.AdaNode.NONE))
             return typeDecl.pRelativeName().getText();
         else return typeDecl.pRelativeName().getText() + "_Access";
@@ -236,8 +247,7 @@ public class AdaAPI {
      * Create an entity that is the conversion of a subprogram parameter, named `${name}_Arg` in the
      * C API, to the `type` Ada type.
      */
-    public static String makeParamConversion(
-            Name name, Libadalang.BaseTypeDecl type, boolean isOutMode) {
+    public String makeParamConversion(Name name, Libadalang.BaseTypeDecl type, boolean isOutMode) {
         type = (Libadalang.BaseTypeDecl) type.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
         String valueVarTypename = type.pFullyQualifiedName();
 
@@ -337,7 +347,7 @@ public class AdaAPI {
      * Create an entity that is the conversion of a C interface type parameter that represent the
      * new value of the setter for ``component`` into the actual Ada type.
      */
-    public static String makeParamConversion(Component component) {
+    public String makeParamConversion(Component component) {
         return makeParamConversion(component.name, component.getType(), false);
     }
 
@@ -345,12 +355,12 @@ public class AdaAPI {
      * Create an entity that is the conversion from a C interface type parameter into the actual Ada
      * type.
      */
-    public static String makeParamConversion(SubpParam param) {
+    public String makeParamConversion(SubpParam param) {
         return makeParamConversion(param.name, param.getType(), param.isOutMode());
     }
 
     /** Create a string to call a function from the proxy. */
-    public static String call(Subprogram subp) {
+    public String call(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
         builder.append(subp.getOriginName());
 
@@ -371,7 +381,7 @@ public class AdaAPI {
      * <p>Parameters with the same type as the first (controlling) parameter will be cast to the
      * non-shadow type.
      */
-    public static String callParent(Subprogram subp) {
+    public String callParent(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
         Libadalang.BaseTypeDecl controllingType = subp.parameters.get(0).getType();
         builder.append(subp.getOriginName()).append("(");
@@ -388,7 +398,7 @@ public class AdaAPI {
     }
 
     /** Create the necessary declarations for the return statement. */
-    public static String makeReturnDeclarations(Libadalang.BaseTypeDecl returnedType) {
+    public String makeReturnDeclarations(Libadalang.BaseTypeDecl returnedType) {
         StringBuilder builder = new StringBuilder();
         returnedType =
                 (Libadalang.BaseTypeDecl)
@@ -419,8 +429,7 @@ public class AdaAPI {
      * Create a string of the value returned by functions, with the necessary cast to the C
      * interface type.
      */
-    public static String makeReturnConversion(
-            Libadalang.BaseTypeDecl returnedType, String returnedValue) {
+    public String makeReturnConversion(Libadalang.BaseTypeDecl returnedType, String returnedValue) {
         StringBuilder builder = new StringBuilder();
         returnedType =
                 (Libadalang.BaseTypeDecl)
@@ -476,7 +485,7 @@ public class AdaAPI {
     }
 
     /** Create a string of the return statement for value returned by component getter functions. */
-    public static String makeGetterReturnConversion(String componentAccess) {
+    public String makeGetterReturnConversion(String componentAccess) {
         StringBuilder builder = new StringBuilder("return ");
         builder.append(componentAccess).append("'Address");
         return builder.toString();
@@ -491,7 +500,7 @@ public class AdaAPI {
     }
 
     /** Return the C Interface typename of a native type. */
-    public static String cInterfaceNativeTypename(NativeType nativeType) {
+    public String cInterfaceNativeTypename(NativeType nativeType) {
         switch (nativeType) {
             case BOOL:
                 return "Interfaces.C.int";
@@ -527,7 +536,7 @@ public class AdaAPI {
     }
 
     /** Return the C Interface typename of a type. */
-    public static String cInterfaceTypename(Libadalang.BaseTypeDecl bTypeDecl) {
+    public String cInterfaceTypename(Libadalang.BaseTypeDecl bTypeDecl) {
         NativeType nativeType = checkNativeType(bTypeDecl);
         if (nativeType != null) return cInterfaceNativeTypename(nativeType);
         if (bTypeDecl instanceof Libadalang.ClasswideTypeDecl) return "System.Address";
@@ -544,7 +553,8 @@ public class AdaAPI {
      * Return a string of a type definition that corresponds to the subprogram's access type in the
      * C ABI.
      */
-    public static String subprogramDispatchType(Subprogram subp) {
+    /** */
+    public String subprogramDispatchType(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
         builder.append(subp.isProcedure() ? "procedure " : "function ")
                 // There will always be at least two arguments here: the first argument will always
@@ -562,7 +572,7 @@ public class AdaAPI {
      * Create a declaration for the function overriding subp for the shadow type, replacing any
      * occurences of the controlling type with the shadow type.
      */
-    public static String makeShadowOverride(Subprogram subp) {
+    public String makeShadowOverride(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
         builder.append(subp.isProcedure() ? "procedure " : "function ")
                 .append(subp.name.toPascalWithUnderscore());
@@ -594,7 +604,7 @@ public class AdaAPI {
         return builder.toString();
     }
 
-    public static String makeShadowReturnDecl(Libadalang.BaseTypeDecl returnedType) {
+    public String makeShadowReturnDecl(Libadalang.BaseTypeDecl returnedType) {
         StringBuilder builder = new StringBuilder();
         returnedType =
                 (Libadalang.BaseTypeDecl)
@@ -635,7 +645,7 @@ public class AdaAPI {
     }
 
     /** Return the return statement of shadow dispatching functions. */
-    public static String makeShadowReturn(Subprogram subp) {
+    public String makeShadowReturn(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
         Libadalang.BaseTypeDecl returnedType =
                 (Libadalang.BaseTypeDecl)
@@ -661,7 +671,7 @@ public class AdaAPI {
     /**
      * Return a string of the argument for param when calling an extern subprogram from a vtable.
      */
-    public static String makeDispatchedArgument(SubpParam param) {
+    public String makeDispatchedArgument(SubpParam param) {
         StringBuilder builder = new StringBuilder();
 
         NativeType nativeType = checkNativeType(param.getType());

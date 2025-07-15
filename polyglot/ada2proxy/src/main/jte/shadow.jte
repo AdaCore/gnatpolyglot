@@ -8,6 +8,7 @@ Template file to generate shadow types for tagged records.
 @import com.adacore.polyglot.proxy.FunctionDecl
 @import com.adacore.polyglot.proxy.Role.RoleKind
 @import com.adacore.polyglot.ada2proxy.proxy.Record
+@param AdaAPI api
 @param Record rec
 @param Boolean isBody
 !{
@@ -36,7 +37,7 @@ Template file to generate shadow types for tagged records.
 
    @for(var subp: methods)
       type ${subp.name.toPascalWithUnderscore()}_${recordName}_Type is access
-         ${AdaAPI.subprogramDispatchType(subp)}
+         ${api.subprogramDispatchType(subp)}
          with Convention => C;
    @endfor
 
@@ -55,7 +56,7 @@ Template file to generate shadow types for tagged records.
       function ${allocFunc.getLastName().toPascalWithUnderscore()}
       <%-- Functions with the SHADOW_ALLOC role have 2 hidden arguments --%>
       @if(!allocFunc.type.parameters.isEmpty() || allocFunc.role.kind == RoleKind.SHADOW_ALLOC)
-         (${AdaAPI.cInterfaceParameters(rec, allocFunc)})
+         (${api.cInterfaceParameters(rec, allocFunc)})
       @endif
          return System.Address;
       pragma Export
@@ -64,14 +65,14 @@ Template file to generate shadow types for tagged records.
    @endfor
 
    @for(var method : rec.methods)
-      overriding ${AdaAPI.makeShadowOverride(method)};
+      overriding ${api.makeShadowOverride(method)};
    @endfor
 
 @else
    @for(var allocFunc : allocFuncs)
       function ${allocFunc.getLastName().toPascalWithUnderscore()}
       @if(!allocFunc.type.parameters.isEmpty() || allocFunc.role.kind == RoleKind.SHADOW_ALLOC)
-         (${AdaAPI.cInterfaceParameters(rec, allocFunc)})
+         (${api.cInterfaceParameters(rec, allocFunc)})
       @endif
          return System.Address
       is
@@ -79,7 +80,7 @@ Template file to generate shadow types for tagged records.
             <%-- The Self and Vtable arguments do not have a corresponding
                  component in the Record, but they are always there. --%>
             @if(rec.getComponent(p.name) != null)
-            ${AdaAPI.makeParamConversion(rec.getComponent(p.name))};
+            ${api.makeParamConversion(rec.getComponent(p.name))};
             @endif
          @endfor
          Self_Value : System.Address := Self_Arg;
@@ -106,7 +107,7 @@ Template file to generate shadow types for tagged records.
          String subpName = method.name.toPascalWithUnderscore();
          String firstParam = method.parameters.get(0).name.toPascalWithUnderscore();
       }
-      ${AdaAPI.makeShadowOverride(method)} is
+      ${api.makeShadowOverride(method)} is
          Table : ${recordName}_Vtable
          with Address => ${firstParam}.Shadow.Vtable;
          pragma Import (Ada, Table);
@@ -117,29 +118,29 @@ Template file to generate shadow types for tagged records.
             @if(!method.isProcedure())
                return
             @endif
-            ${AdaAPI.callParent(method)};
+            ${api.callParent(method)};
          else
             @if(method.isProcedure())
                Table.${subpName}_Dispatch (
                   ${firstParam}.Shadow.Vtable, ${firstParam}.Shadow.Self
                   @for(var p : method.parameters.stream().skip(1).toList())
                      ,
-                     ${AdaAPI.makeDispatchedArgument(p)}
+                     ${api.makeDispatchedArgument(p)}
                   @endfor
                );
             @else
                declare
-                  Returned_Value : ${AdaAPI.cInterfaceTypename(method.getReturnType())} :=
+                  Returned_Value : ${api.cInterfaceTypename(method.getReturnType())} :=
                      Table.${subpName}_Dispatch (
                         ${firstParam}.Shadow.Vtable, ${firstParam}.Shadow.Self
                         @for(var p : method.parameters.stream().skip(1).toList())
                            ,
-                           ${AdaAPI.makeDispatchedArgument(p)}
+                           ${api.makeDispatchedArgument(p)}
                         @endfor
                      );
-                  ${AdaAPI.makeShadowReturnDecl(method.getReturnType())}
+                  ${api.makeShadowReturnDecl(method.getReturnType())}
                begin
-                  ${AdaAPI.makeShadowReturn(method)};
+                  ${api.makeShadowReturn(method)};
                end;
             @endif
          end if;

@@ -7,6 +7,7 @@ Template file to generate array related functions of the Ada bindings.
 @import com.adacore.polyglot.ada2proxy.proxy.Array
 @import com.adacore.polyglot.proxy.Role.RoleKind
 @import java.util.stream.Collectors
+@param AdaAPI api
 @param List<Array> arrays
 
 with Interfaces.C;
@@ -30,7 +31,7 @@ package Polyglot.Ada.Arrays.Non_Native is
             String arrayTypename = componentTypename.replace(".", "_") + "_Array";
             String subpName =
                arrayTypename + "_" + f.name.getLastName().toPascalWithUnderscore();
-            String interfaceType = AdaAPI.cInterfaceTypename(arr.componentType);
+            String interfaceType = api.cInterfaceTypename(arr.componentType);
          }
          @if (f.role.kind == RoleKind.GETTER)
             function ${subpName} is new Get (${componentTypename});

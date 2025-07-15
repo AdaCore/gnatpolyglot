@@ -7,6 +7,7 @@ Template file to generate package specs.
 @import com.adacore.polyglot.ada2proxy.proxy.Package
 @import com.adacore.polyglot.ada2proxy.proxy.Record
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
+@param AdaAPI api
 @param Package pack
 
 !{String packageName = pack.getFullyQualifiedName();}
@@ -21,12 +22,12 @@ package ${packageName}.Proxy is
 @for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>
     @if(decl instanceof Subprogram subp)
         @if(subp.isProcedure())
-            @template.procedure(subp, false)
+            @template.procedure(api, subp, false)
         @else
-            @template.function(subp, false)
+            @template.function(api, subp, false)
         @endif
     @elseif(decl instanceof Record rec)
-        @template.record(rec, false)
+        @template.record(api, rec, false)
     @endif
 @endfor
 end ${packageName}.Proxy;

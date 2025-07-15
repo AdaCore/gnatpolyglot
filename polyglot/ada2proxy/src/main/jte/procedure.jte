@@ -4,26 +4,27 @@ Template file to generate binded procedures.
 --%>
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
+@param AdaAPI api
 @param Subprogram subp
 @param Boolean isBody
 
 @if(!isBody)
-   procedure ${AdaAPI.proxyName(subp)}
+   procedure ${api.proxyName(subp)}
     @if(!subp.parameters.isEmpty())
-      (${AdaAPI.cInterfaceParameters(subp)})
+      (${api.cInterfaceParameters(subp)})
     @endif
     ;
-   pragma Export (C, ${AdaAPI.proxyName(subp)}, "${subp.symbol}");
+   pragma Export (C, ${api.proxyName(subp)}, "${subp.symbol}");
 @else
-   procedure ${AdaAPI.proxyName(subp)}
+   procedure ${api.proxyName(subp)}
     @if(!subp.parameters.isEmpty())
-      (${AdaAPI.cInterfaceParameters(subp)})
+      (${api.cInterfaceParameters(subp)})
     @endif
    is
     @for(var p : subp.parameters)
-      ${AdaAPI.makeParamConversion(p)};
+      ${api.makeParamConversion(p)};
     @endfor
    begin
-      ${AdaAPI.call(subp)};
-   end ${AdaAPI.proxyName(subp)};
+      ${api.call(subp)};
+   end ${api.proxyName(subp)};
 @endif

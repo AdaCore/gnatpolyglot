@@ -7,6 +7,7 @@ Template file to generate package bodies.
 @import com.adacore.polyglot.ada2proxy.proxy.Package
 @import com.adacore.polyglot.ada2proxy.proxy.Record
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
+@param AdaAPI api
 @param Package pack
 
 !{String packageName = pack.getFullyQualifiedName();}
@@ -27,12 +28,12 @@ package body ${packageName}.Proxy is
 @for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>
     @if(decl instanceof Subprogram subp)
         @if(subp.isProcedure())
-            @template.procedure(subp, true)
+            @template.procedure(api, subp, true)
         @else
-            @template.function(subp, true)
+            @template.function(api, subp, true)
         @endif
     @elseif(decl instanceof Record rec)
-        @template.record(rec, true)
+        @template.record(api, rec, true)
     @endif
 @endfor
 end ${packageName}.Proxy;
