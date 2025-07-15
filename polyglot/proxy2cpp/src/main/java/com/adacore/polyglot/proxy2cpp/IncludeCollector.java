@@ -90,6 +90,12 @@ public class IncludeCollector {
         }
 
         @Override
+        public Void visit(ExceptionDecl exceptionDecl) {
+            // Nothing to do
+            return null;
+        }
+
+        @Override
         public Void visit(EnumerationDecl enumerationDecl) {
             throw new UnsupportedOperationException("Unreachable");
         }
@@ -126,10 +132,6 @@ public class IncludeCollector {
 
         @Override
         public Void visit(VTableEntry vTableEntry) {
-            throw new UnsupportedOperationException("Unreachable");
-        }
-
-        public Void visit(ExceptionDecl exceptionDecl) {
             throw new UnsupportedOperationException("Unreachable");
         }
     }

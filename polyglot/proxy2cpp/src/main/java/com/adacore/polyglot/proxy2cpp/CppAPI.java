@@ -4,10 +4,12 @@ import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.NativeType.NativeTypeDecl;
 import com.adacore.polyglot.proxy.ArrayTypeExpr;
 import com.adacore.polyglot.proxy.ClassDecl;
+import com.adacore.polyglot.proxy.ExceptionDecl;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.FunctionTypeExpr;
 import com.adacore.polyglot.proxy.Module;
+import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.NameTypeExpr;
 import com.adacore.polyglot.proxy.Parameter;
 import com.adacore.polyglot.proxy.PointerTypeExpr;
@@ -32,10 +34,18 @@ public class CppAPI {
     /** Directory in which the headers will be written. */
     private Path headerDir;
 
-    public CppAPI(ProxyContext context, Path outputPath) {
+    /** Name of the project . */
+    private Name projectName;
+
+    public CppAPI(ProxyContext context, Path outputPath, Name projectName) {
         this.headerDir = outputPath.resolve("include");
         this.outputPath = outputPath;
         this.context = context;
+        this.projectName = projectName;
+    }
+
+    public Name getProjectName() {
+        return projectName;
     }
 
     public String formatDoc(String doc, int indent) {
@@ -308,7 +318,7 @@ public class CppAPI {
     }
 
     /** Create a string of the return statement. */
-    public String makeReturnStatement(FunctionDecl functionDecl) {
+    public String makeReturnStatement(FunctionDecl functionDecl, String returnedValue) {
         StringBuilder builder = new StringBuilder("return ");
         if (functionDecl.type.returnType instanceof ReferenceTypeExpr ref
                 && ref.typeExpr instanceof NameTypeExpr name
@@ -322,7 +332,7 @@ public class CppAPI {
             // Otherwise, create a new object that wraps the returned pointer.
             builder.append(cppReturnTypename(functionDecl.type.returnType));
         }
-        builder.append("(").append(callCSymbol(functionDecl)).append(")");
+        builder.append("(").append(returnedValue).append(")");
         return builder.toString();
     }
 
@@ -511,5 +521,14 @@ public class CppAPI {
      */
     public String makeRelease(FunctionTypeExpr functionType) {
         return needsRelease(functionType) ? ".release()" : "";
+    }
+
+    public boolean returnsVoid(FunctionDecl functionDecl) {
+        return functionDecl.type.returnType instanceof NameTypeExpr name
+                && context.getTypeDecl(name.name).equals(NativeType.VOID.declaration);
+    }
+
+    public String exceptionFullyQualifiedName(ExceptionDecl exc) {
+        return exc.name.join(n -> lastNameToCppName(n), "::", "::", "");
     }
 }

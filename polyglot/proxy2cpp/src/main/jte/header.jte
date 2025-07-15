@@ -2,6 +2,7 @@
 vim: filetype=jtecpp
 --%>
 @import com.adacore.polyglot.proxy.ClassDecl
+@import com.adacore.polyglot.proxy.ExceptionDecl
 @import com.adacore.polyglot.proxy.FunctionDecl
 @import com.adacore.polyglot.proxy.Module
 @import com.adacore.polyglot.proxy2cpp.CppAPI
@@ -14,6 +15,7 @@ vim: filetype=jtecpp
 #define ${headerGuardMacro}
 
 #include <polyglot_ada_arrays.h>
+#include <polyglot_ada_exceptions.h>
 #include <polyglot_ada_strings.h>
 
 #include <cstdint>
@@ -29,6 +31,8 @@ namespace ${api.namespacePath(module)} {
         @template.function(api, functionDecl, false)
     @elseif (decl instanceof ClassDecl classDecl)
         @template.class(api, classDecl, false)
+    @elseif (decl instanceof ExceptionDecl exceptionDecl)
+        @template.exception(api, exceptionDecl, false)
     @endif
 @endfor
 
