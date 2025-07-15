@@ -84,7 +84,7 @@ public class AdaScanner extends Scanner {
                         .map(s -> ctx.getUnitFromFile(s))
                         .map(u -> visitor.analyzeSpec(u))
                         .toList();
-        this.proxy = new AdaProxy(modules, visitor.getArrayTypes());
+        this.proxy = new AdaProxy(Name.fromLower(projectName), modules, visitor.getArrayTypes());
     }
 
     @Override

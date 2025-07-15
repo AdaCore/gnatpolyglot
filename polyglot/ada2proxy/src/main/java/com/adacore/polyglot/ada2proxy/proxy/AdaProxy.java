@@ -1,8 +1,12 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
+import com.adacore.polyglot.proxy.Name;
 import java.util.List;
 
 public class AdaProxy implements AdaProxyObject {
+
+    /** Name of the project */
+    public Name name;
 
     /** List of Ada packages to generate in the proxy. */
     public List<Package> packages;
@@ -18,7 +22,8 @@ public class AdaProxy implements AdaProxyObject {
      */
     public List<Array> arrayTypes;
 
-    public AdaProxy(List<Package> declarations, List<Array> arrayTypes) {
+    public AdaProxy(Name name, List<Package> declarations, List<Array> arrayTypes) {
+        this.name = name;
         this.packages = declarations;
         this.arrayTypes = arrayTypes;
     }

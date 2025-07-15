@@ -129,7 +129,7 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["java.util.List"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","java.util.List"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.ProxyObject",

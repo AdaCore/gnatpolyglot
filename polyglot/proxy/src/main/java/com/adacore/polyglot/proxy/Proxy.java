@@ -71,11 +71,18 @@ public class Proxy implements ProxyObject {
         }
     }
 
+    /** Name of the proxy library */
+    @JsonProperty("name")
+    public final Name name;
+
     /** List of all the modules of the proxy */
     @JsonProperty("modules")
     public final List<Module> modules;
 
-    public Proxy(@JsonProperty(value = "modules", required = true) List<Module> modules) {
+    public Proxy(
+            @JsonProperty(value = "name", required = true) Name name,
+            @JsonProperty(value = "modules", required = true) List<Module> modules) {
+        this.name = name;
         this.modules = modules;
     }
 

@@ -27,8 +27,12 @@ public class ProxyTest {
     @Test
     public void nonOptionalNullValue() throws Exception {
         // The list of modules in ``Proxy`` cannot be null
-        String json = """
-        {"modules": null}
+        String json =
+                """
+        {
+            "name": "proxy_name",
+            "modules": null
+        }
         """;
         Proxy proxy = objectMapper.readValue(json, Proxy.class);
         validator.visit(proxy);
