@@ -62,12 +62,12 @@ def run_scanner(input_lang: str, project_file: str, output_path: str) -> None:
     """
     if input_lang == "ada":
         if NATIVE_RUN:
-            run_native("ada2proxy", [project_file, "-o", output_path])
+            run_native("ada2proxy", ["-P", project_file, "-o", output_path])
         else:
             run_java(
                 "com.adacore.polyglot.cli.PolyglotMain",
                 os.path.join(POLYGLOT_HOME, "cli", "target", "cli.jar"),
-                ["ada2proxy", project_file, "-o", output_path],
+                ["ada2proxy", "-P", project_file, "-o", output_path],
             )
     else:
         raise Exception(f"Unknown language: {input_lang}")

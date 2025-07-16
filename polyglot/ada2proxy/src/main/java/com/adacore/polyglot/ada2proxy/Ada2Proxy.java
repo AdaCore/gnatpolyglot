@@ -8,15 +8,23 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
-@Command(name = "ada2proxy", description = "create a proxy for an ada project")
+@Command(
+        name = "ada2proxy",
+        description = "create a proxy for an ada project",
+        abbreviateSynopsis = true,
+        sortOptions = false)
 public class Ada2Proxy implements Callable<Integer> {
 
-    @Parameters(index = "0", paramLabel = "project_file", description = "input project file")
-    Path gprfile;
+    @Option(
+            names = {"-P"},
+            paramLabel = "project_file",
+            description = "input project file",
+            required = true)
+    Path project;
 
     @Option(
             names = {"-o", "--output"},
@@ -29,14 +37,20 @@ public class Ada2Proxy implements Callable<Integer> {
             description = "output path")
     List<String> units = new ArrayList<>();
 
+    @CommandLine.Spec CommandLine.Model.CommandSpec spec;
+
     @Override
     public Integer call() throws Exception {
         AdaScanner scanner = new AdaScanner();
 
         try {
-            scanner.scanProject(gprfile, units);
+            scanner.scanProject(project, units);
         } catch (FileNotFoundException e) {
-            System.err.println("File not found: %s".formatted(e.getMessage()));
+            spec.commandLine().getColorScheme().errorText(null);
+            System.err.println(
+                    spec.commandLine()
+                            .getColorScheme()
+                            .errorText("File not found: %s".formatted(e.getMessage())));
             return 1;
         }
 
@@ -46,7 +60,10 @@ public class Ada2Proxy implements Callable<Integer> {
         try {
             Files.createDirectories(outputPath);
         } catch (FileAlreadyExistsException e) {
-            System.err.println("%s is not a directory".formatted(e.getMessage()));
+            System.err.println(
+                    spec.commandLine()
+                            .getColorScheme()
+                            .errorText("%s is not a directory".formatted(e.getMessage())));
             return 1;
         }
 
