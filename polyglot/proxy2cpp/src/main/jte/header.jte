@@ -14,6 +14,7 @@ vim: filetype=jtecpp
 #define ${headerGuardMacro}
 
 #include <polyglot_ada_arrays.h>
+#include <polyglot_ada_strings.h>
 
 #include <cstdint>
 

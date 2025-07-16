@@ -83,7 +83,7 @@ public class CppAPI {
             case SINT128:
                 return "int128_t";
             case STRING:
-                return "std::string";
+                return "polyglot::ada::strings::polyglot_string";
             case VOID:
                 return "void";
             default:
@@ -140,7 +140,10 @@ public class CppAPI {
         if (typeExpr instanceof NameTypeExpr name) {
             TypeDecl typeDecl = context.getTypeDecl(name.name);
             if (typeDecl instanceof NativeTypeDecl nativeType)
-                return nativeTypeName(nativeType.nativeType);
+                return switch (nativeType.nativeType) {
+                    case STRING -> "polyglot::ada::strings::string_data";
+                    default -> nativeTypeName(nativeType.nativeType);
+                };
             // Classes are mapped as pointers in C.
             if (typeDecl instanceof ClassDecl) return "void *";
         } else if (typeExpr instanceof ArrayTypeExpr) {
@@ -149,8 +152,13 @@ public class CppAPI {
             // References are mapped as pointers in C.
             if (ref.typeExpr instanceof ArrayTypeExpr) return cTypename(ref.typeExpr);
             if (ref.typeExpr instanceof NameTypeExpr name
-                    && context.getTypeDecl(name.name) instanceof NativeTypeDecl nativeType)
-                return nativeTypeName(nativeType.nativeType) + "*";
+                    && context.getTypeDecl(name.name) instanceof NativeTypeDecl nativeType) {
+                return switch (nativeType.nativeType) {
+                    case STRING -> cTypename(name);
+                    default -> nativeTypeName(nativeType.nativeType) + "*";
+                };
+            }
+
             return "void *";
         } else if (typeExpr instanceof PointerTypeExpr ptr) {
             if (ptr.typeExpr instanceof NameTypeExpr name
@@ -224,6 +232,25 @@ public class CppAPI {
                 .collect(Collectors.joining(", "));
     }
 
+    /** Return a string that gets the value of a parameter for the call to the Ada subprogram */
+    public String getParamForCall(Parameter p) {
+        // When the parameter is a reference to a scalar, get
+        // the correspondign address.
+        if (p.type instanceof ReferenceTypeExpr ref
+                && ref.typeExpr instanceof NameTypeExpr name
+                && context.getTypeDecl(name.name) instanceof NativeTypeDecl nat) {
+            return switch (nat.nativeType) {
+                case STRING -> p.name.toLower() + ".data()";
+                default -> "&" + p.name.toLower();
+            };
+        }
+        if ((p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof ArrayTypeExpr)
+                || p.type instanceof ArrayTypeExpr
+                || context.getTypeDecl(p.type.getName()) instanceof ClassDecl)
+            return p.name.toLower() + ".data()";
+        return p.name.toLower();
+    }
+
     /** Create a call to the C symbol of the funtion. */
     public String callCSymbol(FunctionDecl functionDecl) {
         StringBuilder builder = new StringBuilder();
@@ -241,23 +268,7 @@ public class CppAPI {
         builder.append(
                 functionDecl.parameters.stream()
                         .skip(funcIsMethod ? 1 : 0)
-                        .map(
-                                p -> {
-                                    // When the parameter is a reference to a scalar, get
-                                    // the correspondign address.
-                                    if (p.type instanceof ReferenceTypeExpr ref
-                                            && ref.typeExpr instanceof NameTypeExpr name
-                                            && context.getTypeDecl(name.name)
-                                                    instanceof NativeTypeDecl)
-                                        return "&" + p.name.toLower();
-                                    if ((p.type instanceof ReferenceTypeExpr ref
-                                                    && ref.typeExpr instanceof ArrayTypeExpr)
-                                            || p.type instanceof ArrayTypeExpr
-                                            || context.getTypeDecl(p.type.getName())
-                                                    instanceof ClassDecl)
-                                        return p.name.toLower() + ".data()";
-                                    return p.name.toLower();
-                                })
+                        .map(p -> getParamForCall(p))
                         .collect(Collectors.joining(", ")));
         builder.append(")");
         return builder.toString();
