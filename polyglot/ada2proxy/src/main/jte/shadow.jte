@@ -15,6 +15,7 @@ Template file to generate shadow types for tagged records.
     String instantiableRecordName = rec.isAbstract()
         ? rec.getClasswideFullyQualifiedName()
         : rec.getFullyQualifiedName();
+    String recordAccessName = rec.name.toPascalWithUnderscore() + "_Access";
     String recordFullName = rec.getFullyQualifiedName();
 
     String shadowTypename = rec.name.toPascalWithUnderscore() + "_Shadow";
@@ -62,6 +63,10 @@ Template file to generate shadow types for tagged records.
          "${allocFunc.symbol}");
    @endfor
 
+   @for(var method : rec.methods)
+      overriding ${AdaAPI.makeShadowOverride(method)};
+   @endfor
+
 @else
    @for(var allocFunc : allocFuncs)
       function ${allocFunc.getLastName().toPascalWithUnderscore()}
@@ -94,5 +99,50 @@ Template file to generate shadow types for tagged records.
       begin
          return Converter.To_Address (Converter.Object_Pointer (Tmp));
       end ${allocFunc.getLastName().toPascalWithUnderscore()};
+   @endfor
+
+   @for(var method : rec.methods)
+      !{
+         String subpName = method.name.toPascalWithUnderscore();
+         String firstParam = method.parameters.get(0).name.toPascalWithUnderscore();
+      }
+      ${AdaAPI.makeShadowOverride(method)} is
+         Table : ${recordName}_Vtable
+         with Address => ${firstParam}.Shadow.Vtable;
+         pragma Import (Ada, Table);
+         procedure Free is new Ada.Unchecked_Deallocation
+           (${instantiableRecordName}, ${recordAccessName});
+      begin
+         if Table.${subpName}_Dispatch = null then
+            @if(!method.isProcedure())
+               return
+            @endif
+            ${AdaAPI.callParent(method)};
+         else
+            @if(method.isProcedure())
+               Table.${subpName}_Dispatch (
+                  ${firstParam}.Shadow.Vtable, ${firstParam}.Shadow.Self
+                  @for(var p : method.parameters.stream().skip(1).toList())
+                     ,
+                     ${AdaAPI.makeDispatchedArgument(p)}
+                  @endfor
+               );
+            @else
+               declare
+                  Returned_Value : ${AdaAPI.cInterfaceTypename(method.getReturnType())} :=
+                     Table.${subpName}_Dispatch (
+                        ${firstParam}.Shadow.Vtable, ${firstParam}.Shadow.Self
+                        @for(var p : method.parameters.stream().skip(1).toList())
+                           ,
+                           ${AdaAPI.makeDispatchedArgument(p)}
+                        @endfor
+                     );
+                  ${AdaAPI.makeShadowReturnDecl(method.getReturnType())}
+               begin
+                  ${AdaAPI.makeShadowReturn(method)};
+               end;
+            @endif
+         end if;
+      end ${method.name.toPascalWithUnderscore()};
    @endfor
 @endif
