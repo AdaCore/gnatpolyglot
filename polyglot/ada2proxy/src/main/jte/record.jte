@@ -58,6 +58,11 @@ Template file to generate bindings for record types.
       @endif
       pragma Export (C, ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}, "${f.symbol}");
     @endfor
+
+   @if(rec.isTaggedType())
+      @template.shadow(rec, isBody)
+   @endif
+
 @else
    <%-- Define an Access type for the record --%>
    type ${recordAccessName} is access all ${recordName};
@@ -145,4 +150,8 @@ Template file to generate bindings for record types.
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
       @endif
     @endfor
+
+   @if(rec.isTaggedType())
+      @template.shadow(rec, isBody)
+   @endif
 @endif

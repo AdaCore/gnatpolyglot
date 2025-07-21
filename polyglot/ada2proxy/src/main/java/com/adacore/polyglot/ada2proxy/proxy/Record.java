@@ -40,6 +40,9 @@ public class Record extends AdaDeclaration {
     /** Default allocating function of the type. */
     private ArrayList<FunctionDecl> allocFunctions;
 
+    /** Default allocating function of the shadow type. */
+    private ArrayList<FunctionDecl> shadowAllocFunctions;
+
     /** Default cloning function of the type. */
     private FunctionDecl cloneFunction;
 
@@ -118,13 +121,26 @@ public class Record extends AdaDeclaration {
         return this.freeFunction;
     }
 
+    private List<Parameter> constructorParameters(boolean withDefaults) {
+        List<Parameter> res =
+                getAllComponents().stream()
+                        .filter(c -> withDefaults || !c.hasDefaultValue())
+                        .map(
+                                c ->
+                                        new Parameter(
+                                                c.name,
+                                                c.getSetterType(),
+                                                new Transfer(RequiredOwner.USER)))
+                        .toList();
+        return res;
+    }
+
     /** Return the allocating functions of the type, or generate a new one if necessary. */
     public List<FunctionDecl> getAllocFunctions() {
         if (this.allocFunctions != null) return this.allocFunctions;
         this.allocFunctions = new ArrayList<>(2);
         if (!isAbstract()) {
             NameTypeExpr type = getTypeExpr();
-            List<Component> allComponents = getAllComponents();
             this.allocFunctions.add(
                     new FunctionDecl(
                             getProxyFullyQualifiedName()
@@ -132,25 +148,15 @@ public class Record extends AdaDeclaration {
                             "Generated function to alloc a " + name.toPascalWithUnderscore(),
                             new Role(RoleKind.ALLOC, type, null),
                             buildMemberSymbol("_Default_Alloc"),
-                            new FunctionTypeExpr(
-                                    allComponents.stream()
-                                            .map(
-                                                    c ->
-                                                            new Parameter(
-                                                                    c.name,
-                                                                    c.getSetterType(),
-                                                                    new Transfer(
-                                                                            RequiredOwner.USER)))
-                                            .toList(),
-                                    type,
-                                    Owner.USER),
+                            new FunctionTypeExpr(constructorParameters(true), type, Owner.USER),
                             FunctionDecl.Visibility.PUBLIC,
                             FunctionDecl.Overridability.FINAL,
                             FunctionDecl.Staticness.NON_STATIC));
 
             // Private types and types that do not thave default values for any of their component
             // do not need a second specialized constructor.
-            if (!origin.pIsPrivate() && allComponents.stream().anyMatch(c -> c.hasDefaultValue())) {
+            if (!origin.pIsPrivate()
+                    && getAllComponents().stream().anyMatch(c -> c.hasDefaultValue())) {
                 this.allocFunctions.add(
                         new FunctionDecl(
                                 getProxyFullyQualifiedName()
@@ -164,25 +170,68 @@ public class Record extends AdaDeclaration {
                                 new Role(RoleKind.ALLOC, type, null),
                                 buildMemberSymbol("_Default_Alloc_1"),
                                 new FunctionTypeExpr(
-                                        allComponents.stream()
-                                                .filter(c -> !c.hasDefaultValue())
-                                                .map(
-                                                        c ->
-                                                                new Parameter(
-                                                                        c.name,
-                                                                        c.getSetterType(),
-                                                                        new Transfer(
-                                                                                RequiredOwner
-                                                                                        .USER)))
-                                                .toList(),
-                                        type,
-                                        Owner.USER),
+                                        constructorParameters(false), type, Owner.USER),
                                 FunctionDecl.Visibility.PUBLIC,
                                 FunctionDecl.Overridability.FINAL,
                                 FunctionDecl.Staticness.NON_STATIC));
             }
         }
         return this.allocFunctions;
+    }
+
+    /** Return the allocating function of the shadow type, or generate a new one if necessary. */
+    public List<FunctionDecl> getShadowAllocFunctions() {
+        // When the binded type is a tagged type, we need to be able to override it. In
+        // order to allow for dynamic dispatch to dispatch to target language overriding
+        // functions, we need to create shadow objects. These will contain the vtable to
+        // know which Ada function is overriden for a given value.
+        // These constructor are similar to the ones created above but also accept a pointer
+        // to the object in the target, and a pointer to the vtable.
+        if (shadowAllocFunctions == null) {
+            shadowAllocFunctions = new ArrayList<>();
+            NameTypeExpr type = getTypeExpr();
+            this.shadowAllocFunctions.add(
+                    new FunctionDecl(
+                            getProxyFullyQualifiedName()
+                                    .append(name.concat(Name.fromLower("shadow_default_alloc"))),
+                            "Generated function to alloc a "
+                                    + name.toPascalWithUnderscore()
+                                    + "_Shadow",
+                            new Role(RoleKind.SHADOW_ALLOC, type, null),
+                            buildMemberSymbol("_Shadow_Default_Alloc"),
+                            new FunctionTypeExpr(constructorParameters(true), type, Owner.USER),
+                            // Shadow allocating functions should only be visible from children
+                            // types.
+                            FunctionDecl.Visibility.PROTECTED,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC));
+
+            // Private types and types that do not thave default values for any of their component
+            // do not need a second specialized constructor.
+            if (!origin.pIsPrivate()
+                    && getAllComponents().stream().anyMatch(c -> c.hasDefaultValue())) {
+                this.shadowAllocFunctions.add(
+                        new FunctionDecl(
+                                getProxyFullyQualifiedName()
+                                        .append(
+                                                name.concat(
+                                                        Name.fromLower(
+                                                                "shadow_default_alloc_default_values"))),
+                                "Generated function to alloc a "
+                                        + name.toPascalWithUnderscore()
+                                        + "_Shadow with default values",
+                                new Role(RoleKind.SHADOW_ALLOC, type, null),
+                                buildMemberSymbol("_Shadow_Default_Alloc_1"),
+                                new FunctionTypeExpr(
+                                        constructorParameters(false), type, Owner.USER),
+                                // Shadow allocating functions should only be visible from children
+                                // types.
+                                FunctionDecl.Visibility.PROTECTED,
+                                FunctionDecl.Overridability.FINAL,
+                                FunctionDecl.Staticness.NON_STATIC));
+            }
+        }
+        return shadowAllocFunctions;
     }
 
     /** Return the cloning function of the type, or generate a new one if necessary. */

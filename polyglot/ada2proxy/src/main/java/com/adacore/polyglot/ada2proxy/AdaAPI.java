@@ -12,6 +12,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Name;
+import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeExpr;
 import java.nio.file.Path;
 import java.util.List;
@@ -184,21 +185,44 @@ public class AdaAPI {
                 .collect(Collectors.joining("; "));
     }
 
-    /** Build a string containing the parameter specifications of the constructor of a record. */
+    /**
+     * Build a string containing the parameter specifications of the constructor of a record. If the
+     * function's role is {@link RoleKind#SHADOW_ALLOC}, also add the self and vtable arguments
+     */
     public static String cInterfaceParameters(Record rec, FunctionDecl function) {
-        return function.type.parameters.stream()
-                .map(
-                        p -> {
-                            // Get the component corresponding to the constuctor's argument.
-                            Component component = rec.getComponent(p.name);
-                            StringBuilder argBuilder = new StringBuilder();
-                            argBuilder
-                                    .append(p.name.toPascalWithUnderscore())
-                                    .append("_Arg : ")
-                                    .append(cInterfaceTypename(component.getType()));
-                            return argBuilder.toString();
-                        })
-                .collect(Collectors.joining("; "));
+        StringBuilder res = new StringBuilder();
+        res.append(
+                function.type.parameters.stream()
+                        .map(
+                                p -> {
+                                    // Get the component corresponding to the constuctor's argument.
+                                    Component component = rec.getComponent(p.name);
+                                    StringBuilder argBuilder = new StringBuilder();
+                                    argBuilder
+                                            .append(p.name.toPascalWithUnderscore())
+                                            .append("_Arg : ");
+                                    // When the component does not exist, it means we could be
+                                    // dealing with either the ``vtable`` or ``self`` argument of
+                                    // shadow types constructors which are non-null const void
+                                    // pointers.
+                                    if (component != null) {
+                                        argBuilder.append(cInterfaceTypename(component.getType()));
+                                    } else if (p.type.equals(
+                                            NativeType.VOID.typeExpr.makePointer(true, true))) {
+                                        argBuilder.append("System.Address");
+                                    } else {
+                                        throw new IllegalArgumentException(
+                                                "Illegal constructor argument");
+                                    }
+
+                                    return argBuilder.toString();
+                                })
+                        .collect(Collectors.joining("; ")));
+        if (function.role.kind == RoleKind.SHADOW_ALLOC) {
+            res.append(!res.isEmpty() ? ";" : "")
+                    .append("Self_Arg : System.Address; Vtable_Arg : System.Address");
+        }
+        return res.toString();
     }
 
     /** Create a string that refers to the type pointed by typeExpr as an access type. */
