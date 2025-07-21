@@ -126,7 +126,8 @@ public class CppAPI {
         // and return a real C++ reference to it. Instead, return a `view` to the returned pointer
         // that acts as a reference and that won't free the underlying pointer when destroyed.
         if (typeExpr instanceof ReferenceTypeExpr ref
-                && !(context.getTypeDecl(ref.typeExpr.getName()) instanceof NativeTypeDecl)) {
+                && !(ref.typeExpr instanceof NameTypeExpr name
+                        && (context.getTypeDecl(name.name) instanceof NativeTypeDecl))) {
             return cppTypename(ref.typeExpr).concat("::view");
         }
         return cppTypename(typeExpr);
@@ -440,5 +441,75 @@ public class CppAPI {
         return classDecl.vtable.stream()
                 .map(m -> memberFunctionPointerVariable(m, classDecl.getLastName().toPascal()))
                 .collect(Collectors.joining(", "));
+    }
+
+    /** Return a string that is the C++ converted parameter from its raw data given by argument. */
+    public String convertForDispatch(Parameter param) {
+        StringBuilder builder = new StringBuilder();
+        // We need value types in cases where there are references, so use the
+        // c++ return type in order to build view types when necessary.
+        builder.append(cppReturnTypename(param.type))
+                .append(" _")
+                .append(param.name.toLower())
+                .append(" = ");
+
+        boolean needsConstCast = false;
+        if (param.type instanceof ReferenceTypeExpr ref
+                && ref.typeExpr instanceof NameTypeExpr name
+                && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
+            // When making a reference to a native type, dereference the pointer to make a reference
+            builder.append("*");
+        } else {
+            // Otherwise, create a new object that wraps the returned pointer.
+            builder.append(cppReturnTypename(param.type));
+            // Arrays (and strings) do not need const casts as they are passed by copy.
+            if (param.type instanceof ReferenceTypeExpr ref
+                    && ref.isConst
+                    && !(ref.typeExpr instanceof ArrayTypeExpr
+                            || ref.typeExpr instanceof NameTypeExpr name
+                                    && context.getTypeDecl(name.name) instanceof NativeTypeDecl nat
+                                    && nat.equals(NativeType.STRING.declaration)))
+                needsConstCast = true;
+        }
+        builder.append("(");
+        // view types do not have a constructor for const pointers as it may be unsafe and const
+        // constructors do not exist. Dispatching functions are only transitionary and unseen to the
+        // user, so when a const pointer is received, cast away its constness: it will be readded
+        // when the view is converted to a const reference.
+        if (needsConstCast) builder.append("const_cast<void *>(");
+        builder.append(param.name.toLower());
+        if (needsConstCast) builder.append(")");
+        builder.append(")");
+
+        return builder.toString();
+    }
+
+    /** Create a dispatching call to the member function set in the vtable's extra data. */
+    public String callDispatch(VTableEntry function) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("(__self->*(__vtable->_data.")
+                .append(function.name.toLower())
+                .append("_member")
+                .append("))(")
+                .append(
+                        function.functionType.parameters.stream()
+                                .skip(1)
+                                .map(p -> "_" + p.name.toLower())
+                                .collect(Collectors.joining(", ")))
+                .append(")");
+        return builder.toString();
+    }
+
+    public boolean needsRelease(FunctionTypeExpr functionType) {
+        return !(functionType.returnType instanceof NameTypeExpr name
+                && context.getTypeDecl(name.name) instanceof NativeTypeDecl);
+    }
+
+    /**
+     * Create a call to ``.release()`` on objects returned by the dispatchers when the value
+     * returned is an object in order to prevent the destructor from freeing the memory returned.
+     */
+    public String makeRelease(FunctionTypeExpr functionType) {
+        return needsRelease(functionType) ? ".release()" : "";
     }
 }

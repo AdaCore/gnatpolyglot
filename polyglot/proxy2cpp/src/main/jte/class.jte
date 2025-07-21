@@ -148,6 +148,31 @@ vim: filetype=jtecpp
     }
 
     @if(!classDecl.isFinal)
+       // Avoid external linkage but keep C linkage. These functions are only
+       // refered localy and using a function pointer.
+       extern "C" {
+       <%-- Dispatching functions to call overriden methods --%>
+       @for(var method : classDecl.vtable)
+           ${api.cTypename(method.functionType.returnType)}
+           ${className}_${method.name.toLower()}_dispatch (
+               ${api.dispatchParameters(method.functionType)}
+           ) {
+               ${className}::vtable *__vtable =
+                  (${className}::vtable *) _vtable;
+               ${className} *__self = (${className} *) _self;
+               @for(var param : method.functionType.parameters.stream().skip(1).toList())
+               ${api.convertForDispatch(param)};
+               @endfor
+               return
+               @if(!api.needsRelease(method.functionType))
+               ${api.cTypename(method.functionType.returnType)}
+               @endif(
+                   ${api.callDispatch(method)}
+               )${api.makeRelease(method.functionType)};
+           }
+       @endfor
+       }
+
        <%-- Constructor of the vtable --%>
        ${className}::vtable::vtable(
            ${api.vtableCtorArguments(classDecl)}
