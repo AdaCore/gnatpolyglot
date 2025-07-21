@@ -4,6 +4,7 @@ Template file to generate shadow types for tagged records.
 --%>
 @import java.util.List
 @import com.adacore.polyglot.ada2proxy.AdaAPI
+@import com.adacore.polyglot.ada2proxy.proxy.Subprogram
 @import com.adacore.polyglot.proxy.FunctionDecl
 @import com.adacore.polyglot.proxy.Role.RoleKind
 @import com.adacore.polyglot.ada2proxy.proxy.Record
@@ -20,6 +21,8 @@ Template file to generate shadow types for tagged records.
     String shadowAccess = shadowTypename + "_Access";
 
     List<FunctionDecl> allocFuncs = rec.getShadowAllocFunctions();
+
+    List<Subprogram> methods = rec.getAllMethods();
 }
 @if(!isBody)
    <%-- Shadow type for inheritance --%>
@@ -29,6 +32,23 @@ Template file to generate shadow types for tagged records.
    end record;
 
    type ${shadowAccess} is access all ${shadowTypename};
+
+   @for(var subp: methods)
+      type ${subp.name.toPascalWithUnderscore()}_${recordName}_Type is access
+         ${AdaAPI.subprogramDispatchType(subp)}
+         with Convention => C;
+   @endfor
+
+   type ${recordName}_Vtable is record
+   @if(methods.isEmpty())
+      null;
+   @else
+      @for(var subp: methods)
+         ${subp.name.toPascalWithUnderscore()}_Dispatch :
+            ${subp.name.toPascalWithUnderscore()}_${recordName}_Type;
+      @endfor
+   @endif
+   end record with Convention => C;
 
    @for(var allocFunc : allocFuncs)
       function ${allocFunc.getLastName().toPascalWithUnderscore()}

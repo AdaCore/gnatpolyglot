@@ -49,6 +49,9 @@ public class Record extends AdaDeclaration {
     /** Default getter and setter functions of the type. */
     private ArrayList<FunctionDecl> componentAccessors;
 
+    /** List of all the subprogams that have the METHOD role for this type. */
+    public ArrayList<Subprogram> methods = new ArrayList<>();
+
     public Record(Libadalang.TypeDecl origin, Name name, List<Component> components) {
         super(name);
         this.origin = origin;
@@ -86,6 +89,16 @@ public class Record extends AdaDeclaration {
             res = parent.getAllComponents();
         } else res = new ArrayList<>(components.size());
         res.addAll(components);
+        return res;
+    }
+
+    /** Return a list of all the non-overriding methods of the type and its parent type. */
+    public List<Subprogram> getAllMethods() {
+        List<Subprogram> res;
+        if (parent != null) {
+            res = parent.getAllMethods();
+        } else res = new ArrayList<>(methods.size());
+        methods.stream().filter(m -> !m.isOverriding()).forEach(m -> res.add(m));
         return res;
     }
 

@@ -324,6 +324,9 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                         symbol,
                         role,
                         returnOwner);
+        if (role != null && role.kind == RoleKind.METHOD) {
+            ((Record) mappedTypes.get(primitiveType)).methods.add(subProg);
+        }
         declarations.add(subProg);
     }
 

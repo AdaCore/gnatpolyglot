@@ -100,4 +100,11 @@ public class Subprogram extends AdaDeclaration {
                 .getParentFullyQualifiedName()
                 .append(name);
     }
+
+    /** Return whether the subprogram is overriding an other suprogram. */
+    public boolean isOverriding() {
+        Libadalang.BasicDecl[] bases = origin.pBaseSubpDeclarations(false);
+        // The method is not overriding when its only base is itself.
+        return !(bases.length == 1 && bases[0].equals(origin));
+    }
 }

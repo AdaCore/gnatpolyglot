@@ -539,4 +539,22 @@ public class AdaAPI {
 
         throw new UnsupportedOperationException("Type not supported");
     }
+
+    /**
+     * Return a string of a type definition that corresponds to the subprogram's access type in the
+     * C ABI.
+     */
+    public static String subprogramDispatchType(Subprogram subp) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(subp.isProcedure() ? "procedure " : "function ")
+                // There will always be at least two arguments here: the first argument will always
+                // be the vtable, and the second argument the dispatching object (i.e the first
+                // value of subp.parameters).
+                .append("(VTable : System.Address; ")
+                .append(cInterfaceParameters(subp))
+                .append(")");
+        if (!subp.isProcedure())
+            builder.append("return ").append(cInterfaceTypename(subp.getReturnType()));
+        return builder.toString();
+    }
 }
