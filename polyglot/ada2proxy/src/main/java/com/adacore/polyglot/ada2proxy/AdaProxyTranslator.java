@@ -87,9 +87,11 @@ public class AdaProxyTranslator {
                                     .toList(),
                             AdaAPI.makeTypeExpr(subprogram.getReturnType()),
                             subprogram.owner),
-                    false,
-                    false,
-                    false);
+                    FunctionDecl.Visibility.PUBLIC,
+                    subprogram.isFinal()
+                            ? FunctionDecl.Overridability.FINAL
+                            : FunctionDecl.Overridability.OVERRIDABLE,
+                    FunctionDecl.Staticness.NON_STATIC);
         }
 
         @Override
@@ -135,7 +137,7 @@ public class AdaProxyTranslator {
                         rec.getDoc(),
                         parentType,
                         8,
-                        false,
+                        !rec.isTaggedType(),
                         rec.components.stream().map(c -> (Field) c.accept(this)).toList(),
                         null);
             }

@@ -45,7 +45,22 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.polyglot.proxy.Role","java.lang.String","com.adacore.polyglot.proxy.FunctionTypeExpr","java.lang.Boolean","java.lang.Boolean","java.lang.Boolean"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.polyglot.proxy.Role","java.lang.String","com.adacore.polyglot.proxy.FunctionTypeExpr","com.adacore.polyglot.proxy.FunctionDecl$Visibility","com.adacore.polyglot.proxy.FunctionDecl$Overridability","com.adacore.polyglot.proxy.FunctionDecl$Staticness"] }]
+},
+{
+  "name":"com.adacore.polyglot.proxy.FunctionDecl$Visibility",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"com.adacore.polyglot.proxy.FunctionDecl$Overridability",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
+},
+{
+  "name":"com.adacore.polyglot.proxy.FunctionDecl$Staticness",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
 },
 {
   "name":"com.adacore.polyglot.proxy.FunctionTypeExpr",

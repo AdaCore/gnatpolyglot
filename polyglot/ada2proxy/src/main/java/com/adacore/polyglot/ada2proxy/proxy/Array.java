@@ -68,9 +68,9 @@ public class Array implements AdaProxyObject {
                                                     new Transfer(RequiredOwner.ANY))),
                                     arrayTypeExpr,
                                     Owner.USER),
-                            false,
-                            false,
-                            false));
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC));
             functions.add(
                     new FunctionDecl(
                             moduleName.append(Name.fromLower("clone")),
@@ -85,9 +85,9 @@ public class Array implements AdaProxyObject {
                                                     new Transfer(RequiredOwner.ANY))),
                                     arrayTypeExpr,
                                     Owner.USER),
-                            false,
-                            false,
-                            false));
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC));
 
             // Declare the constructor functions
             functions.add(
@@ -113,9 +113,9 @@ public class Array implements AdaProxyObject {
                                                     new Transfer(RequiredOwner.ANY))),
                                     NativeType.VOID.typeExpr,
                                     Owner.USER),
-                            false,
-                            false,
-                            false));
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC));
             functions.add(
                     new FunctionDecl(
                             moduleName.append(Name.fromLower("copy")),
@@ -134,9 +134,9 @@ public class Array implements AdaProxyObject {
                                                     new Transfer(RequiredOwner.ANY))),
                                     NativeType.VOID.typeExpr,
                                     Owner.USER),
-                            false,
-                            false,
-                            false));
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC));
 
             // Declare the freeing function
             functions.add(
@@ -153,9 +153,9 @@ public class Array implements AdaProxyObject {
                                                     new Transfer(RequiredOwner.ANY))),
                                     NativeType.VOID.typeExpr,
                                     Owner.UNKNOWN),
-                            false,
-                            false,
-                            false));
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC));
 
             // Declare the getter
             functions.add(
@@ -176,9 +176,9 @@ public class Array implements AdaProxyObject {
                                                     new Transfer(RequiredOwner.ANY))),
                                     arrayTypeExpr.typeExpr.makeReference(false),
                                     Owner.UNKNOWN),
-                            false,
-                            false,
-                            false));
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC));
 
             // Declare the setter
             functions.add(
@@ -203,9 +203,9 @@ public class Array implements AdaProxyObject {
                                                     new Transfer(RequiredOwner.ANY))),
                                     NativeType.VOID.typeExpr,
                                     Owner.UNKNOWN),
-                            false,
-                            false,
-                            false));
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC));
         }
         return functions;
     }

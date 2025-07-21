@@ -25,9 +25,9 @@
             },
             "field": "non_existant"
           },
-          "is_visible": false,
-          "is_final": false,
-          "is_static": false
+          "visibility": "protected",
+          "overridability": "overridable",
+          "staticness": "non_static"
         },
         {
           "kind": "class",

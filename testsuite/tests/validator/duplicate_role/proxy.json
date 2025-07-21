@@ -33,9 +33,9 @@
               "name": { "names": ["module_1", "class_type_1"] }
             }
           },
-          "is_visible": false,
-          "is_final": false,
-          "is_static": false
+          "visibility": "protected",
+          "overridability": "overridable",
+          "staticness": "non_static"
         },
         {
           "kind": "function",
@@ -67,9 +67,9 @@
               "name": { "names": ["module_1", "class_type_1"] }
             }
           },
-          "is_visible": false,
-          "is_final": false,
-          "is_static": false
+          "visibility": "protected",
+          "overridability": "overridable",
+          "staticness": "non_static"
         },
         {
           "kind": "class",

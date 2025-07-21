@@ -21,9 +21,9 @@
             "kind": "getter",
             "type": { "kind": "typename", "name": { "names": ["module_1"] } }
           },
-          "is_visible": false,
-          "is_final": false,
-          "is_static": false
+          "visibility": "protected",
+          "overridability": "overridable",
+          "staticness": "non_static"
         },
         {
           "kind": "class",
@@ -66,9 +66,9 @@
               }
             }
           },
-          "is_visible": false,
-          "is_final": false,
-          "is_static": false
+          "visibility": "protected",
+          "overridability": "overridable",
+          "staticness": "non_static"
         }
       ]
     }

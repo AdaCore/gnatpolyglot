@@ -112,9 +112,9 @@ public class Record extends AdaDeclaration {
                                                     new Transfer(RequiredOwner.USER))),
                                     NativeType.VOID.typeExpr,
                                     Owner.UNKNOWN),
-                            false,
-                            false,
-                            false);
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC);
         return this.freeFunction;
     }
 
@@ -144,9 +144,9 @@ public class Record extends AdaDeclaration {
                                             .toList(),
                                     type,
                                     Owner.USER),
-                            false,
-                            false,
-                            false));
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC));
 
             // Private types and types that do not thave default values for any of their component
             // do not need a second specialized constructor.
@@ -177,9 +177,9 @@ public class Record extends AdaDeclaration {
                                                 .toList(),
                                         type,
                                         Owner.USER),
-                                false,
-                                false,
-                                false));
+                                FunctionDecl.Visibility.PUBLIC,
+                                FunctionDecl.Overridability.FINAL,
+                                FunctionDecl.Staticness.NON_STATIC));
             }
         }
         return this.allocFunctions;
@@ -204,9 +204,9 @@ public class Record extends AdaDeclaration {
                                                     new Transfer(RequiredOwner.USER))),
                                     type,
                                     Owner.USER),
-                            false,
-                            false,
-                            false);
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC);
         }
         return this.cloneFunction;
     }
@@ -234,9 +234,9 @@ public class Record extends AdaDeclaration {
                                                         new Transfer(RequiredOwner.ANY))),
                                         componentTypeRef.makeReference(false),
                                         Owner.STATIC),
-                                false,
-                                false,
-                                false));
+                                FunctionDecl.Visibility.PUBLIC,
+                                FunctionDecl.Overridability.FINAL,
+                                FunctionDecl.Staticness.NON_STATIC));
                 // Create the setter function.
                 TypeExpr setterType = c.getSetterType();
                 componentAccessors.add(
@@ -258,9 +258,9 @@ public class Record extends AdaDeclaration {
                                                         new Transfer(RequiredOwner.ANY))),
                                         NativeType.VOID.typeExpr,
                                         Owner.UNKNOWN),
-                                false,
-                                false,
-                                false));
+                                FunctionDecl.Visibility.PUBLIC,
+                                FunctionDecl.Overridability.FINAL,
+                                FunctionDecl.Staticness.NON_STATIC));
             }
         }
         return componentAccessors;
@@ -298,5 +298,9 @@ public class Record extends AdaDeclaration {
 
     public boolean isAbstract() {
         return origin.pIsAbstractType();
+    }
+
+    public boolean isTaggedType() {
+        return origin.pIsTaggedType(Libadalang.AdaNode.NONE);
     }
 }

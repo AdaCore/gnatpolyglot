@@ -17,9 +17,9 @@
             },
             "return_owner": "unknown"
           },
-          "is_visible": false,
-          "is_final": false,
-          "is_static": false
+          "visibility": "protected",
+          "overridability": "overridable",
+          "staticness": "non_static"
         },
         {
           "kind": "function",
@@ -35,9 +35,9 @@
             },
             "return_owner": "unknown"
           },
-          "is_visible": false,
-          "is_final": false,
-          "is_static": false
+          "visibility": "protected",
+          "overridability": "overridable",
+          "staticness": "non_static"
         }
       ]
     }

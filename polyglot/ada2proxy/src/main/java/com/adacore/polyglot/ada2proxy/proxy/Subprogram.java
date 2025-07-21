@@ -7,7 +7,9 @@ import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Role;
+import com.adacore.polyglot.proxy.Role.RoleKind;
 import java.util.List;
+import java.util.Objects;
 
 public class Subprogram extends AdaDeclaration {
 
@@ -71,6 +73,21 @@ public class Subprogram extends AdaDeclaration {
     /** Return the return type of the Ada subprogram. */
     public Libadalang.BaseTypeDecl getReturnType() {
         return getSpec().pReturnType(Libadalang.AdaNode.NONE);
+    }
+
+    /** Return whether the subprogram is final or can be overriden. */
+    public boolean isFinal() {
+        Libadalang.BaseTypeDecl controllingType = getSpec().pPrimitiveSubpTaggedType(false);
+        return role == null
+                || role.kind != RoleKind.METHOD
+                || parameters.isEmpty()
+                || !parameters.get(0).getType().pIsTaggedType(Libadalang.AdaNode.NONE)
+                // Only subprograms that have their first parameter which are of the controlling
+                // type can be overriden.
+                || !Objects.equals(controllingType, parameters.get(0).getType())
+                // Functions that have the controlling parameter as their return type cannot be
+                // overriden.
+                || Objects.equals(controllingType, getReturnType());
     }
 
     @Override

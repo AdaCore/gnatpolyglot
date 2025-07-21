@@ -6,6 +6,28 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** Represent function declarations. */
 public class FunctionDecl extends Declaration {
+
+    public enum Visibility {
+        @JsonProperty("public")
+        PUBLIC,
+        @JsonProperty("protected")
+        PROTECTED,
+    }
+
+    public enum Overridability {
+        @JsonProperty("final")
+        FINAL,
+        @JsonProperty("overridable")
+        OVERRIDABLE,
+    }
+
+    public enum Staticness {
+        @JsonProperty("static")
+        STATIC,
+        @JsonProperty("non_static")
+        NON_STATIC,
+    }
+
     /** The role of the function. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("role")
@@ -19,17 +41,17 @@ public class FunctionDecl extends Declaration {
     @JsonProperty("type")
     public final FunctionTypeExpr type;
 
-    /** When attached to a type, whether this function is visible outside of the type's scope.. */
+    /** When attached to a type, whether this function is visible outside of the type's scope. */
     @JsonProperty("is_visible")
-    public final Boolean isVisible;
+    public final Visibility visibility;
 
-    /** When attached to a type, whether this function can be overriden.. */
+    /** When attached to a type, whether this function can be overriden. */
     @JsonProperty("is_final")
-    public final Boolean isFinal;
+    public final Overridability overridability;
 
-    /** When attached to a type, whether this function is static.. */
+    /** When attached to a type, whether this function is static. */
     @JsonProperty("is_static")
-    public final Boolean isStatic;
+    public final Staticness staticness;
 
     @JsonCreator
     public FunctionDecl(
@@ -38,17 +60,17 @@ public class FunctionDecl extends Declaration {
             @JsonProperty(value = "role") Role role,
             @JsonProperty(value = "symbol", required = true) String symbol,
             @JsonProperty(value = "type", required = true) FunctionTypeExpr type,
-            @JsonProperty(value = "is_visible") Boolean isVisible,
-            @JsonProperty(value = "is_final") Boolean isFinal,
-            @JsonProperty(value = "is_static") Boolean isStatic) {
+            @JsonProperty(value = "is_visible") Visibility visibility,
+            @JsonProperty(value = "is_final") Overridability overridability,
+            @JsonProperty(value = "is_static") Staticness staticness) {
         super(name, doc);
         this.role = role;
         this.symbol = symbol;
         this.type = type;
 
-        this.isVisible = isVisible;
-        this.isFinal = isFinal;
-        this.isStatic = isStatic;
+        this.visibility = visibility;
+        this.overridability = overridability;
+        this.staticness = staticness;
     }
 
     public <T> T visit(ProxyVisitor<T> v) {
