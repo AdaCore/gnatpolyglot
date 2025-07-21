@@ -151,20 +151,22 @@ public class CppAPI {
         } else if (typeExpr instanceof ReferenceTypeExpr ref) {
             // References are mapped as pointers in C.
             if (ref.typeExpr instanceof ArrayTypeExpr) return cTypename(ref.typeExpr);
+            String constness = ref.isConst ? "const " : "";
             if (ref.typeExpr instanceof NameTypeExpr name
                     && context.getTypeDecl(name.name) instanceof NativeTypeDecl nativeType) {
-                return switch (nativeType.nativeType) {
-                    case STRING -> cTypename(name);
-                    default -> nativeTypeName(nativeType.nativeType) + "*";
-                };
+                return constness
+                        + switch (nativeType.nativeType) {
+                            case STRING -> cTypename(name);
+                            default -> nativeTypeName(nativeType.nativeType) + "*";
+                        };
             }
-
-            return "void *";
+            return constness + "void *";
         } else if (typeExpr instanceof PointerTypeExpr ptr) {
+            String constness = ptr.isConst ? "const " : "";
             if (ptr.typeExpr instanceof NameTypeExpr name
                     && context.getTypeDecl(name.name) instanceof NativeTypeDecl nativeType)
-                return nativeTypeName(nativeType.nativeType) + "*";
-            return "void *";
+                return constness + nativeTypeName(nativeType.nativeType) + "*";
+            return constness + "void *";
         }
         throw new UnsupportedOperationException("Unsupported C type");
     }
