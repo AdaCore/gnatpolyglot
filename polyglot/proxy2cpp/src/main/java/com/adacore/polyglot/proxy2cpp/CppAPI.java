@@ -6,6 +6,7 @@ import com.adacore.polyglot.proxy.ArrayTypeExpr;
 import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
+import com.adacore.polyglot.proxy.FunctionTypeExpr;
 import com.adacore.polyglot.proxy.Module;
 import com.adacore.polyglot.proxy.NameTypeExpr;
 import com.adacore.polyglot.proxy.Parameter;
@@ -15,6 +16,7 @@ import com.adacore.polyglot.proxy.ReferenceTypeExpr;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeDecl;
 import com.adacore.polyglot.proxy.TypeExpr;
+import com.adacore.polyglot.proxy.VTableEntry;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -363,5 +365,80 @@ public class CppAPI {
                                                     functionDecl.type.returnType));
         }
         return false;
+    }
+
+    /** Return a string of the parameters of the dispatching function. */
+    public String dispatchParameters(FunctionTypeExpr function) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("void *_vtable, void *_self");
+        for (var param : function.parameters.stream().skip(1).toList()) {
+            builder.append(", ").append(toCParam(param));
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Construct a variable that is a static function pointer to the dispatching function of
+     * functionDecl.
+     *
+     * <p>The resulting function type is similar to what the functionDecl is, except that: the
+     * second argument is the vtable given to the shadow object; the second argument is the `this`
+     * value given at construction of the shadow object, and only requires a cast to the C++ object
+     * type when doing the dispatching call;
+     *
+     * <p>For the following class and function: <code>
+     *  class A { int foo(int a, const A &b); }
+     * </code>
+     *
+     * <p>the following will be generated: <code>
+     * int (*foo_dispatch)(void *_self, void *_vtable, int a, const void *b)
+     * </code>
+     */
+    public String dispatchFunctionPointerVariable(VTableEntry function) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(cTypename(function.functionType.returnType))
+                .append("(*")
+                .append(function.name.toLower())
+                .append("_dispatch)(")
+                .append(dispatchParameters(function.functionType))
+                .append(")");
+        return builder.toString();
+    }
+
+    /**
+     * Construct a variable that is a member function pointer to the functionDecl.
+     *
+     * <p>For the following class and function: <code>
+     *  class A { int foo(int a, const A &b) const; }
+     * </code>
+     *
+     * <p>the following will be generated: <code>
+     * int (A::*foo_member)(int a, const A& b) const
+     * </code>
+     */
+    public String memberFunctionPointerVariable(VTableEntry function, String className) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(cppTypename(function.functionType.returnType))
+                .append("(")
+                .append(className)
+                .append("::*")
+                .append(function.name.toLower())
+                .append("_member)(")
+                .append(
+                        function.functionType.parameters.stream()
+                                .skip(1)
+                                .map(p -> toCppParam(p))
+                                .collect(Collectors.joining(", ")))
+                .append(")")
+                .append(" ")
+                .append(function.functionType.parameters.get(0).type.isConst() ? "const " : "");
+        return builder.toString();
+    }
+
+    /** Create a string that is the parameters of the class vtable constructor. */
+    public String vtableCtorArguments(ClassDecl classDecl) {
+        return classDecl.vtable.stream()
+                .map(m -> memberFunctionPointerVariable(m, classDecl.getLastName().toPascal()))
+                .collect(Collectors.joining(", "));
     }
 }
