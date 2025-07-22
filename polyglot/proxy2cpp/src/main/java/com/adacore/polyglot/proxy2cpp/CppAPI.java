@@ -311,4 +311,28 @@ public class CppAPI {
     public List<String> getIncludes(Module module) {
         return IncludeCollector.getIncludes(module);
     }
+
+    /** Return whether the function overrides a function of the role type parent. */
+    public boolean isOverriding(FunctionDecl functionDecl) {
+        if (functionDecl.role == null || functionDecl.role.kind != RoleKind.METHOD) return false;
+        TypeDecl type = context.getTypeDecl(functionDecl.role.type.getName());
+        if (type instanceof ClassDecl classDecl) {
+            if (classDecl.parent == null) return false;
+            // All the parameter types, excluding the first one, must match.
+            List<Parameter> functionParams = functionDecl.type.parameters.stream().skip(1).toList();
+
+            return context.getMembers(classDecl.parent.asTypeExpr()).memberFunctions.stream()
+                    .filter(m -> isMethod(m))
+                    .anyMatch(
+                            m ->
+                                    m.name.getLastName().equals(functionDecl.name.getLastName())
+                                            && m.type.parameters.stream()
+                                                    .skip(1)
+                                                    .toList()
+                                                    .equals(functionParams)
+                                            && m.type.returnType.equals(
+                                                    functionDecl.type.returnType));
+        }
+        return false;
+    }
 }
