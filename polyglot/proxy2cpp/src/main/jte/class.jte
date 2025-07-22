@@ -2,6 +2,7 @@
 vim: filetype=jtecpp
 --%>
 @import com.adacore.polyglot.proxy.ClassDecl
+@import com.adacore.polyglot.proxy.FunctionDecl.Visibility
 @import com.adacore.polyglot.proxy.ProxyContext.FunctionMembersEntry
 @import com.adacore.polyglot.proxy2cpp.CppAPI
 @param CppAPI api
@@ -21,16 +22,33 @@ vim: filetype=jtecpp
 
 @if(!isSource)
     class ${className} ${inherits}{
+    protected:
+    @for(var alloc : members.allocFunctions)
+        @if(alloc.visibility == Visibility.PROTECTED)
+            ${className}(${api.cppParameters(alloc)});
+        @endif
+    @endfor
+
+    @for(var m : members.memberFunctions)
+        @if(m.visibility == Visibility.PROTECTED)
+            @template.function(api, m, isSource)
+        @endif
+    @endfor
+
     public:
         explicit ${className}(void *data);
     @for(var alloc : members.allocFunctions)
-        ${className}(${api.cppParameters(alloc)});
+        @if(alloc.visibility == Visibility.PUBLIC)
+            ${className}(${api.cppParameters(alloc)});
+        @endif
     @endfor
         ~${className}();
 
-        @for(var m : members.memberFunctions)
+    @for(var m : members.memberFunctions)
+        @if(m.visibility == Visibility.PUBLIC)
             @template.function(api, m, isSource)
-        @endfor
+        @endif
+    @endfor
 
         void *data() const;
 
