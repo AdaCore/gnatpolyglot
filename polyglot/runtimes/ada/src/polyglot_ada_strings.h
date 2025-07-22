@@ -11,21 +11,7 @@ typedef arrays::array_data string_data ;
 
 class polyglot_string {
 public:
-    class view {
-    public:
-        view(const string_data &data) : _data(data) {}
-
-        operator polyglot_string&() {
-            return *(polyglot_string*)this;
-        }
-
-        polyglot_string* operator->() {
-            return (polyglot_string*)this;
-        }
-
-    private:
-        string_data _data;
-    };
+    class view;
 
 public:
     polyglot_string(string_data data) :_data(data) {}
@@ -43,9 +29,35 @@ public:
 
 
     string_data data() const { return this->_data; }
+    string_data release() {
+        string_data data = this->_data;
+        this->_data.begin = 0;
+        this->_data.end = 0;
+        this->_data.data = nullptr;
+        return data;
+    }
 
 private:
     string_data _data;
+};
+
+class polyglot_string::view  {
+public:
+    view(const string_data &data) {
+        new (&this->_data) polyglot_string(data);
+
+    }
+
+    operator polyglot_string&() {
+        return *(polyglot_string*) &_data;
+    }
+
+    polyglot_string* operator->() {
+        return (polyglot_string*) &_data;
+    }
+
+private:
+    char _data[sizeof(polyglot_string)];
 };
 
 /** Return a new string whose characters are the conversion of each element from arr. */

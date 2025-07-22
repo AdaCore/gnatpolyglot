@@ -51,26 +51,31 @@ vim: filetype=jtecpp
     @endfor
 
         void *data() const;
+        void *release();
 
     public:
-        struct view {
-            view(void *data) : _data(data) {}
-
-            ${className} *operator->() {
-                return (${className} *)this;
-            }
-
-            operator ${className}&() {
-                return *(${className} *)this;
-            }
-        private:
-            void *_data;
-        };
+        struct view;
 
     @if(classDecl.parent == null)
     protected:
         void *_data;
     @endif
+    };
+
+    struct ${className}::view {
+        view(void *data) {
+            new (&this->_data) ${className}(data);
+        }
+
+        ${className} *operator->() {
+            return (${className}*) &_data;
+        }
+
+        operator ${className}&() {
+            return *(${className}*) &_data;
+        }
+    private:
+        char _data[sizeof(${className})];
     };
 @else
     @for(var alloc : members.allocFunctions)
@@ -102,5 +107,11 @@ vim: filetype=jtecpp
 
     void *${className}::data() const {
         return this->_data;
+    }
+
+    void *${className}::release() {
+        void *tmp = this->_data;
+        this->_data = nullptr;
+        return tmp;
     }
 @endif
