@@ -4,6 +4,7 @@ Template file to generate package bodies.
 --%>
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration
+@import com.adacore.polyglot.ada2proxy.proxy.AdaException
 @import com.adacore.polyglot.ada2proxy.proxy.Package
 @import com.adacore.polyglot.ada2proxy.proxy.Record
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
@@ -23,7 +24,9 @@ with System.Address_To_Access_Conversions;
 with Polyglot;
 with Polyglot.Ada;
 with Polyglot.Ada.Arrays;
+with Polyglot.Exceptions;
 with Polyglot.Exceptions.${api.getProjectName().toPascalWithUnderscore()};
+with Polyglot.Ada.Strings;
 
 with ${packageName}; use ${packageName};
 
@@ -37,6 +40,8 @@ package body ${packageName}.Proxy is
         @endif
     @elseif(decl instanceof Record rec)
         @template.record(api, rec, true)
+    @elseif(decl instanceof AdaException exc)
+        @template.exception(api, exc, true)
     @endif
 @endfor
 end ${packageName}.Proxy;

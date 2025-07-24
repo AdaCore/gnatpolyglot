@@ -192,6 +192,7 @@ public class AdaProxyTranslator {
 
         @Override
         public ProxyObject visit(AdaException adaException) {
+            declarations.addAll(adaException.getAllocFunctions());
             return new ExceptionDecl(
                     adaException.getProxyFullyQualifiedName(),
                     adaException.getDoc(),
