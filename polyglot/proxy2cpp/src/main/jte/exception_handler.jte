@@ -54,6 +54,8 @@ void rethrow_if_exc() {
     if (data == nullptr)
         return;
     int kind = k->exc_info.exception_kind;
+    if (kind < 0)
+        polyglot::ada::exceptions::rethrow_standard_exception();
     k->exc_info.exception_data = nullptr;
     try {
         switch (kind) {
