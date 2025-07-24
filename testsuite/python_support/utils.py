@@ -89,8 +89,9 @@ def compile_main(output_lang: str, test_file: str, output_proxy: str, input_prox
 
         LD_FLAGS = [
             f"-L{os.path.join(input_proxy, 'lib_agg', 'static', 'dev')}",
-            f"-ltest_proxy_agg",
-            f"-ldl",
+            "-ltest_proxy_agg",
+            "-ldl",
+            "-lpthread",
         ]
         argv = [
             "g++",
