@@ -17,6 +17,11 @@ public:
     const char *what() const noexcept override { return _what.data(); }
 
     void *data() const { return this->_data; }
+    void *release() {
+       void *data = this->_data;
+       this->_data = nullptr;
+       return data;
+    }
 
 protected:
     void *_data;

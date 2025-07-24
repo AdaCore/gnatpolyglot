@@ -531,4 +531,30 @@ public class CppAPI {
     public String exceptionFullyQualifiedName(ExceptionDecl exc) {
         return exc.name.join(n -> lastNameToCppName(n), "::", "::", "");
     }
+
+    /**
+     * Create a return statement that returns a default value for when a dynamically-dispatched
+     * called function is exitted by a thrown exception.
+     *
+     * <p>When an exception is caught, its information is moved to the polyglot kernel to be
+     * analyzed back by the binded library. The exception is not rethrown in the catch statement,
+     * and a return statement is necessary for code validity, even though its returned value should
+     * not be used by the library.
+     */
+    public String makeDispatchDefaultReturn(FunctionTypeExpr function) {
+        if (function.returnType instanceof ArrayTypeExpr)
+            return "return polyglot::ada::arrays::array_data{0, 0, nullptr};";
+        if (function.returnType instanceof NameTypeExpr name) {
+            TypeDecl returnType = context.getTypeDecl(name.name);
+            if (returnType instanceof NativeTypeDecl nat) {
+                return switch (nat.nativeType) {
+                    case VOID -> "";
+                    case BOOL -> "return false;";
+                    case STRING -> "return polyglot::ada::strings::string_data{0, 0, nullptr};";
+                    default -> "return 0;";
+                };
+            }
+        }
+        return "return nullptr;";
+    }
 }
