@@ -108,11 +108,14 @@ Template file to generate shadow types for tagged records.
          String firstParam = method.parameters.get(0).name.toPascalWithUnderscore();
       }
       ${api.makeShadowOverride(method)} is
+         use all type Ada.Exceptions.Exception_Occurrence_Access;
          Table : ${recordName}_Vtable
          with Address => ${firstParam}.Shadow.Vtable;
          pragma Import (Ada, Table);
          procedure Free is new Ada.Unchecked_Deallocation
            (${instantiableRecordName}, ${recordAccessName});
+         Exc_Occ_A : Standard.Ada.Exceptions.Exception_Occurrence_Access;
+         Exc_Occ : Standard.Ada.Exceptions.Exception_Occurrence;
       begin
          if Table.${subpName}_Dispatch = null then
             @if(!method.isProcedure())
@@ -128,6 +131,16 @@ Template file to generate shadow types for tagged records.
                      ${api.makeDispatchedArgument(p)}
                   @endfor
                );
+               Exc_Occ_A :=
+                 Polyglot.Exceptions.Addr_To_Exc
+                   (Polyglot.Get_Kernel.Exc_Info.Current_Exception);
+               if Exc_Occ_A /= null then
+                  Polyglot.Get_Kernel.Exc_Info.Current_Exception :=
+                    System.Null_Address;
+                  Standard.Ada.Exceptions.Save_Occurrence (Exc_Occ, Exc_Occ_A.all);
+                  Polyglot.Exceptions.Exc_Free (Exc_Occ_A);
+                  Standard.Ada.Exceptions.Reraise_Occurrence (Exc_Occ);
+               end if;
             @else
                declare
                   Returned_Value : ${api.cInterfaceTypename(method.getReturnType())} :=
@@ -140,6 +153,16 @@ Template file to generate shadow types for tagged records.
                      );
                   ${api.makeShadowReturnDecl(method.getReturnType())}
                begin
+                  Exc_Occ_A :=
+                    Polyglot.Exceptions.Addr_To_Exc
+                      (Polyglot.Get_Kernel.Exc_Info.Current_Exception);
+                  if Exc_Occ_A /= null then
+                     Polyglot.Get_Kernel.Exc_Info.Current_Exception :=
+                       System.Null_Address;
+                     Standard.Ada.Exceptions.Save_Occurrence (Exc_Occ, Exc_Occ_A.all);
+                     Polyglot.Exceptions.Exc_Free (Exc_Occ_A);
+                     Standard.Ada.Exceptions.Reraise_Occurrence (Exc_Occ);
+                  end if;
                   ${api.makeShadowReturn(method)};
                end;
             @endif
