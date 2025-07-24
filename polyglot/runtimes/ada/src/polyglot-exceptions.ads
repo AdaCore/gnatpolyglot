@@ -34,4 +34,41 @@ package Polyglot.Exceptions is
    procedure Clear_Last_Exception (K : Kernel_Access);
    pragma Export (C, Clear_Last_Exception);
 
+   type Standard_Exception_Kind is
+     (Constraint_Error_Kind,
+      Program_Error_Kind,
+      Storage_Error_Kind,
+      Tasking_Error_Kind)
+   with Convention => C;
+
+   for Standard_Exception_Kind use
+     (Constraint_Error_Kind => -4,
+      Program_Error_Kind    => -3,
+      Storage_Error_Kind    => -2,
+      Tasking_Error_Kind    => -1);
+
+   function Create_Exception_Occurence
+     (Kind : Standard_Exception_Kind) return System.Address;
+   pragma
+     Export
+       (C,
+        Create_Exception_Occurence,
+        "polyglot__ada__exceptions__create_exception_occurence");
+
+   function Create_Exception_Occurence_Message
+     (Kind : Standard_Exception_Kind;
+      Msg  : Polyglot.Ada.Strings.Polyglot_String) return System.Address;
+   pragma
+     Export
+       (C,
+        Create_Exception_Occurence_Message,
+        "polyglot__ada__exceptions__create_exception_occurence_message");
+
+   procedure Free_Exception_Occurence (Addr : System.Address);
+   pragma
+     Export
+       (C,
+        Free_Exception_Occurence,
+        "polyglot__ada__exceptions__free_exception_occurence");
+
 end Polyglot.Exceptions;

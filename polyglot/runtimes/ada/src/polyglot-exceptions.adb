@@ -33,6 +33,56 @@ package body Polyglot.Exceptions is
       K.Exc_Info.Current_Exception := System.Null_Address;
    end Clear_Last_Exception;
 
+   --------------------------------
+   -- Create_Exception_Occurence --
+   --------------------------------
+
+   function Create_Exception_Occurence
+     (Kind : Standard_Exception_Kind) return System.Address is
+   begin
+      case Kind is
+         when Constraint_Error_Kind =>
+            raise Constraint_Error;
+
+         when Program_Error_Kind =>
+            raise Program_Error;
+
+         when Storage_Error_Kind =>
+            raise Storage_Error;
+
+         when Tasking_Error_Kind =>
+            raise Tasking_Error;
+      end case;
+   exception
+      when E : others =>
+         return Exc_To_Addr (Save_Occurrence (E));
+   end;
+
+   function Create_Exception_Occurence_Message
+     (Kind : Standard_Exception_Kind;
+      Msg  : Polyglot.Ada.Strings.Polyglot_String) return System.Address
+   is
+      Ada_MSg : String (1 .. Positive (Polyglot.Ada.Strings.Length (Msg)))
+      with Address => Msg.Data;
+   begin
+      case Kind is
+         when Constraint_Error_Kind =>
+            raise Constraint_Error with Ada_Msg;
+
+         when Program_Error_Kind =>
+            raise Program_Error with Ada_Msg;
+
+         when Storage_Error_Kind =>
+            raise Storage_Error with Ada_Msg;
+
+         when Tasking_Error_Kind =>
+            raise Tasking_Error with Ada_Msg;
+      end case;
+   exception
+      when E : others =>
+         return Exc_To_Addr (Save_Occurrence (E));
+   end Create_Exception_Occurence_Message;
+
    ------------------------------
    -- Free_Exception_Occurence --
    ------------------------------
