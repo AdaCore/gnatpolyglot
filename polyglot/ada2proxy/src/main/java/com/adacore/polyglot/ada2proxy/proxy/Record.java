@@ -58,6 +58,11 @@ public class Record extends AdaDeclaration {
         return this.origin.pFullyQualifiedName();
     }
 
+    /** Return the fully qualified name of the classwide version of the type. */
+    public String getClasswideFullyQualifiedName() {
+        return this.origin.pClasswideType().pFullyQualifiedName();
+    }
+
     /** Get a {@link TypeExpr} to the current type. */
     public NameTypeExpr getTypeExpr() {
         if (this.ref == null) this.ref = (NameTypeExpr) AdaAPI.makeTypeExpr(this.origin);
@@ -115,8 +120,9 @@ public class Record extends AdaDeclaration {
 
     /** Return the allocating functions of the type, or generate a new one if necessary. */
     public List<FunctionDecl> getAllocFunctions() {
-        if (this.allocFunctions == null) {
-            this.allocFunctions = new ArrayList<>(2);
+        if (this.allocFunctions != null) return this.allocFunctions;
+        this.allocFunctions = new ArrayList<>(2);
+        if (!isAbstract()) {
             NameTypeExpr type = getTypeExpr();
             List<Component> allComponents = getAllComponents();
             this.allocFunctions.add(
@@ -288,5 +294,9 @@ public class Record extends AdaDeclaration {
                 .findFirst()
                 .map((b) -> b.pFullyQualifiedName() + " with")
                 .orElse("");
+    }
+
+    public boolean isAbstract() {
+        return origin.pIsAbstractType();
     }
 }

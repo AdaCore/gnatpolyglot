@@ -348,8 +348,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         if (rec != null) return rec;
         // Get the components of the record.
         ArrayList<Component> components = new ArrayList<>();
-        if (!recordDef.isNone()) {
-            for (var c : recordDef.fComponents().fComponents().children()) {
+        if (!recordDef.isNone() && !(recordDef instanceof Libadalang.NullRecordDef)) {
+            for (var c : recordDef.fComponents().fComponents()) {
+                // If there is a null component decl, there should not be any component.
+                if (c instanceof Libadalang.NullComponentDecl) break;
+
                 Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
                 for (var name : componentDecl.fIds().children()) {
                     components.add(

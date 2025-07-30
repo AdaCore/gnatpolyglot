@@ -220,7 +220,7 @@ public class AdaAPI {
         StringBuilder builder = new StringBuilder();
         String argName = name.toPascalWithUnderscore();
         // Class wide types need a pointer conversion function.
-        if (type instanceof Libadalang.ClasswideTypeDecl) {
+        if (type instanceof Libadalang.ClasswideTypeDecl || type.pIsAbstractType()) {
             Libadalang.BaseTypeDecl specificType = type.pSpecificType();
             String accessType =
                     name.toPascalWithUnderscore().concat("_").concat(asAccess(specificType));
@@ -274,7 +274,7 @@ public class AdaAPI {
                     .append("_Arg.Data; pragma Import (Ada, ")
                     .append(argName)
                     .append("_Value)");
-        } else if (type instanceof Libadalang.ClasswideTypeDecl) {
+        } else if (type instanceof Libadalang.ClasswideTypeDecl || type.pIsAbstractType()) {
             builder.append(" renames ").append(argName).append("_Access.all");
         } else if (type.pIsRecordType(Libadalang.AdaNode.NONE) || isOutMode) {
             // If the type is a record or when the parameter uses an ``out`` mode, generate the

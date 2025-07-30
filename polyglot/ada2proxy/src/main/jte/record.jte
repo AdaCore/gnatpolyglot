@@ -14,7 +14,11 @@ Template file to generate bindings for record types.
 @param Boolean isBody
 
 !{
-    String recordName = rec.getFullyQualifiedName();
+    // Abstract types cannot be instantiated: use their classwide version
+    // instead.
+    String recordName = rec.isAbstract()
+        ? rec.getClasswideFullyQualifiedName()
+        : rec.getFullyQualifiedName();
     String recordPrefix = recordName.replace(".", "_");
     String recordAccessName = rec.name.toPascalWithUnderscore() + "_Access";
     FunctionDecl freeFunc = rec.getFreeFunction();
@@ -100,11 +104,14 @@ Template file to generate bindings for record types.
    function ${cloneFunc.getLastName().toPascalWithUnderscore()}
      (Self: System.Address) return System.Address
    is
-      Tmp : ${recordName} with Address => Self;
-      pragma Import (Ada, Tmp);
+      <%---
+        -- In the case of abstract types, we cannot use a variable with an address clause.
+        -- In order to cover all cases, use an access.
+        --%>
       package Converter is new System.Address_To_Access_Conversions (${recordName});
+      Tmp : Converter.Object_Pointer := Converter.To_Pointer (Self);
    begin
-      return Converter.To_Address (new ${recordName}'(Tmp));
+      return Converter.To_Address (new ${recordName}'(Tmp.all));
    end ${cloneFunc.getLastName().toPascalWithUnderscore()};
 
    <%-- Define the getter and setter functions --%>
