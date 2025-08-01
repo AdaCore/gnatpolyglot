@@ -2,4 +2,6 @@
 
 int main() {
     test::p();
+
+    test::do_nothing();
 }

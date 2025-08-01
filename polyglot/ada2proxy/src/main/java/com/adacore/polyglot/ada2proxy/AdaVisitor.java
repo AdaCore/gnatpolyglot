@@ -249,9 +249,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                                 Libadalang.AdaNode.NONE));
     }
 
-    @Override
-    public Void visit(Libadalang.SubpDecl node) {
-        Libadalang.SubpSpec spec = node.fSubpSpec();
+    public void processSubprogram(Libadalang.BasicDecl node) {
+        Libadalang.SubpSpec spec = (Libadalang.SubpSpec) node.pSubpSpecOrNull(false);
 
         // Get the C symbol of the function.
         String symbol = symbolify(spec);
@@ -326,6 +325,29 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                         role,
                         returnOwner);
         declarations.add(subProg);
+    }
+
+    @Override
+    public Void visit(Libadalang.SubpDecl node) {
+        processSubprogram(node);
+        return null;
+    }
+
+    @Override
+    public Void visit(Libadalang.AbstractSubpDecl node) {
+        processSubprogram(node);
+        return null;
+    }
+
+    @Override
+    public Void visit(Libadalang.ExprFunction node) {
+        processSubprogram(node);
+        return null;
+    }
+
+    @Override
+    public Void visit(Libadalang.NullSubpDecl node) {
+        processSubprogram(node);
         return null;
     }
 
