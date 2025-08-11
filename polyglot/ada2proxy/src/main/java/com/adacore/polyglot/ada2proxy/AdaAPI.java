@@ -34,10 +34,23 @@ public class AdaAPI {
     public static TypeExpr makeTypeExpr(Libadalang.BasicDecl decl) {
         if (decl instanceof Libadalang.TypeDecl typeDecl) {
             if (typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
+                if (isStringType(typeDecl)) return NativeType.STRING.typeExpr;
                 return makeTypeExpr(arrayTypeDef.fComponentType().fTypeExpr()).makeArray();
             }
         }
         return makeProxyFullyQualifiedName(decl).asTypeExpr();
+    }
+
+    public static boolean isStringType(Libadalang.BaseTypeDecl bTypeDecl) {
+        if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl
+                && typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
+            return arrayTypeDef
+                    .fComponentType()
+                    .fTypeExpr()
+                    .pDesignatedTypeDecl()
+                    .equals(typeDecl.pStdCharType());
+        }
+        return bTypeDecl.equals(bTypeDecl.pStdStringType());
     }
 
     /** Return the native type corresponding to bTypeDecl, or null if the type is not native. */
@@ -48,6 +61,7 @@ public class AdaAPI {
 
         if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl) {
             if (typeDecl.equals(typeDecl.pBoolType())) return NativeType.BOOL;
+            if (isStringType(typeDecl)) return NativeType.STRING;
             if (typeDecl.equals(typeDecl.pStdCharType())) return NativeType.UINT8;
             if (typeDecl.pIsIntType(Libadalang.AdaNode.NONE)) {
                 // Compute the number of required bits to hold the values of the type and
@@ -216,6 +230,10 @@ public class AdaAPI {
                     .append("_Arg; pragma Import (Ada, ")
                     .append(argName)
                     .append("_Value)");
+        } else if (type.equals(type.pBoolType())) {
+            // Boolean types do not exist in the Interfaces.C package: they are instead binded as
+            // Ints.
+            builder.append(" := ").append(argName).append("_Arg /= 0");
         } else {
             // Otherwise, the type should convertible with a simple cast:
             // .. code::
@@ -301,7 +319,9 @@ public class AdaAPI {
                         returnedType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
 
         String typeName = returnedType.pFullyQualifiedName();
-        if (returnedType.pIsScalarType(Libadalang.AdaNode.NONE)) {
+        if (returnedType.equals(returnedType.pBoolType())) {
+            builder.append("return (if ").append(returnedValue).append(" then 1 else 0)");
+        } else if (returnedType.pIsScalarType(Libadalang.AdaNode.NONE)) {
             // If the value is a scalar, simply cast to the C interface type.
             builder.append("return ")
                     .append(cInterfaceTypename(returnedType))
@@ -389,7 +409,7 @@ public class AdaAPI {
             case SINT128:
                 return "Interfaces.C.long";
             case STRING:
-                return "Interfaces.C.char_array";
+                return "Polyglot.Ada.Strings.Polyglot_String";
             case VOID:
                 throw new IllegalArgumentException("Ada has no ``void`` type.");
             default:

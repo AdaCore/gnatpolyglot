@@ -1,0 +1,17 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling test main program...
+Running test main program...
+
+Printing Ada.String: String_Func
+Ada.String from C++: String_Func
+Printing Test.User_String: User_String
+Test.User_Str from C++: User_String
+Printing Test.User_String: String_Func
+Printing Ada.String: User_String
+Printing Ada.String: from C++
+Printing Test.User_String: from C++
+
+Done.

@@ -9,6 +9,7 @@ import com.adacore.polyglot.proxy.Proxy;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.output.FileOutput;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -38,8 +39,35 @@ public class AdaScanner extends Scanner {
     /** The Ada proxy. */
     private AdaProxy proxy;
 
+    private List<String> getFilesToAnalyze(ProjectManager projectManager, List<String> units)
+            throws FileNotFoundException {
+        Stream<String> filenames =
+                Stream.of(projectManager.getFiles(SourceFileMode.DEFAULT))
+                        .filter(s -> s.endsWith(".ads"));
+        if (units == null || units.isEmpty()) return filenames.toList();
+        // Filter all the units to bind.
+        List<String> result =
+                filenames
+                        .filter(
+                                units == null || units.isEmpty()
+                                        ? (s -> true)
+                                        : (s ->
+                                                units.contains(
+                                                        Path.of(s).getFileName().toString())))
+                        .toList();
+        // Verify that all the units in ``units`` have been found.
+        List<Path> resultBasenames = result.stream().map(s -> Path.of(s).getFileName()).toList();
+        for (var unit : units) {
+            units.stream()
+                    .filter(u -> resultBasenames.contains(Path.of(u)))
+                    .findFirst()
+                    .orElseThrow(() -> new FileNotFoundException(unit));
+        }
+        return result;
+    }
+
     @Override
-    public void scanProject(Path projectFile) {
+    public void scanProject(Path projectFile, List<String> units) throws FileNotFoundException {
         this.projectFile = projectFile;
         // Get the name of the project
         this.projectName =
@@ -52,8 +80,7 @@ public class AdaScanner extends Scanner {
         ProjectManager projectManager = ProjectManager.create(projectFile.toString());
         AnalysisContext ctx = projectManager.createContext(null, null, true, 8);
         List<Package> modules =
-                Stream.of(projectManager.getFiles(SourceFileMode.DEFAULT))
-                        .filter(s -> s.endsWith(".ads"))
+                getFilesToAnalyze(projectManager, units).stream()
                         .map(s -> ctx.getUnitFromFile(s))
                         .map(u -> visitor.analyzeSpec(u))
                         .toList();

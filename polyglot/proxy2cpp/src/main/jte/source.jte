@@ -12,6 +12,8 @@ vim: filetype=jtecpp
 #include "${include}"
 @endfor
 
+#include <polyglot_ada_strings.h>
+
 namespace ${api.namespacePath(module)} {
 
 @for (var decl : module.declarations)

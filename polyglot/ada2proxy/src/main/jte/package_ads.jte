@@ -15,6 +15,7 @@ with Interfaces.C;
 with System;
 
 with Polyglot.Ada.Arrays;
+with Polyglot.Ada.Strings;
 
 package ${packageName}.Proxy is
 @for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>

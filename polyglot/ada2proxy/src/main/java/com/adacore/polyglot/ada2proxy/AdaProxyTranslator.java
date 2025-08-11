@@ -1,6 +1,7 @@
 package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxy;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxyVisitor;
 import com.adacore.polyglot.ada2proxy.proxy.Array;
@@ -103,7 +104,8 @@ public class AdaProxyTranslator {
             if (!subpParam.isOutMode()) isConst = true;
             // If the parameter is not a scalar, or has ``out`` or ``in out`` mode, it must be a
             // reference.
-            if (AdaAPI.checkNativeType(subpParam.getType()) == null || subpParam.isOutMode())
+            NativeType nat = AdaAPI.checkNativeType(subpParam.getType());
+            if (nat == null || nat == NativeType.STRING || subpParam.isOutMode())
                 typeRef = typeRef.makeReference(isConst);
             return new Parameter(subpParam.name, typeRef, subpParam.transfer);
         }
