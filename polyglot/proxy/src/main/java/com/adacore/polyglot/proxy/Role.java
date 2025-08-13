@@ -27,6 +27,9 @@ public class Role implements ProxyObject {
         /** The function allocates a new instance of type {@link Role#type}. */
         @JsonProperty("alloc")
         ALLOC,
+        /** The function allocates a shadow new instance of type {@link Role#type}. */
+        @JsonProperty("shadow_alloc")
+        SHADOW_ALLOC,
         /** The function frees an instance of type {@link Role#type}. */
         @JsonProperty("free")
         FREE,

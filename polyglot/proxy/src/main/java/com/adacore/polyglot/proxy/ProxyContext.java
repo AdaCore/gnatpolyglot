@@ -56,7 +56,7 @@ public class ProxyContext {
             entry = new FunctionMembersEntry();
             membersEntries.put(func.role.type, entry);
         }
-        if (func.role.kind == RoleKind.ALLOC) {
+        if (func.role.kind == RoleKind.ALLOC || func.role.kind == RoleKind.SHADOW_ALLOC) {
             // There can be multiple allocating function (no args, clone...)
             entry.allocFunctions.add(func);
         } else if (func.role.kind == RoleKind.FREE) {
