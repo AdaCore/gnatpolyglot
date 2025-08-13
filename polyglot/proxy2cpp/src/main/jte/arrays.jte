@@ -18,7 +18,7 @@ namespace ${api.namespacePath(module)} {
 @for (var decl : module.declarations)
     !{FunctionDecl functionDecl = (FunctionDecl) decl;}
     @if(functionDecl.role.kind == RoleKind.FREE)
-        extern "C" ${api.cTypename(functionDecl.returnType)} ${functionDecl.symbol}
+        extern "C" ${api.cTypename(functionDecl.type.returnType)} ${functionDecl.symbol}
             (${api.cParameters(functionDecl)});
         template<>
         ${api.cppTypename(functionDecl.role.type)}::~polyglot_array() {
@@ -26,7 +26,7 @@ namespace ${api.namespacePath(module)} {
         }
 
     @elseif(functionDecl.role.kind == RoleKind.CONSTRUCT)
-        extern "C" ${api.cTypename(functionDecl.returnType)} ${functionDecl.symbol}
+        extern "C" ${api.cTypename(functionDecl.type.returnType)} ${functionDecl.symbol}
             (${api.cParameters(functionDecl)});
         template<>
         ${api.cppTypename(functionDecl.role.type)}::polyglot_array
@@ -34,10 +34,10 @@ namespace ${api.namespacePath(module)} {
             ${api.callCSymbol(functionDecl)};
         }
     @elseif(functionDecl.role.kind != RoleKind.ALLOC)
-        extern "C" ${api.cTypename(functionDecl.returnType)} ${functionDecl.symbol}
+        extern "C" ${api.cTypename(functionDecl.type.returnType)} ${functionDecl.symbol}
             (${api.cParameters(functionDecl)});
         template <>
-        ${api.cppReturnTypename(functionDecl.returnType)}
+        ${api.cppReturnTypename(functionDecl.type.returnType)}
         ${api.functionDefinitionName(functionDecl)}
             (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)} {
             ${api.makeReturnStatement(functionDecl)};

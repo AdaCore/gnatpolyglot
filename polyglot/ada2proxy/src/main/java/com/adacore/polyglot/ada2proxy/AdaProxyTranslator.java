@@ -19,6 +19,7 @@ import com.adacore.polyglot.proxy.EnumerationDecl;
 import com.adacore.polyglot.proxy.Field;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
+import com.adacore.polyglot.proxy.FunctionTypeExpr;
 import com.adacore.polyglot.proxy.Module;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Parameter;
@@ -80,9 +81,12 @@ public class AdaProxyTranslator {
                     subprogram.getDoc(),
                     subprogram.role,
                     subprogram.symbol,
-                    subprogram.parameters.stream().map(p -> (Parameter) p.accept(this)).toList(),
-                    AdaAPI.makeTypeExpr(subprogram.getReturnType()),
-                    subprogram.owner,
+                    new FunctionTypeExpr(
+                            subprogram.parameters.stream()
+                                    .map(p -> (Parameter) p.accept(this))
+                                    .toList(),
+                            AdaAPI.makeTypeExpr(subprogram.getReturnType()),
+                            subprogram.owner),
                     false,
                     false,
                     false);
@@ -130,7 +134,8 @@ public class AdaProxyTranslator {
                         null,
                         8,
                         false,
-                        rec.components.stream().map(c -> (Field) c.accept(this)).toList());
+                        rec.components.stream().map(c -> (Field) c.accept(this)).toList(),
+                        null);
             }
             throw new UnsupportedOperationException(
                     "Unsupported Ada type:" + rec.getTypeDef().getImage());

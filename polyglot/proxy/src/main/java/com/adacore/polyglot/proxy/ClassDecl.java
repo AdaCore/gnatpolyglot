@@ -24,6 +24,10 @@ public class ClassDecl extends TypeDecl {
     @JsonProperty("fields")
     public final List<Field> fields;
 
+    /** vtable. */
+    @JsonProperty("vtable")
+    public final List<VTableEntry> vtable;
+
     @JsonCreator
     public ClassDecl(
             @JsonProperty(value = "name", required = true) FullyQualifiedName name,
@@ -31,12 +35,14 @@ public class ClassDecl extends TypeDecl {
             @JsonProperty(value = "parent") FullyQualifiedName parent,
             @JsonProperty(value = "size", required = true) int size,
             @JsonProperty(value = "is_final", required = true) boolean isFinal,
-            @JsonProperty(value = "fields", required = true) List<Field> fields) {
+            @JsonProperty(value = "fields", required = true) List<Field> fields,
+            @JsonProperty(value = "vtable") List<VTableEntry> vtable) {
         super(name, doc);
         this.parent = parent;
         this.size = size;
         this.isFinal = isFinal;
         this.fields = fields;
+        this.vtable = vtable;
     }
 
     public <T> T visit(ProxyVisitor<T> v) {

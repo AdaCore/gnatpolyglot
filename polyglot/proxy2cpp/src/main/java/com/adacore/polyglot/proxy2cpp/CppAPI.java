@@ -206,7 +206,7 @@ public class CppAPI {
 
     /** Create a string of all the C parameters of the function's symbol. */
     public String cParameters(FunctionDecl functionDecl) {
-        return functionDecl.parameters.stream()
+        return functionDecl.type.parameters.stream()
                 .map(p -> toCParam(p))
                 .collect(Collectors.joining(", "));
     }
@@ -220,13 +220,14 @@ public class CppAPI {
 
     /** Return the const keyword if the function is a const method, else return an empty string. */
     public String getConstMethod(FunctionDecl functionDecl) {
-        if (isMethod(functionDecl) && functionDecl.parameters.get(0).type.isConst()) return "const";
+        if (isMethod(functionDecl) && functionDecl.type.parameters.get(0).type.isConst())
+            return "const";
         return "";
     }
 
     /** Create a string of all the C++ parameters of the function. */
     public String cppParameters(FunctionDecl functionDecl) {
-        return functionDecl.parameters.stream()
+        return functionDecl.type.parameters.stream()
                 .skip(isMethod(functionDecl) ? 1 : 0)
                 .map(p -> toCppParam(p))
                 .collect(Collectors.joining(", "));
@@ -259,14 +260,14 @@ public class CppAPI {
         // If the function is attached to a type, use ``this->data`` as the first argument.
         if (funcIsMethod) {
             if (functionDecl.role.type instanceof ArrayTypeExpr
-                    && functionDecl.parameters.get(0).type instanceof PointerTypeExpr)
+                    && functionDecl.type.parameters.get(0).type instanceof PointerTypeExpr)
                 builder.append("&");
             builder.append("this->_data");
-            if (functionDecl.parameters.size() > 1) builder.append(", ");
+            if (functionDecl.type.parameters.size() > 1) builder.append(", ");
         }
 
         builder.append(
-                functionDecl.parameters.stream()
+                functionDecl.type.parameters.stream()
                         .skip(funcIsMethod ? 1 : 0)
                         .map(p -> getParamForCall(p))
                         .collect(Collectors.joining(", ")));
@@ -277,7 +278,7 @@ public class CppAPI {
     /** Create a string of the return statement. */
     public String makeReturnStatement(FunctionDecl functionDecl) {
         StringBuilder builder = new StringBuilder("return ");
-        if (functionDecl.returnType instanceof ReferenceTypeExpr ref
+        if (functionDecl.type.returnType instanceof ReferenceTypeExpr ref
                 && ref.typeExpr instanceof NameTypeExpr name
                 && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
             // When returning a reference to a native type, get the address returned by the `extern
@@ -287,7 +288,7 @@ public class CppAPI {
             builder.append("*");
         } else {
             // Otherwise, create a new object that wraps the returned pointer.
-            builder.append(cppReturnTypename(functionDecl.returnType));
+            builder.append(cppReturnTypename(functionDecl.type.returnType));
         }
         builder.append("(").append(callCSymbol(functionDecl)).append(")");
         return builder.toString();

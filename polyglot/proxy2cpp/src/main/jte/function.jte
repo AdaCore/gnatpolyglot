@@ -10,12 +10,12 @@ vim: filetype=jtecpp
 
 @if(!isSource)
     ${api.formatDoc(functionDecl.doc, 1)}
-    ${api.cppReturnTypename(functionDecl.returnType)} ${functionDecl.getLastName().toLower()}
+    ${api.cppReturnTypename(functionDecl.type.returnType)} ${functionDecl.getLastName().toLower()}
         (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)};
 @else
-    extern "C" ${api.cTypename(functionDecl.returnType)} ${functionDecl.symbol}
+    extern "C" ${api.cTypename(functionDecl.type.returnType)} ${functionDecl.symbol}
         (${api.cParameters(functionDecl)});
-    ${api.cppReturnTypename(functionDecl.returnType)}
+    ${api.cppReturnTypename(functionDecl.type.returnType)}
     ${api.functionDefinitionName(functionDecl)}
         (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)} {
         ${api.makeReturnStatement(functionDecl)};

@@ -6,6 +6,7 @@ import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.ArrayTypeExpr;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
+import com.adacore.polyglot.proxy.FunctionTypeExpr;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Parameter;
@@ -55,17 +56,18 @@ public class Array implements AdaProxyObject {
                             "Returns a newly allocated array",
                             new Role(RoleKind.ALLOC, arrayTypeExpr, null),
                             buildMemberSymbol("_Alloc"),
-                            List.of(
-                                    new Parameter(
-                                            Name.fromLower("first"),
-                                            NativeType.SINT32.typeExpr,
-                                            new Transfer(RequiredOwner.ANY)),
-                                    new Parameter(
-                                            Name.fromLower("last"),
-                                            NativeType.SINT32.typeExpr,
-                                            new Transfer(RequiredOwner.ANY))),
-                            arrayTypeExpr,
-                            Owner.USER,
+                            new FunctionTypeExpr(
+                                    List.of(
+                                            new Parameter(
+                                                    Name.fromLower("first"),
+                                                    NativeType.SINT32.typeExpr,
+                                                    new Transfer(RequiredOwner.ANY)),
+                                            new Parameter(
+                                                    Name.fromLower("last"),
+                                                    NativeType.SINT32.typeExpr,
+                                                    new Transfer(RequiredOwner.ANY))),
+                                    arrayTypeExpr,
+                                    Owner.USER),
                             false,
                             false,
                             false));
@@ -75,13 +77,14 @@ public class Array implements AdaProxyObject {
                             "Return a newly allocated copy of ``self``",
                             new Role(RoleKind.ALLOC, arrayTypeExpr, null),
                             buildMemberSymbol("_Clone"),
-                            List.of(
-                                    new Parameter(
-                                            Name.fromLower("self"),
-                                            arrayTypeExpr.makeReference(true),
-                                            new Transfer(RequiredOwner.ANY))),
-                            arrayTypeExpr,
-                            Owner.USER,
+                            new FunctionTypeExpr(
+                                    List.of(
+                                            new Parameter(
+                                                    Name.fromLower("self"),
+                                                    arrayTypeExpr.makeReference(true),
+                                                    new Transfer(RequiredOwner.ANY))),
+                                    arrayTypeExpr,
+                                    Owner.USER),
                             false,
                             false,
                             false));
@@ -94,21 +97,22 @@ public class Array implements AdaProxyObject {
                                     + " ``last``",
                             new Role(RoleKind.CONSTRUCT, arrayTypeExpr, null),
                             buildMemberSymbol("_Construct"),
-                            List.of(
-                                    new Parameter(
-                                            Name.fromLower("self"),
-                                            arrayTypeExpr.makePointer(false, true),
-                                            new Transfer(RequiredOwner.ANY)),
-                                    new Parameter(
-                                            Name.fromLower("first"),
-                                            NativeType.SINT32.typeExpr,
-                                            new Transfer(RequiredOwner.ANY)),
-                                    new Parameter(
-                                            Name.fromLower("last"),
-                                            NativeType.SINT32.typeExpr,
-                                            new Transfer(RequiredOwner.ANY))),
-                            NativeType.VOID.typeExpr,
-                            Owner.USER,
+                            new FunctionTypeExpr(
+                                    List.of(
+                                            new Parameter(
+                                                    Name.fromLower("self"),
+                                                    arrayTypeExpr.makePointer(false, true),
+                                                    new Transfer(RequiredOwner.ANY)),
+                                            new Parameter(
+                                                    Name.fromLower("first"),
+                                                    NativeType.SINT32.typeExpr,
+                                                    new Transfer(RequiredOwner.ANY)),
+                                            new Parameter(
+                                                    Name.fromLower("last"),
+                                                    NativeType.SINT32.typeExpr,
+                                                    new Transfer(RequiredOwner.ANY))),
+                                    NativeType.VOID.typeExpr,
+                                    Owner.USER),
                             false,
                             false,
                             false));
@@ -118,17 +122,18 @@ public class Array implements AdaProxyObject {
                             "Create a newly allocated copy of ``from`` at ``to``",
                             new Role(RoleKind.CONSTRUCT, arrayTypeExpr, null),
                             buildMemberSymbol("_Copy"),
-                            List.of(
-                                    new Parameter(
-                                            Name.fromLower("to"),
-                                            arrayTypeExpr.makePointer(false, true),
-                                            new Transfer(RequiredOwner.ANY)),
-                                    new Parameter(
-                                            Name.fromLower("from"),
-                                            arrayTypeExpr.makeReference(true),
-                                            new Transfer(RequiredOwner.ANY))),
-                            NativeType.VOID.typeExpr,
-                            Owner.USER,
+                            new FunctionTypeExpr(
+                                    List.of(
+                                            new Parameter(
+                                                    Name.fromLower("to"),
+                                                    arrayTypeExpr.makePointer(false, true),
+                                                    new Transfer(RequiredOwner.ANY)),
+                                            new Parameter(
+                                                    Name.fromLower("from"),
+                                                    arrayTypeExpr.makeReference(true),
+                                                    new Transfer(RequiredOwner.ANY))),
+                                    NativeType.VOID.typeExpr,
+                                    Owner.USER),
                             false,
                             false,
                             false));
@@ -140,13 +145,14 @@ public class Array implements AdaProxyObject {
                             "Frees the array held by ``Data``",
                             new Role(RoleKind.FREE, arrayTypeExpr, null),
                             buildMemberSymbol("_Free"),
-                            List.of(
-                                    new Parameter(
-                                            Name.fromLower("self"),
-                                            arrayTypeExpr.makePointer(false, false),
-                                            new Transfer(RequiredOwner.ANY))),
-                            NativeType.VOID.typeExpr,
-                            Owner.UNKNOWN,
+                            new FunctionTypeExpr(
+                                    List.of(
+                                            new Parameter(
+                                                    Name.fromLower("self"),
+                                                    arrayTypeExpr.makePointer(false, false),
+                                                    new Transfer(RequiredOwner.ANY))),
+                                    NativeType.VOID.typeExpr,
+                                    Owner.UNKNOWN),
                             false,
                             false,
                             false));
@@ -158,17 +164,18 @@ public class Array implements AdaProxyObject {
                             "Return the value of the element at ``Index``",
                             new Role(RoleKind.GETTER, arrayTypeExpr, null),
                             buildMemberSymbol("_Getter"),
-                            List.of(
-                                    new Parameter(
-                                            Name.fromLower("self"),
-                                            arrayTypeExpr.makeReference(true),
-                                            new Transfer(RequiredOwner.ANY)),
-                                    new Parameter(
-                                            Name.fromLower("index"),
-                                            NativeType.SINT32.typeExpr,
-                                            new Transfer(RequiredOwner.ANY))),
-                            arrayTypeExpr.typeExpr.makeReference(false),
-                            Owner.UNKNOWN,
+                            new FunctionTypeExpr(
+                                    List.of(
+                                            new Parameter(
+                                                    Name.fromLower("self"),
+                                                    arrayTypeExpr.makeReference(true),
+                                                    new Transfer(RequiredOwner.ANY)),
+                                            new Parameter(
+                                                    Name.fromLower("index"),
+                                                    NativeType.SINT32.typeExpr,
+                                                    new Transfer(RequiredOwner.ANY))),
+                                    arrayTypeExpr.typeExpr.makeReference(false),
+                                    Owner.UNKNOWN),
                             false,
                             false,
                             false));
@@ -180,21 +187,22 @@ public class Array implements AdaProxyObject {
                             "Sets the value of the element at ``Index`` to ``New_Val``",
                             new Role(RoleKind.SETTER, arrayTypeExpr, null),
                             buildMemberSymbol("_Setter"),
-                            List.of(
-                                    new Parameter(
-                                            Name.fromLower("self"),
-                                            arrayTypeExpr.makeReference(false),
-                                            new Transfer(RequiredOwner.ANY)),
-                                    new Parameter(
-                                            Name.fromLower("index"),
-                                            NativeType.SINT32.typeExpr,
-                                            new Transfer(RequiredOwner.ANY)),
-                                    new Parameter(
-                                            Name.fromLower("new_val"),
-                                            arrayTypeExpr.typeExpr.makeReference(true),
-                                            new Transfer(RequiredOwner.ANY))),
-                            NativeType.VOID.typeExpr,
-                            Owner.UNKNOWN,
+                            new FunctionTypeExpr(
+                                    List.of(
+                                            new Parameter(
+                                                    Name.fromLower("self"),
+                                                    arrayTypeExpr.makeReference(false),
+                                                    new Transfer(RequiredOwner.ANY)),
+                                            new Parameter(
+                                                    Name.fromLower("index"),
+                                                    NativeType.SINT32.typeExpr,
+                                                    new Transfer(RequiredOwner.ANY)),
+                                            new Parameter(
+                                                    Name.fromLower("new_val"),
+                                                    arrayTypeExpr.typeExpr.makeReference(true),
+                                                    new Transfer(RequiredOwner.ANY))),
+                                    NativeType.VOID.typeExpr,
+                                    Owner.UNKNOWN),
                             false,
                             false,
                             false));

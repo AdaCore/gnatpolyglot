@@ -4,7 +4,7 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.polyglot.proxy.FullyQualifiedName","int","boolean","java.util.List"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.polyglot.proxy.FullyQualifiedName","int","boolean","java.util.List","java.util.List"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.Declaration",
@@ -45,7 +45,14 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.polyglot.proxy.Role","java.lang.String","java.util.List","com.adacore.polyglot.proxy.TypeExpr","com.adacore.polyglot.proxy.Owner","java.lang.Boolean","java.lang.Boolean","java.lang.Boolean"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.polyglot.proxy.Role","java.lang.String","com.adacore.polyglot.proxy.FunctionTypeExpr","java.lang.Boolean","java.lang.Boolean","java.lang.Boolean"] }]
+},
+{
+  "name":"com.adacore.polyglot.proxy.FunctionTypeExpr",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["java.util.List","com.adacore.polyglot.proxy.TypeExpr","com.adacore.polyglot.proxy.Owner"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.Module",
@@ -141,6 +148,13 @@
   "name":"com.adacore.polyglot.proxy.TypeDecl",
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true
+},
+{
+  "name":"com.adacore.polyglot.proxy.VTableEntry",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","com.adacore.polyglot.proxy.FunctionTypeExpr"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.TypeExpr",

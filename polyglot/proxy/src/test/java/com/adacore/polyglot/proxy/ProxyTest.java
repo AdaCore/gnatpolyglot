@@ -45,9 +45,12 @@ public class ProxyTest {
                 "name": { "names": ["function_0"] },
                 "doc": "doc function_0",
                 "symbol": "__symbol_function_0",
-                "parameters": [],
-                "return_type": { "kind": "typename", "name": { "names": [ "uint8" ] } },
-                "return_owner": "unknown"
+                "type": {
+                   "kind": "function",
+                   "parameters": [],
+                   "return_type": { "kind": "typename", "name": { "names": [ "uint8" ] } },
+                   "return_owner": "unknown"
+                }
             }
         """;
         FunctionDecl proxy = objectMapper.readValue(json, FunctionDecl.class);

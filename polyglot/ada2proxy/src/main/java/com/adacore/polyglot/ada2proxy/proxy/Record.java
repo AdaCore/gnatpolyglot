@@ -6,6 +6,7 @@ import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
+import com.adacore.polyglot.proxy.FunctionTypeExpr;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.NameTypeExpr;
 import com.adacore.polyglot.proxy.Owner;
@@ -81,13 +82,14 @@ public class Record extends AdaDeclaration {
                             "Generated function to free ``Self``",
                             new Role(RoleKind.FREE, getTypeExpr(), null),
                             buildMemberSymbol("_Default_Free"),
-                            List.of(
-                                    new Parameter(
-                                            Name.fromLower("self"),
-                                            getTypeExpr().makePointer(false, false),
-                                            new Transfer(RequiredOwner.USER))),
-                            NativeType.VOID.typeExpr,
-                            Owner.UNKNOWN,
+                            new FunctionTypeExpr(
+                                    List.of(
+                                            new Parameter(
+                                                    Name.fromLower("self"),
+                                                    getTypeExpr().makePointer(false, false),
+                                                    new Transfer(RequiredOwner.USER))),
+                                    NativeType.VOID.typeExpr,
+                                    Owner.UNKNOWN),
                             false,
                             false,
                             false);
@@ -106,16 +108,18 @@ public class Record extends AdaDeclaration {
                             "Generated function to alloc a " + name.toPascalWithUnderscore(),
                             new Role(RoleKind.ALLOC, type, null),
                             buildMemberSymbol("_Default_Alloc"),
-                            components.stream()
-                                    .map(
-                                            c ->
-                                                    new Parameter(
-                                                            c.name,
-                                                            c.getSetterType(),
-                                                            new Transfer(RequiredOwner.USER)))
-                                    .toList(),
-                            type,
-                            Owner.USER,
+                            new FunctionTypeExpr(
+                                    components.stream()
+                                            .map(
+                                                    c ->
+                                                            new Parameter(
+                                                                    c.name,
+                                                                    c.getSetterType(),
+                                                                    new Transfer(
+                                                                            RequiredOwner.USER)))
+                                            .toList(),
+                                    type,
+                                    Owner.USER),
                             false,
                             false,
                             false));
@@ -135,17 +139,20 @@ public class Record extends AdaDeclaration {
                                         + " with default values",
                                 new Role(RoleKind.ALLOC, type, null),
                                 buildMemberSymbol("_Default_Alloc_1"),
-                                components.stream()
-                                        .filter(c -> !c.hasDefaultValue())
-                                        .map(
-                                                c ->
-                                                        new Parameter(
-                                                                c.name,
-                                                                c.getSetterType(),
-                                                                new Transfer(RequiredOwner.USER)))
-                                        .toList(),
-                                type,
-                                Owner.USER,
+                                new FunctionTypeExpr(
+                                        components.stream()
+                                                .filter(c -> !c.hasDefaultValue())
+                                                .map(
+                                                        c ->
+                                                                new Parameter(
+                                                                        c.name,
+                                                                        c.getSetterType(),
+                                                                        new Transfer(
+                                                                                RequiredOwner
+                                                                                        .USER)))
+                                                .toList(),
+                                        type,
+                                        Owner.USER),
                                 false,
                                 false,
                                 false));
@@ -165,13 +172,14 @@ public class Record extends AdaDeclaration {
                             "Generated function to clone a " + name.toPascalWithUnderscore(),
                             new Role(RoleKind.ALLOC, type, null),
                             buildMemberSymbol("_Default_Clone"),
-                            List.of(
-                                    new Parameter(
-                                            Name.fromLower("self"),
-                                            type.makeReference(true),
-                                            new Transfer(RequiredOwner.USER))),
-                            type,
-                            Owner.USER,
+                            new FunctionTypeExpr(
+                                    List.of(
+                                            new Parameter(
+                                                    Name.fromLower("self"),
+                                                    type.makeReference(true),
+                                                    new Transfer(RequiredOwner.USER))),
+                                    type,
+                                    Owner.USER),
                             false,
                             false,
                             false);
@@ -194,13 +202,14 @@ public class Record extends AdaDeclaration {
                                 "Return the value of " + c.name.toPascalWithUnderscore(),
                                 new Role(RoleKind.GETTER, getTypeExpr(), c.name),
                                 buildMemberSymbol("_Getter_" + c.name.toPascalWithUnderscore()),
-                                List.of(
-                                        new Parameter(
-                                                Name.fromLower("self"),
-                                                getTypeExpr().makeReference(false),
-                                                new Transfer(RequiredOwner.ANY))),
-                                componentTypeRef.makeReference(false),
-                                Owner.STATIC,
+                                new FunctionTypeExpr(
+                                        List.of(
+                                                new Parameter(
+                                                        Name.fromLower("self"),
+                                                        getTypeExpr().makeReference(false),
+                                                        new Transfer(RequiredOwner.ANY))),
+                                        componentTypeRef.makeReference(false),
+                                        Owner.STATIC),
                                 false,
                                 false,
                                 false));
@@ -213,17 +222,18 @@ public class Record extends AdaDeclaration {
                                 "Sets the value of " + c.name.toPascalWithUnderscore(),
                                 new Role(RoleKind.SETTER, getTypeExpr(), c.name),
                                 buildMemberSymbol("_Setter_" + c.name.toPascalWithUnderscore()),
-                                List.of(
-                                        new Parameter(
-                                                Name.fromLower("self"),
-                                                getTypeExpr().makeReference(false),
-                                                new Transfer(RequiredOwner.ANY)),
-                                        new Parameter(
-                                                Name.fromLower("new").concat(c.name),
-                                                setterType,
-                                                new Transfer(RequiredOwner.ANY))),
-                                NativeType.VOID.typeExpr,
-                                Owner.UNKNOWN,
+                                new FunctionTypeExpr(
+                                        List.of(
+                                                new Parameter(
+                                                        Name.fromLower("self"),
+                                                        getTypeExpr().makeReference(false),
+                                                        new Transfer(RequiredOwner.ANY)),
+                                                new Parameter(
+                                                        Name.fromLower("new").concat(c.name),
+                                                        setterType,
+                                                        new Transfer(RequiredOwner.ANY))),
+                                        NativeType.VOID.typeExpr,
+                                        Owner.UNKNOWN),
                                 false,
                                 false,
                                 false));

@@ -8,16 +8,19 @@
           "name": { "names": ["module_1", "func_1"] },
           "doc": "func_1 documentation",
           "symbol": "func_symbol",
-          "parameters": [],
-          "return_type": {
-            "kind": "typename",
-            "name": { "names": ["void"] }
+          "type": {
+            "kind": "function",
+            "parameters": [],
+            "return_type": {
+              "kind": "typename",
+              "name": { "names": ["void"] }
+            },
+            "return_owner": "unknown"
           },
           "role": {
             "kind": "getter",
             "type": { "kind": "typename", "name": { "names": ["module_1"] } }
           },
-          "return_owner": "unknown",
           "is_visible": false,
           "is_final": false,
           "is_static": false
@@ -44,10 +47,14 @@
           "name": { "names": ["module_1", "func_2"] },
           "doc": "func_1 documentation",
           "symbol": "func_2_symbol",
-          "parameters": [],
-          "return_type": {
-            "kind": "typename",
-            "name": { "names": ["void"] }
+          "type": {
+            "kind": "function",
+            "parameters": [],
+            "return_type": {
+              "kind": "typename",
+              "name": { "names": ["void"] }
+            },
+            "return_owner": "unknown"
           },
           "role": {
             "kind": "getter",
@@ -59,7 +66,6 @@
               }
             }
           },
-          "return_owner": "unknown",
           "is_visible": false,
           "is_final": false,
           "is_static": false

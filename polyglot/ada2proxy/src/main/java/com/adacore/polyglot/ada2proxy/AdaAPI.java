@@ -184,7 +184,7 @@ public class AdaAPI {
 
     /** Build a string containing the parameter specifications of the constructor of a record. */
     public static String cInterfaceParameters(Record rec, FunctionDecl function) {
-        return function.parameters.stream()
+        return function.type.parameters.stream()
                 .map(
                         p -> {
                             // Get the component corresponding to the constuctor's argument.

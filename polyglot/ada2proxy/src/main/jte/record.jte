@@ -29,7 +29,7 @@ Template file to generate bindings for record types.
 
    @for(var allocFunc : allocFuncs)
       function ${allocFunc.getLastName().toPascalWithUnderscore()}
-      @if(!allocFunc.parameters.isEmpty())
+      @if(!allocFunc.type.parameters.isEmpty())
          (${AdaAPI.cInterfaceParameters(rec, allocFunc)})
       @endif
          return System.Address;
@@ -73,17 +73,17 @@ Template file to generate bindings for record types.
 
    @for(var allocFunc : allocFuncs)
       function ${allocFunc.getLastName().toPascalWithUnderscore()}
-      @if(!allocFunc.parameters.isEmpty())
+      @if(!allocFunc.type.parameters.isEmpty())
          (${AdaAPI.cInterfaceParameters(rec, allocFunc)})
       @endif
          return System.Address
       is
-         @for(var p : allocFunc.parameters)
+         @for(var p : allocFunc.type.parameters)
            ${AdaAPI.makeParamConversion(rec.getComponent(p.name))};
          @endfor
          package Converter is new System.Address_To_Access_Conversions (${recordName});
          Tmp : ${recordAccessName} := new ${recordName}'(
-            @for(var p : allocFunc.parameters)
+            @for(var p : allocFunc.type.parameters)
                ${p.name.toPascalWithUnderscore()}_Value,
             @endfor
             others => <>
