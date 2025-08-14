@@ -34,8 +34,8 @@ public class IncludeCollector {
 
         @Override
         public Void visit(Module module) {
-            includedNames.add(module.name);
             module.declarations.forEach(d -> d.visit(this));
+            includedNames.remove(module.name);
             return null;
         }
 
@@ -49,6 +49,10 @@ public class IncludeCollector {
         public Void visit(ClassDecl classDecl) {
             classDecl.fields.forEach(f -> f.type.visit(this));
             if (classDecl.vtable != null) classDecl.vtable.forEach(f -> f.functionType.visit(this));
+            if (classDecl.parent != null) {
+                FullyQualifiedName parentName = classDecl.parent.getParentFullyQualifiedName();
+                if (parentName != null) includedNames.add(parentName);
+            }
             return null;
         }
 

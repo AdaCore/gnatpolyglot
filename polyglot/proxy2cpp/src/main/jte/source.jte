@@ -8,11 +8,9 @@ vim: filetype=jtecpp
 @param CppAPI api
 @param Module module
 
-@for (var include : api.getIncludes(module))
-#include "${include}"
-@endfor
-
 #include <polyglot_ada_strings.h>
+
+#include "${api.headerFilePath(module).getFileName().toString()}"
 
 namespace ${api.namespacePath(module)} {
 
