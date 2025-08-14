@@ -208,9 +208,18 @@ public class CppAPI {
 
     /** Create a string of all the C parameters of the function's symbol. */
     public String cParameters(FunctionDecl functionDecl) {
-        return functionDecl.type.parameters.stream()
-                .map(p -> toCParam(p))
-                .collect(Collectors.joining(", "));
+        StringBuilder builder = new StringBuilder();
+        builder.append(
+                functionDecl.type.parameters.stream()
+                        .map(p -> toCParam(p))
+                        .collect(Collectors.joining(", ")));
+        // SHADOW_ALLOC functions have 2 hidden raw pointer arguments:
+        //  - The self argument of the class's raw pointer type.
+        //  - The vtable argument of the class' vtable raw pointer type.
+        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            builder.append(builder.isEmpty() ? "" : ", ").append("void *_self, void *vtable");
+        }
+        return builder.toString();
     }
 
     public boolean isMethod(FunctionDecl functionDecl) {
@@ -229,10 +238,24 @@ public class CppAPI {
 
     /** Create a string of all the C++ parameters of the function. */
     public String cppParameters(FunctionDecl functionDecl) {
-        return functionDecl.type.parameters.stream()
-                .skip(isMethod(functionDecl) ? 1 : 0)
-                .map(p -> toCppParam(p))
-                .collect(Collectors.joining(", "));
+        StringBuilder builder = new StringBuilder();
+        builder.append(
+                functionDecl.type.parameters.stream()
+                        .skip(isMethod(functionDecl) ? 1 : 0)
+                        .map(p -> toCppParam(p))
+                        .collect(Collectors.joining(", ")));
+        // SHADOW_ALLOC functions have 2 hidden arguments:
+        //  - The self argument of the class's raw pointer type.
+        //  - The vtable argument of the class' vtable raw pointer type.
+        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            String className = functionDecl.role.type.getName().getLastName().toPascal();
+            builder.append(builder.isEmpty() ? "" : ", ")
+                    .append(className)
+                    .append(" *_self, ")
+                    .append(className)
+                    .append("::vtable *_vtable");
+        }
+        return builder.toString();
     }
 
     /** Return a string that gets the value of a parameter for the call to the Ada subprogram */
@@ -273,6 +296,10 @@ public class CppAPI {
                         .skip(funcIsMethod ? 1 : 0)
                         .map(p -> getParamForCall(p))
                         .collect(Collectors.joining(", ")));
+        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            builder.append(functionDecl.type.parameters.isEmpty() ? "" : ", ")
+                    .append("_self, _vtable");
+        }
         builder.append(")");
         return builder.toString();
     }
