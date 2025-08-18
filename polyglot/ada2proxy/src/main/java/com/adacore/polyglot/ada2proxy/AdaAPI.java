@@ -6,9 +6,11 @@ import com.adacore.libadalang.Libadalang.Expr;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
+import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
+import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.TypeExpr;
 import java.nio.file.Path;
@@ -143,6 +145,19 @@ public class AdaAPI {
         return name.toPascalWithUnderscore() + "_Proxy";
     }
 
+    /**
+     * Return name with the correct Ada syntax with ``_Proxy`` as a suffix and the parameter type
+     * names to avoid conflicts with duplicated subprograms.
+     */
+    public static String proxyName(Subprogram subp) {
+        StringBuilder builder = new StringBuilder(proxyName(subp.name));
+        for (var p : subp.parameters) {
+            builder.append("_").append(p.getType().pRelativeNameText().toString());
+        }
+
+        return builder.toString();
+    }
+
     /** Return the typename of the parameter */
     private static String cInterfaceParamTypename(SubpParam p) {
         // If the parameter has a Out mode, it is a reference and will be passed as an address.
@@ -164,6 +179,23 @@ public class AdaAPI {
                                     .append(cInterfaceParamTypename(p));
                             return argBuilder.toString();
                         }))
+                .collect(Collectors.joining("; "));
+    }
+
+    /** Build a string containing the parameter specifications of the constructor of a record. */
+    public static String cInterfaceParameters(Record rec, FunctionDecl function) {
+        return function.parameters.stream()
+                .map(
+                        p -> {
+                            // Get the component corresponding to the constuctor's argument.
+                            Component component = rec.getComponent(p.name);
+                            StringBuilder argBuilder = new StringBuilder();
+                            argBuilder
+                                    .append(p.name.toPascalWithUnderscore())
+                                    .append("_Arg : ")
+                                    .append(cInterfaceTypename(component.getType()));
+                            return argBuilder.toString();
+                        })
                 .collect(Collectors.joining("; "));
     }
 

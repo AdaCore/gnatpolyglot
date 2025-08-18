@@ -117,12 +117,13 @@ public class AdaProxyTranslator {
 
         @Override
         public ClassDecl visit(Record rec) {
-            declarations.add(rec.getAllocFunction());
+            declarations.addAll(rec.getAllocFunctions());
             declarations.add(rec.getFreeFunction());
             declarations.add(rec.getCloneFunction());
             declarations.addAll(rec.getGettersAndSetters());
             if (rec.getTypeDef() instanceof Libadalang.RecordTypeDef
-                    || rec.getTypeDef() instanceof Libadalang.PrivateTypeDef) {
+                    || rec.getTypeDef() instanceof Libadalang.PrivateTypeDef
+                    || rec.getTypeDef() instanceof Libadalang.DerivedTypeDef) {
                 return new ClassDecl(
                         rec.getProxyFullyQualifiedName(),
                         rec.getDoc(),

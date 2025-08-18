@@ -11,14 +11,14 @@ Template file to generate binded functions.
 !{String returnType = AdaAPI.cInterfaceTypename(subp.getReturnType());}
 
 @if(!isBody)
-   function ${AdaAPI.proxyName(subp.name)}
+   function ${AdaAPI.proxyName(subp)}
     @if(!subp.parameters.isEmpty())
       (${AdaAPI.cInterfaceParameters(subp)})
     @endif
       return ${returnType};
-   pragma Export (C, ${AdaAPI.proxyName(subp.name)}, "${subp.symbol}");
+   pragma Export (C, ${AdaAPI.proxyName(subp)}, "${subp.symbol}");
 @else
-   function ${AdaAPI.proxyName(subp.name)}
+   function ${AdaAPI.proxyName(subp)}
     @if(!subp.parameters.isEmpty())
       (${AdaAPI.cInterfaceParameters(subp)})
     @endif
@@ -31,5 +31,5 @@ Template file to generate binded functions.
          ${AdaAPI.call(subp)};
    begin
       ${AdaAPI.makeReturnConversion(subp.getReturnType(), "Value_Returned")};
-   end ${AdaAPI.proxyName(subp.name)};
+   end ${AdaAPI.proxyName(subp)};
 @endif

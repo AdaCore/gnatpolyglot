@@ -26,4 +26,14 @@ int main() {
   test::Value::view val_view_2 = p.get_v_2();
   val_view_2->set_v(8);
   p.print();
+
+  // Test the constructor
+  test::Pair ctor(test::Value(4), test::Value(2));
+  ctor.print();
+
+  test::PairBis bis(test::Value(0), test::Value(0));
+  bis.get_v_1()->set_v(2);
+  bis.get_v_2()->set_v(4);
+  bis.print_bis();
+  bis.print();
 }
