@@ -91,7 +91,7 @@ Template file to generate shadow types for tagged records.
             ${rec.extensionAggregate()}
             @for(var p : allocFunc.type.parameters)
                @if(rec.getComponent(p.name) != null)
-                  ${p.name.toPascalWithUnderscore()}_Value,
+                  ${api.valueName(p.name)},
                @endif
             @endfor
             Shadow => (Self => Self_Value, Vtable => Vtable_Value),

@@ -3,6 +3,7 @@ package com.adacore.polyglot.ada2proxy;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import com.adacore.libadalang.Libadalang.Expr;
+import com.adacore.polyglot.LanguageAPI;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Utility class that provides methods to help generate Ada code from a Proxy. */
-public class AdaAPI {
+public class AdaAPI extends LanguageAPI {
 
     private Name projectName;
 
@@ -30,6 +31,22 @@ public class AdaAPI {
 
     public Name getProjectName() {
         return projectName;
+    }
+
+    /** Return `name` as it is used for declaring arguments in the generated code. */
+    public String argName(Name name) {
+        return name.toPascalWithUnderscore() + "_Arg";
+    }
+
+    /** Return `name` as it is used for passing converted values to binded subprograms. */
+    public String valueName(Name name) {
+        return name.toPascalWithUnderscore() + "_Value";
+    }
+
+    /** Create a unique temporary name, in the form of `{name}_{suffix}_{unique_number}`. */
+    public String makeTemp(Name name, String suffix) {
+        return makeTempName(name.concat(Name.fromPascalWithUnderscore(suffix)))
+                .toPascalWithUnderscore();
     }
 
     /** Create a {@link FullyQualifiedName} to decl, or its parent if ``onlyParent`` is true. */
@@ -187,8 +204,7 @@ public class AdaAPI {
                         (p -> {
                             StringBuilder argBuilder = new StringBuilder();
                             argBuilder
-                                    .append(p.name.toPascalWithUnderscore())
-                                    .append("_Arg")
+                                    .append(argName(p.name))
                                     .append(": ")
                                     .append(cInterfaceParamTypename(p));
                             return argBuilder.toString();
@@ -209,9 +225,7 @@ public class AdaAPI {
                                     // Get the component corresponding to the constuctor's argument.
                                     Component component = rec.getComponent(p.name);
                                     StringBuilder argBuilder = new StringBuilder();
-                                    argBuilder
-                                            .append(p.name.toPascalWithUnderscore())
-                                            .append("_Arg : ");
+                                    argBuilder.append(argName(p.name)).append(" : ");
                                     // When the component does not exist, it means we could be
                                     // dealing with either the ``vtable`` or ``self`` argument of
                                     // shadow types constructors which are non-null const void
@@ -252,32 +266,34 @@ public class AdaAPI {
         String valueVarTypename = type.pFullyQualifiedName();
 
         StringBuilder builder = new StringBuilder();
-        String argName = name.toPascalWithUnderscore();
+        String argName = argName(name);
+        String tempVarValue = null;
         // Class wide types need a pointer conversion function.
         if (type instanceof Libadalang.ClasswideTypeDecl || type.pIsAbstractType()) {
             Libadalang.BaseTypeDecl specificType = type.pSpecificType();
-            String accessType =
-                    name.toPascalWithUnderscore().concat("_").concat(asAccess(specificType));
+            String accessType = makeTemp(name, asAccess(specificType));
+            String converter = makeTemp(name, "Converter");
+            tempVarValue = makeTemp(name, "Access");
             builder.append("type ")
                     .append(accessType)
                     .append(" is access all ")
                     .append(type.pFullyQualifiedName())
                     .append("; function ")
-                    .append(argName)
-                    .append("_Converter is new Ada.Unchecked_Conversion (System.Address, ")
+                    .append(converter)
+                    .append(" is new Ada.Unchecked_Conversion (System.Address, ")
                     .append(accessType)
                     .append(");\n")
-                    .append(name.toPascalWithUnderscore())
-                    .append("_Access : ")
+                    .append(tempVarValue)
+                    .append(" : ")
                     .append(accessType)
                     .append(":= ")
+                    .append(converter)
+                    .append(" (")
                     .append(argName)
-                    .append("_Converter (")
-                    .append(argName)
-                    .append("_Arg);");
+                    .append(")\n;");
         }
         // Begin the declaration of the value.
-        builder.append(argName).append("_Value : ").append(valueVarTypename);
+        builder.append(valueName(name)).append(" : ").append(valueVarTypename);
         if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
             // If the type is an array, generate the following:
             // .. code::
@@ -297,19 +313,19 @@ public class AdaAPI {
                         .append(indexType.pFullyQualifiedName())
                         .append(" (")
                         .append(argName)
-                        .append("_Arg.First) .. ")
+                        .append(".First) .. ")
                         .append(indexType.pFullyQualifiedName())
                         .append(" (")
                         .append(argName)
-                        .append("_Arg.Last))");
+                        .append(".Last))");
             }
             builder.append(" with Address => ")
                     .append(argName)
-                    .append("_Arg.Data; pragma Import (Ada, ")
-                    .append(argName)
-                    .append("_Value)");
+                    .append(".Data; pragma Import (Ada, ")
+                    .append(valueName(name))
+                    .append(")");
         } else if (type instanceof Libadalang.ClasswideTypeDecl || type.pIsAbstractType()) {
-            builder.append(" renames ").append(argName).append("_Access.all");
+            builder.append(" renames ").append(tempVarValue).append(".all");
         } else if (type.pIsRecordType(Libadalang.AdaNode.NONE) || isOutMode) {
             // If the type is a record or when the parameter uses an ``out`` mode, generate the
             // following:
@@ -322,13 +338,13 @@ public class AdaAPI {
             // which would overwrite the argument's data.
             builder.append(" with Address => ")
                     .append(argName)
-                    .append("_Arg; pragma Import (Ada, ")
-                    .append(argName)
-                    .append("_Value)");
+                    .append("; pragma Import (Ada, ")
+                    .append(valueName(name))
+                    .append(")");
         } else if (type.equals(type.pBoolType())) {
             // Boolean types do not exist in the Interfaces.C package: they are instead binded as
             // Ints.
-            builder.append(" := ").append(argName).append("_Arg /= 0");
+            builder.append(" := ").append(argName).append(" /= 0");
         } else {
             // Otherwise, the type should convertible with a simple cast:
             // .. code::
@@ -338,7 +354,7 @@ public class AdaAPI {
                     .append(valueVarTypename)
                     .append(" (")
                     .append(argName)
-                    .append("_Arg)");
+                    .append(")");
         }
         return builder.toString();
     }
@@ -368,7 +384,7 @@ public class AdaAPI {
             builder.append(" (")
                     .append(
                             subp.parameters.stream()
-                                    .map(p -> p.name.toPascalWithUnderscore().concat("_Value"))
+                                    .map(p -> valueName(p.name))
                                     .collect(Collectors.joining(", ")))
                     .append(")");
         }

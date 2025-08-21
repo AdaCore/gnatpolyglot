@@ -54,7 +54,7 @@ Template file to generate bindings for record types.
       @else
          procedure ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
            (Self: System.Address;
-            ${component.name.toPascalWithUnderscore()}_Arg:
+            ${api.argName(component.name)}:
                ${api.cInterfaceTypename(component.getType())});
       @endif
       pragma Export (C, ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}, "${f.symbol}");
@@ -98,7 +98,7 @@ Template file to generate bindings for record types.
               --%>
             ${rec.extensionAggregate()}
             @for(var p : allocFunc.type.parameters)
-               ${p.name.toPascalWithUnderscore()}_Value,
+               ${api.valueName(p.name)},
             @endfor
             others => <>
          );
@@ -140,14 +140,14 @@ Template file to generate bindings for record types.
       @else
          procedure ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
            (Self: System.Address;
-            ${component.name.toPascalWithUnderscore()}_Arg:
+            ${api.argName(component.name)}:
                ${api.cInterfaceTypename(component.getType())})
          is
             Self_Value : ${recordName} with Address => Self;
             pragma Import(Ada, Self_Value);
             ${api.makeParamConversion(component)};
          begin
-            ${componentAccess} := ${component.name.toPascalWithUnderscore()}_Value;
+            ${componentAccess} := ${api.valueName(component.name)};
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
       @endif
     @endfor
