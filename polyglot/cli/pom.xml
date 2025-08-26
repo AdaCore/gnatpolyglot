@@ -91,9 +91,10 @@
               </goals>
               <configuration>
                 <executable>${config.python}</executable>
-                <arguments>
-                  <argument>${basedir}/make.py</argument>
-                </arguments>
+                <commandlineArgs>
+                  ${basedir}/make.py
+                  --classpath %classpath
+                </commandlineArgs>
               </configuration>
             </execution>
           </executions>
