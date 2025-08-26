@@ -2,8 +2,8 @@
 vim: filetype=jteada
 Template file to generate bindings for record types.
 --%>
-@import java.util.List;
-@import com.adacore.libadalang.Libadalang;
+@import java.util.List
+@import com.adacore.libadalang.Libadalang
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.Component
 @import com.adacore.polyglot.ada2proxy.proxy.Record
