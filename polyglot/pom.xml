@@ -52,6 +52,17 @@
         </configuration>
       </plugin>
 
+      <!-- Configure the Java compiler -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <release>24</release>
+          <showWarnings>true</showWarnings>
+        </configuration>
+      </plugin>
+
       <!-- Configure the spotless Java formatter -->
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
@@ -96,4 +107,3 @@
   </build>
 
 </project>
-
