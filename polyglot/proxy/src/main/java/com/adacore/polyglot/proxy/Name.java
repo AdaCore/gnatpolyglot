@@ -161,6 +161,10 @@ public class Name {
                         });
     }
 
+    public String toUpper() {
+        return name.toUpperCase();
+    }
+
     /**
      * Return a new name that is the concatenation of this and rhs with an underscore in between.
      */
