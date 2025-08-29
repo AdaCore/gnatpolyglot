@@ -345,6 +345,12 @@ public class AdaAPI extends LanguageAPI {
             // Boolean types do not exist in the Interfaces.C package: they are instead binded as
             // Ints.
             builder.append(" := ").append(argName).append(" /= 0");
+        } else if (type.pIsEnumType(Libadalang.AdaNode.NONE) && !type.equals(type.pStdCharType())) {
+            builder.append(" := ")
+                    .append(valueVarTypename)
+                    .append("'Enum_Val (")
+                    .append(argName)
+                    .append(")");
         } else {
             // Otherwise, the type should convertible with a simple cast:
             // .. code::
@@ -454,6 +460,13 @@ public class AdaAPI extends LanguageAPI {
         String typeName = returnedType.pFullyQualifiedName();
         if (returnedType.equals(returnedType.pBoolType())) {
             builder.append("return (if ").append(returnedValue).append(" then 1 else 0)");
+        } else if (returnedType.pIsEnumType(Libadalang.AdaNode.NONE)
+                && !returnedType.equals(returnedType.pStdCharType())) {
+            builder.append("return ")
+                    .append(typeName)
+                    .append("'Enum_Rep (")
+                    .append(returnedValue)
+                    .append(")");
         } else if (returnedType.pIsScalarType(Libadalang.AdaNode.NONE)) {
             // If the value is a scalar, simply cast to the C interface type.
             builder.append("return ")
@@ -561,6 +574,9 @@ public class AdaAPI extends LanguageAPI {
         if (typeDef instanceof Libadalang.PrivateTypeDef
                 || typeDef instanceof Libadalang.RecordTypeDef) return "System.Address";
         if (typeDef instanceof Libadalang.ArrayTypeDef) return "Polyglot.Ada.Arrays.Polyglot_Array";
+        if (bTypeDecl.pIsEnumType(Libadalang.AdaNode.NONE)
+                && !bTypeDecl.equals(bTypeDecl.pStdCharType()))
+            return cInterfaceNativeTypename(NativeType.SINT32);
 
         throw new UnsupportedOperationException("Type not supported");
     }
