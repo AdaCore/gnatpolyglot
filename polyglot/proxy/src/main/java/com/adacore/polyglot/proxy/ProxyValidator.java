@@ -74,6 +74,20 @@ public class ProxyValidator implements Callable<Integer> {
             }
         }
 
+        private <T extends ProxyObject> void visitOptional(String fieldName, List<T> proxyObjects) {
+            location.add("." + fieldName);
+            if (proxyObjects != null) {
+                for (int i = 0; i < proxyObjects.size(); i++) {
+                    location.add("[" + i + "]");
+                    ProxyObject proxyObject = proxyObjects.get(i);
+                    if (proxyObject == null) addDiagnostic("cannot be null");
+                    else proxyObject.visit(this);
+                    location.pop();
+                }
+            }
+            location.pop();
+        }
+
         /**
          * Validate that a non ProxyObject value is not null. If it is, add a diagnostic instead.
          */
@@ -187,9 +201,7 @@ public class ProxyValidator implements Callable<Integer> {
                 addDiagnostic(".symbol", "duplicate symbol");
             }
 
-            validateNonNull("parameters", functionDecl.parameters);
-            validateNonNull("return_type", functionDecl.returnType);
-            validateNonNull("return_owner", functionDecl.returnOwner);
+            validateNonNull("type", functionDecl.type);
 
             return Boolean.valueOf(diagnostics.isEmpty());
         }
@@ -237,6 +249,8 @@ public class ProxyValidator implements Callable<Integer> {
 
             // Negative sized class types cannot exist
             if (classDecl.size < 0) addDiagnostic(".size", "cannot be negative");
+
+            visitOptional("vtable", classDecl.vtable);
 
             return Boolean.valueOf(diagnostics.isEmpty());
         }
@@ -345,6 +359,21 @@ public class ProxyValidator implements Callable<Integer> {
         @Override
         public Boolean visit(PointerTypeExpr pointerTypeExpr) {
             validateNonNull("type_expr", pointerTypeExpr.typeExpr);
+            return null;
+        }
+
+        @Override
+        public Boolean visit(FunctionTypeExpr functionTypeExpr) {
+            validateNonNull("parameters", functionTypeExpr.parameters);
+            validateNonNull("return_type", functionTypeExpr.returnType);
+            validateNonNull("return_owner", functionTypeExpr.returnOwner);
+            return null;
+        }
+
+        @Override
+        public Boolean visit(VTableEntry vTableEntry) {
+            validateNonNull("name", vTableEntry.name);
+            validateNonNull("function_type", vTableEntry.functionType);
             return null;
         }
     }

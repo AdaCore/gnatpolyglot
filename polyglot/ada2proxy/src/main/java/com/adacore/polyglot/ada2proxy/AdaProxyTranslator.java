@@ -19,13 +19,16 @@ import com.adacore.polyglot.proxy.EnumerationDecl;
 import com.adacore.polyglot.proxy.Field;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
+import com.adacore.polyglot.proxy.FunctionTypeExpr;
 import com.adacore.polyglot.proxy.Module;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Parameter;
 import com.adacore.polyglot.proxy.Proxy;
 import com.adacore.polyglot.proxy.ProxyObject;
 import com.adacore.polyglot.proxy.TypeExpr;
+import com.adacore.polyglot.proxy.VTableEntry;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class AdaProxyTranslator {
@@ -80,12 +83,17 @@ public class AdaProxyTranslator {
                     subprogram.getDoc(),
                     subprogram.role,
                     subprogram.symbol,
-                    subprogram.parameters.stream().map(p -> (Parameter) p.accept(this)).toList(),
-                    AdaAPI.makeTypeExpr(subprogram.getReturnType()),
-                    subprogram.owner,
-                    false,
-                    false,
-                    false);
+                    new FunctionTypeExpr(
+                            subprogram.parameters.stream()
+                                    .map(p -> (Parameter) p.accept(this))
+                                    .toList(),
+                            AdaAPI.makeTypeExpr(subprogram.getReturnType()),
+                            subprogram.owner),
+                    FunctionDecl.Visibility.PUBLIC,
+                    subprogram.isFinal()
+                            ? FunctionDecl.Overridability.FINAL
+                            : FunctionDecl.Overridability.OVERRIDABLE,
+                    FunctionDecl.Staticness.NON_STATIC);
         }
 
         @Override
@@ -115,22 +123,54 @@ public class AdaProxyTranslator {
             return new EnumItem(enumLiteral.name, enumLiteral.value, enumLiteral.getDoc());
         }
 
+        private List<VTableEntry> makeVtable(Record classDecl) {
+            // Only tagged types can have a vtable.
+            if (!classDecl.isTaggedType()) return null;
+
+            // Stores the names of all functions inside the vtable of the record.
+            HashSet<Name> names = new HashSet<>();
+            List<VTableEntry> entries = new ArrayList<>();
+
+            for (var m : classDecl.getAllMethods()) {
+                Name name = m.name;
+                int suffix = 1;
+                // We must avoid having multiple entries with the same name.
+                while (!names.add(name)) {
+                    name = Name.fromLower("%s_%d".formatted(m.name.toLower(), suffix));
+                }
+                entries.add(
+                        new VTableEntry(
+                                name,
+                                new FunctionTypeExpr(
+                                        m.parameters.stream()
+                                                .map(p -> (Parameter) p.accept(this))
+                                                .toList(),
+                                        AdaAPI.makeTypeExpr(m.getReturnType()),
+                                        m.owner)));
+            }
+            return entries;
+        }
+
         @Override
         public ClassDecl visit(Record rec) {
             declarations.addAll(rec.getAllocFunctions());
             declarations.add(rec.getFreeFunction());
             declarations.add(rec.getCloneFunction());
             declarations.addAll(rec.getGettersAndSetters());
+            if (rec.isTaggedType()) declarations.addAll(rec.getShadowAllocFunctions());
             if (rec.getTypeDef() instanceof Libadalang.RecordTypeDef
                     || rec.getTypeDef() instanceof Libadalang.PrivateTypeDef
                     || rec.getTypeDef() instanceof Libadalang.DerivedTypeDef) {
+                FullyQualifiedName parentType =
+                        rec.parent == null ? null : rec.parent.getProxyFullyQualifiedName();
                 return new ClassDecl(
                         rec.getProxyFullyQualifiedName(),
                         rec.getDoc(),
-                        null,
+                        parentType,
                         8,
-                        false,
-                        rec.components.stream().map(c -> (Field) c.accept(this)).toList());
+                        !rec.isTaggedType(),
+                        rec.components.stream().map(c -> (Field) c.accept(this)).toList(),
+                        makeVtable(rec));
             }
             throw new UnsupportedOperationException(
                     "Unsupported Ada type:" + rec.getTypeDef().getImage());

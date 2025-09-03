@@ -1,4 +1,4 @@
 Running validator test.
 Errors found in the proxy:
- * $.modules[0].declarations[0].parameters[0].type.name: referenced entity is not a type
+ * $.modules[0].declarations[0].type.parameters[0].type.name: referenced entity is not a type
 Done.

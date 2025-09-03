@@ -34,18 +34,20 @@ template <typename T> class polyglot_array {
 public:
     class view {
     public:
-        view(const array_data &data) : _data(data) {}
+        view(const array_data &data) {
+            new (&this->_data) polyglot_array<T>(data);
+        }
 
         operator polyglot_array<T>&() {
-            return *(polyglot_array<T>*)this;
+            return *(polyglot_array<T>*) &_data;
         }
 
         polyglot_array<T>* operator->() {
-            return (polyglot_array<T>*)this;
+            return (polyglot_array<T>*) &_data;
         }
 
     private:
-        array_data _data;
+        char _data[sizeof(polyglot_array<T>)];
     };
 
 public:
@@ -67,6 +69,13 @@ public:
   int get_end() const { return this->_data.end; }
 
   array_data data() const { return this->_data; }
+  array_data release() {
+    array_data data = this->_data;
+    this->_data.begin = 0;
+    this->_data.end = 0;
+    this->_data.data = nullptr;
+    return data;
+  }
 
 private:
   array_data _data;

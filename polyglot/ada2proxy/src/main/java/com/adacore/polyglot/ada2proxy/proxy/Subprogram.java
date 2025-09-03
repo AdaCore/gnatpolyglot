@@ -1,17 +1,20 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.libadalang.Libadalang.SubpSpec;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Role;
+import com.adacore.polyglot.proxy.Role.RoleKind;
 import java.util.List;
+import java.util.Objects;
 
 public class Subprogram extends AdaDeclaration {
 
     /** Origin node in the LAL tree. */
-    private final Libadalang.SubpDecl origin;
+    private final Libadalang.BasicDecl origin;
 
     /** List of parameters the function accepts. */
     public List<SubpParam> parameters;
@@ -26,7 +29,7 @@ public class Subprogram extends AdaDeclaration {
     public Owner owner;
 
     public Subprogram(
-            Libadalang.SubpDecl origin,
+            Libadalang.BasicDecl origin,
             Name name,
             List<SubpParam> parameters,
             String symbol,
@@ -38,6 +41,11 @@ public class Subprogram extends AdaDeclaration {
         this.symbol = symbol;
         this.role = role;
         this.owner = owner;
+    }
+
+    /** Return the SubpSpec of the origin. */
+    private Libadalang.SubpSpec getSpec() {
+        return (SubpSpec) origin.pSubpSpecOrNull(false);
     }
 
     @Override
@@ -59,12 +67,27 @@ public class Subprogram extends AdaDeclaration {
 
     /** Return whether ``funDecl`` is a procedure or a function. */
     public boolean isProcedure() {
-        return origin.fSubpSpec().fSubpReturns().isNone();
+        return getSpec().fSubpReturns().isNone();
     }
 
     /** Return the return type of the Ada subprogram. */
     public Libadalang.BaseTypeDecl getReturnType() {
-        return origin.fSubpSpec().pReturnType(Libadalang.AdaNode.NONE);
+        return getSpec().pReturnType(Libadalang.AdaNode.NONE);
+    }
+
+    /** Return whether the subprogram is final or can be overriden. */
+    public boolean isFinal() {
+        Libadalang.BaseTypeDecl controllingType = getSpec().pPrimitiveSubpTaggedType(false);
+        return role == null
+                || role.kind != RoleKind.METHOD
+                || parameters.isEmpty()
+                || !parameters.get(0).getType().pIsTaggedType(Libadalang.AdaNode.NONE)
+                // Only subprograms that have their first parameter which are of the controlling
+                // type can be overriden.
+                || !Objects.equals(controllingType, parameters.get(0).getType())
+                // Functions that have the controlling parameter as their return type cannot be
+                // overriden.
+                || Objects.equals(controllingType, getReturnType());
     }
 
     @Override
@@ -76,5 +99,12 @@ public class Subprogram extends AdaDeclaration {
         return AdaAPI.makeProxyFullyQualifiedName(origin)
                 .getParentFullyQualifiedName()
                 .append(name);
+    }
+
+    /** Return whether the subprogram is overriding an other suprogram. */
+    public boolean isOverriding() {
+        Libadalang.BasicDecl[] bases = origin.pBaseSubpDeclarations(false);
+        // The method is not overriding when its only base is itself.
+        return !(bases.length == 1 && bases[0].equals(origin));
     }
 }

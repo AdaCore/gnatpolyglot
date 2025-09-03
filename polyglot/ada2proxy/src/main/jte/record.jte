@@ -14,7 +14,11 @@ Template file to generate bindings for record types.
 @param Boolean isBody
 
 !{
-    String recordName = rec.getFullyQualifiedName();
+    // Abstract types cannot be instantiated: use their classwide version
+    // instead.
+    String recordName = rec.isAbstract()
+        ? rec.getClasswideFullyQualifiedName()
+        : rec.getFullyQualifiedName();
     String recordPrefix = recordName.replace(".", "_");
     String recordAccessName = rec.name.toPascalWithUnderscore() + "_Access";
     FunctionDecl freeFunc = rec.getFreeFunction();
@@ -29,7 +33,7 @@ Template file to generate bindings for record types.
 
    @for(var allocFunc : allocFuncs)
       function ${allocFunc.getLastName().toPascalWithUnderscore()}
-      @if(!allocFunc.parameters.isEmpty())
+      @if(!allocFunc.type.parameters.isEmpty())
          (${AdaAPI.cInterfaceParameters(rec, allocFunc)})
       @endif
          return System.Address;
@@ -54,6 +58,11 @@ Template file to generate bindings for record types.
       @endif
       pragma Export (C, ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}, "${f.symbol}");
     @endfor
+
+   @if(rec.isTaggedType())
+      @template.shadow(rec, isBody)
+   @endif
+
 @else
    <%-- Define an Access type for the record --%>
    type ${recordAccessName} is access all ${recordName};
@@ -73,17 +82,21 @@ Template file to generate bindings for record types.
 
    @for(var allocFunc : allocFuncs)
       function ${allocFunc.getLastName().toPascalWithUnderscore()}
-      @if(!allocFunc.parameters.isEmpty())
+      @if(!allocFunc.type.parameters.isEmpty())
          (${AdaAPI.cInterfaceParameters(rec, allocFunc)})
       @endif
          return System.Address
       is
-         @for(var p : allocFunc.parameters)
+         @for(var p : allocFunc.type.parameters)
            ${AdaAPI.makeParamConversion(rec.getComponent(p.name))};
          @endfor
          package Converter is new System.Address_To_Access_Conversions (${recordName});
          Tmp : ${recordAccessName} := new ${recordName}'(
-            @for(var p : allocFunc.parameters)
+            <%-- When the type inherits from a private type (directly, or indirectly)
+              -- an extension aggregate is required.
+              --%>
+            ${rec.extensionAggregate()}
+            @for(var p : allocFunc.type.parameters)
                ${p.name.toPascalWithUnderscore()}_Value,
             @endfor
             others => <>
@@ -96,11 +109,14 @@ Template file to generate bindings for record types.
    function ${cloneFunc.getLastName().toPascalWithUnderscore()}
      (Self: System.Address) return System.Address
    is
-      Tmp : ${recordName} with Address => Self;
-      pragma Import (Ada, Tmp);
+      <%---
+        -- In the case of abstract types, we cannot use a variable with an address clause.
+        -- In order to cover all cases, use an access.
+        --%>
       package Converter is new System.Address_To_Access_Conversions (${recordName});
+      Tmp : Converter.Object_Pointer := Converter.To_Pointer (Self);
    begin
-      return Converter.To_Address (new ${recordName}'(Tmp));
+      return Converter.To_Address (new ${recordName}'(Tmp.all));
    end ${cloneFunc.getLastName().toPascalWithUnderscore()};
 
    <%-- Define the getter and setter functions --%>
@@ -134,4 +150,8 @@ Template file to generate bindings for record types.
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
       @endif
     @endfor
+
+   @if(rec.isTaggedType())
+      @template.shadow(rec, isBody)
+   @endif
 @endif

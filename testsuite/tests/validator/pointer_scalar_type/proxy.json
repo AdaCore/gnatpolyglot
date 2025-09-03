@@ -8,18 +8,21 @@
           "name": { "names": ["module_1", "func_1"] },
           "doc": "func_1 documentation",
           "symbol": "func_symbol",
-          "parameters": [],
-          "return_type": {
-            "kind": "pointer",
-            "type_expr": {
-              "kind": "typename",
-              "name": { "names": ["sint32"] }
-            }
+          "type": {
+            "kind": "function",
+            "parameters": [],
+            "return_type": {
+              "kind": "pointer",
+              "type_expr": {
+                "kind": "typename",
+                "name": { "names": ["sint32"] }
+              }
+            },
+            "return_owner": "library"
           },
-          "return_owner": "library",
-          "is_visible": false,
-          "is_final": false,
-          "is_static": false
+          "visibility": "protected",
+          "overridability": "overridable",
+          "staticness": "non_static"
         }
       ]
     }

@@ -130,12 +130,12 @@ public class AdaScanner extends Scanner {
         for (var pack : proxy.packages) {
             Path packageSpecFile = AdaAPI.toAdaFilename(pack, "-proxy.ads");
             try (FileOutput packageSpec = new FileOutput(proxySrc.resolve(packageSpecFile))) {
-                templateEngine.render("package_ads.jte", proxy.packages.get(0), packageSpec);
+                templateEngine.render("package_ads.jte", pack, packageSpec);
             }
 
             Path packageBodyFile = AdaAPI.toAdaFilename(pack, "-proxy.adb");
             try (FileOutput packageBody = new FileOutput(proxySrc.resolve(packageBodyFile))) {
-                templateEngine.render("package_adb.jte", proxy.packages.get(0), packageBody);
+                templateEngine.render("package_adb.jte", pack, packageBody);
             }
         }
 

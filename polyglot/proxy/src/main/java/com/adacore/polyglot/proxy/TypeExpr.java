@@ -8,7 +8,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value = NameTypeExpr.class, name = "typename"),
     @JsonSubTypes.Type(value = ReferenceTypeExpr.class, name = "reference"),
     @JsonSubTypes.Type(value = ArrayTypeExpr.class, name = "array"),
-    @JsonSubTypes.Type(value = PointerTypeExpr.class, name = "pointer")
+    @JsonSubTypes.Type(value = PointerTypeExpr.class, name = "pointer"),
+    @JsonSubTypes.Type(value = FunctionTypeExpr.class, name = "function")
 })
 /** Base class to represent type expressions. */
 public abstract class TypeExpr implements ProxyObject {

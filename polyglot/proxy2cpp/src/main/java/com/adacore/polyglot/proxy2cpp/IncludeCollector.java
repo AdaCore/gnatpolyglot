@@ -7,6 +7,7 @@ import com.adacore.polyglot.proxy.EnumerationDecl;
 import com.adacore.polyglot.proxy.Field;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
+import com.adacore.polyglot.proxy.FunctionTypeExpr;
 import com.adacore.polyglot.proxy.Module;
 import com.adacore.polyglot.proxy.NameTypeExpr;
 import com.adacore.polyglot.proxy.Parameter;
@@ -16,6 +17,7 @@ import com.adacore.polyglot.proxy.ProxyVisitor;
 import com.adacore.polyglot.proxy.ReferenceTypeExpr;
 import com.adacore.polyglot.proxy.Role;
 import com.adacore.polyglot.proxy.Transfer;
+import com.adacore.polyglot.proxy.VTableEntry;
 import java.util.HashSet;
 import java.util.List;
 
@@ -32,20 +34,25 @@ public class IncludeCollector {
 
         @Override
         public Void visit(Module module) {
-            includedNames.add(module.name);
             module.declarations.forEach(d -> d.visit(this));
+            includedNames.remove(module.name);
             return null;
         }
 
         @Override
         public Void visit(FunctionDecl functionDecl) {
-            functionDecl.parameters.forEach(p -> p.type.visit(this));
+            functionDecl.type.parameters.forEach(p -> p.type.visit(this));
             return null;
         }
 
         @Override
         public Void visit(ClassDecl classDecl) {
             classDecl.fields.forEach(f -> f.type.visit(this));
+            if (classDecl.vtable != null) classDecl.vtable.forEach(f -> f.functionType.visit(this));
+            if (classDecl.parent != null) {
+                FullyQualifiedName parentName = classDecl.parent.getParentFullyQualifiedName();
+                if (parentName != null) includedNames.add(parentName);
+            }
             return null;
         }
 
@@ -71,6 +78,13 @@ public class IncludeCollector {
         @Override
         public Void visit(PointerTypeExpr pointerTypeExpr) {
             pointerTypeExpr.typeExpr.visit(this);
+            return null;
+        }
+
+        @Override
+        public Void visit(FunctionTypeExpr functionTypeExpr) {
+            functionTypeExpr.parameters.forEach(f -> f.type.visit(this));
+            functionTypeExpr.returnType.visit(this);
             return null;
         }
 
@@ -106,6 +120,11 @@ public class IncludeCollector {
 
         @Override
         public Void visit(FullyQualifiedName name) {
+            throw new UnsupportedOperationException("Unreachable");
+        }
+
+        @Override
+        public Void visit(VTableEntry vTableEntry) {
             throw new UnsupportedOperationException("Unreachable");
         }
     }

@@ -18,6 +18,10 @@ vim: filetype=jtecpp
 
 #include <cstdint>
 
+@for (var include : api.getIncludes(module))
+#include "${include}"
+@endfor
+
 namespace ${api.namespacePath(module)} {
 
 @for (var decl : module.declarations)

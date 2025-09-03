@@ -31,4 +31,8 @@ public interface ProxyVisitor<T> {
     public abstract T visit(ReferenceTypeExpr referenceTypeExpr);
 
     public abstract T visit(PointerTypeExpr pointerTypeExpr);
+
+    public abstract T visit(FunctionTypeExpr functionTypeExpr);
+
+    public abstract T visit(VTableEntry vTableEntry);
 }

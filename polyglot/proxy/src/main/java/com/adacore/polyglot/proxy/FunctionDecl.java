@@ -3,10 +3,31 @@ package com.adacore.polyglot.proxy;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
 
 /** Represent function declarations. */
 public class FunctionDecl extends Declaration {
+
+    public enum Visibility {
+        @JsonProperty("public")
+        PUBLIC,
+        @JsonProperty("protected")
+        PROTECTED,
+    }
+
+    public enum Overridability {
+        @JsonProperty("final")
+        FINAL,
+        @JsonProperty("overridable")
+        OVERRIDABLE,
+    }
+
+    public enum Staticness {
+        @JsonProperty("static")
+        STATIC,
+        @JsonProperty("non_static")
+        NON_STATIC,
+    }
+
     /** The role of the function. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("role")
@@ -17,28 +38,20 @@ public class FunctionDecl extends Declaration {
     public final String symbol;
 
     /** List of parameters taken by the function. */
-    @JsonProperty("parameters")
-    public final List<Parameter> parameters;
+    @JsonProperty("type")
+    public final FunctionTypeExpr type;
 
-    /** Type of the returned value. */
-    @JsonProperty("return_type")
-    public final TypeExpr returnType;
-
-    /** Owner of the returned value. */
-    @JsonProperty("return_owner")
-    public final Owner returnOwner;
-
-    /** When attached to a type, whether this function is visible outside of the type's scope.. */
+    /** When attached to a type, whether this function is visible outside of the type's scope. */
     @JsonProperty("is_visible")
-    public final Boolean isVisible;
+    public final Visibility visibility;
 
-    /** When attached to a type, whether this function can be overriden.. */
+    /** When attached to a type, whether this function can be overriden. */
     @JsonProperty("is_final")
-    public final Boolean isFinal;
+    public final Overridability overridability;
 
-    /** When attached to a type, whether this function is static.. */
+    /** When attached to a type, whether this function is static. */
     @JsonProperty("is_static")
-    public final Boolean isStatic;
+    public final Staticness staticness;
 
     @JsonCreator
     public FunctionDecl(
@@ -46,22 +59,18 @@ public class FunctionDecl extends Declaration {
             @JsonProperty(value = "doc", required = true) String doc,
             @JsonProperty(value = "role") Role role,
             @JsonProperty(value = "symbol", required = true) String symbol,
-            @JsonProperty(value = "parameters", required = true) List<Parameter> parameters,
-            @JsonProperty(value = "return_type", required = true) TypeExpr returnType,
-            @JsonProperty(value = "return_owner", required = true) Owner returnOwner,
-            @JsonProperty(value = "is_visible") Boolean isVisible,
-            @JsonProperty(value = "is_final") Boolean isFinal,
-            @JsonProperty(value = "is_static") Boolean isStatic) {
+            @JsonProperty(value = "type", required = true) FunctionTypeExpr type,
+            @JsonProperty(value = "is_visible") Visibility visibility,
+            @JsonProperty(value = "is_final") Overridability overridability,
+            @JsonProperty(value = "is_static") Staticness staticness) {
         super(name, doc);
         this.role = role;
         this.symbol = symbol;
-        this.parameters = parameters;
-        this.returnType = returnType;
-        this.returnOwner = returnOwner;
+        this.type = type;
 
-        this.isVisible = isVisible;
-        this.isFinal = isFinal;
-        this.isStatic = isStatic;
+        this.visibility = visibility;
+        this.overridability = overridability;
+        this.staticness = staticness;
     }
 
     public <T> T visit(ProxyVisitor<T> v) {

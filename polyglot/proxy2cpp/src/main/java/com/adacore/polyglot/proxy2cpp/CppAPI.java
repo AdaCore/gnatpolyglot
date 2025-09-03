@@ -6,6 +6,7 @@ import com.adacore.polyglot.proxy.ArrayTypeExpr;
 import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
+import com.adacore.polyglot.proxy.FunctionTypeExpr;
 import com.adacore.polyglot.proxy.Module;
 import com.adacore.polyglot.proxy.NameTypeExpr;
 import com.adacore.polyglot.proxy.Parameter;
@@ -15,6 +16,7 @@ import com.adacore.polyglot.proxy.ReferenceTypeExpr;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeDecl;
 import com.adacore.polyglot.proxy.TypeExpr;
+import com.adacore.polyglot.proxy.VTableEntry;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -124,7 +126,8 @@ public class CppAPI {
         // and return a real C++ reference to it. Instead, return a `view` to the returned pointer
         // that acts as a reference and that won't free the underlying pointer when destroyed.
         if (typeExpr instanceof ReferenceTypeExpr ref
-                && !(context.getTypeDecl(ref.typeExpr.getName()) instanceof NativeTypeDecl)) {
+                && !(ref.typeExpr instanceof NameTypeExpr name
+                        && (context.getTypeDecl(name.name) instanceof NativeTypeDecl))) {
             return cppTypename(ref.typeExpr).concat("::view");
         }
         return cppTypename(typeExpr);
@@ -151,20 +154,22 @@ public class CppAPI {
         } else if (typeExpr instanceof ReferenceTypeExpr ref) {
             // References are mapped as pointers in C.
             if (ref.typeExpr instanceof ArrayTypeExpr) return cTypename(ref.typeExpr);
+            String constness = ref.isConst ? "const " : "";
             if (ref.typeExpr instanceof NameTypeExpr name
                     && context.getTypeDecl(name.name) instanceof NativeTypeDecl nativeType) {
-                return switch (nativeType.nativeType) {
-                    case STRING -> cTypename(name);
-                    default -> nativeTypeName(nativeType.nativeType) + "*";
-                };
+                return constness
+                        + switch (nativeType.nativeType) {
+                            case STRING -> cTypename(name);
+                            default -> nativeTypeName(nativeType.nativeType) + "*";
+                        };
             }
-
-            return "void *";
+            return constness + "void *";
         } else if (typeExpr instanceof PointerTypeExpr ptr) {
+            String constness = ptr.isConst ? "const " : "";
             if (ptr.typeExpr instanceof NameTypeExpr name
                     && context.getTypeDecl(name.name) instanceof NativeTypeDecl nativeType)
-                return nativeTypeName(nativeType.nativeType) + "*";
-            return "void *";
+                return constness + nativeTypeName(nativeType.nativeType) + "*";
+            return constness + "void *";
         }
         throw new UnsupportedOperationException("Unsupported C type");
     }
@@ -206,9 +211,18 @@ public class CppAPI {
 
     /** Create a string of all the C parameters of the function's symbol. */
     public String cParameters(FunctionDecl functionDecl) {
-        return functionDecl.parameters.stream()
-                .map(p -> toCParam(p))
-                .collect(Collectors.joining(", "));
+        StringBuilder builder = new StringBuilder();
+        builder.append(
+                functionDecl.type.parameters.stream()
+                        .map(p -> toCParam(p))
+                        .collect(Collectors.joining(", ")));
+        // SHADOW_ALLOC functions have 2 hidden raw pointer arguments:
+        //  - The self argument of the class's raw pointer type.
+        //  - The vtable argument of the class' vtable raw pointer type.
+        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            builder.append(builder.isEmpty() ? "" : ", ").append("void *_self, void *vtable");
+        }
+        return builder.toString();
     }
 
     public boolean isMethod(FunctionDecl functionDecl) {
@@ -220,16 +234,31 @@ public class CppAPI {
 
     /** Return the const keyword if the function is a const method, else return an empty string. */
     public String getConstMethod(FunctionDecl functionDecl) {
-        if (isMethod(functionDecl) && functionDecl.parameters.get(0).type.isConst()) return "const";
+        if (isMethod(functionDecl) && functionDecl.type.parameters.get(0).type.isConst())
+            return "const";
         return "";
     }
 
     /** Create a string of all the C++ parameters of the function. */
     public String cppParameters(FunctionDecl functionDecl) {
-        return functionDecl.parameters.stream()
-                .skip(isMethod(functionDecl) ? 1 : 0)
-                .map(p -> toCppParam(p))
-                .collect(Collectors.joining(", "));
+        StringBuilder builder = new StringBuilder();
+        builder.append(
+                functionDecl.type.parameters.stream()
+                        .skip(isMethod(functionDecl) ? 1 : 0)
+                        .map(p -> toCppParam(p))
+                        .collect(Collectors.joining(", ")));
+        // SHADOW_ALLOC functions have 2 hidden arguments:
+        //  - The self argument of the class's raw pointer type.
+        //  - The vtable argument of the class' vtable raw pointer type.
+        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            String className = functionDecl.role.type.getName().getLastName().toPascal();
+            builder.append(builder.isEmpty() ? "" : ", ")
+                    .append(className)
+                    .append(" *_self, ")
+                    .append(className)
+                    .append("::vtable *_vtable");
+        }
+        return builder.toString();
     }
 
     /** Return a string that gets the value of a parameter for the call to the Ada subprogram */
@@ -259,17 +288,21 @@ public class CppAPI {
         // If the function is attached to a type, use ``this->data`` as the first argument.
         if (funcIsMethod) {
             if (functionDecl.role.type instanceof ArrayTypeExpr
-                    && functionDecl.parameters.get(0).type instanceof PointerTypeExpr)
+                    && functionDecl.type.parameters.get(0).type instanceof PointerTypeExpr)
                 builder.append("&");
             builder.append("this->_data");
-            if (functionDecl.parameters.size() > 1) builder.append(", ");
+            if (functionDecl.type.parameters.size() > 1) builder.append(", ");
         }
 
         builder.append(
-                functionDecl.parameters.stream()
+                functionDecl.type.parameters.stream()
                         .skip(funcIsMethod ? 1 : 0)
                         .map(p -> getParamForCall(p))
                         .collect(Collectors.joining(", ")));
+        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            builder.append(functionDecl.type.parameters.isEmpty() ? "" : ", ")
+                    .append("_self, _vtable");
+        }
         builder.append(")");
         return builder.toString();
     }
@@ -277,7 +310,7 @@ public class CppAPI {
     /** Create a string of the return statement. */
     public String makeReturnStatement(FunctionDecl functionDecl) {
         StringBuilder builder = new StringBuilder("return ");
-        if (functionDecl.returnType instanceof ReferenceTypeExpr ref
+        if (functionDecl.type.returnType instanceof ReferenceTypeExpr ref
                 && ref.typeExpr instanceof NameTypeExpr name
                 && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
             // When returning a reference to a native type, get the address returned by the `extern
@@ -287,7 +320,7 @@ public class CppAPI {
             builder.append("*");
         } else {
             // Otherwise, create a new object that wraps the returned pointer.
-            builder.append(cppReturnTypename(functionDecl.returnType));
+            builder.append(cppReturnTypename(functionDecl.type.returnType));
         }
         builder.append("(").append(callCSymbol(functionDecl)).append(")");
         return builder.toString();
@@ -309,5 +342,174 @@ public class CppAPI {
 
     public List<String> getIncludes(Module module) {
         return IncludeCollector.getIncludes(module);
+    }
+
+    /** Return whether the function overrides a function of the role type parent. */
+    public boolean isOverriding(FunctionDecl functionDecl) {
+        if (functionDecl.role == null || functionDecl.role.kind != RoleKind.METHOD) return false;
+        TypeDecl type = context.getTypeDecl(functionDecl.role.type.getName());
+        if (type instanceof ClassDecl classDecl) {
+            if (classDecl.parent == null) return false;
+            // All the parameter types, excluding the first one, must match.
+            List<Parameter> functionParams = functionDecl.type.parameters.stream().skip(1).toList();
+
+            return context.getMembers(classDecl.parent.asTypeExpr()).memberFunctions.stream()
+                    .filter(m -> isMethod(m))
+                    .anyMatch(
+                            m ->
+                                    m.name.getLastName().equals(functionDecl.name.getLastName())
+                                            && m.type.parameters.stream()
+                                                    .skip(1)
+                                                    .toList()
+                                                    .equals(functionParams)
+                                            && m.type.returnType.equals(
+                                                    functionDecl.type.returnType));
+        }
+        return false;
+    }
+
+    /** Return a string of the parameters of the dispatching function. */
+    public String dispatchParameters(FunctionTypeExpr function) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("void *_vtable, void *_self");
+        for (var param : function.parameters.stream().skip(1).toList()) {
+            builder.append(", ").append(toCParam(param));
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Construct a variable that is a static function pointer to the dispatching function of
+     * functionDecl.
+     *
+     * <p>The resulting function type is similar to what the functionDecl is, except that: the
+     * second argument is the vtable given to the shadow object; the second argument is the `this`
+     * value given at construction of the shadow object, and only requires a cast to the C++ object
+     * type when doing the dispatching call;
+     *
+     * <p>For the following class and function: <code>
+     *  class A { int foo(int a, const A &b); }
+     * </code>
+     *
+     * <p>the following will be generated: <code>
+     * int (*foo_dispatch)(void *_self, void *_vtable, int a, const void *b)
+     * </code>
+     */
+    public String dispatchFunctionPointerVariable(VTableEntry function) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(cTypename(function.functionType.returnType))
+                .append("(*")
+                .append(function.name.toLower())
+                .append("_dispatch)(")
+                .append(dispatchParameters(function.functionType))
+                .append(")");
+        return builder.toString();
+    }
+
+    /**
+     * Construct a variable that is a member function pointer to the functionDecl.
+     *
+     * <p>For the following class and function: <code>
+     *  class A { int foo(int a, const A &b) const; }
+     * </code>
+     *
+     * <p>the following will be generated: <code>
+     * int (A::*foo_member)(int a, const A& b) const
+     * </code>
+     */
+    public String memberFunctionPointerVariable(VTableEntry function, String className) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(cppTypename(function.functionType.returnType))
+                .append("(")
+                .append(className)
+                .append("::*")
+                .append(function.name.toLower())
+                .append("_member)(")
+                .append(
+                        function.functionType.parameters.stream()
+                                .skip(1)
+                                .map(p -> toCppParam(p))
+                                .collect(Collectors.joining(", ")))
+                .append(")")
+                .append(" ")
+                .append(function.functionType.parameters.get(0).type.isConst() ? "const " : "");
+        return builder.toString();
+    }
+
+    /** Create a string that is the parameters of the class vtable constructor. */
+    public String vtableCtorArguments(ClassDecl classDecl) {
+        return classDecl.vtable.stream()
+                .map(m -> memberFunctionPointerVariable(m, classDecl.getLastName().toPascal()))
+                .collect(Collectors.joining(", "));
+    }
+
+    /** Return a string that is the C++ converted parameter from its raw data given by argument. */
+    public String convertForDispatch(Parameter param) {
+        StringBuilder builder = new StringBuilder();
+        // We need value types in cases where there are references, so use the
+        // c++ return type in order to build view types when necessary.
+        builder.append(cppReturnTypename(param.type))
+                .append(" _")
+                .append(param.name.toLower())
+                .append(" = ");
+
+        boolean needsConstCast = false;
+        if (param.type instanceof ReferenceTypeExpr ref
+                && ref.typeExpr instanceof NameTypeExpr name
+                && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
+            // When making a reference to a native type, dereference the pointer to make a reference
+            builder.append("*");
+        } else {
+            // Otherwise, create a new object that wraps the returned pointer.
+            builder.append(cppReturnTypename(param.type));
+            // Arrays (and strings) do not need const casts as they are passed by copy.
+            if (param.type instanceof ReferenceTypeExpr ref
+                    && ref.isConst
+                    && !(ref.typeExpr instanceof ArrayTypeExpr
+                            || ref.typeExpr instanceof NameTypeExpr name
+                                    && context.getTypeDecl(name.name) instanceof NativeTypeDecl nat
+                                    && nat.equals(NativeType.STRING.declaration)))
+                needsConstCast = true;
+        }
+        builder.append("(");
+        // view types do not have a constructor for const pointers as it may be unsafe and const
+        // constructors do not exist. Dispatching functions are only transitionary and unseen to the
+        // user, so when a const pointer is received, cast away its constness: it will be readded
+        // when the view is converted to a const reference.
+        if (needsConstCast) builder.append("const_cast<void *>(");
+        builder.append(param.name.toLower());
+        if (needsConstCast) builder.append(")");
+        builder.append(")");
+
+        return builder.toString();
+    }
+
+    /** Create a dispatching call to the member function set in the vtable's extra data. */
+    public String callDispatch(VTableEntry function) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("(__self->*(__vtable->_data.")
+                .append(function.name.toLower())
+                .append("_member")
+                .append("))(")
+                .append(
+                        function.functionType.parameters.stream()
+                                .skip(1)
+                                .map(p -> "_" + p.name.toLower())
+                                .collect(Collectors.joining(", ")))
+                .append(")");
+        return builder.toString();
+    }
+
+    public boolean needsRelease(FunctionTypeExpr functionType) {
+        return !(functionType.returnType instanceof NameTypeExpr name
+                && context.getTypeDecl(name.name) instanceof NativeTypeDecl);
+    }
+
+    /**
+     * Create a call to ``.release()`` on objects returned by the dispatchers when the value
+     * returned is an object in order to prevent the destructor from freeing the memory returned.
+     */
+    public String makeRelease(FunctionTypeExpr functionType) {
+        return needsRelease(functionType) ? ".release()" : "";
     }
 }
