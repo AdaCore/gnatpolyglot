@@ -50,7 +50,8 @@ Template file to generate bindings for record types.
       !{Component component = rec.getComponent(f.role.field);}
       @if(f.role.kind == RoleKind.GETTER)
          function ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
-           (Self: System.Address) return System.Address;
+           (Self: System.Address)
+           return ${api.getterReturnTypename(component.getType())};
       @else
          procedure ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
            (Self: System.Address;
@@ -125,17 +126,17 @@ Template file to generate bindings for record types.
       !{
          Component component = rec.getComponent(f.role.field);
          Libadalang.BaseTypeDecl componentType = component.getType();
-         String componentTypename = componentType.pFullyQualifiedName();
          String componentAccess = "Self_Value." + component.name.toPascalWithUnderscore();
       }
       @if(f.role.kind == RoleKind.GETTER)
          function ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
-           (Self: System.Address) return System.Address
+           (Self: System.Address)
+           return ${api.getterReturnTypename(component.getType())}
          is
             Self_Value : ${recordName} with Address => Self;
             pragma Import(Ada, Self_Value);
          begin
-            ${api.makeGetterReturnConversion(componentAccess)};
+            ${api.makeGetterReturnConversion(componentAccess, componentType)};
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
       @else
          procedure ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}

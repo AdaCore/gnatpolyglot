@@ -513,10 +513,31 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
+    /** Return the type that must be used when returning from a getter. */
+    public String getterReturnTypename(Libadalang.BaseTypeDecl type) {
+        if (type.pIsArrayType(Libadalang.AdaNode.NONE)) return "Polyglot.Ada.Arrays.Polyglot_Array";
+        return "System.Address";
+    }
+
     /** Create a string of the return statement for value returned by component getter functions. */
-    public String makeGetterReturnConversion(String componentAccess) {
+    public String makeGetterReturnConversion(String componentAccess, Libadalang.BaseTypeDecl type) {
         StringBuilder builder = new StringBuilder("return ");
-        builder.append(componentAccess).append("'Address");
+        if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
+            // When returning references to arrays, returning a Polyglot_Array is
+            // still necesssary.
+            builder.append("(First => Interfaces.C.Int (")
+                    .append(componentAccess)
+                    .append("'First),")
+                    .append("Last => Interfaces.C.Int (")
+                    .append(componentAccess)
+                    .append("'Last), ")
+                    .append("Data => ")
+                    .append(componentAccess)
+                    .append("'Address)");
+        } else {
+            // Otherwise, just get the address.
+            builder.append(componentAccess).append("'Address");
+        }
         return builder.toString();
     }
 
