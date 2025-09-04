@@ -9,6 +9,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.EnumLiteral;
 import com.adacore.polyglot.ada2proxy.proxy.EnumType;
+import com.adacore.polyglot.ada2proxy.proxy.GlobalVariable;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
@@ -32,6 +33,7 @@ import com.adacore.polyglot.proxy.VTableEntry;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 public class AdaProxyTranslator {
 
@@ -72,7 +74,8 @@ public class AdaProxyTranslator {
             declarations = new ArrayList<>(pack.declarations.size());
 
             for (var decl : pack.declarations) {
-                declarations.add((Declaration) decl.accept(this));
+                Optional.ofNullable((Declaration) decl.accept(this))
+                        .ifPresent(d -> declarations.add(d));
             }
 
             return new Module(pack.getProxyFullyQualifiedName(), declarations);
@@ -198,6 +201,13 @@ public class AdaProxyTranslator {
                     adaException.getProxyFullyQualifiedName(),
                     adaException.getDoc(),
                     adaException.getValue());
+        }
+
+        @Override
+        public ProxyObject visit(GlobalVariable globalVariable) {
+            declarations.add(globalVariable.getGetter());
+            Optional.ofNullable(globalVariable.getSetter()).ifPresent(d -> declarations.add(d));
+            return null;
         }
     }
 

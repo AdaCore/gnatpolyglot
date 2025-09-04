@@ -7,6 +7,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.EnumLiteral;
 import com.adacore.polyglot.ada2proxy.proxy.EnumType;
+import com.adacore.polyglot.ada2proxy.proxy.GlobalVariable;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
@@ -58,6 +59,11 @@ public class ExceptionCollector {
 
         @Override
         public Void visit(Record rec) {
+            return null;
+        }
+
+        @Override
+        public Void visit(GlobalVariable globalVariable) {
             return null;
         }
 

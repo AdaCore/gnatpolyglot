@@ -9,6 +9,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.EnumLiteral;
 import com.adacore.polyglot.ada2proxy.proxy.EnumType;
+import com.adacore.polyglot.ada2proxy.proxy.GlobalVariable;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
@@ -512,6 +513,16 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                         parentDecl,
                         Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
                         enumValues));
+        return null;
+    }
+
+    public Void visit(Libadalang.ObjectDecl node) {
+        if (!(node.pParentBasicDecl() instanceof Libadalang.PackageDecl)) return null;
+        for (var id : node.fIds()) {
+            declarations.add(
+                    new GlobalVariable(
+                            node, Name.fromPascalWithUnderscore(id.pRelativeName().getText())));
+        }
         return null;
     }
 }
