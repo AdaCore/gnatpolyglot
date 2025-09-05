@@ -89,8 +89,9 @@ def compile_main(output_lang: str, test_file: str, output_proxy: str, input_prox
 
         LD_FLAGS = [
             f"-L{os.path.join(input_proxy, 'lib_agg', 'static', 'dev')}",
-            f"-ltest_proxy_agg",
-            f"-ldl",
+            "-ltest_proxy_agg",
+            "-ldl",
+            "-lpthread",
         ]
         argv = [
             "g++",
@@ -149,11 +150,16 @@ def add_path(env: dict[str, str], env_var: str, path: str):
     env[env_var] = "{}{}{}".format(path, os.path.pathsep, env.get(env_var, ""))
 
 def valgrind_cmd(argv: list[str]):
+    suppression_file = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "package_elab.supp"
+    )
     return [
         "valgrind",
         "-q",
         "--leak-check=full",
+        "--show-leak-kinds=all",
         "--track-origins=yes",
         "--error-exitcode=2",
+        f"--suppressions={suppression_file}",
         *argv
     ]

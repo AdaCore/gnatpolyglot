@@ -28,7 +28,7 @@ public class CppPrinter extends Printer {
 
     @Override
     public void generate(Path outputPath) throws IOException {
-        CppAPI api = new CppAPI(context, outputPath);
+        CppAPI api = new CppAPI(context, outputPath, proxy.name);
 
         for (var module : proxy.modules) {
             if (module.name.names.get(0).equals(Name.fromLower("polyglot"))) continue;
@@ -61,6 +61,25 @@ public class CppPrinter extends Printer {
                 templateEngine.render(
                         "arrays.jte", Map.of("api", api, "module", module), packageSpec);
             }
+        }
+
+        // Emit the proxy exception files
+        Path headerFilename =
+                outputPath.resolve("polyglot_exceptions_" + proxy.name.toLower() + ".h");
+        try (FileOutput packageSpec = new FileOutput(headerFilename)) {
+            templateEngine.render(
+                    "exception_handler.jte",
+                    Map.of("api", api, "proxy", proxy, "isSource", false),
+                    packageSpec);
+        }
+
+        Path sourceFilename =
+                outputPath.resolve("polyglot_exceptions_" + proxy.name.toLower() + ".cpp");
+        try (FileOutput packageSpec = new FileOutput(sourceFilename)) {
+            templateEngine.render(
+                    "exception_handler.jte",
+                    Map.of("api", api, "proxy", proxy, "isSource", true),
+                    packageSpec);
         }
     }
 }

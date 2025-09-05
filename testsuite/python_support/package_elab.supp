@@ -1,0 +1,13 @@
+# Suppressing the SIGSEGV handler of the GNAT runtime adds leaks during the
+# elaboration of the package
+{
+  package_elab
+  Memcheck:Leak
+  fun:?alloc
+  ...
+  fun:system__*
+  ...
+  fun:*init
+  ...
+  fun:__libc_*
+}

@@ -1,0 +1,5 @@
+Running validator test.
+Errors found in the proxy:
+ * $.modules[0].declarations[0].enum_value: value is reserved for anonymous exceptions
+ * $.modules[0].declarations[2].enum_value: duplicate exception enumeration value
+Done.

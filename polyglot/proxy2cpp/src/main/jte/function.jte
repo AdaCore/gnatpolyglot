@@ -1,6 +1,7 @@
 <%--
 vim: filetype=jtecpp
 --%>
+@import com.adacore.polyglot.NativeType
 @import com.adacore.polyglot.proxy.FunctionDecl
 @import com.adacore.polyglot.proxy.FunctionDecl.Overridability
 @import com.adacore.polyglot.proxy.ArrayTypeExpr
@@ -27,6 +28,14 @@ vim: filetype=jtecpp
     ${api.cppReturnTypename(functionDecl.type.returnType)}
     ${api.functionDefinitionName(functionDecl)}
         (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)} {
-        ${api.makeReturnStatement(functionDecl)};
+        @if (api.returnsVoid(functionDecl))
+            ${api.callCSymbol(functionDecl)};
+            polyglot::exceptions::${api.getProjectName().toLower()}::rethrow_if_exc();
+        @else
+            ${api.cTypename(functionDecl.type.returnType)} returned_value =
+                ${api.callCSymbol(functionDecl)};
+            polyglot::exceptions::${api.getProjectName().toLower()}::rethrow_if_exc();
+            ${api.makeReturnStatement(functionDecl, "returned_value")};
+        @endif
     }
 @endif

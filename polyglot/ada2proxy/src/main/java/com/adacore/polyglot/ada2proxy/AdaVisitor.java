@@ -4,6 +4,7 @@ import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseRecordDef;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration;
+import com.adacore.polyglot.ada2proxy.proxy.AdaException;
 import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
@@ -79,6 +80,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     /** Map Ada declarations to their AdaProxy objects. */
     private HashMap<Libadalang.TypeDecl, AdaDeclaration> mappedTypes = new HashMap<>();
+
+    private int exceptionNumber = 1;
 
     /** Analyse an Ada specification file. */
     public Package analyzeSpec(Libadalang.AnalysisUnit unit) {
@@ -470,6 +473,16 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         } else if (AdaAPI.checkNativeType(componentType) == null) {
             arrayComponentTypes.add(componentType);
         }
+        return null;
+    }
+
+    @Override
+    public Void visit(Libadalang.ExceptionDecl node) {
+        declarations.add(
+                new AdaException(
+                        Name.fromPascalWithUnderscore(node.pDefiningName().getText()),
+                        node,
+                        exceptionNumber++));
         return null;
     }
 }

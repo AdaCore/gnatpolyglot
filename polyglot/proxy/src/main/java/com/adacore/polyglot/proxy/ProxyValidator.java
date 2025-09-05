@@ -27,6 +27,9 @@ public class ProxyValidator implements Callable<Integer> {
         /** Set of all symbols found while exploring the proxy. */
         private Set<String> symbols;
 
+        /** Set of all exception values found while exploring the proxy. */
+        private Set<Integer> exceptionValues;
+
         /** Name resolution context. */
         private ProxyContext context;
 
@@ -34,6 +37,7 @@ public class ProxyValidator implements Callable<Integer> {
             this.diagnostics = new ArrayList<>();
             this.location = new Stack<>();
             this.symbols = new HashSet<>();
+            this.exceptionValues = new HashSet<>();
             this.context = new ProxyContext();
         }
 
@@ -192,6 +196,10 @@ public class ProxyValidator implements Callable<Integer> {
                     if (!context.register(functionDecl)) {
                         addDiagnostic(".kind", "a function already has a similar role");
                     }
+                } else if (decl instanceof ExceptionDecl exc) {
+                    if (!context.register(functionDecl)) {
+                        addDiagnostic(".kind", "a function already has a similar role");
+                    }
                 }
                 location.pop();
             }
@@ -275,6 +283,19 @@ public class ProxyValidator implements Callable<Integer> {
                 }
                 location.pop();
             }
+
+            return Boolean.valueOf(diagnostics.isEmpty());
+        }
+
+        @Override
+        public Boolean visit(ExceptionDecl exceptionDecl) {
+            validateNonNull("name", exceptionDecl.name);
+            validateNonNull("doc", exceptionDecl.doc);
+
+            if (exceptionDecl.enumValue == 0)
+                addDiagnostic(".enum_value", "value is reserved for anonymous exceptions");
+            else if (!exceptionValues.add(exceptionDecl.enumValue))
+                addDiagnostic(".enum_value", "duplicate exception enumeration value");
 
             return Boolean.valueOf(diagnostics.isEmpty());
         }

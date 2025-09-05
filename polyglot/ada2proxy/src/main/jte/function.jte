@@ -5,31 +5,41 @@ Template file to generate binded functions.
 @import com.adacore.libadalang.Libadalang
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
+@param AdaAPI api
 @param Subprogram subp
 @param Boolean isBody
 
-!{String returnType = AdaAPI.cInterfaceTypename(subp.getReturnType());}
+!{String returnType = api.cInterfaceTypename(subp.getReturnType());}
 
 @if(!isBody)
-   function ${AdaAPI.proxyName(subp)}
+   function ${api.proxyName(subp)}
     @if(!subp.parameters.isEmpty())
-      (${AdaAPI.cInterfaceParameters(subp)})
+      (${api.cInterfaceParameters(subp)})
     @endif
       return ${returnType};
-   pragma Export (C, ${AdaAPI.proxyName(subp)}, "${subp.symbol}");
+   pragma Export (C, ${api.proxyName(subp)}, "${subp.symbol}");
 @else
-   function ${AdaAPI.proxyName(subp)}
+   function ${api.proxyName(subp)}
     @if(!subp.parameters.isEmpty())
-      (${AdaAPI.cInterfaceParameters(subp)})
+      (${api.cInterfaceParameters(subp)})
     @endif
       return ${returnType} is
     @for(var p : subp.parameters)
-      ${AdaAPI.makeParamConversion(p)};
+      ${api.makeParamConversion(p)};
     @endfor
-      ${AdaAPI.makeReturnDeclarations(subp.getReturnType())}
+      ${api.makeReturnDeclarations(subp.getReturnType())}
       Value_Returned : ${subp.getReturnType().pFullyQualifiedName()} :=
-         ${AdaAPI.call(subp)};
+         ${api.call(subp)};
    begin
-      ${AdaAPI.makeReturnConversion(subp.getReturnType(), "Value_Returned")};
-   end ${AdaAPI.proxyName(subp)};
+      ${api.makeReturnConversion(subp.getReturnType(), "Value_Returned")};
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Clear_Last_Exception (Polyglot.Get_Kernel);
+         Polyglot.Exceptions.Raise_Exception
+           (Polyglot.Get_Kernel,
+            Ada.Exceptions.Save_Occurrence (E),
+            Polyglot.Exceptions.${api.getProjectName().toPascalWithUnderscore()}
+               .Identify_Exception'Access);
+      ${api.makeDefaultReturn(subp)};
+   end ${api.proxyName(subp)};
 @endif

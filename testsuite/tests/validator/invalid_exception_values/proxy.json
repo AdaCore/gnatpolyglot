@@ -1,0 +1,28 @@
+{
+  "name": "proxy",
+  "modules": [
+    {
+      "name": { "names": ["module_1"] },
+      "declarations": [
+        {
+          "kind": "exception",
+          "name": { "names": ["module_1", "zero"] },
+          "doc": "",
+          "enum_value": 0
+        },
+        {
+          "kind": "exception",
+          "name": { "names": ["module_1", "dup1"] },
+          "doc": "",
+          "enum_value": 1
+        },
+        {
+          "kind": "exception",
+          "name": { "names": ["module_1", "dup2"] },
+          "doc": "",
+          "enum_value": 1
+        }
+      ]
+    }
+  ]
+}

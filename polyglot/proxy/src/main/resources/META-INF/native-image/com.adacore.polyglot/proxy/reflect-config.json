@@ -129,7 +129,7 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["java.util.List"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","java.util.List"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.ProxyObject",
@@ -170,6 +170,13 @@
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
   "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.Name","com.adacore.polyglot.proxy.FunctionTypeExpr"] }]
+},
+{
+  "name":"com.adacore.polyglot.proxy.ExceptionDecl",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true,
+  "queryAllDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","int"] }]
 },
 {
   "name":"com.adacore.polyglot.proxy.TypeExpr",

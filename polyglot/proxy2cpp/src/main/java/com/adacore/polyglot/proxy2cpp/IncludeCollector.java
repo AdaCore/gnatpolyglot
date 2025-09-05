@@ -4,6 +4,7 @@ import com.adacore.polyglot.proxy.ArrayTypeExpr;
 import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.EnumItem;
 import com.adacore.polyglot.proxy.EnumerationDecl;
+import com.adacore.polyglot.proxy.ExceptionDecl;
 import com.adacore.polyglot.proxy.Field;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
@@ -85,6 +86,12 @@ public class IncludeCollector {
         public Void visit(FunctionTypeExpr functionTypeExpr) {
             functionTypeExpr.parameters.forEach(f -> f.type.visit(this));
             functionTypeExpr.returnType.visit(this);
+            return null;
+        }
+
+        @Override
+        public Void visit(ExceptionDecl exceptionDecl) {
+            // Nothing to do
             return null;
         }
 

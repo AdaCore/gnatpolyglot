@@ -1,4 +1,5 @@
 {
+  "name": "proxy",
   "modules": [
     {
       "name": { "names": ["module_1"] },

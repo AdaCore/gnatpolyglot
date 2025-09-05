@@ -84,7 +84,7 @@ public class AdaScanner extends Scanner {
                         .map(s -> ctx.getUnitFromFile(s))
                         .map(u -> visitor.analyzeSpec(u))
                         .toList();
-        this.proxy = new AdaProxy(modules, visitor.getArrayTypes());
+        this.proxy = new AdaProxy(Name.fromLower(projectName), modules, visitor.getArrayTypes());
     }
 
     @Override
@@ -96,6 +96,7 @@ public class AdaScanner extends Scanner {
     public void generate(Path path) throws IOException {
         // Write the json proxy file.
         Proxy jsonProxy = getProxy();
+        AdaAPI api = new AdaAPI(Name.fromLower(projectName));
         try {
             jsonProxy.writeProxy(path.resolve("proxy.json").toFile());
         } catch (Exception e) {
@@ -108,9 +109,14 @@ public class AdaScanner extends Scanner {
             templateEngine.render(
                     "proxy_gpr.jte",
                     Map.of(
-                            "relLibPath", path.relativize(projectFile).toString(),
-                            "projectName", Name.fromLower(projectName),
-                            "proxy", proxy),
+                            "api",
+                            api,
+                            "relLibPath",
+                            path.relativize(projectFile).toString(),
+                            "projectName",
+                            Name.fromLower(projectName),
+                            "proxy",
+                            proxy),
                     gprOutput);
         }
         Path aggGprFile = Path.of(projectName + "-proxy-agg.gpr");
@@ -118,6 +124,7 @@ public class AdaScanner extends Scanner {
             templateEngine.render(
                     "proxy_agg_gpr.jte",
                     Map.of(
+                            "api", api,
                             "relLibPath", path.relativize(projectFile).toString(),
                             "projectName", Name.fromLower(projectName),
                             "proxy", proxy,
@@ -130,12 +137,14 @@ public class AdaScanner extends Scanner {
         for (var pack : proxy.packages) {
             Path packageSpecFile = AdaAPI.toAdaFilename(pack, "-proxy.ads");
             try (FileOutput packageSpec = new FileOutput(proxySrc.resolve(packageSpecFile))) {
-                templateEngine.render("package_ads.jte", pack, packageSpec);
+                templateEngine.render(
+                        "package_ads.jte", Map.of("api", api, "pack", pack), packageSpec);
             }
 
             Path packageBodyFile = AdaAPI.toAdaFilename(pack, "-proxy.adb");
             try (FileOutput packageBody = new FileOutput(proxySrc.resolve(packageBodyFile))) {
-                templateEngine.render("package_adb.jte", pack, packageBody);
+                templateEngine.render(
+                        "package_adb.jte", Map.of("api", api, "pack", pack), packageBody);
             }
         }
 
@@ -143,8 +152,43 @@ public class AdaScanner extends Scanner {
         if (!proxy.arrayTypes.isEmpty()) {
             Path arraySpecFile = Path.of("polyglot-ada-arrays-non_native.ads");
             try (FileOutput arraysSpec = new FileOutput(proxySrc.resolve(arraySpecFile))) {
-                templateEngine.render("arrays_ads.jte", proxy.arrayTypes, arraysSpec);
+                templateEngine.render(
+                        "arrays_ads.jte",
+                        Map.of("api", api, "arrays", proxy.arrayTypes),
+                        arraysSpec);
             }
+        }
+
+        // Create the exception specific functions
+        Path exceptionSpecFile = Path.of("polyglot-exceptions-%s.ads".formatted(projectName));
+        try (FileOutput exceptionSpec = new FileOutput(proxySrc.resolve(exceptionSpecFile))) {
+            templateEngine.render(
+                    "exceptions.jte",
+                    Map.of(
+                            "api",
+                            api,
+                            "proxy",
+                            proxy,
+                            "projectName",
+                            Name.fromLower(projectName),
+                            "isSource",
+                            false),
+                    exceptionSpec);
+        }
+        Path exceptionBodyFile = Path.of("polyglot-exceptions-%s.adb".formatted(projectName));
+        try (FileOutput exceptionBody = new FileOutput(proxySrc.resolve(exceptionBodyFile))) {
+            templateEngine.render(
+                    "exceptions.jte",
+                    Map.of(
+                            "api",
+                            api,
+                            "proxy",
+                            proxy,
+                            "projectName",
+                            Name.fromLower(projectName),
+                            "isSource",
+                            true),
+                    exceptionBody);
         }
     }
 }

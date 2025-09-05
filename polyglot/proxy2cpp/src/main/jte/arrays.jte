@@ -40,7 +40,7 @@ namespace ${api.namespacePath(module)} {
         ${api.cppReturnTypename(functionDecl.type.returnType)}
         ${api.functionDefinitionName(functionDecl)}
             (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)} {
-            ${api.makeReturnStatement(functionDecl)};
+            ${api.makeReturnStatement(functionDecl, api.callCSymbol(functionDecl))};
         }
     @endif
 @endfor

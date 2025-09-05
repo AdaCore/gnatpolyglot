@@ -10,6 +10,7 @@ Template file to generate bindings for record types.
 @import com.adacore.polyglot.proxy.FunctionDecl
 @import com.adacore.polyglot.proxy.Role
 @import com.adacore.polyglot.proxy.Role.RoleKind
+@param AdaAPI api
 @param Record rec
 @param Boolean isBody
 
@@ -34,7 +35,7 @@ Template file to generate bindings for record types.
    @for(var allocFunc : allocFuncs)
       function ${allocFunc.getLastName().toPascalWithUnderscore()}
       @if(!allocFunc.type.parameters.isEmpty())
-         (${AdaAPI.cInterfaceParameters(rec, allocFunc)})
+         (${api.cInterfaceParameters(rec, allocFunc)})
       @endif
          return System.Address;
       pragma Export (C, ${allocFunc.getLastName().toPascalWithUnderscore()}, "${allocFunc.symbol}");
@@ -54,13 +55,13 @@ Template file to generate bindings for record types.
          procedure ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
            (Self: System.Address;
             ${component.name.toPascalWithUnderscore()}_Arg:
-               ${AdaAPI.cInterfaceTypename(component.getType())});
+               ${api.cInterfaceTypename(component.getType())});
       @endif
       pragma Export (C, ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}, "${f.symbol}");
     @endfor
 
    @if(rec.isTaggedType())
-      @template.shadow(rec, isBody)
+      @template.shadow(api, rec, isBody)
    @endif
 
 @else
@@ -83,12 +84,12 @@ Template file to generate bindings for record types.
    @for(var allocFunc : allocFuncs)
       function ${allocFunc.getLastName().toPascalWithUnderscore()}
       @if(!allocFunc.type.parameters.isEmpty())
-         (${AdaAPI.cInterfaceParameters(rec, allocFunc)})
+         (${api.cInterfaceParameters(rec, allocFunc)})
       @endif
          return System.Address
       is
          @for(var p : allocFunc.type.parameters)
-           ${AdaAPI.makeParamConversion(rec.getComponent(p.name))};
+           ${api.makeParamConversion(rec.getComponent(p.name))};
          @endfor
          package Converter is new System.Address_To_Access_Conversions (${recordName});
          Tmp : ${recordAccessName} := new ${recordName}'(
@@ -134,17 +135,17 @@ Template file to generate bindings for record types.
             Self_Value : ${recordName} with Address => Self;
             pragma Import(Ada, Self_Value);
          begin
-            ${AdaAPI.makeGetterReturnConversion(componentAccess)};
+            ${api.makeGetterReturnConversion(componentAccess)};
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
       @else
          procedure ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
            (Self: System.Address;
             ${component.name.toPascalWithUnderscore()}_Arg:
-               ${AdaAPI.cInterfaceTypename(component.getType())})
+               ${api.cInterfaceTypename(component.getType())})
          is
             Self_Value : ${recordName} with Address => Self;
             pragma Import(Ada, Self_Value);
-            ${AdaAPI.makeParamConversion(component)};
+            ${api.makeParamConversion(component)};
          begin
             ${componentAccess} := ${component.name.toPascalWithUnderscore()}_Value;
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
@@ -152,6 +153,6 @@ Template file to generate bindings for record types.
     @endfor
 
    @if(rec.isTaggedType())
-      @template.shadow(rec, isBody)
+      @template.shadow(api, rec, isBody)
    @endif
 @endif

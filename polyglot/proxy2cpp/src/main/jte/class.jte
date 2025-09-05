@@ -163,12 +163,17 @@ vim: filetype=jtecpp
                @for(var param : method.functionType.parameters.stream().skip(1).toList())
                ${api.convertForDispatch(param)};
                @endfor
+               try {
                return
                @if(!api.needsRelease(method.functionType))
                ${api.cTypename(method.functionType.returnType)}
                @endif(
                    ${api.callDispatch(method)}
                )${api.makeRelease(method.functionType)};
+               } catch (polyglot::ada::exceptions::AdaException &e) {
+                   polyglot_get_kernel()->exc_info.exception_data = e.release();
+                   ${api.makeDispatchDefaultReturn(method.functionType)}
+               }
            }
        @endfor
        }
