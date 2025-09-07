@@ -7,7 +7,7 @@
 
 class OtherChild : public test::Root {
 public:
-    OtherChild(const std::string &data) : test::Root(4, 2, this, &vtable), _str(data) {}
+    OtherChild(const std::string &data) : test::Root(4, 2, this), _str(data) {}
 
     void p1() const override{
         std::cout << _str << "\n";
@@ -38,13 +38,11 @@ public:
 
 private:
     std::string _str;
-
-    static test::Root::vtable vtable;
 };
 
 class GrandChild : public test::Child {
 public:
-    GrandChild(const std::vector<int> &data) : test::Child(4, 2, 1, this, &vtable), _vec(data) {}
+    GrandChild(const std::vector<int> &data) : test::Child(4, 2, 1, this), _vec(data) {}
 
     virtual void p1() const {
         for (int i : _vec) {
@@ -60,24 +58,7 @@ public:
 
 private:
     std::vector<int> _vec;
-
-    static test::Child::vtable vtable;
 };
-test::Root::vtable OtherChild::vtable(
-    static_cast<void (test::Root::*)() const>(&OtherChild::p1),
-    static_cast<test::Rec (test::Root::*)() const>(&OtherChild::f),
-    static_cast<test::Root(test::Root::*)() const>(&OtherChild::f2),
-    static_cast<polyglot::ada::arrays::polyglot_array<int32_t>(test::Root::*)
-        (const polyglot::ada::arrays::polyglot_array<int32_t> &a, int &) const>(&OtherChild::f_arr)
-);
-
-test::Child::vtable GrandChild::vtable(
-    static_cast<void (test::Child::*)() const>(&GrandChild::p1),
-    nullptr,
-    nullptr,
-    nullptr,
-    static_cast<void (test::Child::*)(const test::Root&, int) const>(&GrandChild::p2)
-);
 
 void test_array(test::Root &r, polyglot::ada::arrays::polyglot_array<int32_t> input) {
     int i = 0;

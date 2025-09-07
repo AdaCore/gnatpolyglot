@@ -5,7 +5,7 @@
 
 class Deriv : public test::Tag {
 public:
-    Deriv(int i) : test::Tag(i, this, &vtable) {}
+    Deriv(int i) : test::Tag(i, this) {}
 
     void raise_exc() const {
         switch (this->get_i()) {
@@ -19,13 +19,7 @@ public:
                 throw polyglot::ada::exceptions::ProgramError("FooBar");
         }
     }
-
-private:
-    static test::Tag::vtable vtable;
 };
-
-test::Tag::vtable
-Deriv::vtable (static_cast<void (test::Tag::*)() const>(&Deriv::raise_exc));
 
 int main() {
     Deriv d(1);
