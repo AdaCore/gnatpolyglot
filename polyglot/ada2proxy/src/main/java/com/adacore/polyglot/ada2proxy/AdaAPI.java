@@ -397,28 +397,6 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
-    /**
-     * Create a call to the subprogram for when a shadow type does not override the subprogram.
-     *
-     * <p>Parameters with the same type as the first (controlling) parameter will be cast to the
-     * non-shadow type.
-     */
-    public String callParent(Subprogram subp) {
-        StringBuilder builder = new StringBuilder();
-        Libadalang.BaseTypeDecl controllingType = subp.parameters.get(0).getType();
-        builder.append(subp.getOriginName()).append("(");
-        for (int i = 0; i < subp.parameters.size(); i++) {
-            SubpParam param = subp.parameters.get(i);
-            if (i != 0) builder.append(", ");
-            boolean needsCast = param.getType().equals(controllingType);
-            if (needsCast) builder.append(controllingType.pFullyQualifiedName()).append(" (");
-            builder.append(param.name.toPascalWithUnderscore());
-            if (needsCast) builder.append(")");
-        }
-        builder.append(")");
-        return builder.toString();
-    }
-
     /** Create the necessary declarations for the return statement. */
     public String makeReturnDeclarations(Libadalang.BaseTypeDecl returnedType) {
         StringBuilder builder = new StringBuilder();
@@ -613,7 +591,7 @@ public class AdaAPI extends LanguageAPI {
                 // There will always be at least two arguments here: the first argument will always
                 // be the vtable, and the second argument the dispatching object (i.e the first
                 // value of subp.parameters).
-                .append("(VTable : System.Address; ")
+                .append("(")
                 .append(cInterfaceParameters(subp))
                 .append(")");
         if (!subp.isProcedure())
