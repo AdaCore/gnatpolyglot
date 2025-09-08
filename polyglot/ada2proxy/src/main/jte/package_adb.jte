@@ -15,12 +15,14 @@ Template file to generate package bodies.
 !{String packageName = pack.getFullyQualifiedName();}
 
 with Ada.Exceptions;
+with Ada.Finalization;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Interfaces.C;
 use all type Interfaces.C.int;
 with System;
 with System.Address_To_Access_Conversions;
+with System.Storage_Elements;
 
 with Polyglot;
 with Polyglot.Ada;
