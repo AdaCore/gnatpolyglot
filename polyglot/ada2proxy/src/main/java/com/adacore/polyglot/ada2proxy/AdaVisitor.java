@@ -262,6 +262,12 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // Get the C symbol of the function.
         String symbol = symbolify(spec);
 
+        // Do not bind any of the controlled type functions. They are too "Ada-specific" and lead to
+        // inconsistencies in the management of object destruction when exposed to the users in
+        // other target languages.
+        if (Stream.of(node.pBaseSubpDeclarations(false))
+                .anyMatch(d -> d.pFullyQualifiedName().startsWith("Ada.Finalization."))) return;
+
         // If the function is callable with the dot notation, it is a method.
         // The subprogram may be visited when exploring inherited primitive subprograms: if so, use
         // the current derived type.
@@ -435,13 +441,18 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             Record rec = makeRecord(node.fRecordExtension(), parentDecl);
             Libadalang.ConcreteTypeDecl subtype =
                     (Libadalang.ConcreteTypeDecl) node.fSubtypeIndication().pDesignatedTypeDecl();
-            if (subtype.fTypeDef() instanceof Libadalang.DerivedTypeDef derived)
-                rec.parent = makeRecord(derived.fRecordExtension(), subtype);
-            else if (subtype.fTypeDef() instanceof Libadalang.RecordTypeDef subrec)
-                rec.parent = makeRecord(subrec.fRecordDef(), subtype);
-            else if (subtype.pIsRecordType(Libadalang.AdaNode.NONE) || subtype.pIsPrivate())
-                rec.parent = makeRecord(BaseRecordDef.NONE, subtype);
-            else throw new RuntimeException("Could not process parent type");
+            // TODO eng/libadalang/polyglot#29: Declarations from foreign libraries are not yet
+            // binded, so we must ignore types from the runtime too (for controlled types
+            // especially).
+            if (!subtype.isNone() && !subtype.pFullyQualifiedName().startsWith("Ada.")) {
+                if (subtype.fTypeDef() instanceof Libadalang.DerivedTypeDef derived)
+                    rec.parent = makeRecord(derived.fRecordExtension(), subtype);
+                else if (subtype.fTypeDef() instanceof Libadalang.RecordTypeDef subrec)
+                    rec.parent = makeRecord(subrec.fRecordDef(), subtype);
+                else if (subtype.pIsRecordType(Libadalang.AdaNode.NONE) || subtype.pIsPrivate())
+                    rec.parent = makeRecord(BaseRecordDef.NONE, subtype);
+                else throw new RuntimeException("Could not process parent type");
+            }
             declarations.add(rec);
         } else if (parentDecl.pIsRecordType(Libadalang.AdaNode.NONE)) {
             // If the parent is a non-tagged record, simply copy the fields of the root type.
