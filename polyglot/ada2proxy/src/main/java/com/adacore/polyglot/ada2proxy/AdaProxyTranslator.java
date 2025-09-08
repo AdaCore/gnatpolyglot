@@ -162,6 +162,7 @@ public class AdaProxyTranslator {
             declarations.addAll(rec.getAllocFunctions());
             declarations.add(rec.getFreeFunction());
             declarations.add(rec.getCloneFunction());
+            declarations.add(rec.getCopyFunction());
             declarations.addAll(rec.getGettersAndSetters());
             if (rec.isTaggedType()) declarations.addAll(rec.getShadowAllocFunctions());
             if (rec.getTypeDef() instanceof Libadalang.RecordTypeDef

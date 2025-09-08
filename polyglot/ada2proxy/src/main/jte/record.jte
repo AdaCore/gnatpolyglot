@@ -23,6 +23,7 @@ Template file to generate bindings for record types.
     String recordPrefix = recordName.replace(".", "_");
     String recordAccessName = rec.name.toPascalWithUnderscore() + "_Access";
     FunctionDecl freeFunc = rec.getFreeFunction();
+    FunctionDecl copyFunc = rec.getCopyFunction();
     List<FunctionDecl> allocFuncs = rec.getAllocFunctions();
     FunctionDecl cloneFunc = rec.getCloneFunction();
 }
@@ -44,6 +45,11 @@ Template file to generate bindings for record types.
    function ${cloneFunc.getLastName().toPascalWithUnderscore()}
      (Self: System.Address) return System.Address;
    pragma Export (C, ${cloneFunc.getLastName().toPascalWithUnderscore()}, "${cloneFunc.symbol}");
+
+   <%-- Declare the copy function --%>
+   procedure ${copyFunc.getLastName().toPascalWithUnderscore()}
+     (Self: System.Address; Other: System.Address);
+   pragma Export (C, ${copyFunc.getLastName().toPascalWithUnderscore()}, "${copyFunc.symbol}");
 
    <%-- Declare the getter and setter functions --%>
    @for(var f : rec.getGettersAndSetters())
@@ -120,6 +126,19 @@ Template file to generate bindings for record types.
    begin
       return Converter.To_Address (new ${recordName}'(Tmp.all));
    end ${cloneFunc.getLastName().toPascalWithUnderscore()};
+
+   <%-- Define the copy function --%>
+   procedure ${copyFunc.getLastName().toPascalWithUnderscore()}
+     (Self: System.Address; Other: System.Address)
+   is
+      package Converter is new System.Address_To_Access_Conversions (${recordName});
+      Self_Access : Converter.Object_Pointer := Converter.To_Pointer (Self);
+      Self_Value : ${recordName} renames Self_Access.all;
+      Other_Access : Converter.Object_Pointer := Converter.To_Pointer (Other);
+      Other_Value : ${recordName} renames Other_Access.all;
+   begin
+      Self_Value := Other_Value;
+   end ${copyFunc.getLastName().toPascalWithUnderscore()};
 
    <%-- Define the getter and setter functions --%>
    @for(var f : rec.getGettersAndSetters())
