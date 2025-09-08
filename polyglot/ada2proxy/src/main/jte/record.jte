@@ -22,6 +22,7 @@ Template file to generate bindings for record types.
         : rec.getFullyQualifiedName();
     String recordPrefix = recordName.replace(".", "_");
     String recordAccessName = rec.name.toPascalWithUnderscore() + "_Access";
+    String cwAccessName = api.makeTemp(rec.name, "Cw_Access");
     FunctionDecl freeFunc = rec.getFreeFunction();
     FunctionDecl copyFunc = rec.getCopyFunction();
     List<FunctionDecl> allocFuncs = rec.getAllocFunctions();
@@ -74,16 +75,28 @@ Template file to generate bindings for record types.
 @else
    <%-- Define an Access type for the record --%>
    type ${recordAccessName} is access all ${recordName};
+   @if(rec.isTaggedType())
+   <%-- Define a classwide Access type for the record --%>
+   type ${cwAccessName} is access all ${recordName}'Class;
+   @endif
 
    <%-- Define the allocation/freeing functions --%>
    procedure ${freeFunc.getLastName().toPascalWithUnderscore()}
      (Self: System.Address)
    is
-      function Convert_Self is new Ada.Unchecked_Conversion
-        (System.Address, ${recordAccessName});
-      procedure Free is new Ada.Unchecked_Deallocation
-        (${recordName}, ${recordAccessName});
-      Local_Self : ${recordAccessName} := Convert_Self (Self);
+      @if(rec.isTaggedType())
+         function Convert_Self is new Ada.Unchecked_Conversion
+           (System.Address, ${cwAccessName});
+         procedure Free is new Ada.Unchecked_Deallocation
+           (${recordName}'Class, ${cwAccessName});
+         Local_Self : ${cwAccessName} := Convert_Self (Self);
+      @else
+         function Convert_Self is new Ada.Unchecked_Conversion
+           (System.Address, ${recordAccessName});
+         procedure Free is new Ada.Unchecked_Deallocation
+           (${recordName}, ${recordAccessName});
+         Local_Self : ${recordAccessName} := Convert_Self (Self);
+      @endif
    begin
       Free (Local_Self);
    end ${freeFunc.getLastName().toPascalWithUnderscore()};
