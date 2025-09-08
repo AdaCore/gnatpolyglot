@@ -46,6 +46,10 @@ vim: filetype=jtecpp
     @endfor
         ~${className}();
 
+    @if(members.copyFunction != null)
+        ${className} &operator=(${api.cppParameters(members.copyFunction)});
+    @endif
+
     @for(var m : members.memberFunctions)
         @if(m.visibility == Visibility.PUBLIC)
             @template.function(api, m, isSource)
@@ -160,6 +164,16 @@ vim: filetype=jtecpp
         ${members.freeFunction.symbol}(_data);
         _data = nullptr;
     }
+
+    @if(members.copyFunction != null)
+       extern "C" void ${members.copyFunction.symbol}
+           (${api.cParameters(members.copyFunction)});
+        ${className}
+        &${className}::operator=(${api.cppParameters(members.copyFunction)}) {
+            ${api.callCSymbol(members.copyFunction)};
+            return *this;
+        }
+    @endif
 
     void *${className}::data() const {
         return this->_data;

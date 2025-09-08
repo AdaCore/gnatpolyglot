@@ -5,6 +5,7 @@ vim: filetype=jtecpp
 @import com.adacore.polyglot.proxy.ExceptionDecl
 @import com.adacore.polyglot.proxy.FunctionDecl
 @import com.adacore.polyglot.proxy.Module
+@import com.adacore.polyglot.proxy.Role.RoleKind
 @import com.adacore.polyglot.proxy2cpp.CppAPI
 @param CppAPI api
 @param Module module
@@ -19,7 +20,8 @@ namespace ${api.namespacePath(module)} {
 
 @for (var decl : module.declarations)
     @if (decl instanceof FunctionDecl functionDecl
-            && (functionDecl.role == null || api.isMethod(functionDecl)))
+            && (functionDecl.role == null
+                || functionDecl.role.kind.compareTo(RoleKind.SETTER) <= 0))
         @template.function(api, functionDecl, true)
     @elseif (decl instanceof ClassDecl classDecl)
         @template.class(api, classDecl, true)
