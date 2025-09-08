@@ -133,8 +133,11 @@ Template file to generate bindings for record types.
            (Self: System.Address)
            return ${api.getterReturnTypename(component.getType())}
          is
-            Self_Value : ${recordName} with Address => Self;
-            pragma Import(Ada, Self_Value);
+            package Converter is
+               new System.Address_To_Access_Conversions (${recordName});
+            Self_Access : Converter.Object_Pointer :=
+               Converter.To_Pointer (Self);
+            Self_Value : ${recordName} renames Self_Access.all;
          begin
             ${api.makeGetterReturnConversion(componentAccess, componentType)};
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
@@ -144,8 +147,11 @@ Template file to generate bindings for record types.
             ${api.argName(component.name)}:
                ${api.cInterfaceTypename(component.getType())})
          is
-            Self_Value : ${recordName} with Address => Self;
-            pragma Import(Ada, Self_Value);
+            package Converter is
+               new System.Address_To_Access_Conversions (${recordName});
+            Self_Access : Converter.Object_Pointer :=
+               Converter.To_Pointer (Self);
+            Self_Value : ${recordName} renames Self_Access.all;
             ${api.makeParamConversion(component)};
          begin
             ${componentAccess} := ${api.valueName(component.name)};
