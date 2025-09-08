@@ -10,6 +10,8 @@ vim: filetype=jtecpp
 @param CppAPI api
 @param Module module
 
+#include <cassert>
+
 #include <polyglot_ada_strings.h>
 #include "polyglot_exceptions_${api.getProjectName().toLower()}.h"
 #include "polyglot.h"
