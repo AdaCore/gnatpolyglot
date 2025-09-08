@@ -134,10 +134,13 @@ Template file to generate bindings for record types.
         -- In the case of abstract types, we cannot use a variable with an address clause.
         -- In order to cover all cases, use an access.
         --%>
-      package Converter is new System.Address_To_Access_Conversions (${recordName});
-      Tmp : Converter.Object_Pointer := Converter.To_Pointer (Self);
+      function Convert_Self is new Ada.Unchecked_Conversion
+        (System.Address, ${recordAccessName});
+      function Convert_Return is new Ada.Unchecked_Conversion
+        (${recordAccessName}, System.Address);
+      Tmp : ${recordAccessName} := Convert_Self (Self);
    begin
-      return Converter.To_Address (new ${recordName}'(Tmp.all));
+      return Convert_Return (new ${recordName}'(Tmp.all));
    end ${cloneFunc.getLastName().toPascalWithUnderscore()};
 
    <%-- Define the copy function --%>
