@@ -4,6 +4,7 @@ import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.NativeType.NativeTypeDecl;
 import com.adacore.polyglot.proxy.ArrayTypeExpr;
 import com.adacore.polyglot.proxy.ClassDecl;
+import com.adacore.polyglot.proxy.EnumerationDecl;
 import com.adacore.polyglot.proxy.ExceptionDecl;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
@@ -110,7 +111,7 @@ public class CppAPI {
             TypeDecl typeDecl = context.getTypeDecl(name.name);
             if (typeDecl instanceof NativeTypeDecl nativeType)
                 return nativeTypeName(nativeType.nativeType);
-            if (typeDecl instanceof ClassDecl)
+            if (typeDecl instanceof ClassDecl || typeDecl instanceof EnumerationDecl)
                 return name.name.join(fqn -> lastNameToCppName(fqn), "", "::", "");
         } else if (typeExpr instanceof ArrayTypeExpr array) {
             return "polyglot::ada::arrays::polyglot_array<" + cppTypename(array.typeExpr) + ">";
@@ -159,6 +160,7 @@ public class CppAPI {
                 };
             // Classes are mapped as pointers in C.
             if (typeDecl instanceof ClassDecl) return "void *";
+            if (typeDecl instanceof EnumerationDecl) return nativeTypeName(NativeType.SINT32);
         } else if (typeExpr instanceof ArrayTypeExpr) {
             return "polyglot::ada::arrays::array_data";
         } else if (typeExpr instanceof ReferenceTypeExpr ref) {
@@ -273,15 +275,19 @@ public class CppAPI {
 
     /** Return a string that gets the value of a parameter for the call to the Ada subprogram */
     public String getParamForCall(Parameter p) {
+        if (p.type instanceof NameTypeExpr name
+                && context.getTypeDecl(name.name) instanceof EnumerationDecl)
+            return "static_cast<int>(" + p.name.toLower() + ")";
         // When the parameter is a reference to a scalar, get
         // the correspondign address.
-        if (p.type instanceof ReferenceTypeExpr ref
-                && ref.typeExpr instanceof NameTypeExpr name
-                && context.getTypeDecl(name.name) instanceof NativeTypeDecl nat) {
-            return switch (nat.nativeType) {
-                case STRING -> p.name.toLower() + ".data()";
-                default -> "&" + p.name.toLower();
-            };
+        if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof NameTypeExpr name) {
+            if (context.getTypeDecl(name.name) instanceof NativeTypeDecl nat)
+                return switch (nat.nativeType) {
+                    case STRING -> p.name.toLower() + ".data()";
+                    default -> "&" + p.name.toLower();
+                };
+            if (context.getTypeDecl(name.name) instanceof EnumerationDecl)
+                return "&" + p.name.toLower();
         }
         if ((p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof ArrayTypeExpr)
                 || p.type instanceof ArrayTypeExpr
@@ -328,6 +334,13 @@ public class CppAPI {
             // Note that unlike class types that require a wrapping proxy objects, native types can
             // be directely addressed, thus we can return real C++ references.
             builder.append("*");
+        } else if (functionDecl.type.returnType instanceof NameTypeExpr name
+                && context.getTypeDecl(name.name) instanceof EnumerationDecl) {
+            // Scoped enums cannot be instantiated with a list initializer until C++17. Use a
+            // static_cast instead.
+            builder.append("static_cast<")
+                    .append(cppReturnTypename(functionDecl.type.returnType))
+                    .append(">");
         } else {
             // Otherwise, create a new object that wraps the returned pointer.
             builder.append(cppReturnTypename(functionDecl.type.returnType));

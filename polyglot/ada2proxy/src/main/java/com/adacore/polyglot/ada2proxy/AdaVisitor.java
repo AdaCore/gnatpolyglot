@@ -7,6 +7,8 @@ import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration;
 import com.adacore.polyglot.ada2proxy.proxy.AdaException;
 import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
+import com.adacore.polyglot.ada2proxy.proxy.EnumLiteral;
+import com.adacore.polyglot.ada2proxy.proxy.EnumType;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
@@ -241,6 +243,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 // Native and array types do not create new types in the proxy, so we cannot attach
                 // methods
                 && AdaAPI.checkNativeType(primitiveType) == null
+                && !primitiveType.pIsEnumType(Libadalang.AdaNode.NONE)
                 && !primitiveType.pIsArrayType(Libadalang.AdaNode.NONE)
                 // The first argument of the subprogram must be compatible with the primitive type.
                 && spec.pParams().length != 0
@@ -483,6 +486,32 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                         Name.fromPascalWithUnderscore(node.pDefiningName().getText()),
                         node,
                         exceptionNumber++));
+        return null;
+    }
+
+    public Void visit(Libadalang.EnumTypeDef node) {
+        Libadalang.ConcreteTypeDecl parentDecl =
+                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
+
+        List<EnumLiteral> enumValues =
+                Stream.of(node.fEnumLiterals().children())
+                        .map(
+                                lit -> {
+                                    Libadalang.EnumLiteralDecl enumLit =
+                                            (Libadalang.EnumLiteralDecl) lit;
+                                    return new EnumLiteral(
+                                            enumLit,
+                                            Name.fromPascalWithUnderscore(
+                                                    enumLit.pDefiningName().getText()),
+                                            enumLit.pEnumRep().intValue());
+                                })
+                        .toList();
+
+        declarations.add(
+                new EnumType(
+                        parentDecl,
+                        Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
+                        enumValues));
         return null;
     }
 }

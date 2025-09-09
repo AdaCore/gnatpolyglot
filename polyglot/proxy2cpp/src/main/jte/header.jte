@@ -3,6 +3,7 @@ vim: filetype=jtecpp
 --%>
 @import com.adacore.polyglot.proxy.ClassDecl
 @import com.adacore.polyglot.proxy.ExceptionDecl
+@import com.adacore.polyglot.proxy.EnumerationDecl
 @import com.adacore.polyglot.proxy.FunctionDecl
 @import com.adacore.polyglot.proxy.Module
 @import com.adacore.polyglot.proxy2cpp.CppAPI
@@ -33,6 +34,8 @@ namespace ${api.namespacePath(module)} {
         @template.class(api, classDecl, false)
     @elseif (decl instanceof ExceptionDecl exceptionDecl)
         @template.exception(api, exceptionDecl, false)
+    @elseif (decl instanceof EnumerationDecl enumDecl)
+        @template.enum(api, enumDecl)
     @endif
 @endfor
 

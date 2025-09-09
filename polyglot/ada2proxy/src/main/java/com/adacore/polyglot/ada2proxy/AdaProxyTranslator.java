@@ -115,8 +115,9 @@ public class AdaProxyTranslator {
             // If the parameter is not a scalar, or has ``out`` or ``in out`` mode, it must be a
             // reference.
             NativeType nat = AdaAPI.checkNativeType(subpParam.getType());
-            if (nat == null || nat == NativeType.STRING || subpParam.isOutMode())
-                typeRef = typeRef.makeReference(isConst);
+            if (!subpParam.getType().pIsEnumType(Libadalang.AdaNode.NONE)
+                            && (nat == null || nat == NativeType.STRING)
+                    || subpParam.isOutMode()) typeRef = typeRef.makeReference(isConst);
             return new Parameter(subpParam.name, typeRef, subpParam.transfer);
         }
 

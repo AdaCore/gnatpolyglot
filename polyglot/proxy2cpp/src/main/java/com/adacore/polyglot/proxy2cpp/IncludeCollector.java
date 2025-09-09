@@ -97,7 +97,8 @@ public class IncludeCollector {
 
         @Override
         public Void visit(EnumerationDecl enumerationDecl) {
-            throw new UnsupportedOperationException("Unreachable");
+            // Nothing to do
+            return null;
         }
 
         @Override
