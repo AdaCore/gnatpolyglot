@@ -5,6 +5,7 @@ Template file to generate package bodies.
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration
 @import com.adacore.polyglot.ada2proxy.proxy.AdaException
+@import com.adacore.polyglot.ada2proxy.proxy.GlobalVariable
 @import com.adacore.polyglot.ada2proxy.proxy.Package
 @import com.adacore.polyglot.ada2proxy.proxy.Record
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
@@ -42,6 +43,8 @@ package body ${packageName}.Proxy is
         @template.record(api, rec, true)
     @elseif(decl instanceof AdaException exc)
         @template.exception(api, exc, true)
+    @elseif(decl instanceof GlobalVariable gv)
+        @template.global_var(api, gv, true)
     @endif
 @endfor
 end ${packageName}.Proxy;
