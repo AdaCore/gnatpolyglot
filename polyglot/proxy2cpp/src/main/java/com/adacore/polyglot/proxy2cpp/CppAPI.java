@@ -259,16 +259,12 @@ public class CppAPI {
                         .skip(isMethod(functionDecl) ? 1 : 0)
                         .map(p -> toCppParam(p))
                         .collect(Collectors.joining(", ")));
-        // SHADOW_ALLOC functions have 2 hidden arguments:
+        // The SHADOW_ALLOC function has one hidden argument:
         //  - The self argument of the class's raw pointer type.
-        //  - The vtable argument of the class' vtable raw pointer type.
         if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
             String className = functionDecl.role.type.getName().getLastName().toPascal();
-            builder.append(builder.isEmpty() ? "" : ", ")
-                    .append(className)
-                    .append(" *_self, ")
-                    .append(className)
-                    .append("::vtable *_vtable");
+            builder.append(builder.isEmpty() ? "" : ", ").append(className).append(" *_self");
+            ;
         }
         return builder.toString();
     }
@@ -316,8 +312,11 @@ public class CppAPI {
                         .map(p -> getParamForCall(p))
                         .collect(Collectors.joining(", ")));
         if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            String className = functionDecl.role.type.getName().getLastName().toPascal();
             builder.append(functionDecl.type.parameters.isEmpty() ? "" : ", ")
-                    .append("_self, _vtable");
+                    .append("_self, &")
+                    .append(className)
+                    .append("_vtable");
         }
         builder.append(")");
         return builder.toString();
@@ -394,7 +393,7 @@ public class CppAPI {
     /** Return a string of the parameters of the dispatching function. */
     public String dispatchParameters(FunctionTypeExpr function) {
         StringBuilder builder = new StringBuilder();
-        builder.append("void *_vtable, void *_self");
+        builder.append("void *_self");
         for (var param : function.parameters.stream().skip(1).toList()) {
             builder.append(", ").append(toCParam(param));
         }
@@ -510,10 +509,9 @@ public class CppAPI {
     /** Create a dispatching call to the member function set in the vtable's extra data. */
     public String callDispatch(VTableEntry function) {
         StringBuilder builder = new StringBuilder();
-        builder.append("(__self->*(__vtable->_data.")
+        builder.append("__self->")
                 .append(function.name.toLower())
-                .append("_member")
-                .append("))(")
+                .append("(")
                 .append(
                         function.functionType.parameters.stream()
                                 .skip(1)
