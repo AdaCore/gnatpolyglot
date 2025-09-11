@@ -32,10 +32,7 @@ def run_java(main_class: str, class_path: str, argv: list[str]) -> None:
 
     java_exec = os.path.realpath(os.path.join(os.environ["JAVA_HOME"], "bin", "java"))
 
-    extra_args = [
-        "--add-exports",
-        "org.graalvm.truffle/com.oracle.truffle.api.strings=ALL-UNNAMED",
-    ]
+    extra_args = ["--enable-native-access=ALL-UNNAMED"]
     run([java_exec, "-cp", class_path, *extra_args, main_class, *argv])
 
 def run_native(subcommand: str, argv: list[str]):
