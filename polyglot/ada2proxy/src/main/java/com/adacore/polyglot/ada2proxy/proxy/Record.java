@@ -396,4 +396,10 @@ public class Record extends AdaDeclaration {
     public boolean isTaggedType() {
         return origin.pIsTaggedType(Libadalang.AdaNode.NONE);
     }
+
+    public boolean isControlled() {
+        return origin.pRootType(Libadalang.AdaNode.NONE)
+                .pFullyQualifiedName()
+                .startsWith("Ada.Finalization.");
+    }
 }
