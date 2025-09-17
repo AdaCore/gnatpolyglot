@@ -44,7 +44,15 @@ vim: filetype=jtecpp
             ${className}(${api.cppParameters(alloc)});
         @endif
     @endfor
+        @if(!classDecl.isFinal && classDecl.parent == null)
+        virtual ~${className}();
+        @else
         ~${className}();
+        @endif
+
+    @if(members.copyFunction != null)
+        ${className} &operator=(${api.cppParameters(members.copyFunction)});
+    @endif
 
     @for(var m : members.memberFunctions)
         @if(m.visibility == Visibility.PUBLIC)
@@ -54,6 +62,8 @@ vim: filetype=jtecpp
 
         void *data() const;
         void *release();
+
+        virtual ${className} *internal_clone(void *data);
 
     public:
         struct view;
@@ -107,11 +117,26 @@ vim: filetype=jtecpp
                 }
             }
         @endfor
+
+        void *${className}_do_internal_clone(${className} *self, void *data) {
+            return self->internal_clone(data);
+        }
+
+        void ${className}_do_internal_free(${className} *self) {
+            // If this is called, thats means the destruction of the shadow data was
+            // called from the library. The data is already being freed on that side if
+            // necessary (it could have been copied on the stack, meaning that calling
+            // the free function could lead to an invalid free)
+            self->release();
+            delete self;
+        }
         }
 
         struct ${className}_vtable {
         <%-- Constructor of the vtable --%>
         ${className}_vtable() {
+            this->_data.clone_shadow_dispatch = &${className}_do_internal_clone;
+            this->_data.free_shadow_dispatch = &${className}_do_internal_free;
         @for(var method : classDecl.vtable)
             !{String lastName = method.name.toLower();}
              this->_data.${lastName}_dispatch =
@@ -122,6 +147,8 @@ vim: filetype=jtecpp
             void *data() { return &this->_data; }
 
             struct table_data {
+                void *(*clone_shadow_dispatch)(${className} *_self, void *_data);
+                void (*free_shadow_dispatch)(${className} *_self);
             <%---
               -- Generate all the dispatch function pointers. They are
               -- functions with C linkage and they must overlay on the vtable
@@ -160,6 +187,24 @@ vim: filetype=jtecpp
         ${members.freeFunction.symbol}(_data);
         _data = nullptr;
     }
+
+    ${className} *${className}::internal_clone(void *) {
+        assert(
+            "Attempting to clone a derivation of ${className}:"
+            " ${className}::internal_clone should be overriden"
+            && false
+        );
+    }
+
+    @if(members.copyFunction != null)
+       extern "C" void ${members.copyFunction.symbol}
+           (${api.cParameters(members.copyFunction)});
+        ${className}
+        &${className}::operator=(${api.cppParameters(members.copyFunction)}) {
+            ${api.callCSymbol(members.copyFunction)};
+            return *this;
+        }
+    @endif
 
     void *${className}::data() const {
         return this->_data;

@@ -22,7 +22,9 @@ Template file to generate bindings for record types.
         : rec.getFullyQualifiedName();
     String recordPrefix = recordName.replace(".", "_");
     String recordAccessName = rec.name.toPascalWithUnderscore() + "_Access";
+    String cwAccessName = api.makeTemp(rec.name, "Cw_Access");
     FunctionDecl freeFunc = rec.getFreeFunction();
+    FunctionDecl copyFunc = rec.getCopyFunction();
     List<FunctionDecl> allocFuncs = rec.getAllocFunctions();
     FunctionDecl cloneFunc = rec.getCloneFunction();
 }
@@ -44,6 +46,11 @@ Template file to generate bindings for record types.
    function ${cloneFunc.getLastName().toPascalWithUnderscore()}
      (Self: System.Address) return System.Address;
    pragma Export (C, ${cloneFunc.getLastName().toPascalWithUnderscore()}, "${cloneFunc.symbol}");
+
+   <%-- Declare the copy function --%>
+   procedure ${copyFunc.getLastName().toPascalWithUnderscore()}
+     (Self: System.Address; Other: System.Address);
+   pragma Export (C, ${copyFunc.getLastName().toPascalWithUnderscore()}, "${copyFunc.symbol}");
 
    <%-- Declare the getter and setter functions --%>
    @for(var f : rec.getGettersAndSetters())
@@ -68,16 +75,28 @@ Template file to generate bindings for record types.
 @else
    <%-- Define an Access type for the record --%>
    type ${recordAccessName} is access all ${recordName};
+   @if(rec.isTaggedType())
+   <%-- Define a classwide Access type for the record --%>
+   type ${cwAccessName} is access all ${recordName}'Class;
+   @endif
 
    <%-- Define the allocation/freeing functions --%>
    procedure ${freeFunc.getLastName().toPascalWithUnderscore()}
      (Self: System.Address)
    is
-      function Convert_Self is new Ada.Unchecked_Conversion
-        (System.Address, ${recordAccessName});
-      procedure Free is new Ada.Unchecked_Deallocation
-        (${recordName}, ${recordAccessName});
-      Local_Self : ${recordAccessName} := Convert_Self (Self);
+      @if(rec.isTaggedType())
+         function Convert_Self is new Ada.Unchecked_Conversion
+           (System.Address, ${cwAccessName});
+         procedure Free is new Ada.Unchecked_Deallocation
+           (${recordName}'Class, ${cwAccessName});
+         Local_Self : ${cwAccessName} := Convert_Self (Self);
+      @else
+         function Convert_Self is new Ada.Unchecked_Conversion
+           (System.Address, ${recordAccessName});
+         procedure Free is new Ada.Unchecked_Deallocation
+           (${recordName}, ${recordAccessName});
+         Local_Self : ${recordAccessName} := Convert_Self (Self);
+      @endif
    begin
       Free (Local_Self);
    end ${freeFunc.getLastName().toPascalWithUnderscore()};
@@ -115,11 +134,27 @@ Template file to generate bindings for record types.
         -- In the case of abstract types, we cannot use a variable with an address clause.
         -- In order to cover all cases, use an access.
         --%>
-      package Converter is new System.Address_To_Access_Conversions (${recordName});
-      Tmp : Converter.Object_Pointer := Converter.To_Pointer (Self);
+      function Convert_Self is new Ada.Unchecked_Conversion
+        (System.Address, ${recordAccessName});
+      function Convert_Return is new Ada.Unchecked_Conversion
+        (${recordAccessName}, System.Address);
+      Tmp : ${recordAccessName} := Convert_Self (Self);
    begin
-      return Converter.To_Address (new ${recordName}'(Tmp.all));
+      return Convert_Return (new ${recordName}'(Tmp.all));
    end ${cloneFunc.getLastName().toPascalWithUnderscore()};
+
+   <%-- Define the copy function --%>
+   procedure ${copyFunc.getLastName().toPascalWithUnderscore()}
+     (Self: System.Address; Other: System.Address)
+   is
+      package Converter is new System.Address_To_Access_Conversions (${recordName});
+      Self_Access : Converter.Object_Pointer := Converter.To_Pointer (Self);
+      Self_Value : ${recordName} renames Self_Access.all;
+      Other_Access : Converter.Object_Pointer := Converter.To_Pointer (Other);
+      Other_Value : ${recordName} renames Other_Access.all;
+   begin
+      Self_Value := Other_Value;
+   end ${copyFunc.getLastName().toPascalWithUnderscore()};
 
    <%-- Define the getter and setter functions --%>
    @for(var f : rec.getGettersAndSetters())
@@ -133,8 +168,11 @@ Template file to generate bindings for record types.
            (Self: System.Address)
            return ${api.getterReturnTypename(component.getType())}
          is
-            Self_Value : ${recordName} with Address => Self;
-            pragma Import(Ada, Self_Value);
+            package Converter is
+               new System.Address_To_Access_Conversions (${recordName});
+            Self_Access : Converter.Object_Pointer :=
+               Converter.To_Pointer (Self);
+            Self_Value : ${recordName} renames Self_Access.all;
          begin
             ${api.makeGetterReturnConversion(componentAccess, componentType)};
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
@@ -144,8 +182,11 @@ Template file to generate bindings for record types.
             ${api.argName(component.name)}:
                ${api.cInterfaceTypename(component.getType())})
          is
-            Self_Value : ${recordName} with Address => Self;
-            pragma Import(Ada, Self_Value);
+            package Converter is
+               new System.Address_To_Access_Conversions (${recordName});
+            Self_Access : Converter.Object_Pointer :=
+               Converter.To_Pointer (Self);
+            Self_Value : ${recordName} renames Self_Access.all;
             ${api.makeParamConversion(component)};
          begin
             ${componentAccess} := ${api.valueName(component.name)};

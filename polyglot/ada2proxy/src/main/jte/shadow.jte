@@ -29,9 +29,13 @@ Template file to generate shadow types for tagged records.
 @if(!isBody)
    <%-- Shadow type for inheritance --%>
 
-   type ${shadowTypename} is new ${recordFullName} with record
+   type ${shadowTypename} is new
+         ${recordFullName} and Polyglot.Ada.Shadow_Interface with record
       Shadow: Polyglot.Ada.Shadow_Data;
    end record;
+
+   procedure Set_Self_Owner
+     (Shadow : out ${shadowTypename}; Owner : Polyglot.Ada.Self_Owner_Kind);
 
    type ${shadowAccess} is access all ${shadowTypename};
 
@@ -42,14 +46,12 @@ Template file to generate shadow types for tagged records.
    @endfor
 
    type ${recordName}_Vtable is record
-   @if(methods.isEmpty())
-      null;
-   @else
+      Clone_Shadow_Dispatch : Polyglot.Ada.Clone_Shadow_Type;
+      Free_Shadow_Dispatch  : Polyglot.Ada.Free_Shadow_Type;
       @for(var subp: methods)
          ${subp.name.toPascalWithUnderscore()}_Dispatch :
             ${subp.name.toPascalWithUnderscore()}_${recordName}_Type;
       @endfor
-   @endif
    end record with Convention => C;
 
    @for(var allocFunc : allocFuncs)
@@ -69,6 +71,32 @@ Template file to generate shadow types for tagged records.
    @endfor
 
 @else
+
+   procedure Set_Self_Owner
+     (Shadow : out ${shadowTypename}; Owner : Polyglot.Ada.Self_Owner_Kind) is
+   begin
+      Shadow.Shadow.Self_Owner := Owner;
+   end Set_Self_Owner;
+
+   function ${shadowTypename}_Back_Ref_Converter
+     (Self : access Polyglot.Ada.Shadow_Data) return System.Address
+   is
+      -- Init blank data to have an variable available to get the offset of a field.
+      -- Ada does not allow getting the location of a field by refering its type only,
+      -- but instead requires a value. In order to avoid dereferencing a null value,
+      -- or creating a new object that could result in calling controlled type functions,
+      -- we overlay an object on a blank array of bytes.
+      type Bit_Array is array (1 .. ${shadowTypename}'Size) of Standard.Boolean with Pack;
+      Tmp_Bits      : Bit_Array;
+      function Bits_To_Shadow is new Ada.Unchecked_Conversion (System.Address, ${shadowTypename}_Access);
+      Tmp : ${shadowTypename}_Access := Bits_To_Shadow(Tmp_Bits'Address);
+      -- Get the offset from the Shadow_Data inside Cont_Shadow types
+      Shadow_Offset : constant System.Storage_Elements.Storage_Offset :=
+        Tmp.Shadow'Position;
+   begin
+      return System.Storage_Elements."-" (Self.all'Address, Shadow_Offset);
+   end ${shadowTypename}_Back_Ref_Converter;
+
    @for(var allocFunc : allocFuncs)
       function ${allocFunc.getLastName().toPascalWithUnderscore()}
       @if(!allocFunc.type.parameters.isEmpty() || allocFunc.role.kind == RoleKind.SHADOW_ALLOC)
@@ -94,7 +122,12 @@ Template file to generate shadow types for tagged records.
                   ${api.valueName(p.name)},
                @endif
             @endfor
-            Shadow => (Self => Self_Value, Vtable => Vtable_Value),
+            Shadow =>
+               (Ada.Finalization.Controlled with
+                Self => Self_Value,
+                Vtable => Vtable_Value,
+                Self_Owner => Polyglot.Ada.User,
+                Back_Ref_Converter => ${shadowTypename}_Back_Ref_Converter'Access),
             others => <>
          );
       begin

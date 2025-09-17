@@ -16,6 +16,9 @@ public class ProxyContext {
         /** Function to free the type. */
         public FunctionDecl freeFunction = null;
 
+        /** Function to copy the type. */
+        public FunctionDecl copyFunction = null;
+
         /** List of all other member functions of the type (getters, setters, methods...). */
         public ArrayList<FunctionDecl> memberFunctions = new ArrayList<>();
     }
@@ -62,6 +65,9 @@ public class ProxyContext {
         } else if (func.role.kind == RoleKind.FREE) {
             if (entry.freeFunction != null) return false;
             entry.freeFunction = func;
+        } else if (func.role.kind == RoleKind.COPY) {
+            if (entry.copyFunction != null) return false;
+            entry.copyFunction = func;
         } else if (func.role.kind.compareTo(RoleKind.SETTER) <= 0) {
             entry.memberFunctions.add(func);
         }

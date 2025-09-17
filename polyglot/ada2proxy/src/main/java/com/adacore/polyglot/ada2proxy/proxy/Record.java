@@ -46,6 +46,9 @@ public class Record extends AdaDeclaration {
     /** Default cloning function of the type. */
     private FunctionDecl cloneFunction;
 
+    /** Default copying function of the type. */
+    private FunctionDecl copyFunction;
+
     /** Default getter and setter functions of the type. */
     private ArrayList<FunctionDecl> componentAccessors;
 
@@ -132,6 +135,34 @@ public class Record extends AdaDeclaration {
                             FunctionDecl.Overridability.FINAL,
                             FunctionDecl.Staticness.NON_STATIC);
         return this.freeFunction;
+    }
+
+    /** Return the copying function of the type, or generate a new one if necessary. */
+    public FunctionDecl getCopyFunction() {
+        if (this.copyFunction == null)
+            this.copyFunction =
+                    new FunctionDecl(
+                            getProxyFullyQualifiedName()
+                                    .append(name.concat(Name.fromLower("default_copy"))),
+                            "Generated function to copy ``Other`` to ``Self``",
+                            new Role(RoleKind.COPY, getTypeExpr(), null),
+                            buildMemberSymbol("_Default_Copy"),
+                            new FunctionTypeExpr(
+                                    List.of(
+                                            new Parameter(
+                                                    Name.fromLower("self"),
+                                                    getTypeExpr().makeReference(false),
+                                                    new Transfer(RequiredOwner.USER)),
+                                            new Parameter(
+                                                    Name.fromLower("other"),
+                                                    getTypeExpr().makeReference(true),
+                                                    new Transfer(RequiredOwner.USER))),
+                                    NativeType.VOID.typeExpr,
+                                    Owner.UNKNOWN),
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC);
+        return this.copyFunction;
     }
 
     private List<Parameter> constructorParameters(boolean withDefaults) {

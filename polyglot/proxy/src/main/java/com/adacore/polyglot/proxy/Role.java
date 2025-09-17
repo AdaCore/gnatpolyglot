@@ -18,6 +18,9 @@ public class Role implements ProxyObject {
         /** The function sets the value of {@link Role#field}. */
         @JsonProperty("setter")
         SETTER,
+        /** The function copies an instance of type {@link Role#type}. */
+        @JsonProperty("copy")
+        COPY,
         /** The function initializes the field of an instance of type {@link Role#type}. */
         @JsonProperty("construct")
         CONSTRUCT,

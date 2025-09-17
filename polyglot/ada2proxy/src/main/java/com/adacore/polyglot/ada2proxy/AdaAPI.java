@@ -269,7 +269,7 @@ public class AdaAPI extends LanguageAPI {
         String argName = argName(name);
         String tempVarValue = null;
         // Class wide types need a pointer conversion function.
-        if (type instanceof Libadalang.ClasswideTypeDecl || type.pIsAbstractType()) {
+        if (type.pIsRecordType(Libadalang.AdaNode.NONE)) {
             Libadalang.BaseTypeDecl specificType = type.pSpecificType();
             String accessType = makeTemp(name, asAccess(specificType));
             String converter = makeTemp(name, "Converter");
@@ -324,11 +324,10 @@ public class AdaAPI extends LanguageAPI {
                     .append(".Data; pragma Import (Ada, ")
                     .append(valueName(name))
                     .append(")");
-        } else if (type instanceof Libadalang.ClasswideTypeDecl || type.pIsAbstractType()) {
+        } else if (type.pIsRecordType(Libadalang.AdaNode.NONE)) {
             builder.append(" renames ").append(tempVarValue).append(".all");
-        } else if (type.pIsRecordType(Libadalang.AdaNode.NONE) || isOutMode) {
-            // If the type is a record or when the parameter uses an ``out`` mode, generate the
-            // following:
+        } else if (isOutMode) {
+            // If the parameter uses an ``out`` mode, generate the following:
             // .. code::
             //
             //     ${Arg}_Value : ${Type} with Address => ${Arg}_Arg;
