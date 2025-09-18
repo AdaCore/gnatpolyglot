@@ -112,16 +112,20 @@ Template file to generate bindings for record types.
            ${api.makeParamConversion(rec.getComponent(p.name))};
          @endfor
          package Converter is new System.Address_To_Access_Conversions (${recordName});
-         Tmp : ${recordAccessName} := new ${recordName}'(
-            <%-- When the type inherits from a private type (directly, or indirectly)
-              -- an extension aggregate is required.
-              --%>
-            ${rec.extensionAggregate()}
-            @for(var p : allocFunc.type.parameters)
-               ${api.valueName(p.name)},
-            @endfor
-            others => <>
-         );
+         @if(rec.isControlled() && allocFunc.type.parameters.isEmpty())
+            Tmp : ${recordAccessName} := new ${recordName};
+         @else
+            Tmp : ${recordAccessName} := new ${recordName}'(
+               <%-- When the type inherits from a private type (directly, or indirectly)
+                 -- an extension aggregate is required.
+                 --%>
+               ${rec.extensionAggregate()}
+               @for(var p : allocFunc.type.parameters)
+                  ${api.valueName(p.name)},
+               @endfor
+               others => <>
+            );
+         @endif
       begin
          return Converter.To_Address (Converter.Object_Pointer (Tmp));
       end ${allocFunc.getLastName().toPascalWithUnderscore()};

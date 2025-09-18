@@ -131,6 +131,9 @@ Template file to generate shadow types for tagged records.
             others => <>
          );
       begin
+         @if(rec.isControlled() && allocFunc.type.parameters.isEmpty())
+         ${recordName} (Tmp.all).Initialize;
+         @endif
          return Converter.To_Address (Converter.Object_Pointer (Tmp));
       end ${allocFunc.getLastName().toPascalWithUnderscore()};
    @endfor
