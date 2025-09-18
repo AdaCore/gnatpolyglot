@@ -21,7 +21,9 @@ int main() {
     {
         test::Cont cont;
         test::ContWrapper wrapper(cont);
+        test::ContWrapper cont2;
         cont.p();
         wrapper.get_c()->p();
+        cont2.get_c()->p();
     }
 }

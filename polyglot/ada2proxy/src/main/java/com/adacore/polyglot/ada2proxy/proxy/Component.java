@@ -19,7 +19,12 @@ public class Component implements AdaProxyObject {
     }
 
     public boolean hasDefaultValue() {
-        return !origin.fDefaultExpr().isNone();
+        return !origin.fDefaultExpr().isNone()
+                // Component who are of a controlled type implicitely have a default value.
+                || origin.pFormalType(Libadalang.AdaNode.NONE)
+                        .pRootType(Libadalang.AdaNode.NONE)
+                        .pFullyQualifiedName()
+                        .startsWith("Ada.Finalization.");
     }
 
     /**
