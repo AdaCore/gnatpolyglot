@@ -301,6 +301,33 @@ public class AdaAPI extends LanguageAPI {
                     .append(" (")
                     .append(argName)
                     .append(")\n;");
+        } else if (AdaTypeMatcher.isArrayAccess(type)) {
+            Libadalang.BaseTypeDecl arrayType = type.pAccessedType(Libadalang.AdaNode.NONE);
+            Libadalang.BaseTypeDecl indexType = arrayType.pIndexType(0, Libadalang.AdaNode.NONE);
+            String polyglotArrayValue = isOutMode ? makeTemp(name, "Polyglot_Array") : argName;
+            tempVarValue = makeTemp(name, "Array");
+            if (isOutMode) {
+                builder.append(polyglotArrayValue)
+                        .append(" : Polyglot.Ada.Arrays.Polyglot_Array with Address => ")
+                        .append(argName)
+                        .append("; pragma Import(Ada, ")
+                        .append(polyglotArrayValue)
+                        .append(");\n");
+            }
+
+            builder.append(tempVarValue)
+                    .append(" : ")
+                    .append(arrayType.pFullyQualifiedName())
+                    .append(" (")
+                    .append(createBoundCast(polyglotArrayValue, arrayType, true))
+                    .append(" .. ")
+                    .append(createBoundCast(polyglotArrayValue, arrayType, false))
+                    .append(") with Address => ")
+                    .append(polyglotArrayValue)
+                    .append(".Data;\n")
+                    .append("pragma Import (Ada, ")
+                    .append(tempVarValue)
+                    .append(");");
         } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
             converter = makeTemp(name, "Converter");
             builder.append("function ")
@@ -334,6 +361,8 @@ public class AdaAPI extends LanguageAPI {
                     .append(")");
         } else if (type.pIsRecordType(Libadalang.AdaNode.NONE)) {
             builder.append(" renames ").append(tempVarValue).append(".all");
+        } else if (AdaTypeMatcher.isArrayAccess(type)) {
+            builder.append(" := ").append(tempVarValue).append("'Unrestricted_Access");
         } else if (isOutMode) {
             // If the parameter uses an ``out`` mode, generate the following:
             // .. code::
@@ -420,7 +449,8 @@ public class AdaAPI extends LanguageAPI {
                     .append(" System.Address_To_Access_Conversions(")
                     .append(typename)
                     .append(");");
-        } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
+        } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)
+                || AdaTypeMatcher.isArrayAccess(returnedType)) {
             String accessType = asAccess(returnedType);
             builder.append("type ")
                     .append(accessType)
@@ -500,6 +530,31 @@ public class AdaAPI extends LanguageAPI {
                     .append("return (First => Interfaces.C.Int (Returned_Array.all'First),")
                     .append("Last => Interfaces.C.Int (Returned_Array.all'Last), ")
                     .append("Data => Returned_Array.all'Address)");
+        } else if (AdaTypeMatcher.isArrayAccess(returnedType)) {
+            Libadalang.BaseTypeDecl indexType =
+                    returnedType
+                            .pAccessedType(Libadalang.AdaNode.NONE)
+                            .pIndexType(0, Libadalang.AdaNode.NONE);
+            builder.append("if ")
+                    .append(returnedValue)
+                    .append(" = null then\n")
+                    .append("return (First => Interfaces.C.int (")
+                    .append(indexType.pFullyQualifiedName())
+                    .append("'First + 1), Last => Interfaces.C.int (")
+                    .append(indexType.pFullyQualifiedName())
+                    .append("'First), Data => System.Null_Address);\n")
+                    .append("else\n")
+                    .append("return (First => Interfaces.C.Int (")
+                    .append(returnedValue)
+                    .append(".all'First),")
+                    .append("Last => Interfaces.C.Int (")
+                    .append(returnedValue)
+                    .append(".all'Last), ")
+                    .append("Data => ")
+                    .append(returnedValue)
+                    .append(".all'Address);\n")
+                    .append("end if");
+
         } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
             builder.append("return Return_Type_Converter (").append(returnedValue).append(")");
         }
@@ -752,9 +807,46 @@ public class AdaAPI extends LanguageAPI {
         if (AdaTypeMatcher.isCharacter(returnType))
             return "return Interfaces.C.To_C ( Character'Val(0))";
         if (returnType.pIsScalarType(Libadalang.AdaNode.NONE)) return "return 0";
-        if (returnType.pIsArrayType(Libadalang.AdaNode.NONE))
-            return "return(1, 0, System.Null_Address)";
+        if (returnType.pIsArrayType(Libadalang.AdaNode.NONE)
+                || AdaTypeMatcher.isArrayAccess(subp.getReturnType()))
+            return " return(1, 0, System.Null_Address)";
         if (AdaTypeMatcher.isReturnedAsAddress(returnType)) return "return System.Null_Address";
         return "return (others => <>)";
+    }
+
+    public String syncParamValue(SubpParam param) {
+        StringBuilder builder = new StringBuilder();
+        if (AdaTypeMatcher.isArrayAccess(param.getType()) && param.isOutMode()) {
+            String polyglotArray = makeTemp(param.name, "Polyglot_Array");
+            String valueArg = valueName(param.name);
+            builder.append("declare\n")
+                    .append(polyglotArray)
+                    .append(" : Polyglot.Ada.Arrays.Polyglot_Array with Address => ")
+                    .append(argName(param.name))
+                    .append("; pragma Import(Ada, ")
+                    .append(polyglotArray)
+                    .append(");\n")
+                    .append("begin\n")
+                    .append(polyglotArray)
+                    .append(".First := Interfaces.C.int (if ")
+                    .append(valueArg)
+                    .append(" = null then 0 else ")
+                    .append(valueArg)
+                    .append(".all'First);\n")
+                    .append(polyglotArray)
+                    .append(".Last := Interfaces.C.int (if ")
+                    .append(valueArg)
+                    .append(" = null then -1 else ")
+                    .append(valueArg)
+                    .append(".all'Last);\n")
+                    .append(polyglotArray)
+                    .append(".Data := (if ")
+                    .append(valueArg)
+                    .append(" = null then System.Null_Address else ")
+                    .append(valueArg)
+                    .append(".all'Address);\n")
+                    .append("end;");
+        }
+        return builder.toString();
     }
 }

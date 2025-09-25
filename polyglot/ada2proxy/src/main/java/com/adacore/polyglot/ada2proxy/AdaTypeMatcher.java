@@ -8,6 +8,11 @@ import java.util.stream.Stream;
 /** Collection of static methods to help identify complex types from Libadalang. */
 public class AdaTypeMatcher {
 
+    /** Return whether the BaseTypeDecl is an access type to an array. */
+    public static boolean isArrayAccess(Libadalang.BaseTypeDecl typeDecl) {
+        return typeDecl.pIsAccessType(NONE) && typeDecl.pAccessedType(NONE).pIsArrayType(NONE);
+    }
+
     /** Return whether the BaseTypeDecl is a controlled type. */
     public static boolean isControlledType(Libadalang.BaseTypeDecl typeDecl) {
         return typeDecl.pRootType(Libadalang.AdaNode.NONE)
