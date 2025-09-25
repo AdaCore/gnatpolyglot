@@ -342,9 +342,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // Get the list of parameters.
         List<SubpParam> parameters = new ArrayList<>();
         if (!spec.fSubpParams().isNone()) {
-            for (var child : spec.fSubpParams().fParams().children()) {
-                Libadalang.ParamSpec paramSpec = (Libadalang.ParamSpec) child;
-
+            for (var paramSpec : spec.fSubpParams().fParams()) {
                 // Enqueue the parameter's type in case we do not visit it in the required list of
                 // units
                 queuedDecls.add(paramSpec.pFormalType(Libadalang.AdaNode.NONE));
@@ -356,7 +354,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 Transfer transfer = new Transfer(RequiredOwner.ANY);
 
                 // For each parameter declared in the spec, add a parameter.
-                for (var p : paramSpec.fIds().children())
+                for (var p : paramSpec.fIds())
                     parameters.add(
                             new SubpParam(
                                     paramSpec,
@@ -461,7 +459,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
                 Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
                 queuedDecls.add(componentDecl.pFormalType(Libadalang.AdaNode.NONE));
-                for (var name : componentDecl.fIds().children()) {
+                for (var name : componentDecl.fIds()) {
                     components.add(
                             new Component(
                                     componentDecl, Name.fromPascalWithUnderscore(name.getText())));
