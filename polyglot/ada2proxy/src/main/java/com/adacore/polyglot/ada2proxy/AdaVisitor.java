@@ -309,6 +309,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 && AdaAPI.checkNativeType(primitiveType) == null
                 && !primitiveType.pIsEnumType(Libadalang.AdaNode.NONE)
                 && !primitiveType.pIsArrayType(Libadalang.AdaNode.NONE)
+                && !primitiveType.pIsAccessType(Libadalang.AdaNode.NONE)
                 // The first argument of the subprogram must be compatible with the primitive type.
                 && spec.pParams().length != 0
                 && (spec.pParams()[0]
@@ -351,7 +352,13 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 // arguments, so the ownership does not matter.
                 // TODO Access types: Ownership informations will be necessary when access types are
                 // handled.
-                Transfer transfer = new Transfer(RequiredOwner.ANY);
+                Transfer transfer =
+                        new Transfer(
+                                paramSpec
+                                                .pFormalType(Libadalang.AdaNode.NONE)
+                                                .pIsAccessType(Libadalang.AdaNode.NONE)
+                                        ? RequiredOwner.LIBRARY
+                                        : RequiredOwner.ANY);
 
                 // For each parameter declared in the spec, add a parameter.
                 for (var p : paramSpec.fIds())
@@ -389,11 +396,18 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                             returnType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
         }
 
-        // Record value type are allocated on the heap before being returned. If a function returns
-        // one, it is copied to a heap address before being returned to the user.
         Owner returnOwner = Owner.UNKNOWN;
-        if (!returnType.isNone() && returnType.pIsRecordType(Libadalang.AdaNode.NONE))
-            returnOwner = Owner.LIBRARY;
+        if (!returnType.isNone()) {
+            // When returning an access, there is no way to determine whether the pointer is to be
+            // freed by the user or the library at an other moment. The safest way to avoid the any
+            // errors is to making the returning access library owned.
+            if (returnType.pIsAccessType(Libadalang.AdaNode.NONE)) returnOwner = Owner.LIBRARY;
+            // Record and Array value types are allocated on the heap before being returned from the
+            // Ada glue. Since the copy is performed after the called Ada function has returned, we
+            // know for sure that the user is the only owner of that heap value.
+            if (returnType.pIsRecordType(Libadalang.AdaNode.NONE)
+                    || returnType.pIsArrayType(Libadalang.AdaNode.NONE)) returnOwner = Owner.USER;
+        }
 
         Subprogram subProg =
                 new Subprogram(

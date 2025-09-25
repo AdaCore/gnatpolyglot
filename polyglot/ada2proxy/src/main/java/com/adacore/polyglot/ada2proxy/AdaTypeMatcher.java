@@ -39,4 +39,10 @@ public class AdaTypeMatcher {
     public static boolean isEnum(Libadalang.BaseTypeDecl typeDecl) {
         return typeDecl.pIsEnumType(Libadalang.AdaNode.NONE) && !isCharacter(typeDecl);
     }
+
+    public static boolean isReturnedAsAddress(Libadalang.BaseTypeDecl typeDecl) {
+        return typeDecl.pIsPrivate()
+                || typeDecl.pIsRecordType(Libadalang.AdaNode.NONE)
+                || typeDecl.pIsAccessType(Libadalang.AdaNode.NONE);
+    }
 }

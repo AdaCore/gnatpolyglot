@@ -1,6 +1,7 @@
 package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.AdaException;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxy;
@@ -111,15 +112,17 @@ public class AdaProxyTranslator {
 
         @Override
         public Parameter visit(SubpParam subpParam) {
-            TypeExpr typeRef = AdaAPI.makeTypeExpr(subpParam.getType());
+            BaseTypeDecl type = subpParam.getType();
+            TypeExpr typeRef = AdaAPI.makeTypeExpr(type);
             boolean isConst = false;
             // If the parameter has the mode ``in`` or default, it is constant.
             if (!subpParam.isOutMode()) isConst = true;
-            // If the parameter is not a scalar, or has ``out`` or ``in out`` mode, it must be a
-            // reference.
-            NativeType nat = AdaAPI.checkNativeType(subpParam.getType());
-            if (!subpParam.getType().pIsEnumType(Libadalang.AdaNode.NONE)
-                            && (nat == null || nat == NativeType.STRING)
+            // If the parameter is neither a scalar, an enum type, an access type, or has ``out`` or
+            // ``in out`` mode, it must be a reference.
+            NativeType nat = AdaAPI.checkNativeType(type);
+            if ((!type.pIsEnumType(Libadalang.AdaNode.NONE)
+                            && !type.pIsAccessType(Libadalang.AdaNode.NONE)
+                            && (nat == null || nat == NativeType.STRING))
                     || subpParam.isOutMode()) typeRef = typeRef.makeReference(isConst);
             return new Parameter(subpParam.name, typeRef, subpParam.transfer);
         }
