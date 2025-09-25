@@ -66,23 +66,11 @@ public class AdaAPI extends LanguageAPI {
     public static TypeExpr makeTypeExpr(Libadalang.BasicDecl decl) {
         if (decl instanceof Libadalang.TypeDecl typeDecl) {
             if (typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
-                if (isStringType(typeDecl)) return NativeType.STRING.typeExpr;
+                if (AdaTypeMatcher.isStringType(typeDecl)) return NativeType.STRING.typeExpr;
                 return makeTypeExpr(arrayTypeDef.fComponentType().fTypeExpr()).makeArray();
             }
         }
         return makeProxyFullyQualifiedName(decl).asTypeExpr();
-    }
-
-    public static boolean isStringType(Libadalang.BaseTypeDecl bTypeDecl) {
-        if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl
-                && typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
-            return arrayTypeDef
-                    .fComponentType()
-                    .fTypeExpr()
-                    .pDesignatedTypeDecl()
-                    .equals(typeDecl.pStdCharType());
-        }
-        return bTypeDecl.equals(bTypeDecl.pStdStringType());
     }
 
     /** Return the native type corresponding to bTypeDecl, or null if the type is not native. */
@@ -93,8 +81,8 @@ public class AdaAPI extends LanguageAPI {
 
         if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl) {
             if (typeDecl.equals(typeDecl.pBoolType())) return NativeType.BOOL;
-            if (isStringType(typeDecl)) return NativeType.STRING;
-            if (typeDecl.equals(typeDecl.pStdCharType())) return NativeType.UINT8;
+            if (AdaTypeMatcher.isStringType(typeDecl)) return NativeType.STRING;
+            if (AdaTypeMatcher.isCharacter(typeDecl)) return NativeType.UINT8;
             if (typeDecl.pIsIntType(Libadalang.AdaNode.NONE)) {
                 // Compute the number of required bits to hold the values of the type and
                 // find the smallest type able to hold it.
@@ -299,12 +287,8 @@ public class AdaAPI extends LanguageAPI {
             //     pragma Import (Ada, ${Arg}_Value);
             //
             // If the array type is not unconstrained, the bounds will not be generated.
-            Libadalang.ArrayTypeDef typeDef =
-                    (Libadalang.ArrayTypeDef) ((Libadalang.TypeDecl) type).fTypeDef();
-            if (typeDef.fIndices() instanceof Libadalang.UnconstrainedArrayIndices indices) {
-                Libadalang.UnconstrainedArrayIndex index =
-                        (Libadalang.UnconstrainedArrayIndex) indices.fTypes().getChild(0);
-                BaseTypeDecl indexType = index.fSubtypeName().pNameDesignatedType();
+            if (!type.pIsStaticallyConstrained()) {
+                Libadalang.BaseTypeDecl indexType = type.pIndexType(0, Libadalang.AdaNode.NONE);
                 builder.append(" (")
                         .append(indexType.pFullyQualifiedName())
                         .append(" (")
@@ -340,7 +324,7 @@ public class AdaAPI extends LanguageAPI {
             // Boolean types do not exist in the Interfaces.C package: they are instead binded as
             // Ints.
             builder.append(" := ").append(argName).append(" /= 0");
-        } else if (type.pIsEnumType(Libadalang.AdaNode.NONE) && !type.equals(type.pStdCharType())) {
+        } else if (AdaTypeMatcher.isEnum(type)) {
             builder.append(" := ")
                     .append(valueVarTypename)
                     .append("'Enum_Val (")
@@ -433,8 +417,7 @@ public class AdaAPI extends LanguageAPI {
         String typeName = returnedType.pFullyQualifiedName();
         if (returnedType.equals(returnedType.pBoolType())) {
             builder.append("return (if ").append(returnedValue).append(" then 1 else 0)");
-        } else if (returnedType.pIsEnumType(Libadalang.AdaNode.NONE)
-                && !returnedType.equals(returnedType.pStdCharType())) {
+        } else if (AdaTypeMatcher.isEnum(returnedType)) {
             builder.append("return ")
                     .append(typeName)
                     .append("'Enum_Rep (")
@@ -559,18 +542,16 @@ public class AdaAPI extends LanguageAPI {
     }
 
     /** Return the C Interface typename of a type. */
-    public String cInterfaceTypename(Libadalang.BaseTypeDecl bTypeDecl) {
-        NativeType nativeType = checkNativeType(bTypeDecl);
+    public String cInterfaceTypename(Libadalang.BaseTypeDecl typeDecl) {
+        NativeType nativeType = checkNativeType(typeDecl);
         if (nativeType != null) return cInterfaceNativeTypename(nativeType);
-        if (bTypeDecl instanceof Libadalang.ClasswideTypeDecl) return "System.Address";
-        Libadalang.TypeDef typeDef =
-                ((Libadalang.TypeDecl) bTypeDecl.pRootType(Libadalang.AdaNode.NONE)).fTypeDef();
-        if (typeDef instanceof Libadalang.PrivateTypeDef
-                || typeDef instanceof Libadalang.RecordTypeDef) return "System.Address";
-        if (typeDef instanceof Libadalang.ArrayTypeDef) return "Polyglot.Ada.Arrays.Polyglot_Array";
-        if (bTypeDecl.pIsEnumType(Libadalang.AdaNode.NONE)
-                && !bTypeDecl.equals(bTypeDecl.pStdCharType()))
-            return cInterfaceNativeTypename(NativeType.SINT32);
+        if (typeDecl instanceof Libadalang.ClasswideTypeDecl) return "System.Address";
+        if (typeDecl.pIsArrayType(Libadalang.AdaNode.NONE)
+                || AdaTypeMatcher.isArrayAccess(typeDecl))
+            return "Polyglot.Ada.Arrays.Polyglot_Array";
+        if (typeDecl.pIsPrivate()
+                || typeDecl.pIsRecordType(Libadalang.AdaNode.NONE)) return "System.Address";
+        if (AdaTypeMatcher.isEnum(typeDecl)) return cInterfaceNativeTypename(NativeType.SINT32);
 
         throw new UnsupportedOperationException("Type not supported");
     }
@@ -731,7 +712,7 @@ public class AdaAPI extends LanguageAPI {
      */
     public String makeDefaultReturn(Subprogram subp) {
         BaseTypeDecl returnType = subp.getReturnType();
-        if (returnType.equals(returnType.pStdCharType()))
+        if (AdaTypeMatcher.isCharacter(returnType))
             return "return Interfaces.C.To_C ( Character'Val(0))";
         if (returnType.pIsScalarType(Libadalang.AdaNode.NONE)) return "return 0";
         if (returnType.pIsRecordType(Libadalang.AdaNode.NONE) || returnType.pIsPrivate())

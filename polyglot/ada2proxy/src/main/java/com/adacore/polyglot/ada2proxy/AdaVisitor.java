@@ -328,8 +328,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // Do not bind any of the controlled type functions. They are too "Ada-specific" and lead to
         // inconsistencies in the management of object destruction when exposed to the users in
         // other target languages.
-        if (Stream.of(node.pBaseSubpDeclarations(false))
-                .anyMatch(d -> d.pFullyQualifiedName().startsWith("Ada.Finalization."))) return;
+        if (AdaTypeMatcher.isControlledPrimitve(node)) return;
 
         // If the function is callable with the dot notation, it is a method.
         // The subprogram may be visited when exploring inherited primitive subprograms: if so, use

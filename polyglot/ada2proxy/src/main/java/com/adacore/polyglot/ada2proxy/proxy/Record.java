@@ -4,6 +4,7 @@ import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.TypeDef;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
+import com.adacore.polyglot.ada2proxy.AdaTypeMatcher;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.FunctionTypeExpr;
@@ -398,8 +399,6 @@ public class Record extends AdaDeclaration {
     }
 
     public boolean isControlled() {
-        return origin.pRootType(Libadalang.AdaNode.NONE)
-                .pFullyQualifiedName()
-                .startsWith("Ada.Finalization.");
+        return AdaTypeMatcher.isControlledType(origin);
     }
 }
