@@ -101,7 +101,9 @@ public class Array implements AdaProxyObject {
                                     List.of(
                                             new Parameter(
                                                     Name.fromLower("self"),
-                                                    arrayTypeExpr.makePointer(false, true),
+                                                    arrayTypeExpr
+                                                            .makePointer(false, true)
+                                                            .makeReference(false),
                                                     new Transfer(RequiredOwner.ANY)),
                                             new Parameter(
                                                     Name.fromLower("first"),
@@ -149,7 +151,9 @@ public class Array implements AdaProxyObject {
                                     List.of(
                                             new Parameter(
                                                     Name.fromLower("self"),
-                                                    arrayTypeExpr.makePointer(false, false),
+                                                    arrayTypeExpr
+                                                            .makePointer(false, false)
+                                                            .makeReference(false),
                                                     new Transfer(RequiredOwner.ANY))),
                                     NativeType.VOID.typeExpr,
                                     Owner.UNKNOWN),
