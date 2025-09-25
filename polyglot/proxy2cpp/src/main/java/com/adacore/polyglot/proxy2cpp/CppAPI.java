@@ -180,10 +180,8 @@ public class CppAPI {
             return constness + "void *";
         } else if (typeExpr instanceof PointerTypeExpr ptr) {
             String constness = ptr.isConst ? "const " : "";
-            if (ptr.typeExpr instanceof NameTypeExpr name
-                    && context.getTypeDecl(name.name) instanceof NativeTypeDecl nativeType)
-                return constness + nativeTypeName(nativeType.nativeType) + "*";
-            return constness + "void *";
+            return constness
+                    + (ptr.typeExpr instanceof ArrayTypeExpr ? cTypename(ptr.typeExpr) : "void *");
         }
         throw new UnsupportedOperationException("Unsupported C type");
     }
@@ -362,9 +360,10 @@ public class CppAPI {
         } else if (functionDecl.type.returnType instanceof PointerTypeExpr ptr) {
             builder.append(cppReturnTypename(functionDecl.type.returnType));
             returnedValue =
-                    "%s == nullptr ? nullptr : new %s(%s), %s"
+                    "%s%s == nullptr ? nullptr : new %s(%s), %s"
                             .formatted(
                                     returnedValue,
+                                    ptr.typeExpr instanceof ArrayTypeExpr ? ".data" : "",
                                     cppTypename(ptr.typeExpr),
                                     returnedValue,
                                     cppOwner(functionDecl.type.returnOwner));
@@ -637,7 +636,12 @@ public class CppAPI {
                     .append(name)
                     .append("_data = ")
                     .append(name)
-                    .append(".get() == nullptr ? nullptr : ")
+                    .append(".get() == nullptr ? ")
+                    .append(
+                            isArray
+                                    ? "polyglot::ada::arrays::array_data{0, -1, nullptr}"
+                                    : "nullptr")
+                    .append(" : ")
                     .append(name)
                     .append(".get()->data();");
             // When the type is a reference, create a copy of the internal data to compare it after
@@ -661,15 +665,19 @@ public class CppAPI {
                 && ref.typeExpr instanceof PointerTypeExpr ptr) {
             String name = param.name.toLower();
             String dataName = "_" + param.name.toLower() + "_data";
+            String addressAccessor = ptr.typeExpr instanceof ArrayTypeExpr ? ".data" : "";
             String copyName = "__" + param.name.toLower() + "_data";
             builder.append("if (")
                     .append(dataName)
+                    .append(addressAccessor)
                     .append(" != ")
                     .append(copyName)
+                    .append(addressAccessor)
                     .append(") ")
                     .append(name)
                     .append(".reset(")
                     .append(dataName)
+                    .append(addressAccessor)
                     .append("== nullptr ? nullptr : new ")
                     .append(cppTypename(ptr.typeExpr))
                     .append("(")

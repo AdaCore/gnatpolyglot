@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iostream>
 #include <type_traits>
+#include <polyglot_ptr.h>
 
 namespace polyglot::ada::arrays {
 
@@ -51,34 +52,43 @@ public:
     };
 
 public:
-  polyglot_array(array_data data) :_data(data) {}
-  polyglot_array(int begin, int end);
-  ~polyglot_array();
+    polyglot_array(array_data data) :_data(data) {}
+    polyglot_array(int begin, int end);
+    ~polyglot_array();
 
-  polyglot_array(const polyglot_array<T> &other);
-  polyglot_array &operator=(const polyglot_array<T> &other);
+    polyglot_array(const polyglot_array<T> &other);
+    polyglot_array &operator=(const polyglot_array<T> &other);
 
-  // Define R: if T is scalar, R is T&; otherwise, R is T::view
-  using R = typename ref_selector<T>::type;
+    // Define R: if T is scalar, R is T&; otherwise, R is T::view
+    using R = typename ref_selector<T>::type;
 
-  R get(std::int32_t index) const;
-  void set(std::int32_t index, const T &new_val);
+    R get(std::int32_t index) const;
+    void set(std::int32_t index, const T &new_val);
 
-  int get_begin() const { return this->_data.begin; }
+    int get_begin() const { return this->_data.begin; }
 
-  int get_end() const { return this->_data.end; }
+    int get_end() const { return this->_data.end; }
 
-  array_data data() const { return this->_data; }
-  array_data release() {
-    array_data data = this->_data;
-    this->_data.begin = 0;
-    this->_data.end = 0;
-    this->_data.data = nullptr;
-    return data;
-  }
+    /** Internal use only */
+    array_data data() const { return this->_data; }
+
+    /** Internal use only */
+    array_data release() {
+        array_data data = this->_data;
+        this->_data.begin = 0;
+        this->_data.end = 0;
+        this->_data.data = nullptr;
+        return data;
+    }
+
+    friend polyglot_ptr<polyglot_array<T>>;
 
 private:
-  array_data _data;
+    array_data _data;
+
+    bool is_shadow() {
+        return false;
+    }
 };
 
 } // namespace polyglot::ada::arrays

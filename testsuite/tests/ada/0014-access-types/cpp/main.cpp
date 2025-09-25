@@ -57,6 +57,37 @@ void recursive_rec() {
     item3.set_owner(polyglot::memory_owner::USER);
 }
 
+void print_array(const polyglot_array<int> &arr) {
+    std::cout << "{ ";
+    for (int i = arr.get_begin(); i <= arr.get_end(); i++) {
+        std::cout << arr.get(i) << ", ";
+    }
+    std::cout << "}\n";
+}
+
+void array() {
+    polyglot_array<int> arr(1, 4);
+    for (int i = arr.get_begin(); i <= arr.get_end(); i++) {
+        arr.set(i, i);
+    }
+    polyglot::polyglot_ptr<polyglot_array<int>> ptr1(arr);
+    auto other = test::arr_f(ptr1);
+    print_array(*ptr1);
+    print_array(*other);
+
+    test::arr_p(other);
+    test::arr_p(other);
+    print_array(*ptr1);
+    print_array(*other);
+
+    test::arr_p(nullptr);
+
+    test::arr_p_in_out(other);
+    print_array(*ptr1);
+    print_array(*other);
+    other.set_owner(polyglot::memory_owner::USER);
+}
+
 int main() {
     simple_rec();
     std::cout << "\n";
