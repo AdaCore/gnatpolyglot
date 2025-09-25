@@ -177,6 +177,10 @@ Template file to generate bindings for record types.
             Self_Access : Converter.Object_Pointer :=
                Converter.To_Pointer (Self);
             Self_Value : ${recordName} renames Self_Access.all;
+         @if(componentType.pIsAccessType(Libadalang.AdaNode.NONE))
+            function Access_Converter is new Ada.Unchecked_Conversion
+              (${componentType.pFullyQualifiedName()}, System.Address);
+         @endif
          begin
             ${api.makeGetterReturnConversion(componentAccess, componentType)};
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};

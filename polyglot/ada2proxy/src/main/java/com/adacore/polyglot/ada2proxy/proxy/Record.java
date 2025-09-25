@@ -311,7 +311,7 @@ public class Record extends AdaDeclaration {
             componentAccessors = new ArrayList<>(components.size() * 2);
 
             for (var c : components) {
-                TypeExpr componentTypeRef = AdaAPI.makeTypeExpr(c.getType());
+                TypeExpr getterReturnType = c.getGetterType();
                 // Create the getter function.
                 componentAccessors.add(
                         new FunctionDecl(
@@ -326,8 +326,10 @@ public class Record extends AdaDeclaration {
                                                         Name.fromLower("self"),
                                                         getTypeExpr().makeReference(true),
                                                         new Transfer(RequiredOwner.ANY))),
-                                        componentTypeRef.makeReference(false),
-                                        Owner.STATIC),
+                                        getterReturnType,
+                                        c.getType().pIsAccessType(Libadalang.AdaNode.NONE)
+                                                ? Owner.LIBRARY
+                                                : Owner.STATIC),
                                 FunctionDecl.Visibility.PUBLIC,
                                 FunctionDecl.Overridability.FINAL,
                                 FunctionDecl.Staticness.NON_STATIC));

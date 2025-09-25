@@ -38,6 +38,16 @@ public class Component implements AdaProxyObject {
         return setterType;
     }
 
+    /** Return the type return type of the getter used to get this component. */
+    public TypeExpr getGetterType() {
+
+        Libadalang.BaseTypeDecl type = getType();
+        TypeExpr typeExpr = AdaAPI.makeTypeExpr(type);
+        return type.pIsAccessType(Libadalang.AdaNode.NONE)
+                ? typeExpr
+                : typeExpr.makeReference(false);
+    }
+
     /** Return the type of the component. */
     public Libadalang.BaseTypeDecl getType() {
         return this.origin.pFormalType(Libadalang.AdaNode.NONE);
