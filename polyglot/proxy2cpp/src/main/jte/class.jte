@@ -44,11 +44,7 @@ vim: filetype=jtecpp
             ${className}(${api.cppParameters(alloc)});
         @endif
     @endfor
-        @if(!classDecl.isFinal && classDecl.parent == null)
         virtual ~${className}();
-        @else
-        ~${className}();
-        @endif
 
     @if(members.copyFunction != null)
         ${className} &operator=(${api.cppParameters(members.copyFunction)});
