@@ -314,8 +314,8 @@ public class CppAPI {
         // If the function is attached to a type, use ``this->data`` as the first argument.
         if (funcIsMethod) {
             if (functionDecl.role.type instanceof ArrayTypeExpr
-                    && functionDecl.type.parameters.get(0).type instanceof PointerTypeExpr)
-                builder.append("&");
+                    && functionDecl.type.parameters.get(0).type instanceof ReferenceTypeExpr ref
+                    && ref.typeExpr instanceof PointerTypeExpr) builder.append("&");
             builder.append("this->_data");
             if (functionDecl.type.parameters.size() > 1) builder.append(", ");
         }
