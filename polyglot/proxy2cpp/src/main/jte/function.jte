@@ -34,10 +34,16 @@ vim: filetype=jtecpp
         @endfor
         @if (api.returnsVoid(functionDecl))
             ${api.callCSymbol(functionDecl)};
+            @for(var param : functionDecl.type.parameters)
+                ${api.checkPointerValue(param)}
+            @endfor
             polyglot::exceptions::${api.getProjectName().toLower()}::rethrow_if_exc();
         @else
             ${api.cTypename(functionDecl.type.returnType)} returned_value =
                 ${api.callCSymbol(functionDecl)};
+            @for(var param : functionDecl.type.parameters)
+                ${api.checkPointerValue(param)}
+            @endfor
             polyglot::exceptions::${api.getProjectName().toLower()}::rethrow_if_exc();
             ${api.makeReturnStatement(functionDecl, "returned_value")};
         @endif

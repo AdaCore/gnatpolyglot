@@ -287,6 +287,8 @@ public class CppAPI {
             if (context.getTypeDecl(name.name) instanceof EnumerationDecl)
                 return "&" + p.name.toLower();
         }
+        if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr)
+            return (ref.isConst ? "" : "&") + "_" + p.name.toLower() + "_data";
         if (p.type instanceof PointerTypeExpr) return "_" + p.name.toLower() + "_data";
         if ((p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof ArrayTypeExpr)
                 || p.type instanceof ArrayTypeExpr
@@ -638,6 +640,41 @@ public class CppAPI {
                     .append(".get() == nullptr ? nullptr : ")
                     .append(name)
                     .append(".get()->data();");
+            // When the type is a reference, create a copy of the internal data to compare it after
+            // the call as it may have been modified.
+            if (param.type instanceof ReferenceTypeExpr ref && !ref.isConst) {
+                builder.append(dataType)
+                        .append(" __")
+                        .append(name)
+                        .append("_data = _")
+                        .append(name)
+                        .append("_data;");
+            }
+        }
+        return builder.toString();
+    }
+
+    public String checkPointerValue(Parameter param) {
+        StringBuilder builder = new StringBuilder();
+        if (param.type instanceof ReferenceTypeExpr ref
+                && !ref.isConst
+                && ref.typeExpr instanceof PointerTypeExpr ptr) {
+            String name = param.name.toLower();
+            String dataName = "_" + param.name.toLower() + "_data";
+            String copyName = "__" + param.name.toLower() + "_data";
+            builder.append("if (")
+                    .append(dataName)
+                    .append(" != ")
+                    .append(copyName)
+                    .append(") ")
+                    .append(name)
+                    .append(".reset(")
+                    .append(dataName)
+                    .append("== nullptr ? nullptr : new ")
+                    .append(cppTypename(ptr.typeExpr))
+                    .append("(")
+                    .append(dataName)
+                    .append("), polyglot::memory_owner::LIBRARY);");
         }
         return builder.toString();
     }
