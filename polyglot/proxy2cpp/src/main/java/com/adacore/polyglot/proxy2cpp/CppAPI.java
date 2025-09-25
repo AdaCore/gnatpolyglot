@@ -12,11 +12,13 @@ import com.adacore.polyglot.proxy.FunctionTypeExpr;
 import com.adacore.polyglot.proxy.Module;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.NameTypeExpr;
+import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Parameter;
 import com.adacore.polyglot.proxy.PointerTypeExpr;
 import com.adacore.polyglot.proxy.ProxyContext;
 import com.adacore.polyglot.proxy.ReferenceTypeExpr;
 import com.adacore.polyglot.proxy.Role.RoleKind;
+import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.polyglot.proxy.TypeDecl;
 import com.adacore.polyglot.proxy.TypeExpr;
 import com.adacore.polyglot.proxy.VTableEntry;
@@ -121,9 +123,9 @@ public class CppAPI {
             builder.append(cppTypename(ref.typeExpr)).append(" &");
             return builder.toString();
         } else if (typeExpr instanceof PointerTypeExpr pointer) {
-            StringBuilder builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder("polyglot::polyglot_ptr<");
             if (pointer.isConst) builder.append("const ");
-            builder.append(cppTypename(pointer.typeExpr)).append(" *");
+            builder.append(cppTypename(pointer.typeExpr)).append(">");
             return builder.toString();
         }
         throw new UnsupportedOperationException("Unsupported Cpp type");
@@ -285,11 +287,21 @@ public class CppAPI {
             if (context.getTypeDecl(name.name) instanceof EnumerationDecl)
                 return "&" + p.name.toLower();
         }
+        if (p.type instanceof PointerTypeExpr) return "_" + p.name.toLower() + "_data";
         if ((p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof ArrayTypeExpr)
                 || p.type instanceof ArrayTypeExpr
                 || context.getTypeDecl(p.type.getName()) instanceof ClassDecl)
             return p.name.toLower() + ".data()";
         return p.name.toLower();
+    }
+
+    public String getParamForConstructor(Parameter p) {
+        if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr
+                || p.type instanceof PointerTypeExpr) {
+            String name = p.name.toLower();
+            return "%s.get() == nullptr ? nullptr : %s->data()".formatted(name, name);
+        }
+        return getParamForCall(p);
     }
 
     /** Create a call to the C symbol of the funtion. */
@@ -306,12 +318,17 @@ public class CppAPI {
             if (functionDecl.type.parameters.size() > 1) builder.append(", ");
         }
 
+        RoleKind roleKind = functionDecl.role != null ? functionDecl.role.kind : null;
+
         builder.append(
                 functionDecl.type.parameters.stream()
                         .skip(funcIsMethod ? 1 : 0)
-                        .map(p -> getParamForCall(p))
+                        .map(
+                                roleKind == RoleKind.ALLOC || roleKind == RoleKind.SHADOW_ALLOC
+                                        ? p -> getParamForConstructor(p)
+                                        : p -> getParamForCall(p))
                         .collect(Collectors.joining(", ")));
-        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+        if (roleKind == RoleKind.SHADOW_ALLOC) {
             String className = functionDecl.role.type.getName().getLastName().toPascal();
             builder.append(functionDecl.type.parameters.isEmpty() ? "" : ", ")
                     .append("_self, &")
@@ -340,12 +357,25 @@ public class CppAPI {
             builder.append("static_cast<")
                     .append(cppReturnTypename(functionDecl.type.returnType))
                     .append(">");
+        } else if (functionDecl.type.returnType instanceof PointerTypeExpr ptr) {
+            builder.append(cppReturnTypename(functionDecl.type.returnType));
+            returnedValue =
+                    "%s == nullptr ? nullptr : new %s(%s), %s"
+                            .formatted(
+                                    returnedValue,
+                                    cppTypename(ptr.typeExpr),
+                                    returnedValue,
+                                    cppOwner(functionDecl.type.returnOwner));
         } else {
             // Otherwise, create a new object that wraps the returned pointer.
             builder.append(cppReturnTypename(functionDecl.type.returnType));
         }
         builder.append("(").append(returnedValue).append(")");
         return builder.toString();
+    }
+
+    private String cppOwner(Owner owner) {
+        return "polyglot::memory_owner::" + owner.toString();
     }
 
     /** Return the C++ name of the function to define ``functionDecl``. */
@@ -567,5 +597,48 @@ public class CppAPI {
             }
         }
         return "return nullptr;";
+    }
+
+    public String verifyOwnership(Parameter param) {
+        StringBuilder builder = new StringBuilder();
+        if ((param.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr
+                        || param.type instanceof PointerTypeExpr)
+                && param.transfer.required_owner != RequiredOwner.ANY) {
+            builder.append("if (")
+                    .append(param.name.toLower())
+                    .append(".get_owner() < polyglot::memory_owner::")
+                    .append(param.transfer.required_owner.toString())
+                    .append(") throw std::invalid_argument(")
+                    .append("std::string(__FUNCTION__) + \": ")
+                    .append(param.name.toLower())
+                    .append(": owner should be ")
+                    .append(param.transfer.required_owner)
+                    .append("\");");
+        }
+        return builder.toString();
+    }
+
+    public String createPointerBuffer(Parameter param) {
+        StringBuilder builder = new StringBuilder();
+        PointerTypeExpr ptrType = null;
+        if (param.type instanceof PointerTypeExpr ptr) ptrType = ptr;
+        else if (param.type instanceof ReferenceTypeExpr ref
+                && ref.typeExpr instanceof PointerTypeExpr ptr) ptrType = ptr;
+
+        if (ptrType != null) {
+            String name = param.name.toLower();
+            boolean isArray = ptrType.typeExpr instanceof ArrayTypeExpr;
+            String dataType = isArray ? "polyglot::ada::arrays::array_data" : "void *";
+
+            builder.append(dataType)
+                    .append(" _")
+                    .append(name)
+                    .append("_data = ")
+                    .append(name)
+                    .append(".get() == nullptr ? nullptr : ")
+                    .append(name)
+                    .append(".get()->data();");
+        }
+        return builder.toString();
     }
 }

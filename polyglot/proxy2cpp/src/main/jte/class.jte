@@ -61,6 +61,12 @@ vim: filetype=jtecpp
 
         virtual ${className} *internal_clone(void *data);
 
+        template <typename U>
+        friend class polyglot::polyglot_ptr;
+    private:
+
+        bool is_shadow();
+
     public:
         struct view;
 
@@ -211,4 +217,9 @@ vim: filetype=jtecpp
         this->_data = nullptr;
         return tmp;
     }
+
+    bool ${className}::is_shadow() {
+        return typeid(${className}).before(typeid(*this));
+    }
+
 @endif

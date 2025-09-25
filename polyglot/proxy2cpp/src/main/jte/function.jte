@@ -28,6 +28,10 @@ vim: filetype=jtecpp
     ${api.cppReturnTypename(functionDecl.type.returnType)}
     ${api.functionDefinitionName(functionDecl)}
         (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)} {
+        @for(var param : functionDecl.type.parameters)
+            ${api.verifyOwnership(param)}
+            ${api.createPointerBuffer(param)}
+        @endfor
         @if (api.returnsVoid(functionDecl))
             ${api.callCSymbol(functionDecl)};
             polyglot::exceptions::${api.getProjectName().toLower()}::rethrow_if_exc();
