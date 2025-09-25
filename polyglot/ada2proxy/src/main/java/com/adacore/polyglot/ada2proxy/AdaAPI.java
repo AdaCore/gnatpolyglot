@@ -247,6 +247,25 @@ public class AdaAPI extends LanguageAPI {
         else return typeDecl.pRelativeName().getText() + "_Access";
     }
 
+    public String createBoundCast(String data, Libadalang.BaseTypeDecl type, boolean isLowerBound) {
+        StringBuilder builder = new StringBuilder();
+        String indexTypeName = type.pIndexType(0, Libadalang.AdaNode.NONE).pFullyQualifiedName();
+        builder.append("(if Polyglot.Ada.")
+                .append(AdaTypeMatcher.isStringType(type) ? "Strings" : "Arrays")
+                .append(".Length (")
+                .append(data)
+                .append(") > 0 then ")
+                .append(indexTypeName)
+                .append("(")
+                .append(data)
+                .append(isLowerBound ? ".First" : ".Last")
+                .append(") else ")
+                .append(indexTypeName)
+                .append("'First")
+                .append(isLowerBound ? " + 1)" : ")");
+        return builder.toString();
+    }
+
     /**
      * Create an entity that is the conversion of a subprogram parameter, named `${name}_Arg` in the
      * C API, to the `type` Ada type.
@@ -302,16 +321,11 @@ public class AdaAPI extends LanguageAPI {
             //
             // If the array type is not unconstrained, the bounds will not be generated.
             if (!type.pIsStaticallyConstrained()) {
-                Libadalang.BaseTypeDecl indexType = type.pIndexType(0, Libadalang.AdaNode.NONE);
                 builder.append(" (")
-                        .append(indexType.pFullyQualifiedName())
-                        .append(" (")
-                        .append(argName)
-                        .append(".First) .. ")
-                        .append(indexType.pFullyQualifiedName())
-                        .append(" (")
-                        .append(argName)
-                        .append(".Last))");
+                        .append(createBoundCast(argName, type, true))
+                        .append(" .. ")
+                        .append(createBoundCast(argName, type, false))
+                        .append(")");
             }
             builder.append(" with Address => ")
                     .append(argName)
@@ -739,7 +753,7 @@ public class AdaAPI extends LanguageAPI {
             return "return Interfaces.C.To_C ( Character'Val(0))";
         if (returnType.pIsScalarType(Libadalang.AdaNode.NONE)) return "return 0";
         if (returnType.pIsArrayType(Libadalang.AdaNode.NONE))
-            return " return(0, 0, System.Null_Address)";
+            return "return(1, 0, System.Null_Address)";
         if (AdaTypeMatcher.isReturnedAsAddress(returnType)) return "return System.Null_Address";
         return "return (others => <>)";
     }
