@@ -23,8 +23,10 @@ import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -35,6 +37,8 @@ import java.util.stream.Stream;
 public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     private Set<String> symbols = new HashSet<>();
+
+    private Queue<Libadalang.BasicDecl> queuedDecls = new LinkedList<>();
 
     /** Turn a fully qualified name into a unique C symbol. */
     private String symbolify(Libadalang.SubpSpec spec) {
@@ -84,6 +88,9 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     /** Map Ada declarations to their AdaProxy objects. */
     private HashMap<Libadalang.TypeDecl, AdaDeclaration> mappedTypes = new HashMap<>();
 
+    /** Map Ada PackageDecl to their AdaProxy Package. */
+    private HashMap<Libadalang.PackageDecl, Package> mappedPackages = new HashMap<>();
+
     private int exceptionNumber = 1;
 
     /** Analyse an Ada specification file. */
@@ -98,7 +105,56 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         if (analyzedPackage.isNone()) return null;
 
         // Return the module.
-        return new Package(analyzedPackage, declarations);
+        Package pack = new Package(analyzedPackage, declarations);
+        mappedPackages.put(analyzedPackage, pack);
+        return pack;
+    }
+
+    /**
+     * Create a list of all the packages with the types that are missing in the proxy.
+     *
+     * <p>The possible occurence of a missing package is when `ada2proxy` is called with the
+     * `--unit` parameter and the parents of listed packages are not in the list.
+     *
+     * <p>The possible occurence of a missing type is when a type from a with-ed package is used in
+     * an other package.
+     */
+    public List<Package> getNonVisitedPackages() {
+        List<Package> packages = new ArrayList<>();
+        while (!queuedDecls.isEmpty()) {
+            Libadalang.BasicDecl decl = queuedDecls.poll();
+            if (decl instanceof Libadalang.PackageDecl p) {
+                if (mappedPackages.containsKey(p)) continue;
+                // When a package was not visited, create an empty one. We do not want to visit all
+                // its declarations.
+                Package pack = new Package(p, new ArrayList<>());
+                packages.add(pack);
+                mappedPackages.put(p, pack);
+            }
+            if (decl instanceof Libadalang.BaseTypeDecl type) {
+                // If the type was already visited, it is already in a package's list of
+                // declaration. Also ignore types from the Std unit.
+                if (mappedTypes.containsKey(type) || type.getUnit().equals(type.pStandardUnit()))
+                    continue;
+                if (type.pParentBasicDecl() instanceof Libadalang.PackageDecl p) {
+                    Package pack = mappedPackages.get(p);
+                    // If the type's package does not yet exist, enqueue the package and the type.
+                    // The package needs to exist before the mapped type.
+                    // Arrays do not create a new type in the proxy. We only need to ensure the
+                    // component's type is binded, not the array type's package.
+                    if (pack == null && !type.pIsArrayType(Libadalang.AdaNode.NONE)) {
+                        queuedDecls.add(p);
+                        queuedDecls.add(type);
+                    } else {
+                        // pack may be null when the type is an array.
+                        if (pack != null) declarations = pack.declarations;
+                        type.accept(this);
+                        declarations = null;
+                    }
+                }
+            }
+        }
+        return packages;
     }
 
     public List<Array> getArrayTypes() {
@@ -232,6 +288,13 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         node.fPublicPart().fDecls().accept(this);
         resolveNameConflicts();
 
+        Libadalang.Name name = node.fPackageName().fName();
+        while (name instanceof Libadalang.DottedName dotted) {
+            if (dotted.fPrefix().pReferencedDecl(false) instanceof Libadalang.PackageDecl p)
+                queuedDecls.add(p);
+            name = dotted.fPrefix();
+        }
+
         return null;
     }
 
@@ -283,6 +346,10 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             for (var child : spec.fSubpParams().fParams().children()) {
                 Libadalang.ParamSpec paramSpec = (Libadalang.ParamSpec) child;
 
+                // Enqueue the parameter's type in case we do not visit it in the required list of
+                // units
+                queuedDecls.add(paramSpec.pFormalType(Libadalang.AdaNode.NONE));
+
                 // Record value types are given through an address, but later **copied** into the
                 // arguments, so the ownership does not matter.
                 // TODO Access types: Ownership informations will be necessary when access types are
@@ -318,10 +385,12 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         //     end record;
         //
         Libadalang.BaseTypeDecl returnType = spec.pReturnType(Libadalang.AdaNode.NONE);
-        if (!returnType.isNone())
+        if (!returnType.isNone()) {
+            queuedDecls.add(returnType);
             returnType =
                     (Libadalang.BaseTypeDecl)
                             returnType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+        }
 
         // Record value type are allocated on the heap before being returned. If a function returns
         // one, it is copied to a heap address before being returned to the user.
@@ -392,6 +461,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 if (c instanceof Libadalang.NullComponentDecl) break;
 
                 Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
+                queuedDecls.add(componentDecl.pFormalType(Libadalang.AdaNode.NONE));
                 for (var name : componentDecl.fIds().children()) {
                     components.add(
                             new Component(
@@ -487,6 +557,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             // TODO: create a record
         } else if (AdaAPI.checkNativeType(componentType) == null) {
             arrayComponentTypes.add(componentType);
+            queuedDecls.add(componentType);
         }
         return null;
     }
@@ -519,11 +590,13 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                                 })
                         .toList();
 
-        declarations.add(
+        EnumType enumType =
                 new EnumType(
                         parentDecl,
                         Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
-                        enumValues));
+                        enumValues);
+        declarations.add(enumType);
+        mappedTypes.put(parentDecl, enumType);
         return null;
     }
 

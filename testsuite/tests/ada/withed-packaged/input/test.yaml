@@ -1,0 +1,7 @@
+driver: scan2proxy
+
+input_lang: ada
+project_file: test.gpr
+
+units:
+  - "test.ads"
