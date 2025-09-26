@@ -52,25 +52,41 @@ def run_proxy_validator(proxy_location: str) -> None:
         )
 
 
-def run_scanner(input_lang: str, project_file: str, output_path: str) -> None:
+def run_scanner(
+    input_lang: str,
+    project_file: str,
+    output_path: str,
+    extra_args: list[str] | None = None
+) -> None:
     """
     Run a scanner on ``project_file`` and generate the proxy at
     ``output_path``.
     """
+    if extra_args is None:
+        extra_args = []
     if input_lang == "ada":
         if NATIVE_RUN:
-            run_native("ada2proxy", ["-P", project_file, "-o", output_path])
+            run_native(
+                "ada2proxy",
+                ["-P", project_file, "-o", output_path, *extra_args]
+            )
         else:
             run_java(
                 "com.adacore.polyglot.cli.PolyglotMain",
                 os.path.join(POLYGLOT_HOME, "cli", "target", "cli.jar"),
-                ["ada2proxy", "-P", project_file, "-o", output_path],
+                ["ada2proxy", "-P", project_file, "-o", output_path, *extra_args],
             )
     else:
         raise Exception(f"Unknown language: {input_lang}")
 
 
-def compile_main(output_lang: str, test_file: str, output_proxy: str, input_proxy: str) -> str:
+def compile_main(
+    output_lang: str,
+    test_file: str,
+    output_proxy: str,
+    input_proxy: str,
+    input_lib: str,
+) -> str:
     """
     Compile the main test file and return a path to its corresponding
     executable.
@@ -86,7 +102,7 @@ def compile_main(output_lang: str, test_file: str, output_proxy: str, input_prox
 
         LD_FLAGS = [
             f"-L{os.path.join(input_proxy, 'lib_agg', 'static', 'dev')}",
-            "-ltest_proxy_agg",
+            f"-l{input_lib}_proxy_agg",
             "-ldl",
             "-lpthread",
         ]

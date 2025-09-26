@@ -5,13 +5,21 @@ import yaml
 
 from e3.fs import mkdir
 
-from utils import compile_lib, run_proxy_validator, run_scanner
+from utils import add_path, compile_lib, run_proxy_validator, run_scanner
+
+env = os.environ
 
 try:
     with open("test.yaml") as f:
         config = yaml.safe_load(f)
     project_file = config["project_file"]
     input_lang = config["input_lang"]
+    units = ",".join(config.get("units", []))
+    scanner_args = []
+    if units != "":
+        scanner_args.append(f"--units={units}")
+    for p in config.get("local_project_path", []):
+        add_path(env, "GPR_PROJECT_PATH", p)
 except KeyError as e:
     print(f"Error: missing value of `{e.args[0]}` in test.yaml")
     sys.exit(1)
@@ -24,7 +32,7 @@ print("Running scanner test.")
 
 # Run the scanenr to generate the proxy
 print("Running the scanner...")
-run_scanner(input_lang, project_file, proxy_location)
+run_scanner(input_lang, project_file, proxy_location, scanner_args)
 
 # Run the proxy validator on the generated json
 print("Validating the json...")
