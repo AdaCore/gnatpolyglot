@@ -5,12 +5,15 @@ Template file to generate a gprbuild specification of the Ada bindings.
 @import com.adacore.polyglot.ada2proxy.proxy.AdaProxy
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.proxy.Name
-@import java.util.stream.Collectors;
+@import java.nio.file.Path
+@import java.util.stream.Collectors
+@import java.util.List
 @param AdaAPI api
 @param String relLibPath
 @param Name projectName
 @param AdaProxy proxy
 @param String runtimeLocation
+@param List<String> sources
 
 with "${projectName.toLower()}-proxy.gpr";
 
@@ -59,7 +62,12 @@ aggregate library project ${projectName.toPascalWithUnderscore()}.Proxy.Agg is
             @if (!proxy.arrayTypes.isEmpty())
                "polyglot-ada-arrays-non_native.ads",
             @endif
-            ${api.getAggregateInterfaces(proxy.packages)}
+            ${api.getProxyInterfaces(proxy.packages)},
+            ${
+               sources.stream()
+                  .map(s -> "\"%s\"".formatted(Path.of(s).getFileName()))
+                  .collect(Collectors.joining(", "))
+            }
          );
       when "no" =>
          null;

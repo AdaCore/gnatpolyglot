@@ -36,6 +36,9 @@ public class AdaScanner extends Scanner {
     /** The name of the project. */
     private String projectName;
 
+    /** List of all interfaces used in the project. */
+    private List<String> interfaces;
+
     /** The Ada proxy. */
     private AdaProxy proxy;
 
@@ -88,6 +91,22 @@ public class AdaScanner extends Scanner {
                         .toList();
         modules =
                 Stream.concat(modules.stream(), visitor.getNonVisitedPackages().stream()).toList();
+        // In order to write the gpr files, we must know which units of the binded library are used.
+        // To do so, get the full dependencies of all the binded units, and filter out those that
+        // are not from the project being analyzed.
+        List<String> sources =
+                Stream.of(projectManager.getFiles(SourceFileMode.DEFAULT))
+                        .map(f -> Path.of(f).getFileName().toString())
+                        .toList();
+
+        interfaces =
+                modules.stream()
+                        .flatMap(p -> p.getUnitDependencies(true).stream())
+                        .filter(p -> !p.getUnit().equals(p.pStandardUnit()))
+                        .distinct()
+                        .map(u -> u.getUnit().getFileName(false))
+                        .filter(filename -> sources.contains(filename))
+                        .toList();
         this.proxy = new AdaProxy(Name.fromLower(projectName), modules, visitor.getArrayTypes());
     }
 
@@ -128,11 +147,18 @@ public class AdaScanner extends Scanner {
             templateEngine.render(
                     "proxy_agg_gpr.jte",
                     Map.of(
-                            "api", api,
-                            "relLibPath", path.relativize(projectFile).toString(),
-                            "projectName", Name.fromLower(projectName),
-                            "proxy", proxy,
-                            "runtimeLocation", getRuntimeLocation()),
+                            "api",
+                            api,
+                            "relLibPath",
+                            path.relativize(projectFile).toString(),
+                            "projectName",
+                            Name.fromLower(projectName),
+                            "proxy",
+                            proxy,
+                            "runtimeLocation",
+                            getRuntimeLocation(),
+                            "sources",
+                            interfaces),
                     gprOutput);
         }
 
@@ -145,10 +171,12 @@ public class AdaScanner extends Scanner {
                         "package_ads.jte", Map.of("api", api, "pack", pack), packageSpec);
             }
 
-            Path packageBodyFile = AdaAPI.toAdaFilename(pack, "-proxy.adb");
-            try (FileOutput packageBody = new FileOutput(proxySrc.resolve(packageBodyFile))) {
-                templateEngine.render(
-                        "package_adb.jte", Map.of("api", api, "pack", pack), packageBody);
+            if (!pack.declarations.isEmpty()) {
+                Path packageBodyFile = AdaAPI.toAdaFilename(pack, "-proxy.adb");
+                try (FileOutput packageBody = new FileOutput(proxySrc.resolve(packageBodyFile))) {
+                    templateEngine.render(
+                            "package_adb.jte", Map.of("api", api, "pack", pack), packageBody);
+                }
             }
         }
 
