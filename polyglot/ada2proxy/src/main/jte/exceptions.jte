@@ -70,4 +70,4 @@ package body Polyglot.Exceptions.${projectName.toPascalWithUnderscore()} is
    end Identify_Exception;
 @endif
 
-end Polyglot.Exceptions.Test;
+end Polyglot.Exceptions.${projectName.toPascalWithUnderscore()};
