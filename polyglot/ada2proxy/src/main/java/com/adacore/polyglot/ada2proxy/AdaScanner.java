@@ -77,7 +77,9 @@ public class AdaScanner extends Scanner {
                         .substring(0, projectFile.getFileName().toString().lastIndexOf(".gpr"));
 
         // Analyze all the ``.ads`` source files.
-        ProjectManager projectManager = ProjectManager.create(projectFile.toString());
+        ProjectOptions options = new ProjectOptions();
+        options.addSwitch(ProjectOption.P, projectFile.toString());
+        ProjectManager projectManager = new ProjectManager(options, false);
         AnalysisContext ctx = projectManager.createContext(null, null, true, 8);
         List<Package> modules =
                 getFilesToAnalyze(projectManager, units).stream()
