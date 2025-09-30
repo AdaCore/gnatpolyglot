@@ -5,7 +5,9 @@ import yaml
 
 from e3.fs import mkdir
 
-from utils import add_path, compile_lib, run_proxy_validator, run_scanner
+from utils import (
+    add_path, compile_lib, run_proxy_validator, run_scanner, get_proxy_lib_file
+)
 
 env = os.environ
 
@@ -20,6 +22,8 @@ try:
         scanner_args.append(f"--units={units}")
     for p in config.get("local_project_path", []):
         add_path(env, "GPR_PROJECT_PATH", p)
+
+    input_lib_flags = config.get("input_lib_flags", [])
 except KeyError as e:
     print(f"Error: missing value of `{e.args[0]}` in test.yaml")
     sys.exit(1)
@@ -40,6 +44,7 @@ run_proxy_validator(os.path.join(proxy_location, "proxy.json"))
 
 # Try to compile the proxy library
 print("Trying to compile the library...")
-compile_lib(input_lang, proxy_location)
+compile_lib(input_lang, project_file, input_lib_flags)
+compile_lib(input_lang, get_proxy_lib_file(input_lang, proxy_location))
 
 print("Done.")

@@ -122,19 +122,26 @@ def compile_main(
         raise Exception(f"Unknown language: {output_lang}")
 
 
-def compile_lib(input_lang: str, proxy_location: str) -> None:
+def compile_lib(
+    input_lang: str,
+    lib_location: str,
+    extra_args: list[str] | None = None
+) -> None:
     """
     Compile the generated library at the given path.
     """
+    if extra_args is None:
+        extra_args = []
     if input_lang == "ada":
         run([
             "gprbuild",
-            str(list(Path(proxy_location).glob("*agg.gpr"))[0]),
+            lib_location,
             "-q",
             "-XLIBRARY_TYPE=static",
+            *extra_args,
         ])
     elif input_lang == "c++":
-        run(["make", "--silent", "-B", "-C", proxy_location])
+        run(["make", "--silent", "-B", "-C", lib_location])
     else:
         raise Exception(f"Unknown language: {input_lang}")
 
@@ -176,3 +183,9 @@ def valgrind_cmd(argv: list[str]):
         f"--suppressions={suppression_file}",
         *argv
     ]
+
+
+def get_proxy_lib_file(input_lang: str, proxy_location: str) -> str:
+    if input_lang == "ada":
+        return str(list(Path(proxy_location).glob("*agg.gpr"))[0])
+    return ""
