@@ -112,7 +112,7 @@ Template file to generate bindings for record types.
            ${api.makeParamConversion(rec.getComponent(p.name))};
          @endfor
          package Converter is new System.Address_To_Access_Conversions (${recordName});
-         @if(rec.isControlled() && allocFunc.type.parameters.isEmpty())
+         @if(allocFunc.type.parameters.isEmpty())
             Tmp : ${recordAccessName} := new ${recordName};
          @else
             Tmp : ${recordAccessName} := new ${recordName}'(
