@@ -725,6 +725,10 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
+    /**
+     * Create a return statement that returns a dummy value for when an exception is thrown. This
+     * value should never reach the user and is only used for the correctness of the generated code.
+     */
     public String makeDefaultReturn(Subprogram subp) {
         BaseTypeDecl returnType = subp.getReturnType();
         if (returnType.equals(returnType.pStdCharType()))
