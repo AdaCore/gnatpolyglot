@@ -14,6 +14,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
+import com.adacore.polyglot.proxy.BadNameSyntaxException;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Role;
@@ -285,7 +286,13 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     public Void visit(Libadalang.PackageDecl node) {
         this.analyzedPackage = node;
 
-        node.fPublicPart().fDecls().accept(this);
+        for (var d : node.fPublicPart().fDecls()) {
+            try {
+                d.accept(this);
+            } catch (BadNameSyntaxException e) {
+                System.err.println(e.getMessage());
+            }
+        }
         resolveNameConflicts();
 
         Libadalang.Name name = node.fPackageName().fName();

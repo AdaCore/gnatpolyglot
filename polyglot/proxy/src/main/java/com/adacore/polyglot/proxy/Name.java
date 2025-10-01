@@ -60,8 +60,8 @@ public class Name {
 
     /** Constructor using the lower syntax. */
     public Name(String name) {
-        if (name.isEmpty()) throw new IllegalArgumentException("A name cannot be empty");
-        if (!isLower(name)) throw new IllegalArgumentException(name + " is not lower");
+        if (name.isEmpty()) throw new BadNameSyntaxException("A name cannot be empty");
+        if (!isLower(name)) throw new BadNameSyntaxException(name + " is not lower");
         this.name = name;
     }
 
@@ -87,13 +87,13 @@ public class Name {
 
     /** Return a new Name from a string using the lower syntax. */
     public static Name fromLower(String name) {
-        if (!isLower(name)) throw new IllegalArgumentException(name + " is not lower");
+        if (!isLower(name)) throw new BadNameSyntaxException(name + " is not lower");
         return new Name(name);
     }
 
     /** Return a new Name from a string using the camel syntax. */
     public static Name fromCamel(String name) {
-        if (!isCamel(name)) throw new IllegalArgumentException(name + " is not in camel syntax");
+        if (!isCamel(name)) throw new BadNameSyntaxException(name + " is not in camel syntax");
         return new Name(
                 Pattern.compile("[A-Z]")
                         .matcher(name)
@@ -105,7 +105,7 @@ public class Name {
 
     /** Return a new name from a string using the Pascal syntax. */
     public static Name fromPascal(String name) {
-        if (!isPascal(name)) throw new IllegalArgumentException(name + " is not in Pascal syntax");
+        if (!isPascal(name)) throw new BadNameSyntaxException(name + " is not in Pascal syntax");
         return new Name(
                 Pattern.compile("[A-Z]")
                         .matcher(name)
@@ -119,7 +119,7 @@ public class Name {
     /** Return a new name from a string using the Pascal syntax with additional underscores. */
     public static Name fromPascalWithUnderscore(String name) {
         if (!isPascalWithUnderscore(name))
-            throw new IllegalArgumentException(
+            throw new BadNameSyntaxException(
                     name + " is not in Pascal syntax with additional underescores");
         return new Name(name.toLowerCase());
     }
