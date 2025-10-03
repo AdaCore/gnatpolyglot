@@ -56,6 +56,31 @@ public class Name {
         }
     }
 
+    // Arithmetic operators
+    public static final Name operatorPlus = Name.fromLower("operator_plus");
+    public static final Name operatorMinus = Name.fromLower("operator_minus");
+    public static final Name operatorMult = Name.fromLower("operator_mult");
+    public static final Name operatorDiv = Name.fromLower("operator_div");
+    public static final Name operatorPow = Name.fromLower("operator_pow");
+    public static final Name operatorMod = Name.fromLower("operator_mod");
+    public static final Name operatorRem = Name.fromLower("operator_rem");
+    public static final Name operatorAbs = Name.fromLower("operator_abs");
+    public static final Name operatorConcat = Name.fromLower("operator_concat");
+
+    // Bitwise operators
+    public static final Name operatorBitAnd = Name.fromLower("operator_bit_and");
+    public static final Name operatorBitOr = Name.fromLower("operator_bit_or");
+    public static final Name operatorBitXor = Name.fromLower("operator_bit_xor");
+    public static final Name operatorBitNot = Name.fromLower("operator_bit_not");
+
+    // Comparison operators
+    public static final Name operatorEq = Name.fromLower("operator_eq");
+    public static final Name operatorNe = Name.fromLower("operator_ne");
+    public static final Name operatorLt = Name.fromLower("operator_lt");
+    public static final Name operatorLe = Name.fromLower("operator_le");
+    public static final Name operatorGt = Name.fromLower("operator_gt");
+    public static final Name operatorGe = Name.fromLower("operator_ge");
+
     private final String name;
 
     /** Constructor using the lower syntax. */
