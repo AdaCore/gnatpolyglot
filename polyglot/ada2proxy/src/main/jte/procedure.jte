@@ -32,6 +32,8 @@ Template file to generate binded procedures.
          Polyglot.Exceptions.Raise_Exception
            (Polyglot.Get_Kernel,
             Ada.Exceptions.Save_Occurrence (E),
-            Polyglot.Exceptions.Test.Identify_Exception'Access);
+            Polyglot.Exceptions
+                  .${api.getProjectName().toPascalWithUnderscore()}
+                  .Identify_Exception'Access);
    end ${api.proxyName(subp)};
 @endif

@@ -142,9 +142,11 @@ public class ProxyValidator implements Callable<Integer> {
             if (proxy.modules != null) {
                 location.add(".modules");
                 for (int i = 0; i < proxy.modules.size(); i++) {
+                    Module module = proxy.modules.get(i);
                     location.add("[" + i + "]");
-                    if (!context.register(proxy.modules.get(i)))
+                    if (!context.register(module))
                         addDiagnostic("an other module exists with the same name and parent");
+                    registerModuleDecls(module);
                     location.pop();
                 }
                 location.pop();
@@ -155,10 +157,7 @@ public class ProxyValidator implements Callable<Integer> {
             return Boolean.valueOf(diagnostics.isEmpty());
         }
 
-        @Override
-        public Boolean visit(Module module) {
-            validateNonNull("name", module.name);
-
+        private void registerModuleDecls(Module module) {
             if (module.declarations != null) {
                 for (int i = 0; i < module.declarations.size(); i++) {
                     if (module.declarations.get(i) instanceof TypeDecl typeDecl) {
@@ -169,6 +168,11 @@ public class ProxyValidator implements Callable<Integer> {
                     }
                 }
             }
+        }
+
+        @Override
+        public Boolean visit(Module module) {
+            validateNonNull("name", module.name);
             validateNonNull("declarations", module.declarations);
 
             FullyQualifiedName parentName = module.name.getParentFullyQualifiedName();

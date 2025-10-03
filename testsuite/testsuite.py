@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import os
+from os.path import isdir
 import sys
 
 from e3.os import process
@@ -80,5 +81,11 @@ class PolyglotTestsuite(Testsuite):
         ]:
             process.Run(["gprbuild", "-P", gpr_file, "-p", "-f"])
 
+        # Check if the internal testsuite is present
+        self.env.control_condition_env = {
+            "skip_internal": not os.path.isdir(os.path.join(
+                os.path.dirname(__file__), "tests", "internal", "sources"
+            ))
+        }
 
 sys.exit(PolyglotTestsuite().testsuite_main())

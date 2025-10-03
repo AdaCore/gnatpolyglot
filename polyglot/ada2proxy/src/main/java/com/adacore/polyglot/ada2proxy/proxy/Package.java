@@ -4,6 +4,7 @@ import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Package implements AdaProxyObject {
 
@@ -30,5 +31,12 @@ public class Package implements AdaProxyObject {
 
     public FullyQualifiedName getProxyFullyQualifiedName() {
         return AdaAPI.makeProxyFullyQualifiedName(origin);
+    }
+
+    public List<Libadalang.CompilationUnit> getUnitDependencies(boolean withSelf) {
+        if (origin.getUnit().getRoot() instanceof Libadalang.CompilationUnit unit) {
+            return Stream.concat(Stream.of(unit.pUnitDependencies()), Stream.of(unit)).toList();
+        }
+        return List.of();
     }
 }

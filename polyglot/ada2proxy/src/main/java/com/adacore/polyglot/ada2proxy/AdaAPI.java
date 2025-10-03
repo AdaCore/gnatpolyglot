@@ -144,9 +144,7 @@ public class AdaAPI extends LanguageAPI {
         return packages.stream()
                 .flatMap(
                         p -> {
-                            return Stream.of(
-                                    AdaAPI.toAdaFilename(p, "-proxy.ads").toString(),
-                                    AdaAPI.toAdaFilename(p, "-proxy.adb").toString());
+                            return Stream.of(AdaAPI.toAdaFilename(p, "-proxy.ads").toString());
                         })
                 .map(s -> "\"%s\"".formatted(s))
                 .collect(Collectors.joining(", "));
@@ -162,9 +160,7 @@ public class AdaAPI extends LanguageAPI {
                         p -> {
                             return Stream.of(
                                     AdaAPI.toAdaFilename(p, ".ads").toString(),
-                                    AdaAPI.toAdaFilename(p, ".adb").toString(),
-                                    AdaAPI.toAdaFilename(p, "-proxy.ads").toString(),
-                                    AdaAPI.toAdaFilename(p, "-proxy.adb").toString());
+                                    AdaAPI.toAdaFilename(p, "-proxy.ads").toString());
                         })
                 .map(s -> "\"%s\"".formatted(s))
                 .collect(Collectors.joining(", "));
