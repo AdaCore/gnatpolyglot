@@ -1,14 +1,19 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
-import com.adacore.libadalang.Libadalang.Mode;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Transfer;
 
 public class SubpParam implements AdaProxyObject {
 
+    public enum Mode {
+        IN,
+        OUT,
+        INOUT,
+    }
+
     /** Origin node in the LAL tree. */
-    private final Libadalang.ParamSpec origin;
+    private final Libadalang.BaseFormalParamDecl origin;
 
     /** Name of the Subprogram parameter. */
     public Name name;
@@ -24,7 +29,7 @@ public class SubpParam implements AdaProxyObject {
      */
     private Libadalang.BaseTypeDecl type;
 
-    public SubpParam(Libadalang.ParamSpec origin, Name name, Transfer transfer) {
+    public SubpParam(Libadalang.BaseFormalParamDecl origin, Name name, Transfer transfer) {
         this.origin = origin;
         this.name = name;
         this.transfer = transfer;
@@ -40,7 +45,7 @@ public class SubpParam implements AdaProxyObject {
     }
 
     public boolean isOutMode() {
-        return getMode() instanceof Libadalang.ModeOut || getMode() instanceof Libadalang.ModeInOut;
+        return getMode() == Mode.OUT || getMode() == Mode.INOUT;
     }
 
     @Override
@@ -49,6 +54,13 @@ public class SubpParam implements AdaProxyObject {
     }
 
     public Mode getMode() {
-        return origin.fMode();
+        if (origin instanceof Libadalang.ParamSpec p) {
+            return switch (p.fMode()) {
+                case Libadalang.ModeOut m -> Mode.OUT;
+                case Libadalang.ModeInOut m -> Mode.INOUT;
+                default -> Mode.IN;
+            };
+        }
+        return Mode.IN;
     }
 }

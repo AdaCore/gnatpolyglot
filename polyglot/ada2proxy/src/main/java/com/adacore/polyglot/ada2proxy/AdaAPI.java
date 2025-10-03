@@ -49,6 +49,13 @@ public class AdaAPI extends LanguageAPI {
                 .toPascalWithUnderscore();
     }
 
+    /**
+     * Return the `name` as it should be in the proxy.
+     */
+    public static Name functionProxyName(String name) {
+        return Name.fromLower(s);
+    }
+
     /** Create a {@link FullyQualifiedName} to decl, or its parent if ``onlyParent`` is true. */
     public static FullyQualifiedName makeProxyFullyQualifiedName(Libadalang.BasicDecl decl) {
         if (decl instanceof Libadalang.BaseTypeDecl typeDecl) {
@@ -59,7 +66,7 @@ public class AdaAPI extends LanguageAPI {
         }
         Libadalang.Symbol[] symbols = decl.pFullyQualifiedNameArray(false);
         return new FullyQualifiedName(
-                Stream.of(symbols).map(s -> s.text).map(Name::fromLower).toList());
+                Stream.of(symbols).map(s -> s.text).map(s -> functionProxyName(s)).toList());
     }
 
     /** Create a {@link TypeExpr} to ``decl``. */
@@ -682,14 +689,14 @@ public class AdaAPI extends LanguageAPI {
         String shadowTypename = firstParam.getType().pRelativeName().getText() + "_Shadow";
 
         builder.append(firstParam.name.toPascalWithUnderscore()).append(" : ");
-        if (firstParam.getMode() instanceof Libadalang.ModeInOut) builder.append("in out ");
-        else if (firstParam.getMode() instanceof Libadalang.ModeOut) builder.append("out ");
+        if (firstParam.getMode() == SubpParam.Mode.INOUT) builder.append("in out ");
+        else if (firstParam.getMode() == SubpParam.Mode.OUT) builder.append("out ");
         builder.append(shadowTypename);
 
         for (var param : subp.parameters.stream().skip(1).toList()) {
             builder.append("; ").append(param.name.toPascalWithUnderscore()).append(" : ");
-            if (param.getMode() instanceof Libadalang.ModeInOut) builder.append("in out ");
-            else if (param.getMode() instanceof Libadalang.ModeOut) builder.append("out ");
+            if (param.getMode() == SubpParam.Mode.INOUT) builder.append("in out ");
+            else if (param.getMode() == SubpParam.Mode.OUT) builder.append("out ");
             if (param.getType().equals(controllingType)) builder.append(shadowTypename);
             else builder.append(param.getType().pFullyQualifiedName());
         }

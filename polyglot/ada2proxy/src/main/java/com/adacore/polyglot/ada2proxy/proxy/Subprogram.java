@@ -1,7 +1,6 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
-import com.adacore.libadalang.Libadalang.SubpSpec;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.Name;
@@ -44,8 +43,8 @@ public class Subprogram extends AdaDeclaration {
     }
 
     /** Return the SubpSpec of the origin. */
-    private Libadalang.SubpSpec getSpec() {
-        return (SubpSpec) origin.pSubpSpecOrNull(false);
+    private Libadalang.BaseSubpSpec getSpec() {
+        return origin.pSubpSpecOrNull(false);
     }
 
     @Override
@@ -60,14 +59,19 @@ public class Subprogram extends AdaDeclaration {
         return builder.toString();
     }
 
-    /** Return the fully qualified name of the declaration of origin. */
+    /** Return the relative name of the declaration of origin. */
     public String getOriginName() {
+        return origin.pRelativeName().getText();
+    }
+
+    /** Return the fully qualified name of the declaration of origin. */
+    public String getOriginFullyQualifiedName() {
         return origin.pFullyQualifiedName();
     }
 
     /** Return whether ``funDecl`` is a procedure or a function. */
     public boolean isProcedure() {
-        return getSpec().fSubpReturns().isNone();
+        return getReturnType().isNone();
     }
 
     /** Return the return type of the Ada subprogram. */
