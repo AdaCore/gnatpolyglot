@@ -77,12 +77,12 @@ public class Name {
 
     /** Return whether the name uses the Pascal syntax. */
     public static boolean isPascal(String name) {
-        return name.matches("[A-Z][a-z0-9]*([A-Z0-9][a-z0-9]*)*");
+        return name.matches("[A-Z]+[a-z0-9]*([A-Z0-9]+[a-z0-9]*)*");
     }
 
     /** Return whether the name uses the Pascal syntax. */
     public static boolean isPascalWithUnderscore(String name) {
-        return name.matches("[A-Z][a-z0-9]*(_[A-Z0-9][a-z0-9]*)*");
+        return name.matches("[A-Z]+[a-z0-9]*(_[A-Z0-9]+[a-z0-9]*)*");
     }
 
     /** Return a new Name from a string using the lower syntax. */
