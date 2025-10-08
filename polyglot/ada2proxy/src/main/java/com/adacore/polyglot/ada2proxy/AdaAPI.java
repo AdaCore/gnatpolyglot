@@ -738,36 +738,65 @@ public class AdaAPI extends LanguageAPI {
         returnedType =
                 (Libadalang.BaseTypeDecl)
                         returnedType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
-        String typename = returnedType.pFullyQualifiedName();
+        String typename =
+                AdaTypeMatcher.isNonClassWideTagged(returnedType)
+                        ? returnedType.pRelativeName().getText() + "_Shadow"
+                        : returnedType.pFullyQualifiedName();
+        String accessType =
+                AdaTypeMatcher.isNonClassWideTagged(returnedType)
+                        ? typename + "_Shadow"
+                        : asAccess(returnedType);
         if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)
                 || returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
             // When returning records, we need to convert an Address to an access`: declare a
             // converter.
             builder.append("type ")
-                    .append(asAccess(returnedType))
+                    .append(accessType)
                     .append(" is access all ")
                     .append(typename)
                     .append(" with Size => Standard'Address_Size")
                     .append(";\n");
             builder.append("function Converter is new Ada.Unchecked_Conversion (System.Address, ")
-                    .append(asAccess(returnedType))
+                    .append(accessType)
                     .append(");\n")
                     // The returned value will be located on the heap and will be deallocated at
                     // some point.
                     .append("procedure Free is new Ada.Unchecked_Deallocation (")
                     .append(typename)
                     .append(", ")
-                    .append(asAccess(returnedType))
+                    .append(accessType)
                     .append(");\n");
             // The value will be received as an address or a Polyglot_Array. In order to be able to
             // free it, it needs to be stored in an access variable.
             builder.append("Returned_Access : ")
-                    .append(asAccess(returnedType))
+                    .append(accessType)
                     .append(" := ")
                     .append("Converter (Returned_Value");
             // Get the data of the Polyglot_Array or String when the return type is an array.
             if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) builder.append(".Data");
             builder.append(");");
+        } else if (AdaTypeMatcher.isArrayAccess(returnedType)) {
+            builder.append("type ")
+                    .append(accessType)
+                    .append(" is access all ")
+                    .append(
+                            returnedType
+                                    .pAccessedType(Libadalang.AdaNode.NONE)
+                                    .pFullyQualifiedName())
+                    .append(" with Size => Standard'Address_Size")
+                    .append(";\n");
+            builder.append("function Converter is new Ada.Unchecked_Conversion (System.Address, ")
+                    .append(accessType)
+                    .append(");\n")
+                    .append("Returned_Access : ")
+                    .append(accessType)
+                    .append(" := ")
+                    .append("Converter (Returned_Value.Data);\n");
+
+        } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
+            builder.append("function Converter is new Ada.Unchecked_Conversion (System.Address, ")
+                    .append(typename)
+                    .append(");\n");
         }
 
         return builder.toString();
@@ -779,7 +808,10 @@ public class AdaAPI extends LanguageAPI {
         Libadalang.BaseTypeDecl returnedType =
                 (Libadalang.BaseTypeDecl)
                         subp.getReturnType().pMostVisiblePart(Libadalang.AdaNode.NONE, false);
-        String typename = returnedType.pFullyQualifiedName();
+        String typename =
+                AdaTypeMatcher.isNonClassWideTagged(returnedType)
+                        ? returnedType.pRelativeName().getText() + "_Shadow"
+                        : returnedType.pFullyQualifiedName();
         builder.append("return Result : ").append(typename).append(" := ");
         if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)
                 || returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
@@ -790,6 +822,10 @@ public class AdaAPI extends LanguageAPI {
                     .append(" do\n")
                     .append("Free (Returned_Access);\n")
                     .append("end return");
+        } else if (AdaTypeMatcher.isArrayAccess(returnedType)) {
+            builder.append(returnedType.pFullyQualifiedName()).append(" (Returned_Access)");
+        } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
+            builder.append("Converter (Returned_Value)");
         } else {
             builder.append(returnedType.pFullyQualifiedName()).append(" (Returned_Value)");
         }
