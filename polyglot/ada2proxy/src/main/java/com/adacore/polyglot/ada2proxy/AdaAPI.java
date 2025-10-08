@@ -826,6 +826,8 @@ public class AdaAPI extends LanguageAPI {
             builder.append(returnedType.pFullyQualifiedName()).append(" (Returned_Access)");
         } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
             builder.append("Converter (Returned_Value)");
+        } else if (returnedType.pIsEnumType(Libadalang.AdaNode.NONE)) {
+            builder.append(returnedType.pFullyQualifiedName()).append("'Enum_Val (Returned_Value)");
         } else {
             builder.append(returnedType.pFullyQualifiedName()).append(" (Returned_Value)");
         }
@@ -844,6 +846,11 @@ public class AdaAPI extends LanguageAPI {
                 || param.getType().pIsPrivate()
                 || (param.getType().pIsScalarType(Libadalang.AdaNode.NONE) && param.isOutMode())) {
             builder.append(param.name.toPascalWithUnderscore()).append("'Address");
+        } else if (param.getType().pIsEnumType(Libadalang.AdaNode.NONE)) {
+            builder.append(param.getType().pFullyQualifiedName())
+                    .append("'Enum_Rep (")
+                    .append(param.name.toPascalWithUnderscore())
+                    .append(")");
         } else if (param.getType().pIsScalarType(Libadalang.AdaNode.NONE)) {
             builder.append(cInterfaceNativeTypename(nativeType))
                     .append(" (")
