@@ -44,16 +44,20 @@ class GrandChild : public test::Child {
 public:
     GrandChild(const std::vector<int> &data) : test::Child(4, 2, 1, this), _vec(data) {}
 
-    virtual void p1() const {
+    void p1() const override {
         for (int i : _vec) {
             std::cout << i << " ";
         }
         std::cout << "\n";
     }
 
-    void p2(const test::Root &rec, int32_t i) const {
+    void p2(const test::Root &rec, int32_t i) const override {
         std::cout << "P2 from C++ " << i << ": ";
         rec.p1();
+    }
+
+    test::Rec f() const override {
+        return test::Rec(100);
     }
 
 private:
@@ -102,6 +106,8 @@ int main() {
     std::cout << "r1 = " << r1.get_i() << "\n";
     test::Rec r2 = test::f_rec(ref);
     std::cout << "r2 = " << r2.get_i() << "\n";
+    test::Rec r3 = test::f_rec(grand);
+    std::cout << "r3 = " << r3.get_i() << "\n";
 
     test::p2_child(child, root, 1);
     test::p2_child(gref, root, 1);

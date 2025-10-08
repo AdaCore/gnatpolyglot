@@ -73,8 +73,8 @@ Template file to generate shadow types for tagged records.
          "${allocFunc.symbol}");
    @endfor
 
-   @for(var method : rec.methods)
-      overriding ${api.makeShadowOverride(method)};
+   @for(var method : methods)
+      overriding ${api.makeShadowOverride(method, shadowTypename)};
    @endfor
 
 @else
@@ -145,12 +145,12 @@ Template file to generate shadow types for tagged records.
       end ${allocFunc.getLastName().toPascalWithUnderscore()};
    @endfor
 
-   @for(var method : rec.methods)
+   @for(var method : methods)
       !{
          String subpName = method.name.toPascalWithUnderscore();
          String firstParam = method.parameters.get(0).name.toPascalWithUnderscore();
       }
-      ${api.makeShadowOverride(method)} is
+      ${api.makeShadowOverride(method, shadowTypename)} is
          use all type Ada.Exceptions.Exception_Occurrence_Access;
          Table : ${recordName}_Vtable
          with Address => ${firstParam}.Shadow.Vtable;

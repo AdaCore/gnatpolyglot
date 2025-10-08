@@ -700,7 +700,7 @@ public class AdaAPI extends LanguageAPI {
      * Create a declaration for the function overriding subp for the shadow type, replacing any
      * occurences of the controlling type with the shadow type.
      */
-    public String makeShadowOverride(Subprogram subp) {
+    public String makeShadowOverride(Subprogram subp, String shadowTypename) {
         StringBuilder builder = new StringBuilder();
         builder.append(subp.isProcedure() ? "procedure " : "function ")
                 .append(subp.getOriginName());
@@ -708,7 +708,6 @@ public class AdaAPI extends LanguageAPI {
 
         SubpParam firstParam = subp.parameters.get(0);
         Libadalang.BaseTypeDecl controllingType = firstParam.getType();
-        String shadowTypename = firstParam.getType().pRelativeName().getText() + "_Shadow";
 
         builder.append(firstParam.name.toPascalWithUnderscore()).append(" : ");
         if (firstParam.getMode() == SubpParam.Mode.INOUT) builder.append("in out ");
