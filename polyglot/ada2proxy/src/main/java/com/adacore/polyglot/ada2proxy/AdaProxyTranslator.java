@@ -134,7 +134,7 @@ public class AdaProxyTranslator {
 
         private List<VTableEntry> makeVtable(Record classDecl) {
             // Only tagged types can have a vtable.
-            if (!classDecl.isTaggedType()) return null;
+            if (!classDecl.isInheritable()) return null;
 
             // Stores the names of all functions inside the vtable of the record.
             HashSet<Name> names = new HashSet<>();
@@ -167,7 +167,7 @@ public class AdaProxyTranslator {
             declarations.add(rec.getCloneFunction());
             declarations.add(rec.getCopyFunction());
             declarations.addAll(rec.getGettersAndSetters());
-            if (rec.isTaggedType()) declarations.addAll(rec.getShadowAllocFunctions());
+            if (rec.isInheritable()) declarations.addAll(rec.getShadowAllocFunctions());
             if (rec.getTypeDef() instanceof Libadalang.RecordTypeDef
                     || rec.getTypeDef() instanceof Libadalang.PrivateTypeDef
                     || rec.getTypeDef() instanceof Libadalang.DerivedTypeDef) {
@@ -178,7 +178,7 @@ public class AdaProxyTranslator {
                         rec.getDoc(),
                         parentType,
                         8,
-                        !rec.isTaggedType(),
+                        !rec.isInheritable(),
                         rec.components.stream().map(c -> (Field) c.accept(this)).toList(),
                         makeVtable(rec));
             }

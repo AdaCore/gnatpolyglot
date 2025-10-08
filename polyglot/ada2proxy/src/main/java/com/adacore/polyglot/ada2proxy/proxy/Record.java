@@ -20,6 +20,7 @@ import com.adacore.polyglot.proxy.TypeExpr;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Record extends AdaDeclaration {
 
@@ -398,6 +399,25 @@ public class Record extends AdaDeclaration {
 
     public boolean isTaggedType() {
         return origin.pIsTaggedType(Libadalang.AdaNode.NONE);
+    }
+
+    /**
+     * Return whether the type should be inheritable in the proxy.
+     *
+     * <p>In order to be inheritable, a type should be tagged, and none of its primitives should
+     * have no controlling parameters other than the first parameter.
+     */
+    public boolean isInheritable() {
+        return isTaggedType()
+                && Stream.of(origin.pGetPrimitives(false, false))
+                        .noneMatch(
+                                p -> {
+                                    Libadalang.BaseSubpSpec spec = p.pSubpSpecOrNull(false);
+                                    return spec.pReturnType(Libadalang.AdaNode.NONE).equals(origin)
+                                            || Stream.of(spec.pParamTypes(Libadalang.AdaNode.NONE))
+                                                    .skip(1)
+                                                    .anyMatch(t -> t.equals(origin));
+                                });
     }
 
     public boolean isControlled() {
