@@ -26,4 +26,6 @@ package Test is
 
    function Call_T_F(Obj : T'Class; E : Enum_1) return Enum_2 is (Obj.T_F (E));
 
+   type Enum_3 is new Enum_1;
+
 end Test;
