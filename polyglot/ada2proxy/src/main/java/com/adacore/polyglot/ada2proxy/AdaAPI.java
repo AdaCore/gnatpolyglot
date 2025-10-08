@@ -804,6 +804,7 @@ public class AdaAPI extends LanguageAPI {
 
         NativeType nativeType = checkNativeType(param.getType());
         if (param.getType().pIsRecordType(Libadalang.AdaNode.NONE)
+                || param.getType().pIsPrivate()
                 || (param.getType().pIsScalarType(Libadalang.AdaNode.NONE) && param.isOutMode())) {
             builder.append(param.name.toPascalWithUnderscore()).append("'Address");
         } else if (param.getType().pIsScalarType(Libadalang.AdaNode.NONE)) {
@@ -821,7 +822,8 @@ public class AdaAPI extends LanguageAPI {
                     .append(" Data => ")
                     .append(param.name.toPascalWithUnderscore())
                     .append("'Address)");
-            ;
+        } else {
+            throw new RuntimeException("Unsupported dispatch " + param.getType());
         }
 
         return builder.toString();
