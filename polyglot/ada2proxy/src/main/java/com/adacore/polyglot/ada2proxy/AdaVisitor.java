@@ -142,13 +142,13 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 packages.add(pack);
                 enqueueParentPackages(p);
                 mappedPackages.put(p, pack);
-            }
-            if (decl instanceof Libadalang.BaseTypeDecl type) {
+            } else if (decl instanceof Libadalang.BaseTypeDecl type) {
                 // If the type was already visited, it is already in a package's list of
-                // declaration. Also ignore types from the Std unit.
-                if (mappedTypes.containsKey(type) || type.getUnit().equals(type.pStandardUnit()))
-                    continue;
-                if (type.pParentBasicDecl() instanceof Libadalang.PackageDecl p) {
+                // declaration. Also ignore types from the Std unit or native types.
+                if (mappedTypes.containsKey(type)
+                        || type.getUnit().equals(type.pStandardUnit())
+                        || AdaAPI.checkNativeType(type) != null) continue;
+                if (type.pParentBasicDecl() instanceof Libadalang.BasePackageDecl p) {
                     Package pack = mappedPackages.get(p);
                     // If the type's package does not yet exist, enqueue the package and the type.
                     // The package needs to exist before the mapped type.
@@ -161,6 +161,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                         type.accept(this);
                         declarations = null;
                     }
+                } else {
+                    System.out.println("Unsupported parent decl " + type.pParentBasicDecl());
                 }
             }
         }
