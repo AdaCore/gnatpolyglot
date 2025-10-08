@@ -32,7 +32,6 @@ import com.adacore.polyglot.proxy.ProxyObject;
 import com.adacore.polyglot.proxy.TypeExpr;
 import com.adacore.polyglot.proxy.VTableEntry;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -135,18 +134,9 @@ public class AdaProxyTranslator {
         private List<VTableEntry> makeVtable(Record classDecl) {
             // Only tagged types can have a vtable.
             if (!classDecl.isInheritable()) return null;
-
-            // Stores the names of all functions inside the vtable of the record.
-            HashSet<Name> names = new HashSet<>();
             List<VTableEntry> entries = new ArrayList<>();
-
             for (var m : classDecl.getAllMethods()) {
                 Name name = m.name;
-                int suffix = 1;
-                // We must avoid having multiple entries with the same name.
-                while (!names.add(name)) {
-                    name = Name.fromLower("%s_%d".formatted(m.name.toLower(), suffix));
-                }
                 entries.add(
                         new VTableEntry(
                                 name,

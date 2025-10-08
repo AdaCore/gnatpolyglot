@@ -2,12 +2,14 @@
 vim: filetype=jteada
 Template file to generate shadow types for tagged records.
 --%>
-@import java.util.List
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
 @import com.adacore.polyglot.proxy.FunctionDecl
 @import com.adacore.polyglot.proxy.Role.RoleKind
 @import com.adacore.polyglot.ada2proxy.proxy.Record
+@import java.util.List
+@import java.util.HashMap
+@import java.util.stream.Collectors
 @param AdaAPI api
 @param Record rec
 @param Boolean isBody
@@ -25,6 +27,11 @@ Template file to generate shadow types for tagged records.
     List<FunctionDecl> allocFuncs = rec.getShadowAllocFunctions();
 
     List<Subprogram> methods = rec.getAllMethods();
+    Integer i = 0;
+    HashMap<Subprogram, String> vtableNames = new HashMap<>();
+    for (var m : methods) {
+        vtableNames.put(m, m.name.toPascalWithUnderscore() + "_Dispatch" + i++);
+    }
 }
 @if(!isBody)
    <%-- Shadow type for inheritance --%>
@@ -40,7 +47,7 @@ Template file to generate shadow types for tagged records.
    type ${shadowAccess} is access all ${shadowTypename};
 
    @for(var subp: methods)
-      type ${subp.name.toPascalWithUnderscore()}_${recordName}_Type is access
+      type ${vtableNames.get(subp)}_${recordName}_Type is access
          ${api.subprogramDispatchType(subp)}
          with Convention => C;
    @endfor
@@ -49,8 +56,8 @@ Template file to generate shadow types for tagged records.
       Clone_Shadow_Dispatch : Polyglot.Ada.Clone_Shadow_Type;
       Free_Shadow_Dispatch  : Polyglot.Ada.Free_Shadow_Type;
       @for(var subp: methods)
-         ${subp.name.toPascalWithUnderscore()}_Dispatch :
-            ${subp.name.toPascalWithUnderscore()}_${recordName}_Type;
+         ${vtableNames.get(subp)} :
+            ${vtableNames.get(subp)}_${recordName}_Type;
       @endfor
    end record with Convention => C;
 
@@ -154,7 +161,7 @@ Template file to generate shadow types for tagged records.
          Exc_Occ : Standard.Ada.Exceptions.Exception_Occurrence;
       @if(method.isProcedure())
       begin
-         Table.${subpName}_Dispatch (
+         Table.${vtableNames.get(method)} (
             ${firstParam}.Shadow.Self
             @for(var p : method.parameters.stream().skip(1).toList())
                ,
@@ -173,7 +180,7 @@ Template file to generate shadow types for tagged records.
          end if;
       @else
          Returned_Value : ${api.cInterfaceTypename(method.getReturnType())} :=
-            Table.${subpName}_Dispatch (
+            Table.${vtableNames.get(method)} (
                ${firstParam}.Shadow.Self
                @for(var p : method.parameters.stream().skip(1).toList())
                   ,
