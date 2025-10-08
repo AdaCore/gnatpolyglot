@@ -565,8 +565,10 @@ public class AdaAPI extends LanguageAPI {
                             .pAccessedType(Libadalang.AdaNode.NONE)
                             .pIndexType(0, Libadalang.AdaNode.NONE);
             builder.append("if ")
+                    .append(returnedType.pParentBasicDecl().pFullyQualifiedName())
+                    .append(".\"=\" (")
                     .append(returnedValue)
-                    .append(" = null then\n")
+                    .append(", null) then\n")
                     .append("return (First => Interfaces.C.int (")
                     .append(indexType.pFullyQualifiedName())
                     .append("'First + 1), Last => Interfaces.C.int (")
@@ -849,6 +851,8 @@ public class AdaAPI extends LanguageAPI {
         if (AdaTypeMatcher.isArrayAccess(param.getType()) && param.isOutMode()) {
             String polyglotArray = makeTemp(param.name, "Polyglot_Array");
             String valueArg = valueName(param.name);
+            String eqFunction =
+                    param.getType().pParentBasicDecl().pFullyQualifiedName() + ".\"=\"(";
             builder.append("declare\n")
                     .append(polyglotArray)
                     .append(" : Polyglot.Ada.Arrays.Polyglot_Array with Address => ")
@@ -859,20 +863,23 @@ public class AdaAPI extends LanguageAPI {
                     .append("begin\n")
                     .append(polyglotArray)
                     .append(".First := Interfaces.C.int (if ")
+                    .append(eqFunction)
                     .append(valueArg)
-                    .append(" = null then 0 else ")
+                    .append(", null) then 0 else ")
                     .append(valueArg)
                     .append(".all'First);\n")
                     .append(polyglotArray)
                     .append(".Last := Interfaces.C.int (if ")
+                    .append(eqFunction)
                     .append(valueArg)
-                    .append(" = null then -1 else ")
+                    .append(", null) then -1 else ")
                     .append(valueArg)
                     .append(".all'Last);\n")
                     .append(polyglotArray)
                     .append(".Data := (if ")
+                    .append(eqFunction)
                     .append(valueArg)
-                    .append(" = null then System.Null_Address else ")
+                    .append(", null) then System.Null_Address else ")
                     .append(valueArg)
                     .append(".all'Address);\n")
                     .append("end;");
