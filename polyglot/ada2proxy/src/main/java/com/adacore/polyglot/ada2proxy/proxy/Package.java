@@ -39,4 +39,15 @@ public class Package implements AdaProxyObject {
         }
         return List.of();
     }
+
+    public List<String> getRenamedDependencies() {
+        if (origin.getUnit().getRoot() instanceof Libadalang.CompilationUnit unit) {
+            return Stream.of(unit.pImportedUnits(false))
+                    .filter(u -> u.pDecl() instanceof Libadalang.PackageRenamingDecl)
+                    .map(u -> (Libadalang.PackageRenamingDecl) u.pDecl())
+                    .map(u -> u.pFinalRenamedPackage().pFullyQualifiedName())
+                    .toList();
+        }
+        return List.of();
+    }
 }

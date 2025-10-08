@@ -3,6 +3,7 @@ vim: filetype=jteada
 Template file to generate package bodies.
 --%>
 @import com.adacore.polyglot.ada2proxy.AdaAPI
+@import com.adacore.polyglot.ada2proxy.WithCollector
 @import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration
 @import com.adacore.polyglot.ada2proxy.proxy.AdaException
 @import com.adacore.polyglot.ada2proxy.proxy.GlobalVariable
@@ -32,6 +33,10 @@ with Polyglot.Exceptions.${api.getProjectName().toPascalWithUnderscore()};
 with Polyglot.Ada.Strings;
 
 with ${packageName}; use ${packageName};
+
+@for(var necessaryWith : WithCollector.getIncludes(pack))
+   with ${necessaryWith}; use ${necessaryWith};
+@endfor
 
 package body ${packageName}.Proxy is
 @for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>

@@ -3,6 +3,7 @@ vim: filetype=jteada
 Template file to generate package specs.
 --%>
 @import com.adacore.polyglot.ada2proxy.AdaAPI
+@import com.adacore.polyglot.ada2proxy.WithCollector
 @import com.adacore.polyglot.ada2proxy.proxy.Array
 @import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration
 @import com.adacore.polyglot.ada2proxy.proxy.AdaException
@@ -20,6 +21,9 @@ with System;
 
 with Polyglot.Ada.Arrays;
 with Polyglot.Ada.Strings;
+@for(var necessaryWith : WithCollector.getIncludes(pack))
+   with ${necessaryWith};
+@endfor
 
 package ${packageName}.Proxy is
 @for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>
