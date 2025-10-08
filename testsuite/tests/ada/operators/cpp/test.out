@@ -1,0 +1,28 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling test main program...
+Running test main program...
+
+{3, 8}
+4
+{2, 2}
+-2
+{8, 15}
+{5, 3}
+{16, 32}
+{0, 0}
+{0, 0}
+{-15, 15}
+{35, 9}
+1
+0
+0
+1
+{1, 0}
+{3, 6}
+{-2, -3}
+{3, 4}
+
+Done.

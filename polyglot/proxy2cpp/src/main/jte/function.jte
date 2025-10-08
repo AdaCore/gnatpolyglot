@@ -16,7 +16,7 @@ vim: filetype=jtecpp
         virtual
     @endif
     ${api.formatDoc(functionDecl.doc, 1)}
-    ${api.cppReturnTypename(functionDecl.type.returnType)} ${functionDecl.getLastName().toLower()}
+    ${api.cppReturnTypename(functionDecl.type.returnType)} ${api.functionName(functionDecl)}
         (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)}
     @if(overrides)
         override
