@@ -484,17 +484,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
                 queuedDecls.add(componentDecl.pFormalType(Libadalang.AdaNode.NONE));
                 for (var name : componentDecl.fIds()) {
-                    components.add(
-                            new Component(
-                                    componentDecl, Name.fromPascalWithUnderscore(name.getText())));
+                    components.add(new Component(componentDecl, AdaAPI.getName(name)));
                 }
             }
         }
-        rec =
-                new Record(
-                        parentDecl,
-                        Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
-                        components);
+        rec = new Record(parentDecl, AdaAPI.getName(parentDecl.pDefiningName()), components);
         mappedTypes.put(parentDecl, rec);
         return rec;
     }
@@ -593,10 +587,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     @Override
     public Void visit(Libadalang.ExceptionDecl node) {
         declarations.add(
-                new AdaException(
-                        Name.fromPascalWithUnderscore(node.pDefiningName().getText()),
-                        node,
-                        exceptionNumber++));
+                new AdaException(AdaAPI.getName(node.pDefiningName()), node, exceptionNumber++));
         return null;
     }
 
@@ -612,17 +603,13 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                                             (Libadalang.EnumLiteralDecl) lit;
                                     return new EnumLiteral(
                                             enumLit,
-                                            Name.fromPascalWithUnderscore(
-                                                    enumLit.pDefiningName().getText()),
+                                            AdaAPI.getName(enumLit.pDefiningName()),
                                             enumLit.pEnumRep().intValue());
                                 })
                         .toList();
 
         EnumType enumType =
-                new EnumType(
-                        parentDecl,
-                        Name.fromPascalWithUnderscore(parentDecl.pDefiningName().getText()),
-                        enumValues);
+                new EnumType(parentDecl, AdaAPI.getName(parentDecl.pDefiningName()), enumValues);
         declarations.add(enumType);
         mappedTypes.put(parentDecl, enumType);
         return null;
@@ -631,9 +618,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     public Void visit(Libadalang.ObjectDecl node) {
         if (!(node.pParentBasicDecl() instanceof Libadalang.PackageDecl)) return null;
         for (var id : node.fIds()) {
-            declarations.add(
-                    new GlobalVariable(
-                            node, Name.fromPascalWithUnderscore(id.pRelativeName().getText())));
+            declarations.add(new GlobalVariable(node, AdaAPI.getName(id)));
         }
         return null;
     }

@@ -159,6 +159,11 @@ public class AdaAPI extends LanguageAPI {
         return makeTypeExpr(typeExpr.pDesignatedTypeDecl());
     }
 
+    /** Create a proxy Name from an Ada defining name, using its canonical text */
+    public static Name getName(Libadalang.DefiningName name) {
+        return Name.fromLower(name.pCanonicalText().text);
+    }
+
     /**
      * Create the list of strings containing the interfaces generated from the json proxy for the
      * gpr project file.
