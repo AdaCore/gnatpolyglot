@@ -501,21 +501,41 @@ public class CppAPI {
         return builder.toString();
     }
 
-    public boolean needsRelease(FunctionTypeExpr functionType) {
-        return !(functionType.returnType instanceof NameTypeExpr name
-                && context.getTypeDecl(name.name) instanceof NativeTypeDecl);
-    }
-
     /**
      * Create a call to ``.release()`` on objects returned by the dispatchers when the value
      * returned is an object in order to prevent the destructor from freeing the memory returned.
      */
-    public String makeRelease(FunctionTypeExpr functionType) {
-        return needsRelease(functionType) ? ".release()" : "";
+    public String makeReturnFromDispatch(FunctionTypeExpr functionType, String returnedValue) {
+        StringBuilder builder = new StringBuilder();
+        if (functionType.returnType instanceof NameTypeExpr name
+                && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
+            builder.append("return ");
+            if (context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
+                builder.append("(")
+                        .append(cTypename(functionType.returnType))
+                        .append(")")
+                        .append(returnedValue);
+            } else {
+                builder.append(returnedValue).append(".release();");
+            }
+        } else if (functionType.returnType instanceof ArrayTypeExpr) {
+            builder.append("return ").append(returnedValue).append(".release();");
+        } else if (functionType.returnType instanceof PointerTypeExpr) {
+            builder.append("if (")
+                    .append(returnedValue)
+                    .append(".get() == nullptr) {")
+                    .append(makeDispatchDefaultReturn(functionType))
+                    .append("} else { return ")
+                    .append(returnedValue)
+                    .append(".get()->data() ;}");
+        } else {
+            throw new UnsupportedOperationException("Unsupported returned dispatch type");
+        }
+        return builder.toString();
     }
 
-    public boolean returnsVoid(FunctionDecl functionDecl) {
-        return functionDecl.type.returnType instanceof NameTypeExpr name
+    public boolean returnsVoid(FunctionTypeExpr functionType) {
+        return functionType.returnType instanceof NameTypeExpr name
                 && context.getTypeDecl(name.name).equals(NativeType.VOID.declaration);
     }
 
@@ -533,7 +553,9 @@ public class CppAPI {
      * not be used by the library.
      */
     public String makeDispatchDefaultReturn(FunctionTypeExpr function) {
-        if (function.returnType instanceof ArrayTypeExpr)
+        if (function.returnType instanceof ArrayTypeExpr
+                || function.returnType instanceof PointerTypeExpr ptr
+                        && ptr.typeExpr instanceof ArrayTypeExpr)
             return "return polyglot::ada::arrays::array_data{0, 0, nullptr};";
         if (function.returnType instanceof NameTypeExpr name) {
             TypeDecl returnType = context.getTypeDecl(name.name);

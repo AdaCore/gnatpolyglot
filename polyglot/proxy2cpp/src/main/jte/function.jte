@@ -12,10 +12,10 @@ vim: filetype=jtecpp
 
 @if(!isSource)
     !{boolean overrides = api.isOverriding(functionDecl);}
+    ${api.formatDoc(functionDecl.doc, 1)}
     @if(functionDecl.overridability == Overridability.OVERRIDABLE && !overrides)
         virtual
     @endif
-    ${api.formatDoc(functionDecl.doc, 1)}
     ${api.cppReturnTypename(functionDecl.type.returnType)} ${api.functionName(functionDecl)}
         (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)}
     @if(overrides)
@@ -32,7 +32,7 @@ vim: filetype=jtecpp
             ${api.verifyOwnership(param)}
             ${api.createPointerBuffer(param)}
         @endfor
-        @if (api.returnsVoid(functionDecl))
+        @if (api.returnsVoid(functionDecl.type))
             ${api.callCSymbol(functionDecl)};
             @for(var param : functionDecl.type.parameters)
                 ${api.checkPointerValue(param)}
