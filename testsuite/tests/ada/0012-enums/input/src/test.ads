@@ -20,4 +20,10 @@ package Test is
 
    function F_Enum_2(V: Enum_2) return Enum_2;
 
+   type T is tagged null record;
+
+   function T_F (Obj : T; E : Enum_1) return Enum_2 is (D);
+
+   function Call_T_F(Obj : T'Class; E : Enum_1) return Enum_2 is (Obj.T_F (E));
+
 end Test;

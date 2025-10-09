@@ -518,14 +518,15 @@ public class CppAPI {
      */
     public String makeReturnFromDispatch(FunctionTypeExpr functionType, String returnedValue) {
         StringBuilder builder = new StringBuilder();
-        if (functionType.returnType instanceof NameTypeExpr name
-                && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
+        if (functionType.returnType instanceof NameTypeExpr name) {
             builder.append("return ");
-            if (context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
-                builder.append("(")
+            TypeDecl typeDecl = context.getTypeDecl(name.name);
+            if (typeDecl instanceof NativeTypeDecl || typeDecl instanceof EnumerationDecl) {
+                builder.append("static_cast<")
                         .append(cTypename(functionType.returnType))
-                        .append(")")
-                        .append(returnedValue);
+                        .append(">(")
+                        .append(returnedValue)
+                        .append(");");
             } else {
                 builder.append(returnedValue).append(".release();");
             }
@@ -577,6 +578,8 @@ public class CppAPI {
                     case STRING -> "return polyglot::ada::strings::string_data{0, 0, nullptr};";
                     default -> "return 0;";
                 };
+            } else if (returnType instanceof EnumerationDecl) {
+                return "return 0;";
             }
         }
         return "return nullptr;";
