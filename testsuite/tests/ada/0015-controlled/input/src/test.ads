@@ -27,6 +27,12 @@ package Test is
    overriding
    procedure Finalize (Object : in out Cont);
 
+   type Cont_Array is array (Positive range <>) of Cont;
+
+   procedure Foo (Arr : in out Cont_Array);
+
+   function Get_Arr return Cont_Array;
+
 private
 
    type Rec_Access is access all Rec;
