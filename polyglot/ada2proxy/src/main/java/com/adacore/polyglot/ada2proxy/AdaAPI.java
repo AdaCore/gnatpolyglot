@@ -208,6 +208,14 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
+    public String getProxyAccessFullyQualifiedName(Libadalang.BaseTypeDecl type) {
+        if (type.equals(type.pStdStringType())) return "Polyglot.Ada.Strings.String_Access";
+        return type.pParentBasicDecl()
+                .pFullyQualifiedName()
+                .concat(".Proxy.")
+                .concat(asAccess(type));
+    }
+
     /** Return the typename of the parameter */
     private String cInterfaceParamTypename(SubpParam p) {
         // If the parameter has a Out mode, it is a reference and will be passed as an address.
@@ -480,14 +488,8 @@ public class AdaAPI extends LanguageAPI {
                     .append(");");
         } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)
                 || AdaTypeMatcher.isArrayAccess(returnedType)) {
-            String accessType = asAccess(returnedType);
-            builder.append("type ")
-                    .append(accessType)
-                    .append(" is access all ")
-                    .append(typename)
-                    .append(" with Size => Standard'Address_Size;\n")
-                    .append("Returned_Array : ")
-                    .append(accessType)
+            builder.append("Returned_Array : ")
+                    .append(getProxyAccessFullyQualifiedName(returnedType))
                     .append(";");
         } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
             builder.append("function Return_Type_Converter is new")

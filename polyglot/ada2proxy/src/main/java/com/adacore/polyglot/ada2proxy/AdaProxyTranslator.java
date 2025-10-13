@@ -59,10 +59,11 @@ public class AdaProxyTranslator {
                                     Name.fromLower("polyglot"),
                                     Name.fromLower("ada"),
                                     Name.fromLower("arrays")),
-                            proxy.arrayTypes.stream()
+                            ArrayCollector.getAllComponentTypes(proxy).stream()
+                                    .filter(c -> AdaAPI.checkNativeType(c) == null)
                                     .flatMap(
-                                            a ->
-                                                    a.memberFunctions().stream()
+                                            c ->
+                                                    Array.memberFunctions(c).stream()
                                                             .map(f -> (Declaration) f))
                                     .toList()));
             return new Proxy(proxy.name, modules);

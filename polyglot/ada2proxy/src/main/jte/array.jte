@@ -1,0 +1,17 @@
+<%--
+vim: filetype=jteada
+Template file to generate array related types of the Ada bindings.
+--%>
+@import java.util.List
+@import com.adacore.libadalang.Libadalang
+@import com.adacore.polyglot.ada2proxy.AdaAPI
+@import com.adacore.polyglot.ada2proxy.ArrayCollector
+@import com.adacore.polyglot.ada2proxy.proxy.AdaProxy
+@import com.adacore.polyglot.ada2proxy.proxy.Array
+@import com.adacore.polyglot.proxy.Role.RoleKind
+@import java.util.stream.Collectors
+@param AdaAPI api
+@param Array array
+
+   type ${api.asAccess(array.arrayType)} is access all ${array.getFullyQualifiedName()}
+   with Size => Standard'Address_Size;
