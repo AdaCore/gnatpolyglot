@@ -37,8 +37,14 @@ public:
         return data;
     }
 
+    friend class polyglot_ptr<polyglot_string>;
+
 private:
     string_data _data;
+
+    bool is_shadow() const {
+        return false;
+    }
 };
 
 class polyglot_string::view  {

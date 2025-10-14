@@ -86,7 +86,7 @@ public:
 private:
     array_data _data;
 
-    bool is_shadow() {
+    bool is_shadow() const {
         return false;
     }
 };
