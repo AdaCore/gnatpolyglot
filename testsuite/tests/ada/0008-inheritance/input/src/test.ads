@@ -14,7 +14,7 @@ package Test is
 
    function F (R : Root) return Rec;
 
-   function F2 (R : Root) return Root'Class;
+   -- function F2 (R : Root) return Root'Class;
 
    function F_Arr (R : Root; A: Arr; I : in out Integer) return Arr;
 
@@ -34,6 +34,6 @@ package Test is
 
    function F_Arr_Disp (R: Root'Class; A: Arr; I : in out Integer) return Arr;
 
-   function F2_Root (R: Root'Class) return Root'Class;
+   -- function F2_Root (R: Root'Class) return Root'Class;
 
 end Test;

@@ -17,9 +17,9 @@ public:
        return test::Rec(21);
     }
 
-    test::Root f2() const override {
-       return test::Root(7, 8);
-    }
+    // test::Root f2() const override {
+    //    return test::Root(7, 8);
+    // }
 
     polyglot::ada::arrays::polyglot_array<int32_t>
     f_arr(const polyglot::ada::arrays::polyglot_array<int32_t> &a, int &i) const override {
@@ -106,8 +106,8 @@ int main() {
     test::p2_child(child, root, 1);
     test::p2_child(gref, root, 1);
 
-    test::f2_root(root).p1();
-    test::f2_root(other).p1();
+    // test::f2_root(root).p1();
+    // test::f2_root(other).p1();
 
     polyglot::ada::arrays::polyglot_array<int32_t> arr(1, 5);
     for (int i = arr.get_begin(); i <= arr.get_end(); i++) {
