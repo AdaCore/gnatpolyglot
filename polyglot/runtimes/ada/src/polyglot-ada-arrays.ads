@@ -50,6 +50,13 @@ package Polyglot.Ada.Arrays is
    procedure Set
      (Self : Polyglot_Array; Index : Interfaces.C.Int; New_Val : C);
 
+   generic
+      type C is private;
+   procedure Set_Record
+     (Self    : Polyglot_Array;
+      Index   : Interfaces.C.Int;
+      New_Val_Addr : System.Address);
+
    function Length (Arr : Polyglot_Array) return Interfaces.C.int
    is (Arr.Last - Arr.First + 1);
 

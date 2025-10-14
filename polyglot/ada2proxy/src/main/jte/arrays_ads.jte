@@ -47,7 +47,7 @@ package Polyglot.Ada.Arrays.Non_Native is
          @if (f.role.kind == RoleKind.GETTER)
             function ${subpName} is new Get (${componentTypename});
          @elseif (f.role.kind == RoleKind.SETTER)
-            procedure ${subpName} is new Set (${componentTypename});
+            procedure ${subpName} is new Set_Record (${componentTypename});
          @elseif (f.role.kind == RoleKind.FREE)
             procedure ${subpName} is new Free (${componentTypename});
          @elseif (f.role.kind == RoleKind.ALLOC)
