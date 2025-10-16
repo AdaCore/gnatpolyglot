@@ -18,6 +18,7 @@ vim: filetype=jtecpp
 #include <polyglot_ada_arrays.h>
 #include <polyglot_ada_exceptions.h>
 #include <polyglot_ada_strings.h>
+#include <polyglot_ptr.h>
 
 #include <cstdint>
 

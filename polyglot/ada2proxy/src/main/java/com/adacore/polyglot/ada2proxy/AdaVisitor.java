@@ -309,6 +309,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 && AdaAPI.checkNativeType(primitiveType) == null
                 && !primitiveType.pIsEnumType(Libadalang.AdaNode.NONE)
                 && !primitiveType.pIsArrayType(Libadalang.AdaNode.NONE)
+                && !primitiveType.pIsAccessType(Libadalang.AdaNode.NONE)
                 // The first argument of the subprogram must be compatible with the primitive type.
                 && spec.pParams().length != 0
                 && (spec.pParams()[0]
@@ -328,8 +329,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // Do not bind any of the controlled type functions. They are too "Ada-specific" and lead to
         // inconsistencies in the management of object destruction when exposed to the users in
         // other target languages.
-        if (Stream.of(node.pBaseSubpDeclarations(false))
-                .anyMatch(d -> d.pFullyQualifiedName().startsWith("Ada.Finalization."))) return;
+        if (AdaTypeMatcher.isControlledPrimitve(node)) return;
 
         // If the function is callable with the dot notation, it is a method.
         // The subprogram may be visited when exploring inherited primitive subprograms: if so, use
@@ -343,9 +343,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // Get the list of parameters.
         List<SubpParam> parameters = new ArrayList<>();
         if (!spec.fSubpParams().isNone()) {
-            for (var child : spec.fSubpParams().fParams().children()) {
-                Libadalang.ParamSpec paramSpec = (Libadalang.ParamSpec) child;
-
+            for (var paramSpec : spec.fSubpParams().fParams()) {
                 // Enqueue the parameter's type in case we do not visit it in the required list of
                 // units
                 queuedDecls.add(paramSpec.pFormalType(Libadalang.AdaNode.NONE));
@@ -354,10 +352,16 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 // arguments, so the ownership does not matter.
                 // TODO Access types: Ownership informations will be necessary when access types are
                 // handled.
-                Transfer transfer = new Transfer(RequiredOwner.ANY);
+                Transfer transfer =
+                        new Transfer(
+                                paramSpec
+                                                .pFormalType(Libadalang.AdaNode.NONE)
+                                                .pIsAccessType(Libadalang.AdaNode.NONE)
+                                        ? RequiredOwner.LIBRARY
+                                        : RequiredOwner.ANY);
 
                 // For each parameter declared in the spec, add a parameter.
-                for (var p : paramSpec.fIds().children())
+                for (var p : paramSpec.fIds())
                     parameters.add(
                             new SubpParam(
                                     paramSpec,
@@ -392,11 +396,18 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                             returnType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
         }
 
-        // Record value type are allocated on the heap before being returned. If a function returns
-        // one, it is copied to a heap address before being returned to the user.
         Owner returnOwner = Owner.UNKNOWN;
-        if (!returnType.isNone() && returnType.pIsRecordType(Libadalang.AdaNode.NONE))
-            returnOwner = Owner.LIBRARY;
+        if (!returnType.isNone()) {
+            // When returning an access, there is no way to determine whether the pointer is to be
+            // freed by the user or the library at an other moment. The safest way to avoid the any
+            // errors is to making the returning access library owned.
+            if (returnType.pIsAccessType(Libadalang.AdaNode.NONE)) returnOwner = Owner.LIBRARY;
+            // Record and Array value types are allocated on the heap before being returned from the
+            // Ada glue. Since the copy is performed after the called Ada function has returned, we
+            // know for sure that the user is the only owner of that heap value.
+            if (returnType.pIsRecordType(Libadalang.AdaNode.NONE)
+                    || returnType.pIsArrayType(Libadalang.AdaNode.NONE)) returnOwner = Owner.USER;
+        }
 
         Subprogram subProg =
                 new Subprogram(
@@ -462,7 +473,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
                 Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
                 queuedDecls.add(componentDecl.pFormalType(Libadalang.AdaNode.NONE));
-                for (var name : componentDecl.fIds().children()) {
+                for (var name : componentDecl.fIds()) {
                     components.add(
                             new Component(
                                     componentDecl, Name.fromPascalWithUnderscore(name.getText())));

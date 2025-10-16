@@ -44,11 +44,7 @@ vim: filetype=jtecpp
             ${className}(${api.cppParameters(alloc)});
         @endif
     @endfor
-        @if(!classDecl.isFinal && classDecl.parent == null)
         virtual ~${className}();
-        @else
-        ~${className}();
-        @endif
 
     @if(members.copyFunction != null)
         ${className} &operator=(${api.cppParameters(members.copyFunction)});
@@ -64,6 +60,12 @@ vim: filetype=jtecpp
         void *release();
 
         virtual ${className} *internal_clone(void *data);
+
+        template <typename U>
+        friend class polyglot::polyglot_ptr;
+    private:
+
+        bool is_shadow();
 
     public:
         struct view;
@@ -215,4 +217,9 @@ vim: filetype=jtecpp
         this->_data = nullptr;
         return tmp;
     }
+
+    bool ${className}::is_shadow() {
+        return typeid(${className}).before(typeid(*this));
+    }
+
 @endif

@@ -28,12 +28,22 @@ vim: filetype=jtecpp
     ${api.cppReturnTypename(functionDecl.type.returnType)}
     ${api.functionDefinitionName(functionDecl)}
         (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)} {
+        @for(var param : functionDecl.type.parameters)
+            ${api.verifyOwnership(param)}
+            ${api.createPointerBuffer(param)}
+        @endfor
         @if (api.returnsVoid(functionDecl))
             ${api.callCSymbol(functionDecl)};
+            @for(var param : functionDecl.type.parameters)
+                ${api.checkPointerValue(param)}
+            @endfor
             polyglot::exceptions::${api.getProjectName().toLower()}::rethrow_if_exc();
         @else
             ${api.cTypename(functionDecl.type.returnType)} returned_value =
                 ${api.callCSymbol(functionDecl)};
+            @for(var param : functionDecl.type.parameters)
+                ${api.checkPointerValue(param)}
+            @endfor
             polyglot::exceptions::${api.getProjectName().toLower()}::rethrow_if_exc();
             ${api.makeReturnStatement(functionDecl, "returned_value")};
         @endif

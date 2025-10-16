@@ -4,6 +4,7 @@ import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.TypeDef;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
+import com.adacore.polyglot.ada2proxy.AdaTypeMatcher;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.FunctionTypeExpr;
@@ -310,7 +311,7 @@ public class Record extends AdaDeclaration {
             componentAccessors = new ArrayList<>(components.size() * 2);
 
             for (var c : components) {
-                TypeExpr componentTypeRef = AdaAPI.makeTypeExpr(c.getType());
+                TypeExpr getterReturnType = c.getGetterType();
                 // Create the getter function.
                 componentAccessors.add(
                         new FunctionDecl(
@@ -325,8 +326,10 @@ public class Record extends AdaDeclaration {
                                                         Name.fromLower("self"),
                                                         getTypeExpr().makeReference(true),
                                                         new Transfer(RequiredOwner.ANY))),
-                                        componentTypeRef.makeReference(false),
-                                        Owner.STATIC),
+                                        getterReturnType,
+                                        c.getType().pIsAccessType(Libadalang.AdaNode.NONE)
+                                                ? Owner.LIBRARY
+                                                : Owner.STATIC),
                                 FunctionDecl.Visibility.PUBLIC,
                                 FunctionDecl.Overridability.FINAL,
                                 FunctionDecl.Staticness.NON_STATIC));
@@ -398,8 +401,6 @@ public class Record extends AdaDeclaration {
     }
 
     public boolean isControlled() {
-        return origin.pRootType(Libadalang.AdaNode.NONE)
-                .pFullyQualifiedName()
-                .startsWith("Ada.Finalization.");
+        return AdaTypeMatcher.isControlledType(origin);
     }
 }

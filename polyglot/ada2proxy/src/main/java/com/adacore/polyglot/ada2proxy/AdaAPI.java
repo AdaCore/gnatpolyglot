@@ -66,23 +66,17 @@ public class AdaAPI extends LanguageAPI {
     public static TypeExpr makeTypeExpr(Libadalang.BasicDecl decl) {
         if (decl instanceof Libadalang.TypeDecl typeDecl) {
             if (typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
-                if (isStringType(typeDecl)) return NativeType.STRING.typeExpr;
+                if (AdaTypeMatcher.isStringType(typeDecl)) return NativeType.STRING.typeExpr;
                 return makeTypeExpr(arrayTypeDef.fComponentType().fTypeExpr()).makeArray();
+            }
+            if (typeDecl.fTypeDef() instanceof Libadalang.TypeAccessDef access) {
+                return makeTypeExpr(access.fSubtypeIndication())
+                        .makePointer(
+                                access.fHasConstant() instanceof Libadalang.ConstantPresent,
+                                access.fHasNotNull() instanceof Libadalang.NotNullPresent);
             }
         }
         return makeProxyFullyQualifiedName(decl).asTypeExpr();
-    }
-
-    public static boolean isStringType(Libadalang.BaseTypeDecl bTypeDecl) {
-        if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl
-                && typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
-            return arrayTypeDef
-                    .fComponentType()
-                    .fTypeExpr()
-                    .pDesignatedTypeDecl()
-                    .equals(typeDecl.pStdCharType());
-        }
-        return bTypeDecl.equals(bTypeDecl.pStdStringType());
     }
 
     /** Return the native type corresponding to bTypeDecl, or null if the type is not native. */
@@ -93,8 +87,8 @@ public class AdaAPI extends LanguageAPI {
 
         if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl) {
             if (typeDecl.equals(typeDecl.pBoolType())) return NativeType.BOOL;
-            if (isStringType(typeDecl)) return NativeType.STRING;
-            if (typeDecl.equals(typeDecl.pStdCharType())) return NativeType.UINT8;
+            if (AdaTypeMatcher.isStringType(typeDecl)) return NativeType.STRING;
+            if (AdaTypeMatcher.isCharacter(typeDecl)) return NativeType.UINT8;
             if (typeDecl.pIsIntType(Libadalang.AdaNode.NONE)) {
                 // Compute the number of required bits to hold the values of the type and
                 // find the smallest type able to hold it.
@@ -253,6 +247,25 @@ public class AdaAPI extends LanguageAPI {
         else return typeDecl.pRelativeName().getText() + "_Access";
     }
 
+    public String createBoundCast(String data, Libadalang.BaseTypeDecl type, boolean isLowerBound) {
+        StringBuilder builder = new StringBuilder();
+        String indexTypeName = type.pIndexType(0, Libadalang.AdaNode.NONE).pFullyQualifiedName();
+        builder.append("(if Polyglot.Ada.")
+                .append(AdaTypeMatcher.isStringType(type) ? "Strings" : "Arrays")
+                .append(".Length (")
+                .append(data)
+                .append(") > 0 then ")
+                .append(indexTypeName)
+                .append("(")
+                .append(data)
+                .append(isLowerBound ? ".First" : ".Last")
+                .append(") else ")
+                .append(indexTypeName)
+                .append("'First")
+                .append(isLowerBound ? " + 1)" : ")");
+        return builder.toString();
+    }
+
     /**
      * Create an entity that is the conversion of a subprogram parameter, named `${name}_Arg` in the
      * C API, to the `type` Ada type.
@@ -264,11 +277,12 @@ public class AdaAPI extends LanguageAPI {
         StringBuilder builder = new StringBuilder();
         String argName = argName(name);
         String tempVarValue = null;
+        String converter = null;
         // Class wide types need a pointer conversion function.
         if (type.pIsRecordType(Libadalang.AdaNode.NONE)) {
             Libadalang.BaseTypeDecl specificType = type.pSpecificType();
             String accessType = makeTemp(name, asAccess(specificType));
-            String converter = makeTemp(name, "Converter");
+            converter = makeTemp(name, "Converter");
             tempVarValue = makeTemp(name, "Access");
             builder.append("type ")
                     .append(accessType)
@@ -287,6 +301,40 @@ public class AdaAPI extends LanguageAPI {
                     .append(" (")
                     .append(argName)
                     .append(")\n;");
+        } else if (AdaTypeMatcher.isArrayAccess(type)) {
+            Libadalang.BaseTypeDecl arrayType = type.pAccessedType(Libadalang.AdaNode.NONE);
+            Libadalang.BaseTypeDecl indexType = arrayType.pIndexType(0, Libadalang.AdaNode.NONE);
+            String polyglotArrayValue = isOutMode ? makeTemp(name, "Polyglot_Array") : argName;
+            tempVarValue = makeTemp(name, "Array");
+            if (isOutMode) {
+                builder.append(polyglotArrayValue)
+                        .append(" : Polyglot.Ada.Arrays.Polyglot_Array with Address => ")
+                        .append(argName)
+                        .append("; pragma Import(Ada, ")
+                        .append(polyglotArrayValue)
+                        .append(");\n");
+            }
+
+            builder.append(tempVarValue)
+                    .append(" : ")
+                    .append(arrayType.pFullyQualifiedName())
+                    .append(" (")
+                    .append(createBoundCast(polyglotArrayValue, arrayType, true))
+                    .append(" .. ")
+                    .append(createBoundCast(polyglotArrayValue, arrayType, false))
+                    .append(") with Address => ")
+                    .append(polyglotArrayValue)
+                    .append(".Data;\n")
+                    .append("pragma Import (Ada, ")
+                    .append(tempVarValue)
+                    .append(");");
+        } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
+            converter = makeTemp(name, "Converter");
+            builder.append("function ")
+                    .append(converter)
+                    .append(" is new Ada.Unchecked_Conversion (System.Address, ")
+                    .append(valueVarTypename)
+                    .append(");\n");
         }
         // Begin the declaration of the value.
         builder.append(valueName(name)).append(" : ").append(valueVarTypename);
@@ -299,21 +347,12 @@ public class AdaAPI extends LanguageAPI {
             //     pragma Import (Ada, ${Arg}_Value);
             //
             // If the array type is not unconstrained, the bounds will not be generated.
-            Libadalang.ArrayTypeDef typeDef =
-                    (Libadalang.ArrayTypeDef) ((Libadalang.TypeDecl) type).fTypeDef();
-            if (typeDef.fIndices() instanceof Libadalang.UnconstrainedArrayIndices indices) {
-                Libadalang.UnconstrainedArrayIndex index =
-                        (Libadalang.UnconstrainedArrayIndex) indices.fTypes().getChild(0);
-                BaseTypeDecl indexType = index.fSubtypeName().pNameDesignatedType();
+            if (!type.pIsStaticallyConstrained()) {
                 builder.append(" (")
-                        .append(indexType.pFullyQualifiedName())
-                        .append(" (")
-                        .append(argName)
-                        .append(".First) .. ")
-                        .append(indexType.pFullyQualifiedName())
-                        .append(" (")
-                        .append(argName)
-                        .append(".Last))");
+                        .append(createBoundCast(argName, type, true))
+                        .append(" .. ")
+                        .append(createBoundCast(argName, type, false))
+                        .append(")");
             }
             builder.append(" with Address => ")
                     .append(argName)
@@ -322,6 +361,8 @@ public class AdaAPI extends LanguageAPI {
                     .append(")");
         } else if (type.pIsRecordType(Libadalang.AdaNode.NONE)) {
             builder.append(" renames ").append(tempVarValue).append(".all");
+        } else if (AdaTypeMatcher.isArrayAccess(type)) {
+            builder.append(" := ").append(tempVarValue).append("'Unrestricted_Access");
         } else if (isOutMode) {
             // If the parameter uses an ``out`` mode, generate the following:
             // .. code::
@@ -340,12 +381,14 @@ public class AdaAPI extends LanguageAPI {
             // Boolean types do not exist in the Interfaces.C package: they are instead binded as
             // Ints.
             builder.append(" := ").append(argName).append(" /= 0");
-        } else if (type.pIsEnumType(Libadalang.AdaNode.NONE) && !type.equals(type.pStdCharType())) {
+        } else if (AdaTypeMatcher.isEnum(type)) {
             builder.append(" := ")
                     .append(valueVarTypename)
                     .append("'Enum_Val (")
                     .append(argName)
                     .append(")");
+        } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
+            builder.append(" := ").append(converter).append("(").append(argName).append(")");
         } else {
             // Otherwise, the type should convertible with a simple cast:
             // .. code::
@@ -406,7 +449,8 @@ public class AdaAPI extends LanguageAPI {
                     .append(" System.Address_To_Access_Conversions(")
                     .append(typename)
                     .append(");");
-        } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
+        } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)
+                || AdaTypeMatcher.isArrayAccess(returnedType)) {
             String accessType = asAccess(returnedType);
             builder.append("type ")
                     .append(accessType)
@@ -416,6 +460,11 @@ public class AdaAPI extends LanguageAPI {
                     .append("Returned_Array : ")
                     .append(accessType)
                     .append(";");
+        } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
+            builder.append("function Return_Type_Converter is new")
+                    .append(" Ada.Unchecked_Conversion (")
+                    .append(typename)
+                    .append(", System.Address);");
         }
         return builder.toString();
     }
@@ -433,8 +482,7 @@ public class AdaAPI extends LanguageAPI {
         String typeName = returnedType.pFullyQualifiedName();
         if (returnedType.equals(returnedType.pBoolType())) {
             builder.append("return (if ").append(returnedValue).append(" then 1 else 0)");
-        } else if (returnedType.pIsEnumType(Libadalang.AdaNode.NONE)
-                && !returnedType.equals(returnedType.pStdCharType())) {
+        } else if (AdaTypeMatcher.isEnum(returnedType)) {
             builder.append("return ")
                     .append(typeName)
                     .append("'Enum_Rep (")
@@ -482,6 +530,33 @@ public class AdaAPI extends LanguageAPI {
                     .append("return (First => Interfaces.C.Int (Returned_Array.all'First),")
                     .append("Last => Interfaces.C.Int (Returned_Array.all'Last), ")
                     .append("Data => Returned_Array.all'Address)");
+        } else if (AdaTypeMatcher.isArrayAccess(returnedType)) {
+            Libadalang.BaseTypeDecl indexType =
+                    returnedType
+                            .pAccessedType(Libadalang.AdaNode.NONE)
+                            .pIndexType(0, Libadalang.AdaNode.NONE);
+            builder.append("if ")
+                    .append(returnedValue)
+                    .append(" = null then\n")
+                    .append("return (First => Interfaces.C.int (")
+                    .append(indexType.pFullyQualifiedName())
+                    .append("'First + 1), Last => Interfaces.C.int (")
+                    .append(indexType.pFullyQualifiedName())
+                    .append("'First), Data => System.Null_Address);\n")
+                    .append("else\n")
+                    .append("return (First => Interfaces.C.Int (")
+                    .append(returnedValue)
+                    .append(".all'First),")
+                    .append("Last => Interfaces.C.Int (")
+                    .append(returnedValue)
+                    .append(".all'Last), ")
+                    .append("Data => ")
+                    .append(returnedValue)
+                    .append(".all'Address);\n")
+                    .append("end if");
+
+        } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
+            builder.append("return Return_Type_Converter (").append(returnedValue).append(")");
         }
         return builder.toString();
     }
@@ -507,6 +582,8 @@ public class AdaAPI extends LanguageAPI {
                     .append("Data => ")
                     .append(componentAccess)
                     .append("'Address)");
+        } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
+            builder.append("Access_Converter (").append(componentAccess).append(")");
         } else {
             // Otherwise, just get the address.
             builder.append(componentAccess).append("'Address");
@@ -559,18 +636,14 @@ public class AdaAPI extends LanguageAPI {
     }
 
     /** Return the C Interface typename of a type. */
-    public String cInterfaceTypename(Libadalang.BaseTypeDecl bTypeDecl) {
-        NativeType nativeType = checkNativeType(bTypeDecl);
+    public String cInterfaceTypename(Libadalang.BaseTypeDecl typeDecl) {
+        NativeType nativeType = checkNativeType(typeDecl);
         if (nativeType != null) return cInterfaceNativeTypename(nativeType);
-        if (bTypeDecl instanceof Libadalang.ClasswideTypeDecl) return "System.Address";
-        Libadalang.TypeDef typeDef =
-                ((Libadalang.TypeDecl) bTypeDecl.pRootType(Libadalang.AdaNode.NONE)).fTypeDef();
-        if (typeDef instanceof Libadalang.PrivateTypeDef
-                || typeDef instanceof Libadalang.RecordTypeDef) return "System.Address";
-        if (typeDef instanceof Libadalang.ArrayTypeDef) return "Polyglot.Ada.Arrays.Polyglot_Array";
-        if (bTypeDecl.pIsEnumType(Libadalang.AdaNode.NONE)
-                && !bTypeDecl.equals(bTypeDecl.pStdCharType()))
-            return cInterfaceNativeTypename(NativeType.SINT32);
+        if (typeDecl.pIsArrayType(Libadalang.AdaNode.NONE)
+                || AdaTypeMatcher.isArrayAccess(typeDecl))
+            return "Polyglot.Ada.Arrays.Polyglot_Array";
+        if (AdaTypeMatcher.isReturnedAsAddress(typeDecl)) return "System.Address";
+        if (AdaTypeMatcher.isEnum(typeDecl)) return cInterfaceNativeTypename(NativeType.SINT32);
 
         throw new UnsupportedOperationException("Type not supported");
     }
@@ -725,15 +798,55 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
+    /**
+     * Create a return statement that returns a dummy value for when an exception is thrown. This
+     * value should never reach the user and is only used for the correctness of the generated code.
+     */
     public String makeDefaultReturn(Subprogram subp) {
         BaseTypeDecl returnType = subp.getReturnType();
-        if (returnType.equals(returnType.pStdCharType()))
+        if (AdaTypeMatcher.isCharacter(returnType))
             return "return Interfaces.C.To_C ( Character'Val(0))";
         if (returnType.pIsScalarType(Libadalang.AdaNode.NONE)) return "return 0";
-        if (returnType.pIsRecordType(Libadalang.AdaNode.NONE) || returnType.pIsPrivate())
-            return "return System.Null_Address";
-        if (returnType.pIsArrayType(Libadalang.AdaNode.NONE))
-            return " return(0, 0, System.Null_Address)";
+        if (returnType.pIsArrayType(Libadalang.AdaNode.NONE)
+                || AdaTypeMatcher.isArrayAccess(subp.getReturnType()))
+            return " return(1, 0, System.Null_Address)";
+        if (AdaTypeMatcher.isReturnedAsAddress(returnType)) return "return System.Null_Address";
         return "return (others => <>)";
+    }
+
+    public String syncParamValue(SubpParam param) {
+        StringBuilder builder = new StringBuilder();
+        if (AdaTypeMatcher.isArrayAccess(param.getType()) && param.isOutMode()) {
+            String polyglotArray = makeTemp(param.name, "Polyglot_Array");
+            String valueArg = valueName(param.name);
+            builder.append("declare\n")
+                    .append(polyglotArray)
+                    .append(" : Polyglot.Ada.Arrays.Polyglot_Array with Address => ")
+                    .append(argName(param.name))
+                    .append("; pragma Import(Ada, ")
+                    .append(polyglotArray)
+                    .append(");\n")
+                    .append("begin\n")
+                    .append(polyglotArray)
+                    .append(".First := Interfaces.C.int (if ")
+                    .append(valueArg)
+                    .append(" = null then 0 else ")
+                    .append(valueArg)
+                    .append(".all'First);\n")
+                    .append(polyglotArray)
+                    .append(".Last := Interfaces.C.int (if ")
+                    .append(valueArg)
+                    .append(" = null then -1 else ")
+                    .append(valueArg)
+                    .append(".all'Last);\n")
+                    .append(polyglotArray)
+                    .append(".Data := (if ")
+                    .append(valueArg)
+                    .append(" = null then System.Null_Address else ")
+                    .append(valueArg)
+                    .append(".all'Address);\n")
+                    .append("end;");
+        }
+        return builder.toString();
     }
 }

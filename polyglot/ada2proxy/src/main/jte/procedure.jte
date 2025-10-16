@@ -26,6 +26,9 @@ Template file to generate binded procedures.
     @endfor
    begin
       ${api.call(subp)};
+    @for(var p : subp.parameters)
+      ${api.syncParamValue(p)}
+    @endfor
    exception
       when E: others =>
          Polyglot.Exceptions.Clear_Last_Exception (Polyglot.Get_Kernel);

@@ -2,6 +2,7 @@ package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
+import com.adacore.polyglot.ada2proxy.AdaTypeMatcher;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.TypeExpr;
 
@@ -21,10 +22,7 @@ public class Component implements AdaProxyObject {
     public boolean hasDefaultValue() {
         return !origin.fDefaultExpr().isNone()
                 // Component who are of a controlled type implicitely have a default value.
-                || origin.pFormalType(Libadalang.AdaNode.NONE)
-                        .pRootType(Libadalang.AdaNode.NONE)
-                        .pFullyQualifiedName()
-                        .startsWith("Ada.Finalization.");
+                || AdaTypeMatcher.isControlledType(origin.pFormalType(Libadalang.AdaNode.NONE));
     }
 
     /**
@@ -38,6 +36,16 @@ public class Component implements AdaProxyObject {
             // If the argument is not a scalar, get a const reference to the new value.
             setterType = setterType.makeReference(true);
         return setterType;
+    }
+
+    /** Return the type return type of the getter used to get this component. */
+    public TypeExpr getGetterType() {
+
+        Libadalang.BaseTypeDecl type = getType();
+        TypeExpr typeExpr = AdaAPI.makeTypeExpr(type);
+        return type.pIsAccessType(Libadalang.AdaNode.NONE)
+                ? typeExpr
+                : typeExpr.makeReference(false);
     }
 
     /** Return the type of the component. */

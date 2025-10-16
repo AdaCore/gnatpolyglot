@@ -32,6 +32,9 @@ Template file to generate binded functions.
          ${api.call(subp)};
    begin
       ${api.makeReturnConversion(subp.getReturnType(), "Value_Returned")};
+    @for(var p : subp.parameters)
+      ${api.syncParamValue(p)}
+    @endfor
    exception
       when E: others =>
          Polyglot.Exceptions.Clear_Last_Exception (Polyglot.Get_Kernel);
