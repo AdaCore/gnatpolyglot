@@ -140,6 +140,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 // its declarations.
                 Package pack = new Package(p, new ArrayList<>());
                 packages.add(pack);
+                enqueueParentPackages(p);
                 mappedPackages.put(p, pack);
             }
             if (decl instanceof Libadalang.BaseTypeDecl type) {
@@ -286,6 +287,15 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         }
     }
 
+    void enqueueParentPackages(Libadalang.BasePackageDecl node) {
+        Libadalang.Name name = node.fPackageName().fName();
+        while (name instanceof Libadalang.DottedName dotted) {
+            if (dotted.fPrefix().pReferencedDecl(false) instanceof Libadalang.PackageDecl p
+                    && !p.pFullyQualifiedName().equals("Ada")) queuedDecls.add(p);
+            name = dotted.fPrefix();
+        }
+    }
+
     @Override
     public Void visit(Libadalang.PackageDecl node) {
         this.analyzedPackage = node;
@@ -298,13 +308,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             }
         }
         resolveNameConflicts();
-
-        Libadalang.Name name = node.fPackageName().fName();
-        while (name instanceof Libadalang.DottedName dotted) {
-            if (dotted.fPrefix().pReferencedDecl(false) instanceof Libadalang.PackageDecl p)
-                queuedDecls.add(p);
-            name = dotted.fPrefix();
-        }
+        enqueueParentPackages(node);
 
         return null;
     }
