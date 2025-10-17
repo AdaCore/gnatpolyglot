@@ -27,6 +27,9 @@ public:
     int get_begin() const { return _data.begin; }
     int get_end() const { return _data.end; }
 
+    int size() const {
+        return this->get_end() - this->get_begin() + 1;
+    }
 
     string_data data() const { return this->_data; }
     string_data release() {

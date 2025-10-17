@@ -69,6 +69,10 @@ public:
 
     int get_end() const { return this->_data.end; }
 
+    int size() const {
+        return this->get_end() - this->get_begin() + 1;
+    }
+
     /** Internal use only */
     array_data data() const { return this->_data; }
 
