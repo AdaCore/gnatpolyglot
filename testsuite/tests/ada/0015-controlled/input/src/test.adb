@@ -48,6 +48,11 @@ package body Test is
       Free (Object.C);
    end Finalize;
 
+   function "="(A, B: Cont) return Boolean is
+   begin
+      return A.C.all = A.C.all and then A.Generation = B.Generation;
+   end "=";
+
    procedure Foo (Arr : in out Cont_Array) is
    begin
       for C of Arr loop

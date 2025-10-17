@@ -23,7 +23,10 @@ public class AdaTypeMatcher {
     /** Return whether the subprogram is a controlled type primitive. */
     public static boolean isControlledPrimitve(Libadalang.BasicDecl subprogram) {
         return Stream.of(subprogram.pBaseSubpDeclarations(false))
-                .anyMatch(d -> d.pFullyQualifiedName().startsWith("Ada.Finalization."));
+                .anyMatch(
+                        d ->
+                                d.pFullyQualifiedName().startsWith("Ada.Finalization.")
+                                        && !(d instanceof Libadalang.SyntheticSubpDecl));
     }
 
     /** Return whether the BaseTypeDecl is the Standard.String type, or an array of character. */

@@ -27,6 +27,8 @@ package Test is
    overriding
    procedure Finalize (Object : in out Cont);
 
+   overriding function "="(A, B: Cont) return Boolean;
+
    type Cont_Array is array (Positive range <>) of Cont;
 
    procedure Foo (Arr : in out Cont_Array);

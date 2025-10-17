@@ -34,4 +34,9 @@ int main() {
        test::foo(arr);
        test::foo(arr);
     }
+    {
+        test::Cont c1;
+        test::Cont c2;
+        std::cout << (c1 == c2) << "\n";
+    }
 }
