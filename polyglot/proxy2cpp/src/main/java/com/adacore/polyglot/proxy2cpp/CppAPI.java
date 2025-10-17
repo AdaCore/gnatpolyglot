@@ -427,7 +427,8 @@ public class CppAPI {
         else if (lastName.equals(Name.operatorBitOr)) return "operator|";
         else if (lastName.equals(Name.operatorBitXor)) return "operator^";
         else if (lastName.equals(Name.operatorBitNot)) return "operator~";
-        else return lastName.toLower();
+        if (CppKeyword.isKeyword(lastName)) return lastName.toLower() + "_";
+        return lastName.toLower();
     }
 
     /** Return the C++ name of the function to define ``functionDecl``. */
