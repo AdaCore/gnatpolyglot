@@ -385,27 +385,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // first parameter's type.
         if (derivedType != null && role != null) parameters.get(0).setType(primitiveType);
 
-        // Get the most visible part of the type of the parameter. The TypeExpr may refer to
-        // an incomplete type:
-        // .. code::
-        //
-        //    type T is private;
-        //
-        //    function Foo return T; -- ``T`` refers to the TypeDecl above, but it holds
-        //                           -- close to no information.
-        //
-        //  private
-        //     type T is record
-        //        ...
-        //     end record;
-        //
         Libadalang.BaseTypeDecl returnType = spec.pReturnType(Libadalang.AdaNode.NONE);
-        if (!returnType.isNone()) {
-            queuedDecls.add(returnType);
-            returnType =
-                    (Libadalang.BaseTypeDecl)
-                            returnType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
-        }
+        if (!returnType.isNone()) queuedDecls.add(returnType);
 
         Owner returnOwner = Owner.UNKNOWN;
         if (!returnType.isNone()) {
