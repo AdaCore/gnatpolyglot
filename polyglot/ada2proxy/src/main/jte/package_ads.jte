@@ -14,7 +14,10 @@ Template file to generate package specs.
 @param AdaAPI api
 @param Package pack
 
-!{String packageName = pack.getFullyQualifiedName();}
+!{
+   String packageName = pack.getProxyUnitName();
+   String parentPackage = pack.getFullyQualifiedName();
+}
 
 with Interfaces.C;
 with System;
@@ -25,7 +28,9 @@ with Polyglot.Ada.Strings;
    with ${necessaryWith};
 @endfor
 
-package ${packageName}.Proxy is
+with ${parentPackage};
+
+package ${packageName} is
 @for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>
     @if(decl instanceof Subprogram subp)
         @if(subp.isProcedure())
@@ -43,4 +48,4 @@ package ${packageName}.Proxy is
         @template.array(api, array)
     @endif
 @endfor
-end ${packageName}.Proxy;
+end ${packageName};

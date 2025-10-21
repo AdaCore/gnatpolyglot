@@ -199,7 +199,7 @@ public class AdaScanner extends Scanner {
         // Create the specification and body files.
         Path proxySrc = path.resolve("src");
         for (var pack : proxy.packages) {
-            Path packageSpecFile = AdaAPI.toAdaFilename(pack, "-proxy.ads");
+            Path packageSpecFile = AdaAPI.toAdaFilename(pack, ".ads");
             try (FileOutput packageSpec = new FileOutput(proxySrc.resolve(packageSpecFile))) {
                 templateEngine.render(
                         "package_ads.jte", Map.of("api", api, "pack", pack), packageSpec);
@@ -207,7 +207,7 @@ public class AdaScanner extends Scanner {
 
             // Only array do not create function in these package bodies
             if (pack.declarations.stream().anyMatch(d -> !(d instanceof Array))) {
-                Path packageBodyFile = AdaAPI.toAdaFilename(pack, "-proxy.adb");
+                Path packageBodyFile = AdaAPI.toAdaFilename(pack, ".adb");
                 try (FileOutput packageBody = new FileOutput(proxySrc.resolve(packageBodyFile))) {
                     templateEngine.render(
                             "package_adb.jte", Map.of("api", api, "pack", pack), packageBody);

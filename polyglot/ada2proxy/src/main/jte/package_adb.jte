@@ -13,7 +13,10 @@ Template file to generate package bodies.
 @param AdaAPI api
 @param Package pack
 
-!{String packageName = pack.getFullyQualifiedName();}
+!{
+   String packageName = pack.getProxyUnitName();
+   String parentPackage = pack.getFullyQualifiedName();
+}
 
 with Ada.Exceptions;
 with Ada.Finalization;
@@ -32,13 +35,13 @@ with Polyglot.Exceptions;
 with Polyglot.Exceptions.${api.getProjectName().toPascalWithUnderscore()};
 with Polyglot.Ada.Strings;
 
-with ${packageName}; use ${packageName};
+with ${parentPackage}; use ${parentPackage};
 
 @for(var necessaryWith : WithCollector.getIncludes(pack))
    with ${necessaryWith}; use ${necessaryWith};
 @endfor
 
-package body ${packageName}.Proxy is
+package body ${packageName} is
 @for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>
     @if(decl instanceof Subprogram subp)
         @if(subp.isProcedure())
@@ -54,4 +57,4 @@ package body ${packageName}.Proxy is
         @template.global_var(api, gv, true)
     @endif
 @endfor
-end ${packageName}.Proxy;
+end ${packageName};

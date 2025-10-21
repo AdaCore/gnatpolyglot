@@ -297,8 +297,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     void enqueueParentPackages(Libadalang.BasePackageDecl node) {
         Libadalang.Name name = node.fPackageName().fName();
         while (name instanceof Libadalang.DottedName dotted) {
-            if (dotted.fPrefix().pReferencedDecl(false) instanceof Libadalang.PackageDecl p
-                    && !p.pFullyQualifiedName().equals("Ada")) queuedDecls.add(p);
+            if (dotted.fPrefix().pReferencedDecl(false) instanceof Libadalang.PackageDecl p)
+                queuedDecls.add(p);
             name = dotted.fPrefix();
         }
     }

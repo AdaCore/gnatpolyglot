@@ -172,7 +172,7 @@ public class AdaAPI extends LanguageAPI {
         return packages.stream()
                 .flatMap(
                         p -> {
-                            return Stream.of(AdaAPI.toAdaFilename(p, "-proxy.ads").toString());
+                            return Stream.of(AdaAPI.toAdaFilename(p, ".ads").toString());
                         })
                 .map(s -> "\"%s\"".formatted(s))
                 .collect(Collectors.joining(", "));
@@ -220,10 +220,10 @@ public class AdaAPI extends LanguageAPI {
 
     public String getProxyAccessFullyQualifiedName(Libadalang.BaseTypeDecl type) {
         if (type.equals(type.pStdStringType())) return "Polyglot.Ada.Strings.String_Access";
-        return type.pParentBasicDecl()
-                .pFullyQualifiedName()
-                .concat(".Proxy.")
-                .concat(asAccess(type));
+        Libadalang.BasePackageDecl pack = (Libadalang.BasePackageDecl) type.pParentBasicDecl();
+        if (Package.isAdaRuntimePackage(pack))
+            return Package.getProxyUnitName(pack).concat(".").concat(asAccess(type));
+        return pack.pFullyQualifiedName().concat(".Proxy.").concat(asAccess(type));
     }
 
     /** Return the typename of the parameter */
@@ -681,7 +681,7 @@ public class AdaAPI extends LanguageAPI {
     /** Return the file name of a module with a given extension. */
     public static Path toAdaFilename(Package pack, String suffix) {
         StringBuilder builder = new StringBuilder();
-        builder.append(pack.getFullyQualifiedName().toLowerCase().replace(".", "-"));
+        builder.append(pack.getProxyUnitName().toLowerCase().replace(".", "-"));
         if (suffix != null) builder.append(suffix);
         return Path.of(builder.toString());
     }
