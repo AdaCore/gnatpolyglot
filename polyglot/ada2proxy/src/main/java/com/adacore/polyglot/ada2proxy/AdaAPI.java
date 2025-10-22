@@ -50,10 +50,32 @@ public class AdaAPI extends LanguageAPI {
     }
 
     /**
-     * Return the `name` as it should be in the proxy.
+     * Return the `name` as it should be in the proxy (i.e. turns operators to their predifined name
+     * proxy).
      */
     public static Name functionProxyName(String name) {
-        return Name.fromLower(s);
+        return switch (name) {
+            case "\"+\"" -> Name.operatorPlus;
+            case "\"-\"" -> Name.operatorMinus;
+            case "\"*\"" -> Name.operatorMult;
+            case "\"/\"" -> Name.operatorDiv;
+            case "\"**\"" -> Name.operatorPow;
+            case "\"mod\"" -> Name.operatorMod;
+            case "\"rem\"" -> Name.operatorRem;
+            case "\"abs\"" -> Name.operatorAbs;
+            case "\"&\"" -> Name.operatorConcat;
+            case "\"=\"" -> Name.operatorEq;
+            case "\"/=\"" -> Name.operatorNe;
+            case "\"<\"" -> Name.operatorLt;
+            case "\"<=\"" -> Name.operatorLe;
+            case "\">\"" -> Name.operatorGt;
+            case "\">=\"" -> Name.operatorGe;
+            case "\"and\"" -> Name.operatorBitAnd;
+            case "\"or\"" -> Name.operatorBitOr;
+            case "\"xor\"" -> Name.operatorBitXor;
+            case "\"not\"" -> Name.operatorBitNot;
+            case String s -> Name.fromLower(s);
+        };
     }
 
     /** Create a {@link FullyQualifiedName} to decl, or its parent if ``onlyParent`` is true. */
@@ -429,7 +451,7 @@ public class AdaAPI extends LanguageAPI {
     /** Create a string to call a function from the proxy. */
     public String call(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
-        builder.append(subp.getOriginName());
+        builder.append(subp.getOriginFullyQualifiedName());
 
         if (!subp.parameters.isEmpty()) {
             builder.append(" (")
@@ -681,7 +703,7 @@ public class AdaAPI extends LanguageAPI {
     public String makeShadowOverride(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
         builder.append(subp.isProcedure() ? "procedure " : "function ")
-                .append(subp.name.toPascalWithUnderscore());
+                .append(subp.getOriginName());
         builder.append("(");
 
         SubpParam firstParam = subp.parameters.get(0);

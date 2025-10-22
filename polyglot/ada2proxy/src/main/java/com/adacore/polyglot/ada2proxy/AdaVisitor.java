@@ -51,7 +51,20 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // other external symbols as much as possible
         // - has a third character to differentiate binded ``U``ser functions from the polyglot
         // ``G``enerated functions such as getters or setters.
-        builder.append("_PU").append(spec.pName().pFullyQualifiedName().replace(".", "_"));
+        builder.append("_PU");
+
+        // If the name is an operator, use the predefined proxy name.
+        if (spec.pName().pIsOperatorName())
+            builder.append(
+                            spec.pParentBasicDecl()
+                                    .pParentBasicDecl()
+                                    .pFullyQualifiedName()
+                                    .replace(".", "_"))
+                    .append(
+                            AdaAPI.functionProxyName(spec.pName().pCanonicalText().text)
+                                    .toPascalWithUnderscore());
+        else builder.append(spec.pName().pFullyQualifiedName().replace(".", "_"));
+
         if (spec.pReturnType(Libadalang.AdaNode.NONE).isNone()) {
             builder.append("Void");
         } else {
@@ -417,6 +430,10 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         Subprogram subProg = new Subprogram(node, name, parameters, symbol, role, returnOwner);
         if (role != null && role.kind == RoleKind.METHOD) {
             ((Record) mappedTypes.get(primitiveType)).methods.add(subProg);
+        }
+        // Create a similar subprogram for "/=" when the current subprogram is "="
+        if (name.equals(Name.operatorEq)) {
+            processSubprogram(node.pCorrespondingNeqSubprogram());
         }
         declarations.add(subProg);
     }
