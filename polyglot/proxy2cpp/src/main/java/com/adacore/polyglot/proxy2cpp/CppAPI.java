@@ -379,9 +379,30 @@ public class CppAPI {
         return "polyglot::memory_owner::" + owner.toString();
     }
 
+    public String functionName(FunctionDecl functionDecl) {
+        Name lastName = functionDecl.name.getLastName();
+        if (lastName.equals(Name.operatorPlus)) return "operator+";
+        else if (lastName.equals(Name.operatorMinus)) return "operator-";
+        else if (lastName.equals(Name.operatorMult)) return "operator*";
+        else if (lastName.equals(Name.operatorDiv)) return "operator/";
+        else if (lastName.equals(Name.operatorMod)) return "operator%";
+        else if (lastName.equals(Name.operatorEq)) return "operator==";
+        else if (lastName.equals(Name.operatorNe)) return "operator!=";
+        else if (lastName.equals(Name.operatorLt)) return "operator<";
+        else if (lastName.equals(Name.operatorLe)) return "operator<=";
+        else if (lastName.equals(Name.operatorGt)) return "operator>";
+        else if (lastName.equals(Name.operatorGe)) return "operator>=";
+        else if (lastName.equals(Name.operatorBitAnd)) return "operator&";
+        else if (lastName.equals(Name.operatorBitOr)) return "operator|";
+        else if (lastName.equals(Name.operatorBitXor)) return "operator^";
+        else if (lastName.equals(Name.operatorBitNot)) return "operator~";
+        else return lastName.toLower();
+    }
+
     /** Return the C++ name of the function to define ``functionDecl``. */
     public String functionDefinitionName(FunctionDecl functionDecl) {
-        String functionName = functionDecl.getLastName().toLower();
+        String functionName = functionName(functionDecl);
+
         if (!isMethod(functionDecl)) return functionName;
         StringBuilder builder = new StringBuilder();
         builder.append(cppTypename(functionDecl.role.type)).append("::").append(functionName);

@@ -56,12 +56,37 @@ public class Name {
         }
     }
 
+    // Arithmetic operators
+    public static final Name operatorPlus = Name.fromLower("operator_plus");
+    public static final Name operatorMinus = Name.fromLower("operator_minus");
+    public static final Name operatorMult = Name.fromLower("operator_mult");
+    public static final Name operatorDiv = Name.fromLower("operator_div");
+    public static final Name operatorPow = Name.fromLower("operator_pow");
+    public static final Name operatorMod = Name.fromLower("operator_mod");
+    public static final Name operatorRem = Name.fromLower("operator_rem");
+    public static final Name operatorAbs = Name.fromLower("operator_abs");
+    public static final Name operatorConcat = Name.fromLower("operator_concat");
+
+    // Bitwise operators
+    public static final Name operatorBitAnd = Name.fromLower("operator_bit_and");
+    public static final Name operatorBitOr = Name.fromLower("operator_bit_or");
+    public static final Name operatorBitXor = Name.fromLower("operator_bit_xor");
+    public static final Name operatorBitNot = Name.fromLower("operator_bit_not");
+
+    // Comparison operators
+    public static final Name operatorEq = Name.fromLower("operator_eq");
+    public static final Name operatorNe = Name.fromLower("operator_ne");
+    public static final Name operatorLt = Name.fromLower("operator_lt");
+    public static final Name operatorLe = Name.fromLower("operator_le");
+    public static final Name operatorGt = Name.fromLower("operator_gt");
+    public static final Name operatorGe = Name.fromLower("operator_ge");
+
     private final String name;
 
     /** Constructor using the lower syntax. */
     public Name(String name) {
-        if (name.isEmpty()) throw new IllegalArgumentException("A name cannot be empty");
-        if (!isLower(name)) throw new IllegalArgumentException(name + " is not lower");
+        if (name.isEmpty()) throw new BadNameSyntaxException("A name cannot be empty");
+        if (!isLower(name)) throw new BadNameSyntaxException(name + " is not lower");
         this.name = name;
     }
 
@@ -77,23 +102,23 @@ public class Name {
 
     /** Return whether the name uses the Pascal syntax. */
     public static boolean isPascal(String name) {
-        return name.matches("[A-Z][a-z0-9]*([A-Z0-9][a-z0-9]*)*");
+        return name.matches("[A-Z]+[a-z0-9]*([A-Z0-9]+[a-z0-9]*)*");
     }
 
     /** Return whether the name uses the Pascal syntax. */
     public static boolean isPascalWithUnderscore(String name) {
-        return name.matches("[A-Z][a-z0-9]*(_[A-Z0-9][a-z0-9]*)*");
+        return name.matches("[A-Z]+[a-z0-9]*(_[A-Z0-9]+[a-z0-9]*)*");
     }
 
     /** Return a new Name from a string using the lower syntax. */
     public static Name fromLower(String name) {
-        if (!isLower(name)) throw new IllegalArgumentException(name + " is not lower");
+        if (!isLower(name)) throw new BadNameSyntaxException(name + " is not lower");
         return new Name(name);
     }
 
     /** Return a new Name from a string using the camel syntax. */
     public static Name fromCamel(String name) {
-        if (!isCamel(name)) throw new IllegalArgumentException(name + " is not in camel syntax");
+        if (!isCamel(name)) throw new BadNameSyntaxException(name + " is not in camel syntax");
         return new Name(
                 Pattern.compile("[A-Z]")
                         .matcher(name)
@@ -105,7 +130,7 @@ public class Name {
 
     /** Return a new name from a string using the Pascal syntax. */
     public static Name fromPascal(String name) {
-        if (!isPascal(name)) throw new IllegalArgumentException(name + " is not in Pascal syntax");
+        if (!isPascal(name)) throw new BadNameSyntaxException(name + " is not in Pascal syntax");
         return new Name(
                 Pattern.compile("[A-Z]")
                         .matcher(name)
@@ -119,7 +144,7 @@ public class Name {
     /** Return a new name from a string using the Pascal syntax with additional underscores. */
     public static Name fromPascalWithUnderscore(String name) {
         if (!isPascalWithUnderscore(name))
-            throw new IllegalArgumentException(
+            throw new BadNameSyntaxException(
                     name + " is not in Pascal syntax with additional underescores");
         return new Name(name.toLowerCase());
     }

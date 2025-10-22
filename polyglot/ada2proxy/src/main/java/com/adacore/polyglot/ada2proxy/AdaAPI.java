@@ -49,6 +49,35 @@ public class AdaAPI extends LanguageAPI {
                 .toPascalWithUnderscore();
     }
 
+    /**
+     * Return the `name` as it should be in the proxy (i.e. turns operators to their predifined name
+     * proxy).
+     */
+    public static Name functionProxyName(String name) {
+        return switch (name) {
+            case "\"+\"" -> Name.operatorPlus;
+            case "\"-\"" -> Name.operatorMinus;
+            case "\"*\"" -> Name.operatorMult;
+            case "\"/\"" -> Name.operatorDiv;
+            case "\"**\"" -> Name.operatorPow;
+            case "\"mod\"" -> Name.operatorMod;
+            case "\"rem\"" -> Name.operatorRem;
+            case "\"abs\"" -> Name.operatorAbs;
+            case "\"&\"" -> Name.operatorConcat;
+            case "\"=\"" -> Name.operatorEq;
+            case "\"/=\"" -> Name.operatorNe;
+            case "\"<\"" -> Name.operatorLt;
+            case "\"<=\"" -> Name.operatorLe;
+            case "\">\"" -> Name.operatorGt;
+            case "\">=\"" -> Name.operatorGe;
+            case "\"and\"" -> Name.operatorBitAnd;
+            case "\"or\"" -> Name.operatorBitOr;
+            case "\"xor\"" -> Name.operatorBitXor;
+            case "\"not\"" -> Name.operatorBitNot;
+            case String s -> Name.fromLower(s);
+        };
+    }
+
     /** Create a {@link FullyQualifiedName} to decl, or its parent if ``onlyParent`` is true. */
     public static FullyQualifiedName makeProxyFullyQualifiedName(Libadalang.BasicDecl decl) {
         if (decl instanceof Libadalang.BaseTypeDecl typeDecl) {
@@ -59,7 +88,7 @@ public class AdaAPI extends LanguageAPI {
         }
         Libadalang.Symbol[] symbols = decl.pFullyQualifiedNameArray(false);
         return new FullyQualifiedName(
-                Stream.of(symbols).map(s -> s.text).map(Name::fromLower).toList());
+                Stream.of(symbols).map(s -> s.text).map(s -> functionProxyName(s)).toList());
     }
 
     /** Create a {@link TypeExpr} to ``decl``. */
@@ -422,7 +451,7 @@ public class AdaAPI extends LanguageAPI {
     /** Create a string to call a function from the proxy. */
     public String call(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
-        builder.append(subp.getOriginName());
+        builder.append(subp.getOriginFullyQualifiedName());
 
         if (!subp.parameters.isEmpty()) {
             builder.append(" (")
@@ -674,7 +703,7 @@ public class AdaAPI extends LanguageAPI {
     public String makeShadowOverride(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
         builder.append(subp.isProcedure() ? "procedure " : "function ")
-                .append(subp.name.toPascalWithUnderscore());
+                .append(subp.getOriginName());
         builder.append("(");
 
         SubpParam firstParam = subp.parameters.get(0);
@@ -682,14 +711,14 @@ public class AdaAPI extends LanguageAPI {
         String shadowTypename = firstParam.getType().pRelativeName().getText() + "_Shadow";
 
         builder.append(firstParam.name.toPascalWithUnderscore()).append(" : ");
-        if (firstParam.getMode() instanceof Libadalang.ModeInOut) builder.append("in out ");
-        else if (firstParam.getMode() instanceof Libadalang.ModeOut) builder.append("out ");
+        if (firstParam.getMode() == SubpParam.Mode.INOUT) builder.append("in out ");
+        else if (firstParam.getMode() == SubpParam.Mode.OUT) builder.append("out ");
         builder.append(shadowTypename);
 
         for (var param : subp.parameters.stream().skip(1).toList()) {
             builder.append("; ").append(param.name.toPascalWithUnderscore()).append(" : ");
-            if (param.getMode() instanceof Libadalang.ModeInOut) builder.append("in out ");
-            else if (param.getMode() instanceof Libadalang.ModeOut) builder.append("out ");
+            if (param.getMode() == SubpParam.Mode.INOUT) builder.append("in out ");
+            else if (param.getMode() == SubpParam.Mode.OUT) builder.append("out ");
             if (param.getType().equals(controllingType)) builder.append(shadowTypename);
             else builder.append(param.getType().pFullyQualifiedName());
         }

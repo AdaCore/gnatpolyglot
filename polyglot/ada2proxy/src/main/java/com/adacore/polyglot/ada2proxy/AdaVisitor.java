@@ -14,6 +14,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
+import com.adacore.polyglot.proxy.BadNameSyntaxException;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Role;
@@ -41,7 +42,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     private Queue<Libadalang.BasicDecl> queuedDecls = new LinkedList<>();
 
     /** Turn a fully qualified name into a unique C symbol. */
-    private String symbolify(Libadalang.SubpSpec spec) {
+    private String symbolify(Libadalang.BaseSubpSpec spec) {
         StringBuilder builder = new StringBuilder();
         // Symbols starting with a "_", followed by either a capital letter or an other
         // "_" are considered reserved identifier.
@@ -50,8 +51,21 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // other external symbols as much as possible
         // - has a third character to differentiate binded ``U``ser functions from the polyglot
         // ``G``enerated functions such as getters or setters.
-        builder.append("_PU").append(spec.pName().pFullyQualifiedName().replace(".", "_"));
-        if (spec.fSubpReturns().isNone()) {
+        builder.append("_PU");
+
+        // If the name is an operator, use the predefined proxy name.
+        if (spec.pName().pIsOperatorName())
+            builder.append(
+                            spec.pParentBasicDecl()
+                                    .pParentBasicDecl()
+                                    .pFullyQualifiedName()
+                                    .replace(".", "_"))
+                    .append(
+                            AdaAPI.functionProxyName(spec.pName().pCanonicalText().text)
+                                    .toPascalWithUnderscore());
+        else builder.append(spec.pName().pFullyQualifiedName().replace(".", "_"));
+
+        if (spec.pReturnType(Libadalang.AdaNode.NONE).isNone()) {
             builder.append("Void");
         } else {
             builder.append(
@@ -285,7 +299,13 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     public Void visit(Libadalang.PackageDecl node) {
         this.analyzedPackage = node;
 
-        node.fPublicPart().fDecls().accept(this);
+        for (var d : node.fPublicPart().fDecls()) {
+            try {
+                d.accept(this);
+            } catch (BadNameSyntaxException e) {
+                System.err.println(e.getMessage());
+            }
+        }
         resolveNameConflicts();
 
         Libadalang.Name name = node.fPackageName().fName();
@@ -299,7 +319,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     }
 
     /** Return whether ``subp`` is dot callable with ``type``. */
-    private boolean isDotCallable(Libadalang.SubpSpec spec, Libadalang.BaseTypeDecl type) {
+    private boolean isDotCallable(Libadalang.BaseSubpSpec spec, Libadalang.BaseTypeDecl type) {
         Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
 
         // TODO: When eng/libadalang/libadalang#1547 is resoled, use the new property.
@@ -321,7 +341,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     }
 
     public void processSubprogram(Libadalang.BasicDecl node) {
-        Libadalang.SubpSpec spec = (Libadalang.SubpSpec) node.pSubpSpecOrNull(false);
+        Libadalang.BaseSubpSpec spec = node.pSubpSpecOrNull(false);
 
         // Get the C symbol of the function.
         String symbol = symbolify(spec);
@@ -342,32 +362,28 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
         // Get the list of parameters.
         List<SubpParam> parameters = new ArrayList<>();
-        if (!spec.fSubpParams().isNone()) {
-            for (var paramSpec : spec.fSubpParams().fParams()) {
-                // Enqueue the parameter's type in case we do not visit it in the required list of
-                // units
-                queuedDecls.add(paramSpec.pFormalType(Libadalang.AdaNode.NONE));
+        for (var paramSpec : spec.pAbstractFormalParams()) {
+            // Enqueue the parameter's type in case we do not visit it in the required list of
+            // units
+            queuedDecls.add(paramSpec.pFormalType(Libadalang.AdaNode.NONE));
 
-                // Record value types are given through an address, but later **copied** into the
-                // arguments, so the ownership does not matter.
-                // TODO Access types: Ownership informations will be necessary when access types are
-                // handled.
-                Transfer transfer =
-                        new Transfer(
-                                paramSpec
-                                                .pFormalType(Libadalang.AdaNode.NONE)
-                                                .pIsAccessType(Libadalang.AdaNode.NONE)
-                                        ? RequiredOwner.LIBRARY
-                                        : RequiredOwner.ANY);
+            // Record value types are given through an address, but later **copied** into the
+            // arguments, so the ownership does not matter.
+            // TODO Access types: Ownership informations will be necessary when access types are
+            // handled.
+            Transfer transfer =
+                    new Transfer(
+                            paramSpec
+                                            .pFormalType(Libadalang.AdaNode.NONE)
+                                            .pIsAccessType(Libadalang.AdaNode.NONE)
+                                    ? RequiredOwner.LIBRARY
+                                    : RequiredOwner.ANY);
 
-                // For each parameter declared in the spec, add a parameter.
-                for (var p : paramSpec.fIds())
-                    parameters.add(
-                            new SubpParam(
-                                    paramSpec,
-                                    Name.fromPascalWithUnderscore(p.getText()),
-                                    transfer));
-            }
+            // For each parameter declared in the spec, add a parameter.
+            for (var p : paramSpec.pDefiningNames())
+                parameters.add(
+                        new SubpParam(
+                                paramSpec, Name.fromLower(p.pCanonicalText().text), transfer));
         }
 
         // When the subprogram is an inherited primitive of a derived type, we need to update its
@@ -409,16 +425,15 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                     || returnType.pIsArrayType(Libadalang.AdaNode.NONE)) returnOwner = Owner.USER;
         }
 
-        Subprogram subProg =
-                new Subprogram(
-                        node,
-                        Name.fromPascalWithUnderscore(spec.fSubpName().getText()),
-                        parameters,
-                        symbol,
-                        role,
-                        returnOwner);
+        Name name = AdaAPI.functionProxyName(spec.pName().pCanonicalText().text);
+
+        Subprogram subProg = new Subprogram(node, name, parameters, symbol, role, returnOwner);
         if (role != null && role.kind == RoleKind.METHOD) {
             ((Record) mappedTypes.get(primitiveType)).methods.add(subProg);
+        }
+        // Create a similar subprogram for "/=" when the current subprogram is "="
+        if (name.equals(Name.operatorEq)) {
+            processSubprogram(node.pCorrespondingNeqSubprogram());
         }
         declarations.add(subProg);
     }

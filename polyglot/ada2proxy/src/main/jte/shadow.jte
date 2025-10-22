@@ -194,6 +194,6 @@ Template file to generate shadow types for tagged records.
          end if;
          ${api.makeShadowReturn(method)};
       @endif
-      end ${method.name.toPascalWithUnderscore()};
+      end ${method.getOriginName()};
    @endfor
 @endif
