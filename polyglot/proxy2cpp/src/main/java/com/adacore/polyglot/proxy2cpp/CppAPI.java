@@ -176,6 +176,9 @@ public class CppAPI {
                             default -> nativeTypeName(nativeType.nativeType) + "*";
                         };
             }
+            if (!ref.isConst && ref.typeExpr instanceof PointerTypeExpr ptr) {
+                if (context.isClassType(ptr.typeExpr)) return constness + "void **";
+            }
             return constness + "void *";
         } else if (typeExpr instanceof PointerTypeExpr ptr) {
             String constness = ptr.isConst ? "const " : "";
@@ -481,7 +484,15 @@ public class CppAPI {
                         .append("::create");
             else builder.append(cppReturnTypename(param.type));
         }
-        builder.append("(").append(param.name.toLower()).append(")");
+        builder.append("(");
+        if (param.type instanceof PointerTypeExpr ptr) {
+            builder.append("new ").append(cppTypename(ptr.typeExpr)).append("(");
+        }
+        builder.append(param.name.toLower());
+        if (param.type instanceof PointerTypeExpr) {
+            builder.append(")");
+        }
+        builder.append(")");
 
         return builder.toString();
     }
