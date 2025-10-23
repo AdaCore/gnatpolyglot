@@ -859,6 +859,23 @@ public class AdaAPI extends LanguageAPI {
                     .append(" Data => ")
                     .append(param.name.toPascalWithUnderscore())
                     .append("'Address)");
+        } else if (AdaTypeMatcher.isArrayAccess(param.getType())) {
+            builder.append("(if ")
+                    .append(param.getType().pParentBasicDecl().pFullyQualifiedName())
+                    .append(".\"=\" (")
+                    .append(argName)
+                    .append(", null) then (1, 0, System.Null_Address) else ")
+                    .append("(First => Interfaces.C.int (")
+                    .append(param.name.toPascalWithUnderscore())
+                    .append(".all'First),")
+                    .append(" Last => Interfaces.C.int (")
+                    .append(param.name.toPascalWithUnderscore())
+                    .append(".all'Last),")
+                    .append(" Data => ")
+                    .append(param.name.toPascalWithUnderscore())
+                    .append(".all'Address))");
+        } else if (param.getType().pIsAccessType(Libadalang.AdaNode.NONE)) {
+            builder.append(param.name.toPascalWithUnderscore()).append(".all'Address");
         } else {
             throw new RuntimeException("Unsupported dispatch " + param.getType());
         }
