@@ -1,10 +1,12 @@
 #include <iostream>
 
 #include "polyglot_ada_arrays.h"
+#include "polyglot_ada_strings.h"
 #include "polyglot_ptr.h"
 #include "test.h"
 
 using namespace polyglot::ada::arrays;
+using namespace polyglot::ada::strings;
 
 class Child : public test::Root {
 public:
@@ -31,6 +33,13 @@ public:
         return ptr;
     }
 
+    polyglot::polyglot_ptr<polyglot_string>
+    root_str(polyglot::polyglot_ptr<polyglot_string> acc) const override {
+        std::cout << "C++ got: " << to_string(*acc) << "\n";
+        return polyglot::polyglot_ptr<polyglot_string>(
+                new polyglot_string("From C++"));
+    }
+
     void root_rec_p(polyglot::polyglot_ptr<test::Rec> &acc) const override {
        std::cout << "C++ got: " << acc->get_i() << "\n";
        acc.reset(new test::Rec(100));
@@ -49,6 +58,12 @@ public:
             ptr->set(i, i);
         }
         acc = ptr;
+    }
+
+    void
+    root_str_p(polyglot::polyglot_ptr<polyglot_string> &acc) const override {
+        std::cout << "C++ got: " << to_string(*acc) << "\n";
+        acc = new polyglot_string("From C++");
     }
 };
 
@@ -97,8 +112,24 @@ void in_out() {
     std::cout << "}\n";
 }
 
+void strings() {
+    Child c;
+    polyglot_string str("begin");
+    polyglot::polyglot_ptr<polyglot_string> ptr1(str);
+    polyglot::polyglot_ptr<polyglot_string> ptr2 = test::call_root_str(c, ptr1);
+    std::cout << "Got from Ada: " << to_string(*ptr2) << "\n";
+    ptr2.set_owner(polyglot::memory_owner::USER);
+    ptr2.reset(&str, polyglot::memory_owner::STATIC);
+    test::call_root_str_p(c, ptr2);
+    std::cout << "Got from Ada: " << to_string(*ptr2) << "\n";
+    ptr2.set_owner(polyglot::memory_owner::USER);
+    ptr2.reset();
+}
+
 int main() {
     dynamic_dispatch();
     std::cout << "\n";
     in_out();
+    std::cout << "\n";
+    strings();
 }
