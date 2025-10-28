@@ -39,4 +39,11 @@ int main() {
         test::Cont c2;
         std::cout << (c1 == c2) << "\n";
     }
+    std::cout << std::endl;
+    {
+        test::Cont cont = test::get_cont();
+        test::Cont cont2 = cont;
+        cont.p();
+        cont2.p();
+    }
 }

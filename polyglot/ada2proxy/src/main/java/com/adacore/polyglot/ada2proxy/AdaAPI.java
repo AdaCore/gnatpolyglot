@@ -599,9 +599,10 @@ public class AdaAPI extends LanguageAPI {
         if (AdaTypeMatcher.isBindedAsClass(returnedType)) {
             // When returning records, we need to convert an access to `System.Address`: declare a
             // converter.
-            builder.append("package Return_Type_Converter is new")
-                    .append(" System.Address_To_Access_Conversions(")
-                    .append(typename)
+            builder.append("function Return_Type_Converter is new")
+                    .append(" Ada.Unchecked_Conversion (")
+                    .append(getProxyAccessFullyQualifiedName(returnedType))
+                    .append(", System.Address")
                     .append(");");
         } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
             builder.append("Returned_Array : ")
@@ -649,7 +650,7 @@ public class AdaAPI extends LanguageAPI {
             // TODO: For the moment, it considers that only value types are returned, and creates a
             // dynamically allocated copy of the value. When access types are supported, do not copy
             // the value to the heap.
-            builder.append("return Return_Type_Converter.To_Address(new ")
+            builder.append("return Return_Type_Converter (new ")
                     .append(typeName)
                     .append("'(")
                     .append(returnedValue)
