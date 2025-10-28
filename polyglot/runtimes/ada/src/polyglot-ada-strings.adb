@@ -10,7 +10,8 @@ package body Polyglot.Ada.Strings is
    function To_C_Char_Ptr
      (Str : Polyglot_String) return Interfaces.C.Strings.chars_ptr
    is
-      Str_Value : String (1 .. Positive (Length (Str)))
+      Len : Interfaces.C.int := Length (Str);
+      Str_Value : String (1 .. Natural (Len))
       with Address => Str.Data;
    begin
       return Interfaces.C.Strings.New_String (Str_Value);
@@ -27,7 +28,8 @@ package body Polyglot.Ada.Strings is
       Tmp_Access  : String_Access
       with Address => Tmp_Renames'Address;
       pragma Import (Ada, Tmp_Access);
-      Str         : String (1 .. Positive (Interfaces.C.Strings.Strlen (Ptr)))
+      Len : Natural := Natural (Interfaces.C.Strings.Strlen (Ptr));
+      Str         : String (1 .. Len)
       with Address => Tmp_Access.all'Address;
       New_Str     : String_Access := new String'(Str);
    begin
