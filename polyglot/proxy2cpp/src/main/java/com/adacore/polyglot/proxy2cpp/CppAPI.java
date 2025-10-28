@@ -138,10 +138,9 @@ public class CppAPI {
         // When returning a reference to a non-native type, we cannot allocate a new proxy object
         // and return a real C++ reference to it. Instead, return a `view` to the returned pointer
         // that acts as a reference and that won't free the underlying pointer when destroyed.
-        if (typeExpr instanceof ReferenceTypeExpr ref
-                && !(ref.typeExpr instanceof NameTypeExpr name
-                        && (context.getTypeDecl(name.name) instanceof NativeTypeDecl))) {
-            return cppTypename(ref.typeExpr).concat("::view");
+        if (typeExpr instanceof ReferenceTypeExpr ref && !context.isNativeScalar(ref.typeExpr)) {
+            String constness = ref.isConst ? "const " : "";
+            return constness.concat(cppTypename(ref.typeExpr)).concat("::view");
         }
         return cppTypename(typeExpr);
     }
@@ -342,14 +341,22 @@ public class CppAPI {
     /** Create a string of the return statement. */
     public String makeReturnStatement(FunctionDecl functionDecl, String returnedValue) {
         StringBuilder builder = new StringBuilder("return ");
-        if (functionDecl.type.returnType instanceof ReferenceTypeExpr ref
-                && ref.typeExpr instanceof NameTypeExpr name
-                && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
-            // When returning a reference to a native type, get the address returned by the `extern
-            // "C"` function and dereference it to create a reference.
-            // Note that unlike class types that require a wrapping proxy objects, native types can
-            // be directely addressed, thus we can return real C++ references.
-            builder.append("*");
+        if (functionDecl.type.returnType instanceof ReferenceTypeExpr ref) {
+            if (context.isNativeScalar(ref.typeExpr)) {
+                // When returning a reference to a native type, get the address returned by the
+                // `extern "C"` function and dereference it to create a reference.
+                // Note that unlike class types that require a wrapping proxy objects, native types
+                // can be directely addressed, thus we can return real C++ references.
+                builder.append("*");
+            } else {
+                // When the returned pointer to an opaque data is `const void *`, we must return a
+                // const view.
+                // The view constructor cannot accept const pointers, since the concept of "const
+                // constructor" does not exist. Instead, use a `create` function that has an
+                // overload for returning const views with `const void *` data pointers.
+                ReferenceTypeExpr nonConstRef = ref.typeExpr.makeReference(false);
+                builder.append(cppReturnTypename(nonConstRef)).append("::create");
+            }
         } else if (functionDecl.type.returnType instanceof NameTypeExpr name
                 && context.getTypeDecl(name.name) instanceof EnumerationDecl) {
             // Scoped enums cannot be instantiated with a list initializer until C++17. Use a
@@ -462,7 +469,6 @@ public class CppAPI {
                 .append(param.name.toLower())
                 .append(" = ");
 
-        boolean needsConstCast = false;
         if (param.type instanceof ReferenceTypeExpr ref
                 && ref.typeExpr instanceof NameTypeExpr name
                 && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
@@ -470,25 +476,12 @@ public class CppAPI {
             builder.append("*");
         } else {
             // Otherwise, create a new object that wraps the returned pointer.
-            builder.append(cppReturnTypename(param.type));
-            // Arrays (and strings) do not need const casts as they are passed by copy.
-            if (param.type instanceof ReferenceTypeExpr ref
-                    && ref.isConst
-                    && !(ref.typeExpr instanceof ArrayTypeExpr
-                            || ref.typeExpr instanceof NameTypeExpr name
-                                    && context.getTypeDecl(name.name) instanceof NativeTypeDecl nat
-                                    && nat.equals(NativeType.STRING.declaration)))
-                needsConstCast = true;
+            if (param.type instanceof ReferenceTypeExpr ref && ref.isConst)
+                builder.append(cppReturnTypename(ref.typeExpr.makeReference(false)))
+                        .append("::create");
+            else builder.append(cppReturnTypename(param.type));
         }
-        builder.append("(");
-        // view types do not have a constructor for const pointers as it may be unsafe and const
-        // constructors do not exist. Dispatching functions are only transitionary and unseen to the
-        // user, so when a const pointer is received, cast away its constness: it will be readded
-        // when the view is converted to a const reference.
-        if (needsConstCast) builder.append("const_cast<void *>(");
-        builder.append(param.name.toLower());
-        if (needsConstCast) builder.append(")");
-        builder.append(")");
+        builder.append("(").append(param.name.toLower()).append(")");
 
         return builder.toString();
     }

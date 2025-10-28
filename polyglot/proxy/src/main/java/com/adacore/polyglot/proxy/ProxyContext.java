@@ -1,6 +1,7 @@
 package com.adacore.polyglot.proxy;
 
 import com.adacore.polyglot.NativeType;
+import com.adacore.polyglot.NativeType.NativeTypeDecl;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -96,5 +97,17 @@ public class ProxyContext {
     /** Get the entry containing all member functions of the given type. */
     public FunctionMembersEntry getMembers(TypeExpr typeExpr) {
         return membersEntries.get(typeExpr);
+    }
+
+    public boolean isStringType(TypeExpr typeExpr) {
+        return typeExpr instanceof NameTypeExpr name
+                && getTypeDecl(name.name) instanceof NativeTypeDecl nativeType
+                && nativeType.equals(NativeType.STRING.declaration);
+    }
+
+    public boolean isNativeScalar(TypeExpr typeExpr) {
+        return typeExpr instanceof NameTypeExpr name
+                && getTypeDecl(name.name) instanceof NativeTypeDecl nativeType
+                && !nativeType.equals(NativeType.STRING.declaration);
     }
 }

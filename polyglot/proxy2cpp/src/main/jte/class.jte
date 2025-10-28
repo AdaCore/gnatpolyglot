@@ -82,12 +82,28 @@ vim: filetype=jtecpp
         view(void *data) {
             new (&this->_data) ${className}(data);
         }
+    public:
+        static inline view create(void *data) {
+            return view(data);
+        }
+
+        static inline const view create(const void *data) {
+            return view(const_cast<void *>(data));
+        }
 
         ${className} *operator->() {
             return (${className}*) &_data;
         }
 
+        ${className} const *operator->() const {
+            return (${className}*) &_data;
+        }
+
         operator ${className}&() {
+            return *(${className}*) &_data;
+        }
+
+        operator const ${className}&() const {
             return *(${className}*) &_data;
         }
     private:
