@@ -148,7 +148,7 @@ Template file to generate shadow types for tagged records.
    @for(var method : methods)
       !{
          String subpName = method.name.toPascalWithUnderscore();
-         String firstParam = method.parameters.get(0).name.toPascalWithUnderscore();
+         String firstParam = api.argName(method.parameters.get(0).name);
       }
       ${api.makeShadowOverride(method, shadowTypename)} is
          use all type Ada.Exceptions.Exception_Occurrence_Access;
@@ -159,6 +159,9 @@ Template file to generate shadow types for tagged records.
            (${instantiableRecordName}, ${recordAccessName});
          Exc_Occ_A : Standard.Ada.Exceptions.Exception_Occurrence_Access;
          Exc_Occ : Standard.Ada.Exceptions.Exception_Occurrence;
+      @for(var param : method.parameters.stream().skip(1).toList())
+         ${api.makeShadowParamConversion(param)};
+      @endfor
       @if(method.isProcedure())
       begin
          Table.${vtableNames.get(method)} (

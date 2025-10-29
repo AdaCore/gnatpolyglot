@@ -711,13 +711,13 @@ public class AdaAPI extends LanguageAPI {
         SubpParam firstParam = subp.parameters.get(0);
         Libadalang.BaseTypeDecl controllingType = firstParam.getType();
 
-        builder.append(firstParam.name.toPascalWithUnderscore()).append(" : ");
+        builder.append(argName(firstParam.name)).append(" : ");
         if (firstParam.getMode() == SubpParam.Mode.INOUT) builder.append("in out ");
         else if (firstParam.getMode() == SubpParam.Mode.OUT) builder.append("out ");
         builder.append(shadowTypename);
 
         for (var param : subp.parameters.stream().skip(1).toList()) {
-            builder.append("; ").append(param.name.toPascalWithUnderscore()).append(" : ");
+            builder.append("; ").append(argName(param.name)).append(" : ");
             if (param.getMode() == SubpParam.Mode.INOUT) builder.append("in out ");
             else if (param.getMode() == SubpParam.Mode.OUT) builder.append("out ");
             if (param.getType().equals(controllingType)) builder.append(shadowTypename);
@@ -838,55 +838,80 @@ public class AdaAPI extends LanguageAPI {
     /**
      * Return a string of the argument for param when calling an extern subprogram from a vtable.
      */
-    public String makeDispatchedArgument(SubpParam param) {
+    public String makeShadowParamConversion(SubpParam param) {
         StringBuilder builder = new StringBuilder();
 
         NativeType nativeType = checkNativeType(param.getType());
+        builder.append(valueName(param.name)).append(" : ");
+        String argName = argName(param.name);
         if (param.getType().pIsRecordType(Libadalang.AdaNode.NONE)
                 || param.getType().pIsPrivate()
                 || (param.getType().pIsScalarType(Libadalang.AdaNode.NONE) && param.isOutMode())) {
-            builder.append(param.name.toPascalWithUnderscore()).append("'Address");
+            builder.append(cInterfaceParamTypename(param))
+                    .append(" := ")
+                    .append(argName)
+                    .append("'Address");
         } else if (param.getType().pIsEnumType(Libadalang.AdaNode.NONE)) {
-            builder.append(param.getType().pFullyQualifiedName())
+            builder.append(cInterfaceParamTypename(param))
+                    .append(" := ")
+                    .append(param.getType().pFullyQualifiedName())
                     .append("'Enum_Rep (")
-                    .append(param.name.toPascalWithUnderscore())
+                    .append(argName)
                     .append(")");
         } else if (param.getType().pIsScalarType(Libadalang.AdaNode.NONE)) {
-            builder.append(cInterfaceNativeTypename(nativeType))
+            builder.append(cInterfaceParamTypename(param))
+                    .append(" := ")
+                    .append(cInterfaceNativeTypename(nativeType))
                     .append(" (")
-                    .append(param.name.toPascalWithUnderscore())
+                    .append(argName)
                     .append(")");
         } else if (param.getType().pIsArrayType(Libadalang.AdaNode.NONE)) {
-            builder.append("(First => Interfaces.C.int (")
-                    .append(param.name.toPascalWithUnderscore())
+            builder.append(cInterfaceParamTypename(param))
+                    .append(" := ")
+                    .append("(First => Interfaces.C.int (")
+                    .append(argName)
                     .append("'First),")
                     .append(" Last => Interfaces.C.int (")
-                    .append(param.name.toPascalWithUnderscore())
+                    .append(argName)
                     .append("'Last),")
                     .append(" Data => ")
-                    .append(param.name.toPascalWithUnderscore())
+                    .append(argName)
                     .append("'Address)");
         } else if (AdaTypeMatcher.isArrayAccess(param.getType())) {
-            builder.append("(if ")
+            builder.append("Polyglot.Ada.Arrays.Polyglot_Array := ")
+                    .append("(if ")
                     .append(param.getType().pParentBasicDecl().pFullyQualifiedName())
                     .append(".\"=\" (")
                     .append(argName)
                     .append(", null) then (1, 0, System.Null_Address) else ")
                     .append("(First => Interfaces.C.int (")
-                    .append(param.name.toPascalWithUnderscore())
+                    .append(argName)
                     .append(".all'First),")
                     .append(" Last => Interfaces.C.int (")
-                    .append(param.name.toPascalWithUnderscore())
+                    .append(argName)
                     .append(".all'Last),")
                     .append(" Data => ")
-                    .append(param.name.toPascalWithUnderscore())
+                    .append(argName)
                     .append(".all'Address))");
         } else if (param.getType().pIsAccessType(Libadalang.AdaNode.NONE)) {
-            builder.append(param.name.toPascalWithUnderscore()).append(".all'Address");
+            builder.append(cInterfaceParamTypename(param))
+                    .append(" := ")
+                    .append(argName)
+                    .append(".all'Address");
         } else {
             throw new RuntimeException("Unsupported dispatch " + param.getType());
         }
 
+        return builder.toString();
+    }
+
+    public String makeDispatchedArgument(SubpParam param) {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append(valueName(param.name));
+        if (param.getType().pIsAccessType(Libadalang.AdaNode.NONE) && param.isOutMode()) {
+            builder.append("'Address");
+        }
         return builder.toString();
     }
 
