@@ -204,6 +204,9 @@ Template file to generate shadow types for tagged records.
          end if;
          ${api.makeShadowReturn(method)};
       @endif
+      @for(var param : method.parameters.stream().skip(1).toList())
+         ${api.syncDispatchParamValue(param)}
+      @endfor
       end ${method.getOriginName()};
    @endfor
 @endif

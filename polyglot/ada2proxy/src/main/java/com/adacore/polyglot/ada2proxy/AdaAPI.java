@@ -971,4 +971,58 @@ public class AdaAPI extends LanguageAPI {
         }
         return builder.toString();
     }
+
+    public String syncDispatchParamValue(SubpParam param) {
+        StringBuilder builder = new StringBuilder();
+        String valueName = valueName(param.name);
+        String argName = argName(param.name);
+        if (AdaTypeMatcher.isArrayAccess(param.getType()) && param.isOutMode()) {
+            String fatPtr = makeTemp(param.name, "Fat_Pointer");
+            String tmpAccess = makeTemp(param.name, "Tmp_Access");
+            builder.append("declare\n")
+                    .append(tmpAccess)
+                    .append(" : ")
+                    .append(param.getType().pFullyQualifiedName())
+                    .append(";\n")
+                    .append(fatPtr)
+                    .append(" : Polyglot.Ada.Arrays.Fat_Pointer := (")
+                    .append(valueName)
+                    .append(".Data, System.Storage_Elements.\"-\"(")
+                    .append(valueName)
+                    .append(".Data, ")
+                    .append(
+                            param.getType()
+                                    .pAccessedType(Libadalang.AdaNode.NONE)
+                                    .pFullyQualifiedName())
+                    .append("'Descriptor_Size / 8));\n")
+                    .append("for ")
+                    .append(fatPtr)
+                    .append("'Address use ")
+                    .append(tmpAccess)
+                    .append("'Address;\n")
+                    .append("begin\n")
+                    .append(argName)
+                    .append(" := ")
+                    .append(tmpAccess)
+                    .append(";\n")
+                    .append("end;");
+        } else if (param.getType().pIsAccessType(Libadalang.AdaNode.NONE) && param.isOutMode()) {
+            String converter = makeTemp(param.name, "Converter");
+            builder.append("declare\n")
+                    .append("function ")
+                    .append(converter)
+                    .append(" is new Ada.Unchecked_Conversion (System.Address, ")
+                    .append(param.getType().pFullyQualifiedName())
+                    .append(");\n")
+                    .append("begin\n")
+                    .append(argName)
+                    .append(" := ")
+                    .append(converter)
+                    .append(" (")
+                    .append(valueName)
+                    .append(");\n")
+                    .append("end;");
+        }
+        return builder.toString();
+    }
 }
