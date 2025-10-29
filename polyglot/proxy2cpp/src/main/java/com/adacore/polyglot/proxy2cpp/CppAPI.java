@@ -465,31 +465,51 @@ public class CppAPI {
     /** Return a string that is the C++ converted parameter from its raw data given by argument. */
     public String convertForDispatch(Parameter param) {
         StringBuilder builder = new StringBuilder();
+        TypeExpr type = param.type;
+        String data = param.name.toLower();
         // We need value types in cases where there are references, so use the
         // c++ return type in order to build view types when necessary.
-        builder.append(cppReturnTypename(param.type))
+        // Returning references to pointers is not possible, so manually enforce building simple
+        // pointers.
+        if (type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr ptr) {
+            builder.append(cTypename(ptr.typeExpr))
+                    .append(ptr.typeExpr instanceof ArrayTypeExpr ? "*" : "")
+                    .append(" __")
+                    .append(param.name.toLower())
+                    .append(" = ");
+            if (ptr.typeExpr instanceof ArrayTypeExpr) {
+                builder.append("(").append(cTypename(ptr.typeExpr)).append("*)");
+                data = "*__" + param.name.toLower();
+            } else {
+                builder.append("*");
+                data = "__" + param.name.toLower();
+            }
+            builder.append(param.name.toLower()).append(";\n");
+            type = ptr;
+        }
+        builder.append(cppReturnTypename(type))
                 .append(" _")
                 .append(param.name.toLower())
                 .append(" = ");
 
-        if (param.type instanceof ReferenceTypeExpr ref
+        if (type instanceof ReferenceTypeExpr ref
                 && ref.typeExpr instanceof NameTypeExpr name
                 && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
             // When making a reference to a native type, dereference the pointer to make a reference
             builder.append("*");
         } else {
             // Otherwise, create a new object that wraps the returned pointer.
-            if (param.type instanceof ReferenceTypeExpr ref && ref.isConst)
+            if (type instanceof ReferenceTypeExpr ref && ref.isConst)
                 builder.append(cppReturnTypename(ref.typeExpr.makeReference(false)))
                         .append("::create");
-            else builder.append(cppReturnTypename(param.type));
+            else builder.append(cppReturnTypename(type));
         }
         builder.append("(");
-        if (param.type instanceof PointerTypeExpr ptr) {
+        if (type instanceof PointerTypeExpr ptr) {
             builder.append("new ").append(cppTypename(ptr.typeExpr)).append("(");
         }
-        builder.append(param.name.toLower());
-        if (param.type instanceof PointerTypeExpr) {
+        builder.append(data);
+        if (type instanceof PointerTypeExpr) {
             builder.append(")");
         }
         builder.append(")");
@@ -668,6 +688,25 @@ public class CppAPI {
                     .append("(")
                     .append(dataName)
                     .append("), polyglot::memory_owner::LIBRARY);");
+        }
+        return builder.toString();
+    }
+
+    public String checkDispatchPointerValue(Parameter param) {
+        StringBuilder builder = new StringBuilder();
+        if (param.type instanceof ReferenceTypeExpr ref
+                && ref.typeExpr instanceof PointerTypeExpr ptr) {
+            String dataName = "_" + param.name.toLower();
+            builder.append("*");
+            if (ptr.typeExpr instanceof ArrayTypeExpr) builder.append("__");
+            builder.append(param.name.toLower())
+                    .append(" = ")
+                    .append(dataName)
+                    .append(".get() == nullptr ? ");
+            if (ptr.typeExpr instanceof ArrayTypeExpr)
+                builder.append("polyglot::ada::arrays::array_data{0, -1, nullptr}");
+            else builder.append("nullptr");
+            builder.append(" : ").append(dataName).append("->data();");
         }
         return builder.toString();
     }

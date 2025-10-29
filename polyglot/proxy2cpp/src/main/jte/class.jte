@@ -143,6 +143,9 @@ vim: filetype=jtecpp
                     polyglot_get_kernel()->exc_info.exception_data = e.release();
                     ${api.makeDispatchDefaultReturn(method.functionType)}
                 }
+                @for(var param : method.functionType.parameters.stream().skip(1).toList())
+                ${api.checkDispatchPointerValue(param)};
+                @endfor
             }
         @endfor
 
