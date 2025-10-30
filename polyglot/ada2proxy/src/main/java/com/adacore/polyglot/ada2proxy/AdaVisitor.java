@@ -558,6 +558,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                     primitive.accept(this);
             }
             this.derivedType = null;
+        } else if (parentDecl.pIsArrayType(Libadalang.AdaNode.NONE)) {
+            Array array = new Array(parentDecl);
+            declarations.add(array);
+            mappedTypes.put(parentDecl, array);
+            queuedDecls.add(parentDecl.pCompType(false, Libadalang.AdaNode.NONE));
         } else if (!parentDecl.pIsScalarType(Libadalang.AdaNode.NONE))
             throw new IllegalArgumentException("Unsupported derivation of types " + node);
 
