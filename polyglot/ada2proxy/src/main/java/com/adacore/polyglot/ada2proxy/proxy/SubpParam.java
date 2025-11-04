@@ -29,11 +29,15 @@ public class SubpParam implements AdaProxyObject {
      */
     private Libadalang.BaseTypeDecl type;
 
-    public SubpParam(Libadalang.BaseFormalParamDecl origin, Name name, Transfer transfer) {
+    public SubpParam(
+            Libadalang.BaseFormalParamDecl origin,
+            Name name,
+            Transfer transfer,
+            Libadalang.BaseTypeDecl type) {
         this.origin = origin;
         this.name = name;
         this.transfer = transfer;
-        this.type = origin.pFormalType(Libadalang.AdaNode.NONE);
+        this.type = type;
     }
 
     public Libadalang.BaseTypeDecl getType() {

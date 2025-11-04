@@ -375,6 +375,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
         // Get the list of parameters.
         List<SubpParam> parameters = new ArrayList<>();
+        Libadalang.BaseTypeDecl[] types = spec.pParamTypes(Libadalang.AdaNode.NONE);
+        int typeIndex = 0;
         for (var paramSpec : spec.pAbstractFormalParams()) {
             // Enqueue the parameter's type in case we do not visit it in the required list of
             // units
@@ -396,12 +398,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             for (var p : paramSpec.pDefiningNames())
                 parameters.add(
                         new SubpParam(
-                                paramSpec, Name.fromLower(p.pCanonicalText().text), transfer));
+                                paramSpec,
+                                Name.fromLower(p.pCanonicalText().text),
+                                transfer,
+                                types[typeIndex++]));
         }
-
-        // When the subprogram is an inherited primitive of a derived type, we need to update its
-        // first parameter's type.
-        if (derivedType != null && role != null) parameters.get(0).setType(primitiveType);
 
         Libadalang.BaseTypeDecl returnType = spec.pReturnType(Libadalang.AdaNode.NONE);
         if (!returnType.isNone()) queuedDecls.add(returnType);
