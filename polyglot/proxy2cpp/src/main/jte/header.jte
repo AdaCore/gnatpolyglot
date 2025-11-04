@@ -20,6 +20,10 @@ vim: filetype=jtecpp
 #include <polyglot_ada_strings.h>
 #include <polyglot_ptr.h>
 
+#if __cplusplus >= 201103L
+#include <array>
+#endif
+
 #include <cstdint>
 
 @for (var include : api.getIncludes(module))
