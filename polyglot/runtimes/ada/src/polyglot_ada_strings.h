@@ -27,6 +27,9 @@ public:
     int get_begin() const { return _data.begin; }
     int get_end() const { return _data.end; }
 
+    int size() const {
+        return this->get_end() - this->get_begin() + 1;
+    }
 
     string_data data() const { return this->_data; }
     string_data release() {
@@ -37,8 +40,14 @@ public:
         return data;
     }
 
+    friend class polyglot_ptr<polyglot_string>;
+
 private:
     string_data _data;
+
+    bool is_shadow() const {
+        return false;
+    }
 };
 
 class polyglot_string::view  {

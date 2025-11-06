@@ -69,6 +69,9 @@ public:
         reset();
         _object_data = other._object_data;
         _shared_counter = other._shared_counter;
+        if (_shared_counter != nullptr)
+            _shared_counter->count += 1;
+        return *this;
     }
 
     template <typename U>
@@ -77,6 +80,9 @@ public:
         reset();
         _object_data = other._object_data;
         _shared_counter = other._shared_counter;
+        if (_shared_counter != nullptr)
+            _shared_counter->count += 1;
+        return *this;
     }
 
     ~polyglot_ptr() {
@@ -187,6 +193,13 @@ public:
         } else {
            set_owner(new_owner);
         }
+    }
+
+    /**
+     * Return the number of polyglot_ptr referring to the same object.
+     */
+    int use_count() const {
+        return _shared_counter == nullptr ? 0 : _shared_counter->count;
     }
 
 private:

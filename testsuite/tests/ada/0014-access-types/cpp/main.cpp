@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <stdexcept>
 
@@ -7,6 +8,45 @@
 #include "lists.h"
 
 using namespace polyglot::ada::arrays;
+
+class Dummy {
+public:
+    bool is_shadow() const {
+        return false;
+    }
+
+    void release() {}
+};
+
+class DummyChild : public Dummy {
+};
+
+void test_polyglot_ptr() {
+    {
+        test::Rec rec(1);
+        polyglot::polyglot_ptr<test::Rec> ptr1(rec);
+        assert(ptr1.get_owner() == polyglot::memory_owner::STATIC);
+        assert(ptr1.use_count() == 1);
+    }
+    {
+        polyglot::polyglot_ptr<test::Rec> ptr1(nullptr);
+        {
+            polyglot::polyglot_ptr<test::Rec> ptr2(new test::Rec(1), polyglot::memory_owner::USER);
+            ptr1 = ptr2;
+            assert(ptr1.use_count() == 2);
+        }
+        assert(ptr1.use_count() == 1);
+        assert(ptr1.get() != nullptr);
+        ptr1.reset();
+        assert(ptr1.get() == nullptr);
+    }
+    {
+        polyglot::polyglot_ptr<Dummy> ptr1(nullptr);
+        polyglot::polyglot_ptr<DummyChild> ptr2(nullptr);
+        ptr1 = ptr2;
+        assert(ptr1.use_count() == 0);
+    }
+}
 
 void simple_rec() {
     test::Rec rec(1);
@@ -89,6 +129,7 @@ void array() {
 }
 
 int main() {
+    test_polyglot_ptr();
     simple_rec();
     std::cout << "\n";
     recursive_rec();
