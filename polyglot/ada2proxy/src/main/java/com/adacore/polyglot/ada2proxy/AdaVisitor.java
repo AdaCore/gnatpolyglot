@@ -96,9 +96,6 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     /** The current package being analyzed */
     private Libadalang.PackageDecl analyzedPackage;
 
-    /** The current type being derived. */
-    private Libadalang.TypeDecl derivedType = null;
-
     /** Map Ada declarations to their AdaProxy objects. */
     private HashMap<Libadalang.TypeDecl, AdaDeclaration> mappedTypes = new HashMap<>();
 
@@ -363,8 +360,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // The subprogram may be visited when exploring inherited primitive subprograms: if so, use
         // the current derived type.
         Role role = null;
-        Libadalang.BaseTypeDecl primitiveType =
-                derivedType == null ? spec.pPrimitiveSubpFirstType(false) : derivedType;
+        Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
         if (isDotCallable(spec, primitiveType))
             role = new Role(RoleKind.METHOD, AdaAPI.makeTypeExpr(primitiveType), null);
 
@@ -519,18 +515,18 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             // The parent type could be located in an ada unit that was not already processed. If
             // that is the case, then process the parent type, but do not register it.
             Record rec = makeRecord(node.fRecordExtension(), parentDecl);
-            Libadalang.ConcreteTypeDecl subtype =
+            Libadalang.ConcreteTypeDecl parentType =
                     (Libadalang.ConcreteTypeDecl) node.fSubtypeIndication().pDesignatedTypeDecl();
             // TODO eng/libadalang/polyglot#29: Declarations from foreign libraries are not yet
             // binded, so we must ignore types from the runtime too (for controlled types
             // especially).
-            if (!subtype.isNone() && !subtype.pFullyQualifiedName().startsWith("Ada.")) {
-                if (subtype.fTypeDef() instanceof Libadalang.DerivedTypeDef derived)
-                    rec.parent = makeRecord(derived.fRecordExtension(), subtype);
-                else if (subtype.fTypeDef() instanceof Libadalang.RecordTypeDef subrec)
-                    rec.parent = makeRecord(subrec.fRecordDef(), subtype);
-                else if (subtype.pIsRecordType(Libadalang.AdaNode.NONE) || subtype.pIsPrivate())
-                    rec.parent = makeRecord(BaseRecordDef.NONE, subtype);
+            if (!parentType.isNone() && !parentType.pFullyQualifiedName().startsWith("Ada.")) {
+                if (parentType.fTypeDef() instanceof Libadalang.DerivedTypeDef derived)
+                    rec.parent = makeRecord(derived.fRecordExtension(), parentType);
+                else if (parentType.fTypeDef() instanceof Libadalang.RecordTypeDef subrec)
+                    rec.parent = makeRecord(subrec.fRecordDef(), parentType);
+                else if (parentType.pIsPrivate())
+                    rec.parent = makeRecord(BaseRecordDef.NONE, parentType);
                 else throw new RuntimeException("Could not process parent type");
             }
             declarations.add(rec);
@@ -545,12 +541,9 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             // When derivating from a record, we need to get the primitives of said record too.
             // The primitives directly explicited on this type will be visited at an other time,
             // so only treat the inherited ones.
-            this.derivedType = parentDecl;
             for (var primitive : parentDecl.pGetPrimitives(true, false)) {
-                if (isDotCallable(((Libadalang.SubpDecl) primitive).fSubpSpec(), parentDecl))
-                    primitive.accept(this);
+                primitive.accept(this);
             }
-            this.derivedType = null;
         } else if (parentDecl.pIsArrayType(Libadalang.AdaNode.NONE)) {
             Array array = new Array(parentDecl);
             declarations.add(array);
@@ -560,11 +553,9 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             EnumType enumType = createEnumType(parentDecl);
             declarations.add(enumType);
             mappedTypes.put(parentDecl, enumType);
-            this.derivedType = parentDecl;
             for (var prim : parentDecl.pGetPrimitives(true, false)) {
                 if (!(prim instanceof Libadalang.EnumLiteralDecl)) processSubprogram(prim);
             }
-            this.derivedType = null;
         } else if (!parentDecl.pIsScalarType(Libadalang.AdaNode.NONE))
             throw new IllegalArgumentException("Unsupported derivation of types " + node);
 
