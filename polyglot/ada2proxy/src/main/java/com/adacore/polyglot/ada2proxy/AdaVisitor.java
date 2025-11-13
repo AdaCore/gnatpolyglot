@@ -563,12 +563,15 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 queuedDecls.add(parentType);
             }
             declarations.add(rec);
-        } else if (parentDecl.pIsRecordType(Libadalang.AdaNode.NONE)) {
+        } else if (parentDecl.pIsRecordType(Libadalang.AdaNode.NONE)
+                || AdaTypeMatcher.isPrivate(parentDecl)) {
             // If the parent is a non-tagged record, simply copy the fields of the root type.
             Libadalang.TypeDecl rootType =
                     (Libadalang.TypeDecl) parentDecl.pRootType(Libadalang.AdaNode.NONE);
             if (rootType.fTypeDef() instanceof Libadalang.RecordTypeDef recordDef) {
                 declarations.add(makeRecord(recordDef.fRecordDef(), parentDecl));
+            } else {
+                declarations.add(makeRecord(Libadalang.BaseRecordDef.NONE, parentDecl));
             }
 
             // When derivating from a record, we need to get the primitives of said record too.

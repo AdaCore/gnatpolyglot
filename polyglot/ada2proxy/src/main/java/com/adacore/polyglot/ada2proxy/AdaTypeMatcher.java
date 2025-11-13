@@ -49,9 +49,17 @@ public class AdaTypeMatcher {
     }
 
     public static boolean isReturnedAsAddress(Libadalang.BaseTypeDecl typeDecl) {
-        return typeDecl.pIsPrivate()
+        return isBindedAsClass(typeDecl) || typeDecl.pIsAccessType(Libadalang.AdaNode.NONE);
+    }
+
+    public static boolean isBindedAsClass(Libadalang.BaseTypeDecl typeDecl) {
+        return isPrivate(typeDecl)
                 || typeDecl.pIsRecordType(Libadalang.AdaNode.NONE)
-                || typeDecl.pIsAccessType(Libadalang.AdaNode.NONE);
+                || typeDecl.pIsTaggedType(Libadalang.AdaNode.NONE);
+    }
+
+    public static boolean isPrivate(Libadalang.BaseTypeDecl typeDecl) {
+        return typeDecl.pRootType(NONE).pIsPrivate() && !typeDecl.pIsTaggedType(NONE);
     }
 
     public static boolean isNonClassWideTagged(Libadalang.BaseTypeDecl typeDecl) {

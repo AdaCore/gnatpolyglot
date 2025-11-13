@@ -374,7 +374,7 @@ public class AdaAPI extends LanguageAPI {
         String tempVarValue = null;
         String converter = null;
         // Class wide types need a pointer conversion function.
-        if (type.pIsRecordType(Libadalang.AdaNode.NONE) || type.pIsPrivate()) {
+        if (AdaTypeMatcher.isBindedAsClass(type)) {
             Libadalang.BaseTypeDecl specificType = type.pSpecificType();
             String accessType = makeTemp(name, asAccess(specificType));
             converter = makeTemp(name, "Converter");
@@ -492,7 +492,7 @@ public class AdaAPI extends LanguageAPI {
             //
             // If the array type is not unconstrained, the bounds will not be generated.
             builder.append(" renames ").append(tempVarValue).append(".all");
-        } else if (type.pIsRecordType(Libadalang.AdaNode.NONE) || type.pIsPrivate()) {
+        } else if (AdaTypeMatcher.isBindedAsClass(type)) {
             builder.append(" renames ").append(tempVarValue).append(".all");
         } else if (AdaTypeMatcher.isArrayAccess(type)) {
             builder.append(" := ")
@@ -597,7 +597,7 @@ public class AdaAPI extends LanguageAPI {
     public String makeReturnDeclarations(Libadalang.BaseTypeDecl returnedType) {
         StringBuilder builder = new StringBuilder();
         String typename = returnedType.pFullyQualifiedName();
-        if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE) || returnedType.pIsPrivate()) {
+        if (AdaTypeMatcher.isBindedAsClass(returnedType)) {
             // When returning records, we need to convert an access to `System.Address`: declare a
             // converter.
             builder.append("package Return_Type_Converter is new")
@@ -643,8 +643,7 @@ public class AdaAPI extends LanguageAPI {
                     .append("'(")
                     .append(returnedValue)
                     .append("))");
-        } else if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)
-                || returnedType.pIsPrivate()) {
+        } else if (AdaTypeMatcher.isBindedAsClass(returnedType)) {
             // If the type returned is an address (i.e. not a scalar), convert the returned value to
             // ``System.Address`` using the entity created by ``makeReturnTypeConverter``.
             //
@@ -879,8 +878,7 @@ public class AdaAPI extends LanguageAPI {
                 AdaTypeMatcher.isNonClassWideTagged(returnedType)
                         ? typename + "_Shadow"
                         : asAccess(returnedType);
-        if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)
-                || returnedType.pIsPrivate()
+        if (AdaTypeMatcher.isBindedAsClass(returnedType)
                 || returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
             // When returning records, we need to convert an Address to an access`: declare a
             // converter.
@@ -945,8 +943,7 @@ public class AdaAPI extends LanguageAPI {
                         ? returnedType.pRelativeName().getText() + "_Shadow"
                         : returnedType.pFullyQualifiedName();
         builder.append("return Result : ").append(typename).append(" := ");
-        if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)
-                || returnedType.pIsPrivate()
+        if (AdaTypeMatcher.isBindedAsClass(returnedType)
                 || returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
             // Values are returned on the heap from the target language. However, the parent of the
             // shadow function does not expect an acess or an address, but a value type instead. We
@@ -974,31 +971,31 @@ public class AdaAPI extends LanguageAPI {
     public String makeShadowParamConversion(SubpParam param) {
         StringBuilder builder = new StringBuilder();
 
-        NativeType nativeType = checkNativeType(param.getType());
+        BaseTypeDecl type = param.getType();
+        NativeType nativeType = checkNativeType(type);
         builder.append(valueName(param.name)).append(" : ");
         String argName = argName(param.name);
-        if (param.getType().pIsRecordType(Libadalang.AdaNode.NONE)
-                || param.getType().pIsPrivate()
-                || (param.getType().pIsScalarType(Libadalang.AdaNode.NONE) && param.isOutMode())) {
+        if (AdaTypeMatcher.isBindedAsClass(type)
+                || (type.pIsScalarType(Libadalang.AdaNode.NONE) && param.isOutMode())) {
             builder.append(cInterfaceParamTypename(param))
                     .append(" := ")
                     .append(argName)
                     .append("'Address");
-        } else if (param.getType().pIsEnumType(Libadalang.AdaNode.NONE)) {
+        } else if (type.pIsEnumType(Libadalang.AdaNode.NONE)) {
             builder.append(cInterfaceParamTypename(param))
                     .append(" := ")
-                    .append(param.getType().pFullyQualifiedName())
+                    .append(type.pFullyQualifiedName())
                     .append("'Enum_Rep (")
                     .append(argName)
                     .append(")");
-        } else if (param.getType().pIsScalarType(Libadalang.AdaNode.NONE)) {
+        } else if (type.pIsScalarType(Libadalang.AdaNode.NONE)) {
             builder.append(cInterfaceParamTypename(param))
                     .append(" := ")
                     .append(cInterfaceNativeTypename(nativeType))
                     .append(" (")
                     .append(argName)
                     .append(")");
-        } else if (param.getType().pIsArrayType(Libadalang.AdaNode.NONE)) {
+        } else if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
             builder.append(cInterfaceParamTypename(param))
                     .append(" := ")
                     .append("(First => Interfaces.C.int (")
@@ -1010,11 +1007,11 @@ public class AdaAPI extends LanguageAPI {
                     .append(" Data => ")
                     .append(argName)
                     .append("'Address)");
-        } else if (AdaTypeMatcher.isArrayAccess(param.getType())) {
-            builder.append(cInterfaceTypename(param.getType()))
+        } else if (AdaTypeMatcher.isArrayAccess(type)) {
+            builder.append(cInterfaceTypename(type))
                     .append(" := ")
                     .append("(if ")
-                    .append(param.getType().pParentBasicDecl().pFullyQualifiedName())
+                    .append(type.pParentBasicDecl().pFullyQualifiedName())
                     .append(".\"=\" (")
                     .append(argName)
                     .append(", null) then (1, 0, System.Null_Address) else ")
@@ -1027,13 +1024,13 @@ public class AdaAPI extends LanguageAPI {
                     .append(" Data => ")
                     .append(argName)
                     .append(".all'Address))");
-        } else if (param.getType().pIsAccessType(Libadalang.AdaNode.NONE)) {
+        } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
             builder.append(cInterfaceParamTypename(param))
                     .append(" := ")
                     .append(argName)
                     .append(".all'Address");
         } else {
-            throw new RuntimeException("Unsupported dispatch " + param.getType());
+            throw new RuntimeException("Unsupported dispatch " + type);
         }
 
         return builder.toString();
