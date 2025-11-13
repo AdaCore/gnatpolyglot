@@ -119,6 +119,14 @@ vim: filetype=jtecpp
         operator const ${className}&() const {
             return *(${className}*) &_data;
         }
+
+        ${className}& operator*() {
+            return *(${className}*) &_data;
+        }
+
+        const ${className}& operator*() const {
+            return *(${className}*) &_data;
+        }
     private:
         char _data[sizeof(${className})];
     };

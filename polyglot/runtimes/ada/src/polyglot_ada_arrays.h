@@ -57,6 +57,14 @@ public:
             return *(polyglot_array<T>*) &_data;
         }
 
+        polyglot_array<T>& operator*() {
+            return *(polyglot_array<T>*) &_data;
+        }
+
+        const polyglot_array<T>& operator*() const {
+            return *(polyglot_array<T>*) &_data;
+        }
+
         polyglot_array<T>* operator->() {
             return (polyglot_array<T>*) &_data;
         }

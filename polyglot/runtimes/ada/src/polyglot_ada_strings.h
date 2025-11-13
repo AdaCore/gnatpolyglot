@@ -65,6 +65,14 @@ public:
         return view(data);
     }
 
+    polyglot_string& operator*() {
+        return *(polyglot_string*) &_data;
+    }
+
+    const polyglot_string& operator*() const {
+        return *(polyglot_string*) &_data;
+    }
+
     operator polyglot_string&() {
         return *(polyglot_string*) &_data;
     }
