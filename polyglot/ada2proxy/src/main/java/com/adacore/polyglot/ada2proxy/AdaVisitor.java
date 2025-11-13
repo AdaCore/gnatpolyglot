@@ -490,8 +490,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return null;
     }
 
-    public Record makeRecord(
-            Libadalang.BaseRecordDef recordDef, Libadalang.ConcreteTypeDecl parentDecl) {
+    public Record makeRecord(Libadalang.BaseRecordDef recordDef, Libadalang.TypeDecl parentDecl) {
         Record rec = (Record) mappedDecls.get(parentDecl);
         if (rec != null) return rec;
         // Get the components of the record.
@@ -515,8 +514,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.PrivateTypeDef node) {
-        Libadalang.ConcreteTypeDecl parentDecl =
-                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
+        Libadalang.TypeDecl parentDecl = (Libadalang.TypeDecl) node.pParentBasicDecl();
         // Add a new record containing the private type.
         Record res = makeRecord(Libadalang.BaseRecordDef.NONE, parentDecl);
         declarations.add(res);
@@ -526,8 +524,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.RecordTypeDef node) {
-        Libadalang.ConcreteTypeDecl parentDecl =
-                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
+        Libadalang.TypeDecl parentDecl = (Libadalang.TypeDecl) node.pParentBasicDecl();
 
         // Add a new Record containing the ada record type.
         declarations.add(makeRecord(node.fRecordDef(), parentDecl));
@@ -537,18 +534,18 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.DerivedTypeDef node) {
-        Libadalang.ConcreteTypeDecl parentDecl =
-                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
+        Libadalang.TypeDecl parentDecl = (Libadalang.TypeDecl) node.pParentBasicDecl();
 
         if (parentDecl.pIsTaggedType(Libadalang.AdaNode.NONE)) {
             // The parent type could be located in an ada unit that was not already processed. If
             // that is the case, then process the parent type, but do not register it.
             Record rec = makeRecord(node.fRecordExtension(), parentDecl);
-            Libadalang.ConcreteTypeDecl parentType =
-                    (Libadalang.ConcreteTypeDecl)
+            Libadalang.TypeDecl parentType =
+                    (Libadalang.TypeDecl)
                             node.fSubtypeIndication()
                                     .pDesignatedTypeDecl()
                                     .pBaseSubtype(Libadalang.AdaNode.NONE);
+
             if (!parentType.isNone()) {
                 if (parentType.fTypeDef() instanceof Libadalang.DerivedTypeDef derived)
                     rec.parent = makeRecord(derived.fRecordExtension(), parentType);
@@ -597,8 +594,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.ArrayTypeDef node) {
-        Libadalang.ConcreteTypeDecl parentDecl =
-                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
+        Libadalang.TypeDecl parentDecl = (Libadalang.TypeDecl) node.pParentBasicDecl();
         Libadalang.BaseTypeDecl componentType =
                 node.fComponentType().fTypeExpr().pDesignatedTypeDecl();
         if (!parentDecl.pGetAspectAssoc(Libadalang.Symbol.create("pack")).isNone()) {
@@ -656,8 +652,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     }
 
     public Void visit(Libadalang.EnumTypeDef node) {
-        Libadalang.ConcreteTypeDecl parentDecl =
-                (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
+        Libadalang.TypeDecl parentDecl = (Libadalang.TypeDecl) node.pParentBasicDecl();
 
         EnumType enumType = createEnumType(parentDecl);
         declarations.add(enumType);
