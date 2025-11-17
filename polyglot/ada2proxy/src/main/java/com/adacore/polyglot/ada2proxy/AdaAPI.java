@@ -171,6 +171,19 @@ public class AdaAPI extends LanguageAPI {
                     throw new UnbindableDeclException(bTypeDecl, e.getLocalizedMessage());
                 }
             }
+            if (typeDecl.pIsFloatType(Libadalang.AdaList.NONE)) {
+                try {
+                    int digits = 0;
+                    if (typeDecl.fTypeDef() instanceof Libadalang.FloatingPointDef floating) {
+                        digits = floating.fNumDigits().pEvalAsInt().intValue();
+                    }
+                    if (digits >= 18) return NativeType.FLOAT128;
+                    if (digits >= 11) return NativeType.FLOAT64;
+                    return NativeType.FLOAT32;
+                } catch (Libadalang.LangkitException e) {
+                    throw new UnbindableDeclException(bTypeDecl, e.getLocalizedMessage());
+                }
+            }
         }
 
         return null;
@@ -999,6 +1012,7 @@ public class AdaAPI extends LanguageAPI {
         BaseTypeDecl returnType = subp.getReturnType();
         if (AdaTypeMatcher.isCharacter(returnType))
             return "return Interfaces.C.To_C ( Character'Val(0))";
+        if (returnType.pIsFloatType(Libadalang.AdaNode.NONE)) return "return 0.0";
         if (returnType.pIsScalarType(Libadalang.AdaNode.NONE)) return "return 0";
         if (returnType.pIsArrayType(Libadalang.AdaNode.NONE)
                 || AdaTypeMatcher.isArrayAccess(subp.getReturnType()))

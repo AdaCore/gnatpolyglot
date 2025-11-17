@@ -1,0 +1,24 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling test main program...
+Running test main program...
+
+got: 0.5
+got: 0.25
+got: 0.125
+got: 2.5
+got: 10.025
+got: 0.123
+got: 1000.25
+got: 10.025
+got: 5.5
+-0.00000E+00
+got: -0
++Inf********
+got: inf
+NaN*********
+got: nan
+
+Done.

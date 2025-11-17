@@ -377,7 +377,7 @@ public class CppAPI {
                                     cppTypename(ptr.typeExpr),
                                     returnedValue,
                                     cppOwner(functionDecl.type.returnOwner));
-        } else {
+        } else if (!context.isNativeScalar(functionDecl.type.returnType)) {
             // Otherwise, create a new object that wraps the returned pointer.
             builder.append(cppReturnTypename(functionDecl.type.returnType));
         }
