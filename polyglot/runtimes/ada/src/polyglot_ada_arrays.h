@@ -34,16 +34,29 @@ template <typename T> struct ref_selector<T, false> {
 template <typename T> class polyglot_array {
 public:
     class view {
-    public:
+    private:
         view(const array_data &data) {
             new (&this->_data) polyglot_array<T>(data);
+        }
+
+    public:
+        static inline view create(const array_data &data) {
+            return view(data);
         }
 
         operator polyglot_array<T>&() {
             return *(polyglot_array<T>*) &_data;
         }
 
+        operator const polyglot_array<T>&() const {
+            return *(polyglot_array<T>*) &_data;
+        }
+
         polyglot_array<T>* operator->() {
+            return (polyglot_array<T>*) &_data;
+        }
+
+        const polyglot_array<T>* operator->() const {
             return (polyglot_array<T>*) &_data;
         }
 

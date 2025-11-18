@@ -69,6 +69,34 @@ int main() {
 }
 ```
 
+# Inheritable types
+
+In Ada, tagged type primitives can have multiple controlling parameters, and
+can also have a controlling return type (dynamic dispatch based on return
+type).
+
+```ada
+type Root is tagged private;
+function F(R1, R2: Root) return Root;
+
+type Child is new Root with private;
+overriding function F(R1, R2: Child) return Child;
+```
+
+Since there is no corresponding capability in most other programming languages,
+any tagged type with a primitive that makes use of such language features will
+be marked as `final` in the proxy.
+
+```cpp
+class Root {
+    // No shadow constructor
+    Root();
+
+    // Not virtual
+    Root f(const Root &r1, const Root &r2);
+};
+```
+
 # Proxy2Cpp
 
 ## C++ objet construction

@@ -13,11 +13,11 @@ package body Test is
       return (I => 42);
    end F;
 
-   function F2 (R : Root) return Root'Class is
-      Tmp : Root'Class := R;
-   begin
-      return Tmp;
-   end F2;
+   -- function F2 (R : Root) return Root'Class is
+   --    Tmp : Root'Class := R;
+   -- begin
+   --    return Tmp;
+   -- end F2;
 
    function F_Arr (R : Root; A: Arr; I : in out Integer) return Arr is
       Res : Arr := A;
@@ -64,10 +64,10 @@ package body Test is
       return R.F;
    end F_Rec;
 
-   function F2_Root (R: Root'Class) return Root'Class is
-   begin
-      return R.F2;
-   end F2_Root;
+   -- function F2_Root (R: Root'Class) return Root'Class is
+   -- begin
+   --    return R.F2;
+   -- end F2_Root;
 
    function F_Arr_Disp (R: Root'Class; A: Arr; I : in out Integer) return Arr is
       Res : Arr := R.F_Arr(A, I);

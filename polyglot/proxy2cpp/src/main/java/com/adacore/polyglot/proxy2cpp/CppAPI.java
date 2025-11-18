@@ -138,10 +138,9 @@ public class CppAPI {
         // When returning a reference to a non-native type, we cannot allocate a new proxy object
         // and return a real C++ reference to it. Instead, return a `view` to the returned pointer
         // that acts as a reference and that won't free the underlying pointer when destroyed.
-        if (typeExpr instanceof ReferenceTypeExpr ref
-                && !(ref.typeExpr instanceof NameTypeExpr name
-                        && (context.getTypeDecl(name.name) instanceof NativeTypeDecl))) {
-            return cppTypename(ref.typeExpr).concat("::view");
+        if (typeExpr instanceof ReferenceTypeExpr ref && !context.isNativeScalar(ref.typeExpr)) {
+            String constness = ref.isConst ? "const " : "";
+            return constness.concat(cppTypename(ref.typeExpr)).concat("::view");
         }
         return cppTypename(typeExpr);
     }
@@ -176,6 +175,9 @@ public class CppAPI {
                             case STRING -> cTypename(name);
                             default -> nativeTypeName(nativeType.nativeType) + "*";
                         };
+            }
+            if (!ref.isConst && ref.typeExpr instanceof PointerTypeExpr ptr) {
+                if (context.isClassType(ptr.typeExpr)) return constness + "void **";
             }
             return constness + "void *";
         } else if (typeExpr instanceof PointerTypeExpr ptr) {
@@ -342,14 +344,22 @@ public class CppAPI {
     /** Create a string of the return statement. */
     public String makeReturnStatement(FunctionDecl functionDecl, String returnedValue) {
         StringBuilder builder = new StringBuilder("return ");
-        if (functionDecl.type.returnType instanceof ReferenceTypeExpr ref
-                && ref.typeExpr instanceof NameTypeExpr name
-                && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
-            // When returning a reference to a native type, get the address returned by the `extern
-            // "C"` function and dereference it to create a reference.
-            // Note that unlike class types that require a wrapping proxy objects, native types can
-            // be directely addressed, thus we can return real C++ references.
-            builder.append("*");
+        if (functionDecl.type.returnType instanceof ReferenceTypeExpr ref) {
+            if (context.isNativeScalar(ref.typeExpr)) {
+                // When returning a reference to a native type, get the address returned by the
+                // `extern "C"` function and dereference it to create a reference.
+                // Note that unlike class types that require a wrapping proxy objects, native types
+                // can be directely addressed, thus we can return real C++ references.
+                builder.append("*");
+            } else {
+                // When the returned pointer to an opaque data is `const void *`, we must return a
+                // const view.
+                // The view constructor cannot accept const pointers, since the concept of "const
+                // constructor" does not exist. Instead, use a `create` function that has an
+                // overload for returning const views with `const void *` data pointers.
+                ReferenceTypeExpr nonConstRef = ref.typeExpr.makeReference(false);
+                builder.append(cppReturnTypename(nonConstRef)).append("::create");
+            }
         } else if (functionDecl.type.returnType instanceof NameTypeExpr name
                 && context.getTypeDecl(name.name) instanceof EnumerationDecl) {
             // Scoped enums cannot be instantiated with a list initializer until C++17. Use a
@@ -452,107 +462,56 @@ public class CppAPI {
         return builder.toString();
     }
 
-    /**
-     * Construct a variable that is a static function pointer to the dispatching function of
-     * functionDecl.
-     *
-     * <p>The resulting function type is similar to what the functionDecl is, except that: the
-     * second argument is the vtable given to the shadow object; the second argument is the `this`
-     * value given at construction of the shadow object, and only requires a cast to the C++ object
-     * type when doing the dispatching call;
-     *
-     * <p>For the following class and function: <code>
-     *  class A { int foo(int a, const A &b); }
-     * </code>
-     *
-     * <p>the following will be generated: <code>
-     * int (*foo_dispatch)(void *_self, void *_vtable, int a, const void *b)
-     * </code>
-     */
-    public String dispatchFunctionPointerVariable(VTableEntry function) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(cTypename(function.functionType.returnType))
-                .append("(*")
-                .append(function.name.toLower())
-                .append("_dispatch)(")
-                .append(dispatchParameters(function.functionType))
-                .append(")");
-        return builder.toString();
-    }
-
-    /**
-     * Construct a variable that is a member function pointer to the functionDecl.
-     *
-     * <p>For the following class and function: <code>
-     *  class A { int foo(int a, const A &b) const; }
-     * </code>
-     *
-     * <p>the following will be generated: <code>
-     * int (A::*foo_member)(int a, const A& b) const
-     * </code>
-     */
-    public String memberFunctionPointerVariable(VTableEntry function, String className) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(cppTypename(function.functionType.returnType))
-                .append("(")
-                .append(className)
-                .append("::*")
-                .append(function.name.toLower())
-                .append("_member)(")
-                .append(
-                        function.functionType.parameters.stream()
-                                .skip(1)
-                                .map(p -> toCppParam(p))
-                                .collect(Collectors.joining(", ")))
-                .append(")")
-                .append(" ")
-                .append(function.functionType.parameters.get(0).type.isConst() ? "const " : "");
-        return builder.toString();
-    }
-
-    /** Create a string that is the parameters of the class vtable constructor. */
-    public String vtableCtorArguments(ClassDecl classDecl) {
-        return classDecl.vtable.stream()
-                .map(m -> memberFunctionPointerVariable(m, classDecl.getLastName().toPascal()))
-                .collect(Collectors.joining(", "));
-    }
-
     /** Return a string that is the C++ converted parameter from its raw data given by argument. */
     public String convertForDispatch(Parameter param) {
         StringBuilder builder = new StringBuilder();
+        TypeExpr type = param.type;
+        String data = param.name.toLower();
         // We need value types in cases where there are references, so use the
         // c++ return type in order to build view types when necessary.
-        builder.append(cppReturnTypename(param.type))
+        // Returning references to pointers is not possible, so manually enforce building simple
+        // pointers.
+        if (type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr ptr) {
+            builder.append(cTypename(ptr.typeExpr))
+                    .append(ptr.typeExpr instanceof ArrayTypeExpr ? "*" : "")
+                    .append(" __")
+                    .append(param.name.toLower())
+                    .append(" = ");
+            if (ptr.typeExpr instanceof ArrayTypeExpr) {
+                builder.append("(").append(cTypename(ptr.typeExpr)).append("*)");
+                data = "*__" + param.name.toLower();
+            } else {
+                builder.append("*");
+                data = "__" + param.name.toLower();
+            }
+            builder.append(param.name.toLower()).append(";\n");
+            type = ptr;
+        }
+        builder.append(cppReturnTypename(type))
                 .append(" _")
                 .append(param.name.toLower())
                 .append(" = ");
 
-        boolean needsConstCast = false;
-        if (param.type instanceof ReferenceTypeExpr ref
+        if (type instanceof ReferenceTypeExpr ref
                 && ref.typeExpr instanceof NameTypeExpr name
                 && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
             // When making a reference to a native type, dereference the pointer to make a reference
             builder.append("*");
         } else {
             // Otherwise, create a new object that wraps the returned pointer.
-            builder.append(cppReturnTypename(param.type));
-            // Arrays (and strings) do not need const casts as they are passed by copy.
-            if (param.type instanceof ReferenceTypeExpr ref
-                    && ref.isConst
-                    && !(ref.typeExpr instanceof ArrayTypeExpr
-                            || ref.typeExpr instanceof NameTypeExpr name
-                                    && context.getTypeDecl(name.name) instanceof NativeTypeDecl nat
-                                    && nat.equals(NativeType.STRING.declaration)))
-                needsConstCast = true;
+            if (type instanceof ReferenceTypeExpr ref && ref.isConst)
+                builder.append(cppReturnTypename(ref.typeExpr.makeReference(false)))
+                        .append("::create");
+            else builder.append(cppReturnTypename(type));
         }
         builder.append("(");
-        // view types do not have a constructor for const pointers as it may be unsafe and const
-        // constructors do not exist. Dispatching functions are only transitionary and unseen to the
-        // user, so when a const pointer is received, cast away its constness: it will be readded
-        // when the view is converted to a const reference.
-        if (needsConstCast) builder.append("const_cast<void *>(");
-        builder.append(param.name.toLower());
-        if (needsConstCast) builder.append(")");
+        if (type instanceof PointerTypeExpr ptr) {
+            builder.append("new ").append(cppTypename(ptr.typeExpr)).append("(");
+        }
+        builder.append(data);
+        if (type instanceof PointerTypeExpr) {
+            builder.append(")");
+        }
         builder.append(")");
 
         return builder.toString();
@@ -573,21 +532,42 @@ public class CppAPI {
         return builder.toString();
     }
 
-    public boolean needsRelease(FunctionTypeExpr functionType) {
-        return !(functionType.returnType instanceof NameTypeExpr name
-                && context.getTypeDecl(name.name) instanceof NativeTypeDecl);
-    }
-
     /**
      * Create a call to ``.release()`` on objects returned by the dispatchers when the value
      * returned is an object in order to prevent the destructor from freeing the memory returned.
      */
-    public String makeRelease(FunctionTypeExpr functionType) {
-        return needsRelease(functionType) ? ".release()" : "";
+    public String makeReturnFromDispatch(FunctionTypeExpr functionType, String returnedValue) {
+        StringBuilder builder = new StringBuilder();
+        if (functionType.returnType instanceof NameTypeExpr name) {
+            builder.append("return ");
+            TypeDecl typeDecl = context.getTypeDecl(name.name);
+            if (typeDecl instanceof NativeTypeDecl || typeDecl instanceof EnumerationDecl) {
+                builder.append("static_cast<")
+                        .append(cTypename(functionType.returnType))
+                        .append(">(")
+                        .append(returnedValue)
+                        .append(");");
+            } else {
+                builder.append(returnedValue).append(".release();");
+            }
+        } else if (functionType.returnType instanceof ArrayTypeExpr) {
+            builder.append("return ").append(returnedValue).append(".release();");
+        } else if (functionType.returnType instanceof PointerTypeExpr) {
+            builder.append("if (")
+                    .append(returnedValue)
+                    .append(".get() == nullptr) {")
+                    .append(makeDispatchDefaultReturn(functionType))
+                    .append("} else { return ")
+                    .append(returnedValue)
+                    .append(".get()->data() ;}");
+        } else {
+            throw new UnsupportedOperationException("Unsupported returned dispatch type");
+        }
+        return builder.toString();
     }
 
-    public boolean returnsVoid(FunctionDecl functionDecl) {
-        return functionDecl.type.returnType instanceof NameTypeExpr name
+    public boolean returnsVoid(FunctionTypeExpr functionType) {
+        return functionType.returnType instanceof NameTypeExpr name
                 && context.getTypeDecl(name.name).equals(NativeType.VOID.declaration);
     }
 
@@ -605,7 +585,9 @@ public class CppAPI {
      * not be used by the library.
      */
     public String makeDispatchDefaultReturn(FunctionTypeExpr function) {
-        if (function.returnType instanceof ArrayTypeExpr)
+        if (function.returnType instanceof ArrayTypeExpr
+                || function.returnType instanceof PointerTypeExpr ptr
+                        && ptr.typeExpr instanceof ArrayTypeExpr)
             return "return polyglot::ada::arrays::array_data{0, 0, nullptr};";
         if (function.returnType instanceof NameTypeExpr name) {
             TypeDecl returnType = context.getTypeDecl(name.name);
@@ -616,6 +598,8 @@ public class CppAPI {
                     case STRING -> "return polyglot::ada::strings::string_data{0, 0, nullptr};";
                     default -> "return 0;";
                 };
+            } else if (returnType instanceof EnumerationDecl) {
+                return "return 0;";
             }
         }
         return "return nullptr;";
@@ -704,6 +688,25 @@ public class CppAPI {
                     .append("(")
                     .append(dataName)
                     .append("), polyglot::memory_owner::LIBRARY);");
+        }
+        return builder.toString();
+    }
+
+    public String checkDispatchPointerValue(Parameter param) {
+        StringBuilder builder = new StringBuilder();
+        if (param.type instanceof ReferenceTypeExpr ref
+                && ref.typeExpr instanceof PointerTypeExpr ptr) {
+            String dataName = "_" + param.name.toLower();
+            builder.append("*");
+            if (ptr.typeExpr instanceof ArrayTypeExpr) builder.append("__");
+            builder.append(param.name.toLower())
+                    .append(" = ")
+                    .append(dataName)
+                    .append(".get() == nullptr ? ");
+            if (ptr.typeExpr instanceof ArrayTypeExpr)
+                builder.append("polyglot::ada::arrays::array_data{0, -1, nullptr}");
+            else builder.append("nullptr");
+            builder.append(" : ").append(dataName).append("->data();");
         }
         return builder.toString();
     }

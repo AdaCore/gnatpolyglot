@@ -5,16 +5,9 @@ Running the printer...
 Compiling test main program...
 Running test main program...
 
-Got A = 0
-Got B = 1
-C++ value:1
-Got E = 15
-Got F = 30
-C++ value:30
-Got F = 30
-C++ value:15
-4
-15
-30
+( 0)
+(-1)
+Child::f
+( 1)
 
 Done.

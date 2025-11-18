@@ -32,6 +32,9 @@ public:
     }
 
     string_data data() const { return this->_data; }
+    string_data release() const {
+        return this->_data;
+    }
     string_data release() {
         string_data data = this->_data;
         this->_data.begin = 0;
@@ -40,7 +43,8 @@ public:
         return data;
     }
 
-    friend class polyglot_ptr<polyglot_string>;
+    template <typename T>
+    friend class polyglot::polyglot_ptr;
 
 private:
     string_data _data;
@@ -51,17 +55,29 @@ private:
 };
 
 class polyglot_string::view  {
-public:
+private:
     view(const string_data &data) {
         new (&this->_data) polyglot_string(data);
+    }
 
+public:
+    static inline view create(const string_data &data) {
+        return view(data);
     }
 
     operator polyglot_string&() {
         return *(polyglot_string*) &_data;
     }
 
+    operator const polyglot_string&() const {
+        return *(polyglot_string*) &_data;
+    }
+
     polyglot_string* operator->() {
+        return (polyglot_string*) &_data;
+    }
+
+    const polyglot_string* operator->() const {
         return (polyglot_string*) &_data;
     }
 

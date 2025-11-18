@@ -4,6 +4,12 @@ with System;
 
 package Polyglot.Ada.Arrays is
 
+   type Fat_Pointer is record
+      Data       : System.Address;
+      Descriptor : System.Address;
+   end record
+   with Convention => C;
+
    type Polyglot_Array is record
       First, Last : Interfaces.C.Int;
       Data        : System.Address;

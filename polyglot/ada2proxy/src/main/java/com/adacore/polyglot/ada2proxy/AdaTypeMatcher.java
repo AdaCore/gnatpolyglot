@@ -50,4 +50,8 @@ public class AdaTypeMatcher {
                 || typeDecl.pIsRecordType(Libadalang.AdaNode.NONE)
                 || typeDecl.pIsAccessType(Libadalang.AdaNode.NONE);
     }
+
+    public static boolean isNonClassWideTagged(Libadalang.BaseTypeDecl typeDecl) {
+        return typeDecl.pIsTaggedType(NONE) && !(typeDecl instanceof Libadalang.ClasswideTypeDecl);
+    }
 }
