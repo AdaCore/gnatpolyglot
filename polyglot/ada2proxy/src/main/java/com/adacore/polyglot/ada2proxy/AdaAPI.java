@@ -93,16 +93,21 @@ public class AdaAPI extends LanguageAPI {
 
     /** Create a {@link TypeExpr} to ``decl``. */
     public static TypeExpr makeTypeExpr(Libadalang.BasicDecl decl) {
-        if (decl instanceof Libadalang.TypeDecl typeDecl) {
-            if (typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
-                if (AdaTypeMatcher.isStringType(typeDecl)) return NativeType.STRING.typeExpr;
-                return makeTypeExpr(arrayTypeDef.fComponentType().fTypeExpr()).makeArray();
-            }
-            if (typeDecl.fTypeDef() instanceof Libadalang.TypeAccessDef access) {
-                return makeTypeExpr(access.fSubtypeIndication())
-                        .makePointer(
-                                access.fHasConstant() instanceof Libadalang.ConstantPresent,
-                                access.fHasNotNull() instanceof Libadalang.NotNullPresent);
+        if (decl.isNone()) return NativeType.VOID.typeExpr;
+        else if (decl instanceof Libadalang.BaseTypeDecl typeDecl) {
+            if (AdaTypeMatcher.isStringType(typeDecl)) return NativeType.STRING.typeExpr;
+            else if (typeDecl.pIsArrayType(Libadalang.AdaNode.NONE)) {
+                return makeTypeExpr(typeDecl.pCompType(false, Libadalang.AdaNode.NONE)).makeArray();
+            } else if (typeDecl.pIsAccessType(Libadalang.AdaNode.NONE)) {
+                Libadalang.TypeDecl rootType =
+                        (Libadalang.TypeDecl) typeDecl.pRootType(Libadalang.AdaNode.NONE);
+                Libadalang.AccessDef accessDef = (Libadalang.AccessDef) rootType.fTypeDef();
+                boolean hasNonNull = accessDef.fHasNotNull().pAsBool();
+                boolean hasConst = false;
+                if (rootType.fTypeDef() instanceof Libadalang.TypeAccessDef access)
+                    hasConst = access.fHasConstant().pAsBool();
+                return makeTypeExpr(typeDecl.pAccessedType(Libadalang.AdaNode.NONE))
+                        .makePointer(hasNonNull, hasConst);
             }
         }
         return makeProxyFullyQualifiedName(decl).asTypeExpr();
