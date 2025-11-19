@@ -13,6 +13,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
+import com.adacore.polyglot.ada2proxy.proxy.Subtype;
 import java.util.HashSet;
 import java.util.List;
 
@@ -100,6 +101,11 @@ public class WithCollector {
 
         @Override
         public Void visit(Component component) {
+            return null;
+        }
+
+        @Override
+        public Void visit(Subtype subtype) {
             return null;
         }
     }

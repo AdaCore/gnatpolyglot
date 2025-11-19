@@ -15,6 +15,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
+import com.adacore.polyglot.ada2proxy.proxy.Subtype;
 import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.ClassDecl.Inheritability;
 import com.adacore.polyglot.proxy.Declaration;
@@ -215,6 +216,12 @@ public class AdaProxyTranslator {
         public ProxyObject visit(GlobalVariable globalVariable) {
             declarations.add(globalVariable.getGetter());
             Optional.ofNullable(globalVariable.getSetter()).ifPresent(d -> declarations.add(d));
+            return null;
+        }
+
+        @Override
+        public ProxyObject visit(Subtype subtype) {
+            // Nothing to do
             return null;
         }
     }
