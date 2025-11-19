@@ -31,13 +31,13 @@ public class AdaTypeMatcher {
 
     /** Return whether the BaseTypeDecl is the Standard.String type, or an array of character. */
     public static boolean isStringType(Libadalang.BaseTypeDecl typeDecl) {
-        return typeDecl.equals(typeDecl.pStdStringType())
-                || typeDecl.pCompType(true, NONE).equals(typeDecl.pStdCharType());
+        return typeDecl.pIsArrayType(Libadalang.AdaNode.NONE)
+                && isCharacter(typeDecl.pCompType(false, NONE));
     }
 
     /** Return whether the BaseTypeDecl is the Standard.Character type. */
     public static boolean isCharacter(Libadalang.BaseTypeDecl typeDecl) {
-        return typeDecl.equals(typeDecl.pStdCharType());
+        return typeDecl.pRootType(Libadalang.AdaNode.NONE).equals(typeDecl.pStdCharType());
     }
 
     /**
