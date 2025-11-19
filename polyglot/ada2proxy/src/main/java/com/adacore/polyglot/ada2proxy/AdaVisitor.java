@@ -536,6 +536,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 else if (parentType.pIsPrivate())
                     rec.parent = makeRecord(BaseRecordDef.NONE, parentType);
                 else throw new RuntimeException("Could not process parent type");
+                queuedDecls.add(parentType);
             }
             declarations.add(rec);
         } else if (parentDecl.pIsRecordType(Libadalang.AdaNode.NONE)) {
