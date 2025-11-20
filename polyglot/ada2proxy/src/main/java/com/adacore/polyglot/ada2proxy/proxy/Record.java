@@ -385,7 +385,10 @@ public class Record extends AdaDeclaration {
      * Return a string of the extension aggrate necessary to construct a record when inheriting from
      * a private type, or an empty string.
      */
-    public String extensionAggregate() {
+    public String extensionAggregate(boolean isShadow) {
+        if (isShadow && origin.pIsPrivate()) {
+            return origin.pFullyQualifiedName() + " with";
+        }
         return Arrays.stream(origin.pFullView().pBaseTypes(Libadalang.AdaNode.NONE))
                 .filter(b -> b.pIsPrivate())
                 .findFirst()

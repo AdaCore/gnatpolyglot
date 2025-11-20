@@ -119,7 +119,7 @@ Template file to generate bindings for record types.
                <%-- When the type inherits from a private type (directly, or indirectly)
                  -- an extension aggregate is required.
                  --%>
-               ${rec.extensionAggregate()}
+               ${rec.extensionAggregate(false)}
                @for(var p : allocFunc.type.parameters)
                   ${api.valueName(p.name)},
                @endfor
