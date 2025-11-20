@@ -96,6 +96,7 @@ if __name__ == "__main__":
         "-cp", args.classpath,
         "--no-fallback",
         "-H:+UnlockExperimentalVMOptions",
+        "-H:-StrictQueryCodeCompilation",
         *os_specific_options
     ]
 
