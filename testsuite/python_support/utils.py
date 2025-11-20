@@ -103,9 +103,10 @@ def compile_main(
         LD_FLAGS = [
             f"-L{os.path.join(input_proxy, 'lib_agg', 'static', 'dev')}",
             f"-l{input_lib}_proxy_agg",
-            "-ldl",
-            "-lpthread",
         ]
+        if os.name != "nt":
+            LD_FLAGS.extend(["-ldl", "-lpthread"])
+
         argv = [
             "g++",
             f"-I{os.path.join(output_proxy, 'include')}",
