@@ -28,7 +28,7 @@ public class Array extends AdaDeclaration {
             new HashMap<>();
 
     public Array(Libadalang.BaseTypeDecl arrayType) {
-        super(Name.fromPascalWithUnderscore(arrayType.pRelativeName().getText()));
+        super(AdaAPI.getName(arrayType.pDefiningName()));
         this.arrayType = arrayType;
     }
 
