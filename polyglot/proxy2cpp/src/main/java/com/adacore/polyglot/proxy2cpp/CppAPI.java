@@ -710,4 +710,18 @@ public class CppAPI {
         }
         return builder.toString();
     }
+
+    public boolean isCopyable(ClassDecl classDecl) {
+        return getMembers(classDecl).copyFunction != null;
+    }
+
+    public boolean isCopyConstructible(ClassDecl classDecl) {
+        TypeExpr paramType = classDecl.name.asTypeExpr();
+        List<TypeExpr> copyParams =
+                List.of(paramType, paramType.makeReference(false), paramType.makeReference(true));
+        return getMembers(classDecl).allocFunctions.stream()
+                .filter(alloc -> alloc.type.parameters.size() == 1)
+                .map(alloc -> alloc.type.parameters.getFirst().type)
+                .anyMatch(funcParam -> copyParams.stream().anyMatch(p -> p.equals(funcParam)));
+    }
 }
