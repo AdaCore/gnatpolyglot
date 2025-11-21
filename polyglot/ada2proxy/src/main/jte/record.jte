@@ -43,14 +43,24 @@ Template file to generate bindings for record types.
       pragma Export (C, ${allocFunc.getLastName().toPascalWithUnderscore()}, "${allocFunc.symbol}");
    @endfor
 
-   function ${cloneFunc.getLastName().toPascalWithUnderscore()}
-     (Self: System.Address) return System.Address;
-   pragma Export (C, ${cloneFunc.getLastName().toPascalWithUnderscore()}, "${cloneFunc.symbol}");
+   @if (cloneFunc != null)
+      function ${cloneFunc.getLastName().toPascalWithUnderscore()}
+        (Self: System.Address) return System.Address;
+      pragma Export
+        (C,
+         ${cloneFunc.getLastName().toPascalWithUnderscore()},
+         "${cloneFunc.symbol}");
+   @endif
 
    <%-- Declare the copy function --%>
-   procedure ${copyFunc.getLastName().toPascalWithUnderscore()}
-     (Self: System.Address; Other: System.Address);
-   pragma Export (C, ${copyFunc.getLastName().toPascalWithUnderscore()}, "${copyFunc.symbol}");
+   @if (copyFunc != null)
+      procedure ${copyFunc.getLastName().toPascalWithUnderscore()}
+        (Self: System.Address; Other: System.Address);
+      pragma Export
+        (C,
+         ${copyFunc.getLastName().toPascalWithUnderscore()},
+         "${copyFunc.symbol}");
+   @endif
 
    <%-- Declare the getter and setter functions --%>
    @for(var f : rec.getGettersAndSetters())
@@ -131,34 +141,39 @@ Template file to generate bindings for record types.
       end ${allocFunc.getLastName().toPascalWithUnderscore()};
    @endfor
 
-   function ${cloneFunc.getLastName().toPascalWithUnderscore()}
-     (Self: System.Address) return System.Address
-   is
-      <%---
-        -- In the case of abstract types, we cannot use a variable with an address clause.
-        -- In order to cover all cases, use an access.
-        --%>
-      function Convert_Self is new Ada.Unchecked_Conversion
-        (System.Address, ${recordAccessName});
-      function Convert_Return is new Ada.Unchecked_Conversion
-        (${recordAccessName}, System.Address);
-      Tmp : ${recordAccessName} := Convert_Self (Self);
-   begin
-      return Convert_Return (new ${recordName}'(Tmp.all));
-   end ${cloneFunc.getLastName().toPascalWithUnderscore()};
+   @if (cloneFunc != null)
+      function ${cloneFunc.getLastName().toPascalWithUnderscore()}
+        (Self: System.Address) return System.Address
+      is
+         <%---
+           -- In the case of abstract types, we cannot use a variable with an
+           -- address clause. In order to cover all cases, use an access.
+           --%>
+         function Convert_Self is new Ada.Unchecked_Conversion
+           (System.Address, ${recordAccessName});
+         function Convert_Return is new Ada.Unchecked_Conversion
+           (${recordAccessName}, System.Address);
+         Tmp : ${recordAccessName} := Convert_Self (Self);
+      begin
+         return Convert_Return (new ${recordName}'(Tmp.all));
+      end ${cloneFunc.getLastName().toPascalWithUnderscore()};
+   @endif
 
-   <%-- Define the copy function --%>
-   procedure ${copyFunc.getLastName().toPascalWithUnderscore()}
-     (Self: System.Address; Other: System.Address)
-   is
-      package Converter is new System.Address_To_Access_Conversions (${recordName});
-      Self_Access : Converter.Object_Pointer := Converter.To_Pointer (Self);
-      Self_Value : ${recordName} renames Self_Access.all;
-      Other_Access : Converter.Object_Pointer := Converter.To_Pointer (Other);
-      Other_Value : ${recordName} renames Other_Access.all;
-   begin
-      Self_Value := Other_Value;
-   end ${copyFunc.getLastName().toPascalWithUnderscore()};
+   @if (copyFunc != null)
+      procedure ${copyFunc.getLastName().toPascalWithUnderscore()}
+        (Self: System.Address; Other: System.Address)
+      is
+         package Converter is new
+            System.Address_To_Access_Conversions (${recordName});
+         Self_Access : Converter.Object_Pointer := Converter.To_Pointer (Self);
+         Self_Value : ${recordName} renames Self_Access.all;
+         Other_Access : Converter.Object_Pointer :=
+            Converter.To_Pointer (Other);
+         Other_Value : ${recordName} renames Other_Access.all;
+      begin
+         Self_Value := Other_Value;
+      end ${copyFunc.getLastName().toPascalWithUnderscore()};
+   @endif
 
    <%-- Define the getter and setter functions --%>
    @for(var f : rec.getGettersAndSetters())

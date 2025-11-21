@@ -28,13 +28,32 @@ Template file to generate binded functions.
       ${api.makeParamConversion(p)};
     @endfor
       ${api.makeReturnDeclarations(subp.getReturnType())}
-      Value_Returned : ${subp.getReturnType().pFullyQualifiedName()} :=
-         ${api.call(subp)};
-   begin
-      ${api.makeReturnConversion(subp.getReturnType(), "Value_Returned")};
-    @for(var p : subp.parameters)
-      ${api.syncParamValue(p)}
-    @endfor
+   <%-- Limited types cannot be copied, so we must include the call in the
+     -- return statement in order to generate legal code.
+     -- Note: This is not possible to do in all cases, since we may want to
+     -- perform checks when returning certain value types such as array
+     -- accesses.
+     --%>
+   @if (subp.getReturnType().pIsLimitedType())
+      begin
+         return Value_Returned : ${returnType} :=
+           Return_Type_Converter.To_Address
+             (new ${subp.getReturnType().pFullyQualifiedName()}'
+               (${api.call(subp)})) do
+          @for(var p : subp.parameters)
+            ${api.syncParamValue(p)}
+          @endfor
+            null;
+         end return;
+   @else
+         Value_Returned : ${subp.getReturnType().pFullyQualifiedName()} :=
+            ${api.call(subp)};
+      begin
+       @for(var p : subp.parameters)
+         ${api.syncParamValue(p)}
+       @endfor
+         ${api.makeReturnConversion(subp.getReturnType(), "Value_Returned")};
+   @endif
    exception
       when E: others =>
          Polyglot.Exceptions.Clear_Last_Exception (Polyglot.Get_Kernel);

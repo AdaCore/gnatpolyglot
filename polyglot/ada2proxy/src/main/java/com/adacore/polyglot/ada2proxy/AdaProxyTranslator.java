@@ -166,8 +166,10 @@ public class AdaProxyTranslator {
         public ClassDecl visit(Record rec) {
             declarations.addAll(rec.getAllocFunctions());
             declarations.add(rec.getFreeFunction());
-            declarations.add(rec.getCloneFunction());
-            declarations.add(rec.getCopyFunction());
+            if (!rec.isLimited()) {
+                declarations.add(rec.getCloneFunction());
+                declarations.add(rec.getCopyFunction());
+            }
             declarations.addAll(rec.getGettersAndSetters());
             if (rec.isInheritable(api)) declarations.addAll(rec.getShadowAllocFunctions());
             if (rec.getTypeDef() instanceof Libadalang.RecordTypeDef

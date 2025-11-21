@@ -137,11 +137,7 @@ def compile_main(
         # We may want to use cflags that are incompatible with the ones we use
         # by default (eg. `--std=c++17 when using C++17 constructs...): specifying
         # cflags will overwrite.
-        C_FLAGS = (
-            cflags
-            if cflags is not None
-            else ["-Wall", "-Wextra", "-Werror", "-std=c++11"]
-        )
+        C_FLAGS = cflags or ["-Wall", "-Wextra", "-Werror", "-std=c++11"]
 
         LD_FLAGS = [
             f"-L{os.path.join(input_proxy, 'lib_agg', 'static', 'dev')}",
@@ -208,7 +204,7 @@ class PrinterConfig():
 
     @property
     def cflags(self) -> list[str] | None:
-        return self._cfg.get("main_cargs")
+        return self._cfg.get("main_cflags")
 
     @property
     def ldflags(self) -> list[str] | None:

@@ -1,0 +1,8 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+# This test uses copy ellision, only guaranteed in C++17 and above
+main_cflags: ["-Wall", "-Wextra", "-Werror", "-std=c++17"]
