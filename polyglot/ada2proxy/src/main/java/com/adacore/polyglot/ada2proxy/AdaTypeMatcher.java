@@ -57,4 +57,8 @@ public class AdaTypeMatcher {
     public static boolean isNonClassWideTagged(Libadalang.BaseTypeDecl typeDecl) {
         return typeDecl.pIsTaggedType(NONE) && !(typeDecl instanceof Libadalang.ClasswideTypeDecl);
     }
+
+    public static boolean isNumber(Libadalang.BaseTypeDecl type) {
+        return type.pIsScalarType(NONE) && !isEnum(type);
+    }
 }

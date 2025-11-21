@@ -213,6 +213,11 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
+    public static String getDisplayName(Libadalang.BasicDecl type) {
+        if (type instanceof Libadalang.AnonymousTypeDecl anon) return anon.getImage();
+        return type.pFullyQualifiedName();
+    }
+
     public String getProxyAccessFullyQualifiedName(Libadalang.BaseTypeDecl type) {
         if (type.equals(type.pStdStringType())) return "Polyglot.Ada.Strings.String_Access";
         return type.pParentBasicDecl()
@@ -727,7 +732,7 @@ public class AdaAPI extends LanguageAPI {
         if (AdaTypeMatcher.isReturnedAsAddress(typeDecl)) return "System.Address";
         if (AdaTypeMatcher.isEnum(typeDecl)) return cInterfaceNativeTypename(NativeType.SINT32);
 
-        throw new UnsupportedOperationException("Type not supported");
+        throw new UnsupportedOperationException(typeDecl + " is not supported");
     }
 
     /**

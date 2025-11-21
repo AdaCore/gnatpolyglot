@@ -41,6 +41,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     private Queue<Libadalang.BasicDecl> queuedDecls = new LinkedList<>();
 
+    private BindableDeclChecker declChecker = new BindableDeclChecker();
+
     /** Turn a fully qualified name into a unique C symbol. */
     private String symbolify(Libadalang.BaseSubpSpec spec) {
         StringBuilder builder = new StringBuilder();
@@ -146,7 +148,9 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 // If the type was already visited, it is already in a package's list of
                 // declaration. Also ignore types from the Std unit or native types.
                 if (mappedTypes.containsKey(type)
+                        || declChecker.seenUnbindable(decl)
                         || type.getUnit().equals(type.pStandardUnit())
+                        || AdaTypeMatcher.isNumber(type)
                         || AdaAPI.checkNativeType(type) != null) continue;
                 if (type.pParentBasicDecl() instanceof Libadalang.BasePackageDecl p) {
                     Package pack = mappedPackages.get(p);
@@ -158,11 +162,12 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                     } else {
                         // pack may be null when the type is an array.
                         if (pack != null) declarations = pack.declarations;
-                        type.accept(this);
+                        visitDecl(type);
                         declarations = null;
                     }
                 } else {
-                    System.out.println("Unsupported parent decl " + type.pParentBasicDecl());
+                    AdaScanner.error(
+                            new UnbindableDeclException(decl, "Unsupported parent declaration"));
                 }
             }
         }
@@ -298,16 +303,27 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         }
     }
 
+    void visitDecl(Libadalang.BasicDecl decl) {
+        try {
+            declChecker.checkIsBindable(decl);
+            // The decl may already have been marked as unbindable, and the checker would not have
+            // thrown an other exception.
+            if (!declChecker.seenUnbindable(decl)) decl.accept(this);
+        } catch (UnbindableDeclException e) {
+            AdaScanner.warning(e);
+        } catch (BadNameSyntaxException e) {
+            AdaScanner.warning(new UnbindableDeclException(decl, e));
+        } catch (Throwable e) {
+            AdaScanner.error(new UnbindableDeclException(decl, e));
+        }
+    }
+
     @Override
     public Void visit(Libadalang.PackageDecl node) {
         this.analyzedPackage = node;
 
-        for (var d : node.fPublicPart().fDecls()) {
-            try {
-                d.accept(this);
-            } catch (BadNameSyntaxException e) {
-                System.err.println(e.getMessage());
-            }
+        for (var n : node.fPublicPart().fDecls()) {
+            if (n instanceof Libadalang.BasicDecl decl) visitDecl(decl);
         }
         resolveNameConflicts();
         enqueueParentPackages(node);
@@ -604,5 +620,13 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             declarations.add(new GlobalVariable(node, AdaAPI.getName(id)));
         }
         return null;
+    }
+
+    public Void visit(Libadalang.GenericPackageDecl node) {
+        throw new UnbindableDeclException(node, "Generic packages are not supported");
+    }
+
+    public Void visit(Libadalang.GenericSubpDecl node) {
+        throw new UnbindableDeclException(node, "Generic subprograms are not supported");
     }
 }

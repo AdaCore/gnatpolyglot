@@ -1,5 +1,6 @@
 package com.adacore.polyglot.ada2proxy;
 
+import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.*;
 import com.adacore.polyglot.Scanner;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxy;
@@ -42,6 +43,38 @@ public class AdaScanner extends Scanner {
 
     /** The Ada proxy. */
     private AdaProxy proxy;
+
+    private static void prettyPrint(UnbindableDeclException exc, String message, String kind) {
+        Libadalang.BasicDecl decl = exc.getDecl();
+        System.err.println(
+                "%s%s: Could not bind %s: %s"
+                        .formatted(
+                                decl.fullSlocImage(), kind, AdaAPI.getDisplayName(decl), message));
+    }
+
+    public static void warning(UnbindableDeclException exc) {
+        Throwable cause = exc.getCause();
+        if (cause == null) {
+            prettyPrint(exc, exc.getMessage(), "warning");
+        } else if (cause instanceof UnbindableDeclException c) {
+            warning(c);
+            prettyPrint(exc, exc.getMessage(), "warning");
+        } else {
+            prettyPrint(exc, cause.toString(), "warning");
+        }
+    }
+
+    public static void error(UnbindableDeclException exc) {
+        Throwable cause = exc.getCause();
+        if (cause == null) {
+            prettyPrint(exc, exc.getMessage(), "error");
+        } else if (cause instanceof UnbindableDeclException c) {
+            error(c);
+            prettyPrint(exc, exc.getMessage(), "error");
+        } else {
+            prettyPrint(exc, cause.toString(), "error");
+        }
+    }
 
     private List<String> getFilesToAnalyze(ProjectManager projectManager, List<String> units)
             throws FileNotFoundException {
