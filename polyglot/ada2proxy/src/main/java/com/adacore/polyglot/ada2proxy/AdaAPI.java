@@ -4,11 +4,15 @@ import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import com.adacore.polyglot.LanguageAPI;
 import com.adacore.polyglot.NativeType;
+import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration;
+import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
+import com.adacore.polyglot.ada2proxy.proxy.EnumType;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
+import com.adacore.polyglot.ada2proxy.proxy.Subtype;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
 import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Name;
@@ -211,6 +215,11 @@ public class AdaAPI extends LanguageAPI {
     /** Create a proxy Name from an Ada defining name, using its canonical text */
     public static Name getName(Libadalang.DefiningName name) {
         return Name.fromLower(name.pCanonicalText().text);
+    }
+
+    /** Return whether the declaration requires to write in a package body during codegen. */
+    public static boolean requiresBodyPackage(AdaDeclaration decl) {
+        return !(decl instanceof Array || decl instanceof Subtype || decl instanceof EnumType);
     }
 
     /**

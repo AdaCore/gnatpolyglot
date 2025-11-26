@@ -4,7 +4,6 @@ import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.*;
 import com.adacore.polyglot.Scanner;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxy;
-import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Proxy;
@@ -219,8 +218,8 @@ public class AdaScanner extends Scanner {
                         "package_ads.jte", Map.of("api", api, "pack", pack), packageSpec);
             }
 
-            // Only array do not create function in these package bodies
-            if (pack.declarations.stream().anyMatch(d -> !(d instanceof Array))) {
+            // Only create a package body file if a declaration requires one
+            if (pack.declarations.stream().anyMatch(AdaAPI::requiresBodyPackage)) {
                 Path packageBodyFile = AdaAPI.toAdaFilename(pack, ".adb");
                 try (FileOutput packageBody = new FileOutput(proxySrc.resolve(packageBodyFile))) {
                     templateEngine.render(
