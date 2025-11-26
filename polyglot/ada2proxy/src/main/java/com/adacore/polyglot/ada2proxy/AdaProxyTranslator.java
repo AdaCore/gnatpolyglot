@@ -41,6 +41,12 @@ public class AdaProxyTranslator {
 
         private List<Declaration> declarations;
 
+        AdaAPI api;
+
+        public Visitor(AdaAPI api) {
+            this.api = api;
+        }
+
         @Override
         public Proxy visit(AdaProxy proxy) {
             List<Module> modules = new ArrayList<>(proxy.packages.size());
@@ -134,7 +140,7 @@ public class AdaProxyTranslator {
 
         private List<VTableEntry> makeVtable(Record classDecl) {
             // Only tagged types can have a vtable.
-            if (!classDecl.isInheritable()) return null;
+            if (!classDecl.isInheritable(api)) return null;
             List<VTableEntry> entries = new ArrayList<>();
             for (var m : classDecl.getAllMethods()) {
                 Name name = m.name;
@@ -158,7 +164,7 @@ public class AdaProxyTranslator {
             declarations.add(rec.getCloneFunction());
             declarations.add(rec.getCopyFunction());
             declarations.addAll(rec.getGettersAndSetters());
-            if (rec.isInheritable()) declarations.addAll(rec.getShadowAllocFunctions());
+            if (rec.isInheritable(api)) declarations.addAll(rec.getShadowAllocFunctions());
             if (rec.getTypeDef() instanceof Libadalang.RecordTypeDef
                     || rec.getTypeDef() instanceof Libadalang.PrivateTypeDef
                     || rec.getTypeDef() instanceof Libadalang.DerivedTypeDef) {
@@ -169,7 +175,7 @@ public class AdaProxyTranslator {
                         rec.getDoc(),
                         parentType,
                         8,
-                        !rec.isInheritable(),
+                        !rec.isInheritable(api),
                         rec.components.stream().map(c -> (Field) c.accept(this)).toList(),
                         makeVtable(rec));
             }
@@ -206,8 +212,8 @@ public class AdaProxyTranslator {
         }
     }
 
-    public static Proxy translate(AdaProxy proxy) {
-        Visitor visitor = new Visitor();
+    public static Proxy translate(AdaProxy proxy, AdaAPI api) {
+        Visitor visitor = new Visitor(api);
         return visitor.visit(proxy);
     }
 }

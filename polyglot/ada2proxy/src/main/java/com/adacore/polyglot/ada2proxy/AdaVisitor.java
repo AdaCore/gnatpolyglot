@@ -42,7 +42,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     private Queue<Libadalang.BasicDecl> queuedDecls = new LinkedList<>();
 
-    private BindableDeclChecker declChecker = new BindableDeclChecker();
+    private AdaAPI api;
+
+    public AdaVisitor(AdaAPI api) {
+        this.api = api;
+    }
 
     /** Turn a fully qualified name into a unique C symbol. */
     private String symbolify(Libadalang.BaseSubpSpec spec) {
@@ -157,7 +161,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 // If the type was already visited, it is already in a package's list of
                 // declaration. Also ignore types from the Std unit or native types.
                 if (registedInParentPackage(type)
-                        || declChecker.seenUnbindable(decl)
+                        || api.getDeclChecker().seenUnbindable(decl)
                         || type.getUnit().equals(type.pStandardUnit())
                         || AdaTypeMatcher.isNumber(type)
                         || AdaAPI.checkNativeType(type) != null) continue;
@@ -314,10 +318,10 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     void visitDecl(Libadalang.BasicDecl decl) {
         try {
-            declChecker.checkIsBindable(decl);
+            api.getDeclChecker().checkIsBindable(decl);
             // The decl may already have been marked as unbindable, and the checker would not have
             // thrown an other exception.
-            if (!declChecker.seenUnbindable(decl)) decl.accept(this);
+            if (!api.getDeclChecker().seenUnbindable(decl)) decl.accept(this);
         } catch (UnbindableDeclException e) {
             AdaScanner.warning(e);
         } catch (BadNameSyntaxException e) {

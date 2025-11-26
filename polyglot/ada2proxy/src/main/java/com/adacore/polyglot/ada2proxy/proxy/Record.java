@@ -408,15 +408,18 @@ public class Record extends AdaDeclaration {
      * Return whether the type should be inheritable in the proxy.
      *
      * <p>In order to be inheritable, a type should be tagged, and none of its primitives should
-     * have no controlling parameters other than the first parameter.
+     * have no controlling parameters other than the first parameter. Lastly, if a primitive was
+     * seen as unbindable, then the type is considered final in the proxy.
      */
-    public boolean isInheritable() {
+    public boolean isInheritable(AdaAPI api) {
         return isTaggedType()
                 && Stream.of(origin.pGetPrimitives(false, false))
                         .noneMatch(
                                 p -> {
                                     Libadalang.BaseSubpSpec spec = p.pSubpSpecOrNull(false);
-                                    return spec.pReturnType(Libadalang.AdaNode.NONE).equals(origin)
+                                    return api.getDeclChecker().seenUnbindable(p)
+                                            || spec.pReturnType(Libadalang.AdaNode.NONE)
+                                                    .equals(origin)
                                             || Stream.of(spec.pParamTypes(Libadalang.AdaNode.NONE))
                                                     .skip(1)
                                                     .anyMatch(t -> t.equals(origin));
