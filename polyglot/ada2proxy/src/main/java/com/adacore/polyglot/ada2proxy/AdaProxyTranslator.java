@@ -16,6 +16,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.polyglot.proxy.ClassDecl;
+import com.adacore.polyglot.proxy.ClassDecl.Inheritability;
 import com.adacore.polyglot.proxy.Declaration;
 import com.adacore.polyglot.proxy.EnumItem;
 import com.adacore.polyglot.proxy.EnumerationDecl;
@@ -45,6 +46,12 @@ public class AdaProxyTranslator {
 
         public Visitor(AdaAPI api) {
             this.api = api;
+        }
+
+        private Inheritability getInheritability(Record rec) {
+            if (!rec.isInheritable(api)) return Inheritability.FINAL;
+            if (rec.isAbstract()) return Inheritability.VIRTUAL;
+            return Inheritability.INHERITABLE;
         }
 
         @Override
@@ -102,9 +109,7 @@ public class AdaProxyTranslator {
                             AdaAPI.makeTypeExpr(subprogram.getReturnType()),
                             subprogram.owner),
                     FunctionDecl.Visibility.PUBLIC,
-                    subprogram.isFinal()
-                            ? FunctionDecl.Overridability.FINAL
-                            : FunctionDecl.Overridability.OVERRIDABLE,
+                    subprogram.getOverridability(),
                     FunctionDecl.Staticness.NON_STATIC);
         }
 
@@ -175,7 +180,7 @@ public class AdaProxyTranslator {
                         rec.getDoc(),
                         parentType,
                         8,
-                        !rec.isInheritable(api),
+                        getInheritability(rec),
                         rec.components.stream().map(c -> (Field) c.accept(this)).toList(),
                         makeVtable(rec));
             }

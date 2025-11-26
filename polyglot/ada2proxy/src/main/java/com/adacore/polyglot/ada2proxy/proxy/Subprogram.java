@@ -3,6 +3,7 @@ package com.adacore.polyglot.ada2proxy.proxy;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.proxy.FullyQualifiedName;
+import com.adacore.polyglot.proxy.FunctionDecl.Overridability;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Role;
@@ -80,9 +81,10 @@ public class Subprogram extends AdaDeclaration {
     }
 
     /** Return whether the subprogram is final or can be overriden. */
-    public boolean isFinal() {
+    public Overridability getOverridability() {
+        if (origin instanceof Libadalang.AbstractSubpDecl) return Overridability.ABSTRACT;
         Libadalang.BaseTypeDecl controllingType = getSpec().pPrimitiveSubpTaggedType(false);
-        return role == null
+        if (role == null
                 || role.kind != RoleKind.METHOD
                 || parameters.isEmpty()
                 || !parameters.get(0).getType().pIsTaggedType(Libadalang.AdaNode.NONE)
@@ -91,7 +93,8 @@ public class Subprogram extends AdaDeclaration {
                 || !Objects.equals(controllingType, parameters.get(0).getType())
                 // Functions that have the controlling parameter as their return type cannot be
                 // overriden.
-                || Objects.equals(controllingType, getReturnType());
+                || Objects.equals(controllingType, getReturnType())) return Overridability.FINAL;
+        return Overridability.OVERRIDABLE;
     }
 
     @Override

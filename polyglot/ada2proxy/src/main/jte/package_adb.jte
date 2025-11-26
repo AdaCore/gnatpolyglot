@@ -10,6 +10,7 @@ Template file to generate package bodies.
 @import com.adacore.polyglot.ada2proxy.proxy.Package
 @import com.adacore.polyglot.ada2proxy.proxy.Record
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
+@import com.adacore.polyglot.proxy.FunctionDecl.Overridability
 @param AdaAPI api
 @param Package pack
 
@@ -43,7 +44,7 @@ with ${parentPackage}; use ${parentPackage};
 
 package body ${packageName} is
 @for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>
-    @if(decl instanceof Subprogram subp)
+    @if(decl instanceof Subprogram subp && subp.getOverridability() != Overridability.ABSTRACT)
         @if(subp.isProcedure())
             @template.procedure(api, subp, true)
         @else

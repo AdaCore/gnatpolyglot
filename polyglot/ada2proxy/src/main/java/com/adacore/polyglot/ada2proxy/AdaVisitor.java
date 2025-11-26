@@ -364,7 +364,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         Libadalang.BaseSubpSpec spec = node.pSubpSpecOrNull(false);
 
         // Get the C symbol of the function.
-        String symbol = symbolify(spec);
+        String symbol = null;
+        if (!(node instanceof Libadalang.AbstractSubpDecl)) symbol = symbolify(spec);
 
         // Do not bind any of the controlled type functions. They are too "Ada-specific" and lead to
         // inconsistencies in the management of object destruction when exposed to the users in
