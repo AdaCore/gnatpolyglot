@@ -1,6 +1,7 @@
 package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import com.adacore.polyglot.ada2proxy.proxy.AdaException;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxy;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxyVisitor;
@@ -29,12 +30,36 @@ public class WithCollector {
 
         public HashSet<String> units = new HashSet<>();
 
+        /**
+         * Return whether returning type in a binded subprogram uses the accessed type declared in
+         * its corresponding proxy package.
+         */
+        private boolean returnTypeUsesAccess(Libadalang.BaseTypeDecl type) {
+            return !type.isNone()
+                    && !type.getUnit().equals(type.pStandardUnit())
+                    && (type.pIsRecordType(Libadalang.AdaNode.NONE)
+                            || AdaTypeMatcher.isPrivate(type)
+                            || type.pIsTaggedType(Libadalang.AdaNode.NONE)
+                            || type.pIsArrayType(Libadalang.AdaNode.NONE));
+        }
+
+        /** Include the parent proxy package of the decl, or decl if it already is a package. */
+        void includeDecl(Libadalang.BasicDecl decl) {
+            if (decl instanceof Libadalang.PackageRenamingDecl pack)
+                includeDecl(pack.pRenamedPackage());
+            else if (decl instanceof Libadalang.BasePackageDecl pack)
+                units.add(Package.getProxyUnitName(pack));
+            else includeDecl(decl.pParentBasicDecl());
+        }
+
         void checkDecl(Libadalang.BasicDecl decl) {
             if (decl.isNone()
                     || decl instanceof Libadalang.BaseTypeDecl type
                             && AdaAPI.checkNativeType(type) != null) return;
-            if (decl instanceof Libadalang.BasePackageDecl pack) {
-                if (Package.isAdaRuntimePackage(pack)) units.add(Package.getProxyUnitName(pack));
+            if (decl instanceof Libadalang.PackageRenamingDecl pack)
+                checkDecl(pack.pRenamedPackage());
+            else if (decl instanceof Libadalang.BasePackageDecl pack) {
+                if (Package.isAdaRuntimePackage(pack)) includeDecl(decl);
             } else checkDecl(decl.pParentBasicDecl());
         }
 
@@ -70,7 +95,13 @@ public class WithCollector {
             for (var param : subprogram.parameters) {
                 checkDecl(param.getType());
             }
-            checkDecl(subprogram.getReturnType());
+            BaseTypeDecl returnType = subprogram.getReturnType();
+            checkDecl(returnType);
+            // Being able to reaching the access type of return types is necessary. Types such as
+            // records or arrays have an access type generated in the corresponding proxy package of
+            // their parent package.
+            if (returnTypeUsesAccess(returnType)) includeDecl(returnType);
+
             return null;
         }
 
@@ -81,11 +112,18 @@ public class WithCollector {
 
         @Override
         public Void visit(Record rec) {
+            // Functions added by polyglot are always in the same package of the access type
+            // generated for any record type: packages should not try to with themselves.
             return null;
         }
 
         @Override
         public Void visit(GlobalVariable globalVariable) {
+            BaseTypeDecl type = globalVariable.getType();
+            // Since a function is generated to return the global variable, we need to be able to
+            // reach the declaration of the global variable's type access similarly to regular
+            // functions.
+            if (returnTypeUsesAccess(type)) includeDecl(type);
             return null;
         }
 
@@ -117,6 +155,7 @@ public class WithCollector {
     public static List<String> getIncludes(Package pack) {
         Visitor visitor = new Visitor();
         visitor.visit(pack);
+        visitor.units.remove(pack.getProxyUnitName());
         return visitor.units.stream().toList();
     }
 }
