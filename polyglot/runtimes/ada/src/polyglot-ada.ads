@@ -5,7 +5,7 @@ package Polyglot.Ada is
 
    type Self_Owner_Kind is (Library, User);
 
-   type Shadow_Interface is interface;
+   type Shadow_Interface is limited interface;
    -- Interface implemented by every shadow types in generated bindings.
 
    procedure Set_Self_Owner
