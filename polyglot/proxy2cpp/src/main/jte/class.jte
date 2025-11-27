@@ -3,6 +3,7 @@ vim: filetype=jtecpp
 --%>
 @import com.adacore.polyglot.proxy.Role.RoleKind
 @import com.adacore.polyglot.proxy.ClassDecl
+@import com.adacore.polyglot.proxy.ClassDecl.Inheritability
 @import com.adacore.polyglot.proxy.FunctionDecl.Visibility
 @import com.adacore.polyglot.proxy.ProxyContext.FunctionMembersEntry
 @import com.adacore.polyglot.proxy.VTableEntry
@@ -70,7 +71,10 @@ vim: filetype=jtecpp
         bool is_shadow();
 
     public:
+
+    @if(classDecl.inheritability != Inheritability.VIRTUAL)
         struct view;
+    @endif
 
     @if(classDecl.parent == null)
     protected:
@@ -78,6 +82,7 @@ vim: filetype=jtecpp
     @endif
     };
 
+    @if(classDecl.inheritability != Inheritability.VIRTUAL)
     struct ${className}::view {
         view(void *data) {
             new (&this->_data) ${className}(data);
@@ -109,8 +114,9 @@ vim: filetype=jtecpp
     private:
         char _data[sizeof(${className})];
     };
+    @endif
 @else
-    @if(!classDecl.isFinal)
+    @if(classDecl.inheritability != Inheritability.FINAL)
         !{
             Integer i = 0;
             HashMap<VTableEntry, String> dispatchNames = new HashMap<>();
