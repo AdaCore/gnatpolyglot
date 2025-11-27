@@ -19,6 +19,8 @@ public class FunctionDecl extends Declaration {
         FINAL,
         @JsonProperty("overridable")
         OVERRIDABLE,
+        @JsonProperty("abstract")
+        ABSTRACT,
     }
 
     public enum Staticness {
@@ -58,7 +60,7 @@ public class FunctionDecl extends Declaration {
             @JsonProperty(value = "name", required = true) FullyQualifiedName name,
             @JsonProperty(value = "doc", required = true) String doc,
             @JsonProperty(value = "role") Role role,
-            @JsonProperty(value = "symbol", required = true) String symbol,
+            @JsonProperty(value = "symbol") String symbol,
             @JsonProperty(value = "type", required = true) FunctionTypeExpr type,
             @JsonProperty(value = "is_visible") Visibility visibility,
             @JsonProperty(value = "is_final") Overridability overridability,

@@ -10,7 +10,7 @@
           "doc": "class_type documentation",
           "size": 8,
           "fields": [],
-          "is_final": false
+          "inheritability": "inheritable"
         },
         {
           "kind": "class",
@@ -18,7 +18,7 @@
           "doc": "class_type documentation",
           "size": 8,
           "fields": [],
-          "is_final": false
+          "inheritability": "inheritable"
         }
       ]
     }

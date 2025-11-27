@@ -4,7 +4,12 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.polyglot.proxy.FullyQualifiedName","int","boolean","java.util.List","java.util.List"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.polyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.polyglot.proxy.FullyQualifiedName","int","com.adacore.polyglot.proxy.ClassDecl$Inheritability","java.util.List","java.util.List"] }]
+},
+{
+  "name":"com.adacore.polyglot.proxy.ClassDecl$Inheritability",
+  "allDeclaredFields":true,
+  "queryAllDeclaredMethods":true
 },
 {
   "name":"com.adacore.polyglot.proxy.Declaration",

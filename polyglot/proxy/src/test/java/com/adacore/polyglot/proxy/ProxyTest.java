@@ -72,7 +72,7 @@ public class ProxyTest {
                 "name": { "names": ["class_0"] },
                 "doc": "doc",
                 "size": -8,
-                "is_final": true,
+                "inheritability": "inheritable",
                 "fields": []
             }
         """;
