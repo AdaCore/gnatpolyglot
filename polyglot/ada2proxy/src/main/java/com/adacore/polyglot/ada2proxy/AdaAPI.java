@@ -890,14 +890,8 @@ public class AdaAPI extends LanguageAPI {
 
     public String makeShadowReturnDecl(Libadalang.BaseTypeDecl returnedType) {
         StringBuilder builder = new StringBuilder();
-        String typename =
-                AdaTypeMatcher.isNonClassWideTagged(returnedType)
-                        ? returnedType.pRelativeName().getText() + "_Shadow"
-                        : returnedType.pFullyQualifiedName();
-        String accessType =
-                AdaTypeMatcher.isNonClassWideTagged(returnedType)
-                        ? typename + "_Shadow"
-                        : asAccess(returnedType);
+        String typename = returnedType.pFullyQualifiedName();
+        String accessType = asAccess(returnedType);
         if (AdaTypeMatcher.isBindedAsClass(returnedType)
                 || returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
             // When returning records, we need to convert an Address to an access`: declare a
@@ -955,10 +949,7 @@ public class AdaAPI extends LanguageAPI {
     public String makeShadowReturn(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
         Libadalang.BaseTypeDecl returnedType = subp.getReturnType();
-        String typename =
-                AdaTypeMatcher.isNonClassWideTagged(returnedType)
-                        ? returnedType.pRelativeName().getText() + "_Shadow"
-                        : returnedType.pFullyQualifiedName();
+        String typename = returnedType.pFullyQualifiedName();
         builder.append("return Result : ").append(typename).append(" := ");
         if (AdaTypeMatcher.isBindedAsClass(returnedType)
                 || returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
