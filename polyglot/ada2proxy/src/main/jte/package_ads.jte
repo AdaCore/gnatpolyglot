@@ -3,6 +3,7 @@ vim: filetype=jteada
 Template file to generate package specs.
 --%>
 @import com.adacore.polyglot.ada2proxy.AdaAPI
+@import com.adacore.polyglot.ada2proxy.proxy.Array
 @import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration
 @import com.adacore.polyglot.ada2proxy.proxy.AdaException
 @import com.adacore.polyglot.ada2proxy.proxy.GlobalVariable
@@ -34,6 +35,8 @@ package ${packageName}.Proxy is
         @template.exception(api, exc, false)
     @elseif(decl instanceof GlobalVariable gv)
         @template.global_var(api, gv, false)
+    @elseif(decl instanceof Array array)
+        @template.array(api, array)
     @endif
 @endfor
 end ${packageName}.Proxy;

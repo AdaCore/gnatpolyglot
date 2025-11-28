@@ -43,10 +43,13 @@ package body Polyglot.Ada.Arrays is
       type Arr_Type is array (Interfaces.C.Int range <>) of C;
       type Arr_Type_Access is access all Arr_Type
       with Size => Standard'Address_Size;
+      subtype Arr_Type_C is Arr_Type (Self.First .. Self.Last);
+      type Arr_Type_C_Access is access all Arr_Type_C
+      with Size => Standard'Address_Size;
 
       function Address_Converter is new
-        Standard.Ada.Unchecked_Conversion (System.Address, Arr_Type_Access);
-      Data_Access : Arr_Type_Access := Address_Converter (Self.Data);
+        Standard.Ada.Unchecked_Conversion (System.Address, Arr_Type_C_Access);
+      Data_Access : Arr_Type_C_Access := Address_Converter (Self.Data);
 
       Arr : Arr_Type_Access := new Arr_Type'(Data_Access.all);
       Res : Polyglot_Array :=
@@ -62,6 +65,9 @@ package body Polyglot.Ada.Arrays is
    procedure Copy (To : System.Address; From : Polyglot_Array) is
       type Arr_Type is array (Interfaces.C.Int range <>) of C;
       type Arr_Type_Access is access all Arr_Type
+      with Size => Standard'Address_Size;
+      subtype Arr_Type_C is Arr_Type (From.First .. From.Last);
+      type Arr_Type_C_Access is access all Arr_Type_C
       with Size => Standard'Address_Size;
 
       To_Value : Polyglot_Array
@@ -109,12 +115,14 @@ package body Polyglot.Ada.Arrays is
    function Get
      (Self : Polyglot_Array; Index : Interfaces.C.Int) return System.Address
    is
-      type Arr_Type is array (Interfaces.C.Int range <>) of C;
-      Self_Value : Arr_Type (Self.First .. Self.Last)
-      with Address => Self.Data;
-      pragma Import (Ada, Self_Value);
+      type Arr_Type is array (Self.First .. Self.Last) of C;
+      type Arr_type_Access is access all Arr_Type
+      with Size => Standard'Address_Size;
+      function Address_Converter is new
+        Standard.Ada.Unchecked_Conversion (System.Address, Arr_Type_Access);
+      Data_Access : Arr_Type_Access := Address_Converter (Self.Data);
    begin
-      return Self_Value (Index)'Address;
+      return Data_Access.all (Index)'Address;
    end Get;
 
    ---------
@@ -123,12 +131,38 @@ package body Polyglot.Ada.Arrays is
 
    procedure Set (Self : Polyglot_Array; Index : Interfaces.C.Int; New_Val : C)
    is
-      type Arr_Type is array (Interfaces.C.Int range <>) of C;
-      Self_Value : Arr_Type (Self.First .. Self.Last)
-      with Address => Self.Data;
-      pragma Import (Ada, Self_Value);
+      type Arr_Type is array (Self.First .. Self.Last) of C;
+      type Arr_type_Access is access all Arr_Type
+      with Size => Standard'Address_Size;
+      function Address_Converter is new
+        Standard.Ada.Unchecked_Conversion (System.Address, Arr_Type_Access);
+      Data_Access : Arr_Type_Access := Address_Converter (Self.Data);
    begin
-      Self_Value (Index) := New_Val;
+      Data_Access.all (Index) := New_Val;
    end Set;
+
+   ----------------
+   -- Set_Record --
+   ----------------
+
+   procedure Set_Record
+     (Self    : Polyglot_Array;
+      Index   : Interfaces.C.Int;
+      New_Val_Addr : System.Address)
+   is
+      type Arr_Type is array (Self.First .. Self.Last) of C;
+      type Arr_type_Access is access all Arr_Type
+      with Size => Standard'Address_Size;
+      function Address_Converter is new
+        Standard.Ada.Unchecked_Conversion (System.Address, Arr_Type_Access);
+      Data_Access : Arr_Type_Access := Address_Converter (Self.Data);
+      type C_Access is access all C
+      with Size => Standard'Address_Size;
+      function C_Access_Converter is new
+        Standard.Ada.Unchecked_Conversion (System.Address, C_Access);
+      New_Val : C_Access := C_Access_Converter (New_Val_Addr);
+   begin
+      Data_Access.all (Index) := New_Val.all;
+   end Set_Record;
 
 end Polyglot.Ada.Arrays;

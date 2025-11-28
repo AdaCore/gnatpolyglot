@@ -48,4 +48,19 @@ package body Test is
       Free (Object.C);
    end Finalize;
 
+   procedure Foo (Arr : in out Cont_Array) is
+   begin
+      for C of Arr loop
+         C.C.A := C.C.A + 10;
+         C.C.B := C.C.B + 10;
+         C.P;
+      end loop;
+   end Foo;
+
+   function Get_Arr return Cont_Array is
+      Arr : Cont_Array (1 .. 3);
+   begin
+      return Arr;
+   end Get_Arr;
+
 end Test;

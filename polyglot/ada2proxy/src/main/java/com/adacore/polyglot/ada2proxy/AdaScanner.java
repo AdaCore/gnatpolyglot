@@ -3,6 +3,7 @@ package com.adacore.polyglot.ada2proxy;
 import com.adacore.libadalang.Libadalang.*;
 import com.adacore.polyglot.Scanner;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxy;
+import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Proxy;
@@ -107,7 +108,7 @@ public class AdaScanner extends Scanner {
                         .map(u -> u.getUnit().getFileName(false))
                         .filter(filename -> sources.contains(filename))
                         .toList();
-        this.proxy = new AdaProxy(Name.fromLower(projectName), modules, visitor.getArrayTypes());
+        this.proxy = new AdaProxy(Name.fromLower(projectName), modules);
     }
 
     @Override
@@ -171,7 +172,8 @@ public class AdaScanner extends Scanner {
                         "package_ads.jte", Map.of("api", api, "pack", pack), packageSpec);
             }
 
-            if (!pack.declarations.isEmpty()) {
+            // Only array do not create function in these package bodies
+            if (pack.declarations.stream().anyMatch(d -> !(d instanceof Array))) {
                 Path packageBodyFile = AdaAPI.toAdaFilename(pack, "-proxy.adb");
                 try (FileOutput packageBody = new FileOutput(proxySrc.resolve(packageBodyFile))) {
                     templateEngine.render(
@@ -181,14 +183,9 @@ public class AdaScanner extends Scanner {
         }
 
         // Create the array specific functions
-        if (!proxy.arrayTypes.isEmpty()) {
-            Path arraySpecFile = Path.of("polyglot-ada-arrays-non_native.ads");
-            try (FileOutput arraysSpec = new FileOutput(proxySrc.resolve(arraySpecFile))) {
-                templateEngine.render(
-                        "arrays_ads.jte",
-                        Map.of("api", api, "arrays", proxy.arrayTypes),
-                        arraysSpec);
-            }
+        Path arraySpecFile = Path.of("polyglot-ada-arrays-non_native.ads");
+        try (FileOutput arraysSpec = new FileOutput(proxySrc.resolve(arraySpecFile))) {
+            templateEngine.render("arrays_ads.jte", Map.of("api", api, "proxy", proxy), arraysSpec);
         }
 
         // Create the exception specific functions

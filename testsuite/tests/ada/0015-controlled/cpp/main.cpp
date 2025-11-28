@@ -1,3 +1,4 @@
+#include "polyglot_ada_arrays.h"
 #include "test.h"
 
 class InheritsControlled : public test::Cont { };
@@ -25,5 +26,12 @@ int main() {
         cont.p();
         wrapper.get_c()->p();
         cont2.get_c()->p();
+    }
+    std::cout << std::endl;
+    {
+       polyglot::ada::arrays::polyglot_array<test::Cont> arr = test::get_arr();
+       test::foo(arr);
+       test::foo(arr);
+       test::foo(arr);
     }
 }

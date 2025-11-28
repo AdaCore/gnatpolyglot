@@ -208,6 +208,14 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
+    public String getProxyAccessFullyQualifiedName(Libadalang.BaseTypeDecl type) {
+        if (type.equals(type.pStdStringType())) return "Polyglot.Ada.Strings.String_Access";
+        return type.pParentBasicDecl()
+                .pFullyQualifiedName()
+                .concat(".Proxy.")
+                .concat(asAccess(type));
+    }
+
     /** Return the typename of the parameter */
     private String cInterfaceParamTypename(SubpParam p) {
         // If the parameter has a Out mode, it is a reference and will be passed as an address.
@@ -330,31 +338,77 @@ public class AdaAPI extends LanguageAPI {
                     .append(" (")
                     .append(argName)
                     .append(")\n;");
+        } else if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
+            String arrayType = valueVarTypename;
+            if (!type.pIsStaticallyConstrained()) {
+                arrayType = makeTemp(name, "Constrained_Array");
+                builder.append("type ")
+                        .append(arrayType)
+                        .append(" is new ")
+                        .append(valueVarTypename)
+                        .append(" (")
+                        .append(createBoundCast(argName, type, true))
+                        .append(" .. ")
+                        .append(createBoundCast(argName, type, false))
+                        .append(");\n");
+                valueVarTypename = arrayType;
+            }
+            tempVarValue = makeTemp(name, "Value_Access");
+            String accessTypename = makeTemp(name, "Constrained_Array_Access");
+            builder.append("type ")
+                    .append(accessTypename)
+                    .append(" is access all ")
+                    .append(arrayType)
+                    .append(" with Size => Standard'Address_Size;\n");
+            builder.append(tempVarValue)
+                    .append(" : ")
+                    .append(accessTypename)
+                    .append(" with Address => ")
+                    .append(argName)
+                    .append(".Data'Address;\n")
+                    .append("pragma Import(Ada, ")
+                    .append(tempVarValue)
+                    .append(");");
         } else if (AdaTypeMatcher.isArrayAccess(type)) {
             Libadalang.BaseTypeDecl arrayType = type.pAccessedType(Libadalang.AdaNode.NONE);
-            Libadalang.BaseTypeDecl indexType = arrayType.pIndexType(0, Libadalang.AdaNode.NONE);
-            String polyglotArrayValue = isOutMode ? makeTemp(name, "Polyglot_Array") : argName;
-            tempVarValue = makeTemp(name, "Array");
+            String arrayTypename = arrayType.pFullyQualifiedName();
             if (isOutMode) {
+                String polyglotArrayValue = makeTemp(name, "Polyglot_Array");
                 builder.append(polyglotArrayValue)
                         .append(" : Polyglot.Ada.Arrays.Polyglot_Array with Address => ")
                         .append(argName)
                         .append("; pragma Import(Ada, ")
                         .append(polyglotArrayValue)
                         .append(");\n");
+                argName = polyglotArrayValue;
             }
-
+            if (!arrayType.pIsStaticallyConstrained()) {
+                String constrainedArray = makeTemp(name, "Constrained_Array");
+                builder.append("type ")
+                        .append(constrainedArray)
+                        .append(" is new ")
+                        .append(arrayTypename)
+                        .append(" (")
+                        .append(createBoundCast(argName, type, true))
+                        .append(" .. ")
+                        .append(createBoundCast(argName, type, false))
+                        .append(");\n");
+                arrayTypename = constrainedArray;
+            }
+            tempVarValue = makeTemp(name, "Value_Access");
+            String accessTypename = makeTemp(name, "Constrained_Array_Access");
+            builder.append("type ")
+                    .append(accessTypename)
+                    .append(" is access all ")
+                    .append(arrayTypename)
+                    .append(" with Size => Standard'Address_Size;\n");
             builder.append(tempVarValue)
                     .append(" : ")
-                    .append(arrayType.pFullyQualifiedName())
-                    .append(" (")
-                    .append(createBoundCast(polyglotArrayValue, arrayType, true))
-                    .append(" .. ")
-                    .append(createBoundCast(polyglotArrayValue, arrayType, false))
-                    .append(") with Address => ")
-                    .append(polyglotArrayValue)
-                    .append(".Data;\n")
-                    .append("pragma Import (Ada, ")
+                    .append(accessTypename)
+                    .append(" with Address => ")
+                    .append(argName)
+                    .append(".Data'Address;\n")
+                    .append("pragma Import(Ada, ")
                     .append(tempVarValue)
                     .append(");");
         } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
@@ -376,22 +430,18 @@ public class AdaAPI extends LanguageAPI {
             //     pragma Import (Ada, ${Arg}_Value);
             //
             // If the array type is not unconstrained, the bounds will not be generated.
-            if (!type.pIsStaticallyConstrained()) {
-                builder.append(" (")
-                        .append(createBoundCast(argName, type, true))
-                        .append(" .. ")
-                        .append(createBoundCast(argName, type, false))
-                        .append(")");
-            }
-            builder.append(" with Address => ")
-                    .append(argName)
-                    .append(".Data; pragma Import (Ada, ")
-                    .append(valueName(name))
-                    .append(")");
+            builder.append(" renames ").append(tempVarValue).append(".all");
         } else if (type.pIsRecordType(Libadalang.AdaNode.NONE)) {
             builder.append(" renames ").append(tempVarValue).append(".all");
         } else if (AdaTypeMatcher.isArrayAccess(type)) {
-            builder.append(" := ").append(tempVarValue).append("'Unrestricted_Access");
+            builder.append(" := ")
+                    .append("(if ")
+                    .append(tempVarValue)
+                    .append(" = null then null else ")
+                    .append(type.pAccessedType(Libadalang.AdaNode.NONE).pFullyQualifiedName())
+                    .append(" (")
+                    .append(tempVarValue)
+                    .append(".all)'Unrestricted_Access)");
         } else if (isOutMode) {
             // If the parameter uses an ``out`` mode, generate the following:
             // .. code::
@@ -457,11 +507,19 @@ public class AdaAPI extends LanguageAPI {
             builder.append(" (")
                     .append(
                             subp.parameters.stream()
-                                    .map(p -> valueName(p.name))
+                                    .map(p -> getParamForCall(p))
                                     .collect(Collectors.joining(", ")))
                     .append(")");
         }
         return builder.toString();
+    }
+
+    private String getParamForCall(SubpParam param) {
+        Name name = param.name;
+        BaseTypeDecl type = param.getType();
+        if (type.pIsArrayType(Libadalang.AdaNode.NONE))
+            return "%s (%s)".formatted(type.pFullyQualifiedName(), valueName(name));
+        return valueName(name);
     }
 
     /** Create the necessary declarations for the return statement. */
@@ -478,18 +536,12 @@ public class AdaAPI extends LanguageAPI {
                     .append(" System.Address_To_Access_Conversions(")
                     .append(typename)
                     .append(");");
-        } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)
-                || AdaTypeMatcher.isArrayAccess(returnedType)) {
-            String accessType = asAccess(returnedType);
-            builder.append("type ")
-                    .append(accessType)
-                    .append(" is access all ")
-                    .append(typename)
-                    .append(" with Size => Standard'Address_Size;\n")
-                    .append("Returned_Array : ")
-                    .append(accessType)
+        } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
+            builder.append("Returned_Array : ")
+                    .append(getProxyAccessFullyQualifiedName(returnedType))
                     .append(";");
-        } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
+        } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)
+                && !AdaTypeMatcher.isArrayAccess(returnedType)) {
             builder.append("function Return_Type_Converter is new")
                     .append(" Ada.Unchecked_Conversion (")
                     .append(typename)

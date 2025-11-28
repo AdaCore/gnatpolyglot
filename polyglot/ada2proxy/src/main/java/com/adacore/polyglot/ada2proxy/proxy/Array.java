@@ -16,27 +16,31 @@ import com.adacore.polyglot.proxy.Transfer;
 import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.polyglot.proxy.TypeExpr;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
-public class Array implements AdaProxyObject {
+public class Array extends AdaDeclaration {
 
-    public final Libadalang.BaseTypeDecl componentType;
+    public final Libadalang.BaseTypeDecl arrayType;
 
-    private List<FunctionDecl> functions;
+    private static HashMap<Libadalang.BaseTypeDecl, List<FunctionDecl>> functionsMap =
+            new HashMap<>();
 
-    public Array(Libadalang.BaseTypeDecl componentType) {
-        this.componentType = componentType;
+    public Array(Libadalang.BaseTypeDecl arrayType) {
+        super(Name.fromPascalWithUnderscore(arrayType.pRelativeName().getText()));
+        this.arrayType = arrayType;
     }
 
     /** Create a symbol for generated member functions. */
-    private String buildMemberSymbol(String suffix) {
+    private static String buildMemberSymbol(String componentTypename, String suffix) {
         // The 3rd character of symbols for polyglot genererated functions is "G" (for Generated)
         StringBuilder symbolBuilder = new StringBuilder("_PG_Polyglot_Arrays_");
-        symbolBuilder.append(componentType.pFullyQualifiedName().replace(".", "_")).append(suffix);
+        symbolBuilder.append(componentTypename).append(suffix);
         return symbolBuilder.toString();
     }
 
-    public List<FunctionDecl> memberFunctions() {
+    public static List<FunctionDecl> memberFunctions(Libadalang.BaseTypeDecl componentType) {
+        List<FunctionDecl> functions = functionsMap.get(componentType);
         if (functions == null) {
             functions = new ArrayList<>();
 
@@ -45,6 +49,7 @@ public class Array implements AdaProxyObject {
                             Name.fromLower("polyglot"),
                             Name.fromLower("ada"),
                             Name.fromLower("arrays"));
+            String componentTypename = componentType.pFullyQualifiedName().replace(".", "_");
 
             TypeExpr componentTypeExpr = AdaAPI.makeTypeExpr(componentType);
             ArrayTypeExpr arrayTypeExpr = componentTypeExpr.makeArray();
@@ -55,7 +60,7 @@ public class Array implements AdaProxyObject {
                             moduleName.append(Name.fromLower("alloc")),
                             "Returns a newly allocated array",
                             new Role(RoleKind.ALLOC, arrayTypeExpr, null),
-                            buildMemberSymbol("_Alloc"),
+                            buildMemberSymbol(componentTypename, "_Alloc"),
                             new FunctionTypeExpr(
                                     List.of(
                                             new Parameter(
@@ -76,7 +81,7 @@ public class Array implements AdaProxyObject {
                             moduleName.append(Name.fromLower("clone")),
                             "Return a newly allocated copy of ``self``",
                             new Role(RoleKind.ALLOC, arrayTypeExpr, null),
-                            buildMemberSymbol("_Clone"),
+                            buildMemberSymbol(componentTypename, "_Clone"),
                             new FunctionTypeExpr(
                                     List.of(
                                             new Parameter(
@@ -96,7 +101,7 @@ public class Array implements AdaProxyObject {
                             "Construct a new array at ``Self``, starting at ``first`` and ending at"
                                     + " ``last``",
                             new Role(RoleKind.CONSTRUCT, arrayTypeExpr, null),
-                            buildMemberSymbol("_Construct"),
+                            buildMemberSymbol(componentTypename, "_Construct"),
                             new FunctionTypeExpr(
                                     List.of(
                                             new Parameter(
@@ -123,7 +128,7 @@ public class Array implements AdaProxyObject {
                             moduleName.append(Name.fromLower("copy")),
                             "Create a newly allocated copy of ``from`` at ``to``",
                             new Role(RoleKind.CONSTRUCT, arrayTypeExpr, null),
-                            buildMemberSymbol("_Copy"),
+                            buildMemberSymbol(componentTypename, "_Copy"),
                             new FunctionTypeExpr(
                                     List.of(
                                             new Parameter(
@@ -146,7 +151,7 @@ public class Array implements AdaProxyObject {
                             moduleName.append(Name.fromLower("free")),
                             "Frees the array held by ``Data``",
                             new Role(RoleKind.FREE, arrayTypeExpr, null),
-                            buildMemberSymbol("_Free"),
+                            buildMemberSymbol(componentTypename, "_Free"),
                             new FunctionTypeExpr(
                                     List.of(
                                             new Parameter(
@@ -167,7 +172,7 @@ public class Array implements AdaProxyObject {
                             moduleName.append(Name.fromLower("get")),
                             "Return the value of the element at ``Index``",
                             new Role(RoleKind.GETTER, arrayTypeExpr, null),
-                            buildMemberSymbol("_Getter"),
+                            buildMemberSymbol(componentTypename, "_Getter"),
                             new FunctionTypeExpr(
                                     List.of(
                                             new Parameter(
@@ -190,7 +195,7 @@ public class Array implements AdaProxyObject {
                             moduleName.append(Name.fromLower("set")),
                             "Sets the value of the element at ``Index`` to ``New_Val``",
                             new Role(RoleKind.SETTER, arrayTypeExpr, null),
-                            buildMemberSymbol("_Setter"),
+                            buildMemberSymbol(componentTypename, "_Setter"),
                             new FunctionTypeExpr(
                                     List.of(
                                             new Parameter(
@@ -214,8 +219,21 @@ public class Array implements AdaProxyObject {
         return functions;
     }
 
+    public String getFullyQualifiedName() {
+        return arrayType.pFullyQualifiedName();
+    }
+
+    public Libadalang.BaseTypeDecl getComponentType() {
+        return arrayType.pCompType(false, Libadalang.AdaNode.NONE);
+    }
+
     @Override
     public <T> T accept(AdaProxyVisitor<T> visitor) {
         return visitor.visit(this);
+    }
+
+    @Override
+    public String getDoc() {
+        return arrayType.pDoc();
     }
 }

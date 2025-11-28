@@ -90,9 +90,6 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     /** List of declarations declared by the module */
     private List<AdaDeclaration> declarations = new ArrayList<>();
 
-    /** List of array component types encountered while analyzing ada units */
-    private Set<Libadalang.BaseTypeDecl> arrayComponentTypes = new HashSet<>();
-
     /** The current package being analyzed */
     private Libadalang.PackageDecl analyzedPackage;
 
@@ -154,9 +151,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                     Package pack = mappedPackages.get(p);
                     // If the type's package does not yet exist, enqueue the package and the type.
                     // The package needs to exist before the mapped type.
-                    // Arrays do not create a new type in the proxy. We only need to ensure the
-                    // component's type is binded, not the array type's package.
-                    if (pack == null && !type.pIsArrayType(Libadalang.AdaNode.NONE)) {
+                    if (pack == null) {
                         queuedDecls.add(p);
                         queuedDecls.add(type);
                     } else {
@@ -169,10 +164,6 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             }
         }
         return packages;
-    }
-
-    public List<Array> getArrayTypes() {
-        return arrayComponentTypes.stream().map(Array::new).toList();
     }
 
     @Override
@@ -567,6 +558,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                     primitive.accept(this);
             }
             this.derivedType = null;
+        } else if (parentDecl.pIsArrayType(Libadalang.AdaNode.NONE)) {
+            Array array = new Array(parentDecl);
+            declarations.add(array);
+            mappedTypes.put(parentDecl, array);
+            queuedDecls.add(parentDecl.pCompType(false, Libadalang.AdaNode.NONE));
         } else if (!parentDecl.pIsScalarType(Libadalang.AdaNode.NONE))
             throw new IllegalArgumentException("Unsupported derivation of types " + node);
 
@@ -581,8 +577,10 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 node.fComponentType().fTypeExpr().pDesignatedTypeDecl();
         if (!parentDecl.pGetAspectAssoc(Libadalang.Symbol.create("pack")).isNone()) {
             // TODO: create a record
-        } else if (AdaAPI.checkNativeType(componentType) == null) {
-            arrayComponentTypes.add(componentType);
+        } else {
+            Array array = new Array(parentDecl);
+            declarations.add(array);
+            mappedTypes.put(parentDecl, array);
             queuedDecls.add(componentType);
         }
         return null;

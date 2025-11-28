@@ -47,7 +47,8 @@ Template file to generate bindings for record types.
             ${api.cInterfaceTypename(varType)}) is
          ${api.makeParamConversion(setterParam.name, varType, false)};
       begin
-         ${gv.getFullyQualifiedName()} := ${api.valueName(setterParam.name)};
+         ${gv.getFullyQualifiedName()} :=
+            ${gv.getType().pFullyQualifiedName()} (${api.valueName(setterParam.name)});
       end ${setter.getLastName().toPascalWithUnderscore()};
    @endif
 
