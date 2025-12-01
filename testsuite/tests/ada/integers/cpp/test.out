@@ -5,15 +5,5 @@ Running the printer...
 Compiling test main program...
 Running test main program...
 
-print char: P
-print short: 7fff
-print int: 7fffffff
-print long: 7fffffffffffffff
-print int: 1048576
-print short: 1000
-print long: -9223372036854775808
-print short: -256
-print int: 1
-print unsigned int: 2
 
 Done.

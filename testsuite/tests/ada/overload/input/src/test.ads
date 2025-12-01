@@ -16,7 +16,7 @@ package Test is
    function Overloaded_Ret(I: Integer) return Integer;
 
    function No_Rename (I: Integer) return Integer;
-   function No_Rename (F: Long_Integer) return Long_Integer;
+   function No_Rename (A, B: Long_Integer) return Long_Integer;
 
    type My_Int is new Integer;
 

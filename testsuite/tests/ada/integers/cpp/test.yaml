@@ -3,3 +3,6 @@ driver: proxy2print
 input_proxy: ../input/
 output_lang: c++
 test_file: main.cpp
+
+control:
+  - [XFAIL, "env.build.os.name == 'windows'", "Discrepency between target info packaging on windows"]

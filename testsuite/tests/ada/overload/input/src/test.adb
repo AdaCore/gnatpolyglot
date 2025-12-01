@@ -54,9 +54,9 @@ package body Test is
       return I * 2;
    end No_Rename;
 
-   function No_Rename (F: Long_Integer) return Long_Integer is
+   function No_Rename (A, B: Long_Integer) return Long_Integer is
    begin
-      return F * 4;
+      return A * B;
    end No_Rename;
 
    procedure Overloaded_Int (I: Integer) is
