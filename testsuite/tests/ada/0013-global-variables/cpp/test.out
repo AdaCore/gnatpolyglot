@@ -13,5 +13,6 @@ Global_Arr = { 1, 1, 1, }
 Global_Arr = { 2, 2, 2, }
 Global_A = 42
 Global_B = 43
+Withed_Type = 1
 
 Done.

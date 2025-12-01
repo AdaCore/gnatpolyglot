@@ -1,3 +1,5 @@
+with Withed;
+
 package Test is
 
    Global_Int : Integer := 1;
@@ -19,5 +21,7 @@ package Test is
    procedure Increment_Arr (A : in out Arr);
 
    Global_A, Global_B : Integer := 42;
+
+   Withed_Type : Withed.Rec;
 
 end Test;

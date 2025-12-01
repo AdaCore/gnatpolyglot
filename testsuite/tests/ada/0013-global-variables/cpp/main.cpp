@@ -26,4 +26,6 @@ int main() {
     test::increment_int(test::get_global_b());
     std::cout << "Global_A = " << test::get_global_a() << "\n";
     std::cout << "Global_B = " << test::get_global_b() << "\n";
+
+    std::cout << "Withed_Type = " << test::get_withed_type()->get_i() << "\n";
 }

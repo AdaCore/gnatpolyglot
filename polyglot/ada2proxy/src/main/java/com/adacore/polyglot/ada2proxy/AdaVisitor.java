@@ -691,6 +691,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         for (var id : node.fIds()) {
             declarations.add(new GlobalVariable(node, id, AdaAPI.getName(id)));
         }
+        queuedDecls.add(node.fTypeExpr().pDesignatedTypeDecl());
         return null;
     }
 
