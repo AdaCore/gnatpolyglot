@@ -29,10 +29,12 @@ try:
     scanner_args = []
     if units != "":
         scanner_args.append(f"--units={units}")
+    scanner_args.extend(input_proxy_config.get("scanner_extra_args", []))
     for p in input_proxy_config.get("local_project_path", []):
         add_path(env, "GPR_PROJECT_PATH", os.path.join(input_lib, p))
 
     input_lib_flags = input_proxy_config.get("input_lib_flags", [])
+    output_lib_flags = input_proxy_config.get("output_lib_flags", [])
 except KeyError as e:
     print(f"Error: missing value of `{e.args[0]}` in proxy test.yaml")
     sys.exit(1)
@@ -46,7 +48,7 @@ print("Running the scanner...")
 run_scanner(input_lang, input_project_file, input_proxy_location, scanner_args)
 print("Compiling the library...")
 compile_lib(input_lang, input_project_file, input_lib_flags)
-compile_lib(input_lang, get_proxy_lib_file(input_lang, input_proxy_location))
+compile_lib(input_lang, get_proxy_lib_file(input_lang, input_proxy_location), output_lib_flags)
 
 try:
     with open("test.yaml") as f:

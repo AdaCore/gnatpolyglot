@@ -15,12 +15,12 @@ public abstract class Scanner {
      *
      * @throws FileNotFoundException
      */
-    public abstract void scanProject(Path projectFile, List<String> units)
+    public abstract void scanProject(Path projectFile, List<String> units, Object options)
             throws FileNotFoundException;
 
     /** Analyze a project and all its files. */
     public void scanProject(Path projectFile) throws FileNotFoundException {
-        scanProject(projectFile, null);
+        scanProject(projectFile, null, null);
     }
 
     /** Generate the code for the proxy. */

@@ -104,7 +104,8 @@ public class AdaScanner extends Scanner {
     }
 
     @Override
-    public void scanProject(Path projectFile, List<String> units) throws FileNotFoundException {
+    public void scanProject(Path projectFile, List<String> units, Object options)
+            throws FileNotFoundException {
         this.projectFile = projectFile;
         // Get the name of the project
         this.projectName =
@@ -114,9 +115,15 @@ public class AdaScanner extends Scanner {
                         .substring(0, projectFile.getFileName().toString().lastIndexOf(".gpr"));
 
         // Analyze all the ``.ads`` source files.
-        ProjectOptions options = new ProjectOptions();
-        options.addSwitch(ProjectOption.P, projectFile.toString());
-        ProjectManager projectManager = new ProjectManager(options, false);
+        ProjectOptions gprOptions = null;
+        if (options != null) {
+            if (options instanceof Libadalang.ProjectOptions opts) gprOptions = opts;
+            else throw new IllegalArgumentException("Options must be a Libadalang.ProjectOptions");
+        } else {
+            gprOptions = new ProjectOptions();
+        }
+        gprOptions.addSwitch(ProjectOption.P, projectFile.toString());
+        ProjectManager projectManager = new ProjectManager(gprOptions, false);
         AnalysisContext ctx = projectManager.createContext(null, null, true, 8);
         List<Package> modules =
                 getFilesToAnalyze(projectManager, units).stream()
