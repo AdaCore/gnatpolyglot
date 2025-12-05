@@ -15,6 +15,8 @@ package Ints is
    function F_My_Long_Int return My_Long_Int;
    function F_My_Small return My_Small;
 
+   procedure P (S : My_Small) is null;
+
    type My_Positive is mod (2**32 - 1);
 
    function F_Positive return Positive;       -- subtype of integer: Should map

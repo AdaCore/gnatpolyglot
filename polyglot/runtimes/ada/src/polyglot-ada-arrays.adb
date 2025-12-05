@@ -1,5 +1,7 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
+with Ada.Exceptions;
+with Polyglot.Exceptions;
 
 package body Polyglot.Ada.Arrays is
 
@@ -16,6 +18,11 @@ package body Polyglot.Ada.Arrays is
       Arr : Arr_Type_Access := new Arr_Type (First .. Last);
    begin
       return (First => First, Last => Last, Data => Arr.all'Address);
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Raise_Exception
+           (E, Polyglot.Exceptions.Identify_Standard_Exception'Access);
+      return (0, 0, System.Null_Address);
    end Alloc;
 
    ---------------
@@ -33,6 +40,10 @@ package body Polyglot.Ada.Arrays is
       with Address => Self;
    begin
       Self_Value := (First => First, Last => Last, Data => Arr.all'Address);
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Raise_Exception
+           (E, Polyglot.Exceptions.Identify_Standard_Exception'Access);
    end Construct;
 
    -----------
@@ -56,6 +67,11 @@ package body Polyglot.Ada.Arrays is
         (First => Self.First, Last => Self.Last, Data => Arr.all'Address);
    begin
       return Res;
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Raise_Exception
+           (E, Polyglot.Exceptions.Identify_Standard_Exception'Access);
+      return (0, 0, System.Null_Address);
    end Clone;
 
    ----------
@@ -82,6 +98,10 @@ package body Polyglot.Ada.Arrays is
       To_Value.First := From.First;
       To_Value.Last := From.Last;
       To_Value.Data := Arr.all'Address;
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Raise_Exception
+           (E, Polyglot.Exceptions.Identify_Standard_Exception'Access);
    end Copy;
 
    ----------
@@ -123,6 +143,11 @@ package body Polyglot.Ada.Arrays is
       Data_Access : Arr_Type_Access := Address_Converter (Self.Data);
    begin
       return Data_Access.all (Index)'Address;
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Raise_Exception
+           (E, Polyglot.Exceptions.Identify_Standard_Exception'Access);
+      return System.Null_Address;
    end Get;
 
    ----------------
@@ -142,6 +167,11 @@ package body Polyglot.Ada.Arrays is
         Standard.Ada.Unchecked_Conversion (C, System.Address);
    begin
       return Access_Converter (Data_Access.all (Index));
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Raise_Exception
+           (E, Polyglot.Exceptions.Identify_Standard_Exception'Access);
+      return System.Null_Address;
    end Get_Access;
 
    ---------
@@ -158,6 +188,10 @@ package body Polyglot.Ada.Arrays is
       Data_Access : Arr_Type_Access := Address_Converter (Self.Data);
    begin
       Data_Access.all (Index) := New_Val;
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Raise_Exception
+           (E, Polyglot.Exceptions.Identify_Standard_Exception'Access);
    end Set;
 
    ----------------
@@ -182,6 +216,10 @@ package body Polyglot.Ada.Arrays is
       New_Val : C_Access := C_Access_Converter (New_Val_Addr);
    begin
       Data_Access.all (Index) := New_Val.all;
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Raise_Exception
+           (E, Polyglot.Exceptions.Identify_Standard_Exception'Access);
    end Set_Record;
 
    ----------------
@@ -204,6 +242,10 @@ package body Polyglot.Ada.Arrays is
       New_Val : C := C_Converter (New_Val_Addr);
    begin
       Data_Access.all (Index) := New_Val;
+   exception
+      when E: others =>
+         Polyglot.Exceptions.Raise_Exception
+           (E, Polyglot.Exceptions.Identify_Standard_Exception'Access);
    end Set_Access;
 
 end Polyglot.Ada.Arrays;

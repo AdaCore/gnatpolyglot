@@ -49,22 +49,18 @@ with ${pack.getFullyQualifiedName()};
 package body Polyglot.Exceptions.${projectName.toPascalWithUnderscore()} is
 
    function Identify_Exception (Id : Exception_Id) return Interfaces.C.Int is
+      Std_exception : Interfaces.C.int :=
+        Polyglot.Exceptions.Identify_Standard_Exception (Id);
    begin
+      if Interfaces.C."/="(Std_exception, Interfaces.C.int(0)) then
+         return Std_exception;
+      end if;
       @for(var exception : ExceptionCollector.getExceptions(proxy))
          if Id = Standard.${exception.getFullyQualifiedName()}'Identity then
             return Exception_Kind'Enum_Rep
                (${exception.getEnumIdentifier()});
          end if;
       @endfor
-      if Id = Constraint_Error'Identity then
-         return Interfaces.C.int(-4);
-      elsif Id = Program_Error'Identity then
-         return Interfaces.C.int(-3);
-      elsif Id = Storage_Error'Identity then
-         return Interfaces.C.int(-2);
-      elsif Id = Tasking_error'Identity then
-         return Interfaces.C.int(-1);
-      end if;
       return Exception_Kind'Enum_Rep (Anon_Kind);
    end Identify_Exception;
 @endif

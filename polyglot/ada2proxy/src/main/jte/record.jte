@@ -117,28 +117,31 @@ Template file to generate bindings for record types.
       @if(!allocFunc.type.parameters.isEmpty())
          (${api.cInterfaceParameters(rec, allocFunc)})
       @endif
-         return System.Address
-      is
-         @for(var p : allocFunc.type.parameters)
-           ${api.makeParamConversion(rec.getComponent(p.name))};
-         @endfor
-         package Converter is new System.Address_To_Access_Conversions (${recordName});
-         @if(allocFunc.type.parameters.isEmpty())
-            Tmp : ${recordAccessName} := new ${recordName};
-         @else
-            Tmp : ${recordAccessName} := new ${recordName}'(
-               <%-- When the type inherits from a private type (directly, or indirectly)
-                 -- an extension aggregate is required.
-                 --%>
-               ${rec.extensionAggregate(false)}
-               @for(var p : allocFunc.type.parameters)
-                  ${api.getParamForCall(rec.getComponent(p.name))},
-               @endfor
-               others => <>
-            );
-         @endif
+         return System.Address is
       begin
-         return Converter.To_Address (Converter.Object_Pointer (Tmp));
+         declare
+            @for(var p : allocFunc.type.parameters)
+              ${api.makeParamConversion(rec.getComponent(p.name))};
+            @endfor
+            package Converter is new System.Address_To_Access_Conversions (${recordName});
+            @if(allocFunc.type.parameters.isEmpty())
+               Tmp : ${recordAccessName} := new ${recordName};
+            @else
+               Tmp : ${recordAccessName} := new ${recordName}'(
+                  <%-- When the type inherits from a private type (directly, or indirectly)
+                    -- an extension aggregate is required.
+                    --%>
+                  ${rec.extensionAggregate(false)}
+                  @for(var p : allocFunc.type.parameters)
+                     ${api.getParamForCall(rec.getComponent(p.name))},
+                  @endfor
+                  others => <>
+               );
+            @endif
+         begin
+            return Converter.To_Address (Converter.Object_Pointer (Tmp));
+         end;
+      @template.exception_handler(api, rec.getOrigin())
       end ${allocFunc.getLastName().toPascalWithUnderscore()};
    @endfor
 
@@ -157,6 +160,7 @@ Template file to generate bindings for record types.
          Tmp : ${recordAccessName} := Convert_Self (Self);
       begin
          return Convert_Return (new ${recordName}'(Tmp.all));
+      @template.exception_handler(api, rec.getOrigin())
       end ${cloneFunc.getLastName().toPascalWithUnderscore()};
    @endif
 
@@ -173,6 +177,7 @@ Template file to generate bindings for record types.
          Other_Value : ${recordName} renames Other_Access.all;
       begin
          Self_Value := Other_Value;
+      @template.exception_handler(api, null)
       end ${copyFunc.getLastName().toPascalWithUnderscore()};
    @endif
 
@@ -200,6 +205,7 @@ Template file to generate bindings for record types.
          @endif
          begin
             ${api.makeGetterReturnConversion(componentAccess, componentType)};
+         @template.exception_handler(api, componentType, true)
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
       @else
          procedure ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}
@@ -212,11 +218,15 @@ Template file to generate bindings for record types.
             Self_Access : Converter.Object_Pointer :=
                Converter.To_Pointer (Self);
             Self_Value : ${recordName} renames Self_Access.all;
-            ${api.makeParamConversion(component)};
          begin
-            ${componentAccess} :=
-              ${component.getType().pFullyQualifiedName()}
-                 (${api.valueName(component.name)});
+            declare
+               ${api.makeParamConversion(component)};
+            begin
+               ${componentAccess} :=
+                 ${component.getType().pFullyQualifiedName()}
+                    (${api.valueName(component.name)});
+            end;
+         @template.exception_handler(api, null)
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
       @endif
     @endfor

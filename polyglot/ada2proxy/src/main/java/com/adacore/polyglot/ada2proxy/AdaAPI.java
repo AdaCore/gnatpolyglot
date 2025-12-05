@@ -1053,17 +1053,23 @@ public class AdaAPI extends LanguageAPI {
      * Create a return statement that returns a dummy value for when an exception is thrown. This
      * value should never reach the user and is only used for the correctness of the generated code.
      */
-    public String makeDefaultReturn(Subprogram subp) {
-        BaseTypeDecl returnType = subp.getReturnType();
+    public String makeDefaultReturn(Libadalang.BaseTypeDecl returnType) {
         if (AdaTypeMatcher.isCharacter(returnType))
             return "return Interfaces.C.To_C ( Character'Val(0))";
         if (returnType.pIsFloatType(Libadalang.AdaNode.NONE)) return "return 0.0";
         if (returnType.pIsScalarType(Libadalang.AdaNode.NONE)) return "return 0";
         if (returnType.pIsArrayType(Libadalang.AdaNode.NONE)
-                || AdaTypeMatcher.isArrayAccess(subp.getReturnType()))
+                || AdaTypeMatcher.isArrayAccess(returnType))
             return " return(1, 0, System.Null_Address)";
         if (AdaTypeMatcher.isReturnedAsAddress(returnType)) return "return System.Null_Address";
         return "return (others => <>)";
+    }
+
+    public String makeDefaultGetterReturn(Libadalang.BaseTypeDecl returnType) {
+        if (returnType.pIsArrayType(Libadalang.AdaNode.NONE)
+                || AdaTypeMatcher.isArrayAccess(returnType))
+            return "return (1, 0, System.Null_Address)";
+        return "return System.Null_Address";
     }
 
     public String syncParamValue(SubpParam param) {
