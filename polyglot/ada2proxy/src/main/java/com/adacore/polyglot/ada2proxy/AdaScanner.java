@@ -1,5 +1,6 @@
 package com.adacore.polyglot.ada2proxy;
 
+import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.*;
 import com.adacore.polyglot.Scanner;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxy;
@@ -42,6 +43,38 @@ public class AdaScanner extends Scanner {
 
     /** The Ada proxy. */
     private AdaProxy proxy;
+
+    private static void prettyPrint(UnbindableDeclException exc, String message, String kind) {
+        Libadalang.BasicDecl decl = exc.getDecl();
+        System.err.println(
+                "%s%s: Could not bind %s: %s"
+                        .formatted(
+                                decl.fullSlocImage(), kind, AdaAPI.getDisplayName(decl), message));
+    }
+
+    public static void warning(UnbindableDeclException exc) {
+        Throwable cause = exc.getCause();
+        if (cause == null) {
+            prettyPrint(exc, exc.getMessage(), "warning");
+        } else if (cause instanceof UnbindableDeclException c) {
+            warning(c);
+            prettyPrint(exc, exc.getMessage(), "warning");
+        } else {
+            prettyPrint(exc, cause.toString(), "warning");
+        }
+    }
+
+    public static void error(UnbindableDeclException exc) {
+        Throwable cause = exc.getCause();
+        if (cause == null) {
+            prettyPrint(exc, exc.getMessage(), "error");
+        } else if (cause instanceof UnbindableDeclException c) {
+            error(c);
+            prettyPrint(exc, exc.getMessage(), "error");
+        } else {
+            prettyPrint(exc, cause.toString(), "error");
+        }
+    }
 
     private List<String> getFilesToAnalyze(ProjectManager projectManager, List<String> units)
             throws FileNotFoundException {
@@ -166,7 +199,7 @@ public class AdaScanner extends Scanner {
         // Create the specification and body files.
         Path proxySrc = path.resolve("src");
         for (var pack : proxy.packages) {
-            Path packageSpecFile = AdaAPI.toAdaFilename(pack, "-proxy.ads");
+            Path packageSpecFile = AdaAPI.toAdaFilename(pack, ".ads");
             try (FileOutput packageSpec = new FileOutput(proxySrc.resolve(packageSpecFile))) {
                 templateEngine.render(
                         "package_ads.jte", Map.of("api", api, "pack", pack), packageSpec);
@@ -174,7 +207,7 @@ public class AdaScanner extends Scanner {
 
             // Only array do not create function in these package bodies
             if (pack.declarations.stream().anyMatch(d -> !(d instanceof Array))) {
-                Path packageBodyFile = AdaAPI.toAdaFilename(pack, "-proxy.adb");
+                Path packageBodyFile = AdaAPI.toAdaFilename(pack, ".adb");
                 try (FileOutput packageBody = new FileOutput(proxySrc.resolve(packageBodyFile))) {
                     templateEngine.render(
                             "package_adb.jte", Map.of("api", api, "pack", pack), packageBody);

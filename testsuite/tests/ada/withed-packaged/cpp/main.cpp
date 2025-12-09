@@ -1,4 +1,5 @@
 #include "test.h"
+#include "renamed.h"
 
 using namespace polyglot::ada::arrays;
 
@@ -9,4 +10,6 @@ int main() {
     test::p1(r2);
     polyglot_array<rec3::R3> arr(1, 3);
     test::p2(arr);
+
+    test::p3(renamed::T());
 }

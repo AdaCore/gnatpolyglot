@@ -29,6 +29,13 @@ public class FullyQualifiedName implements ProxyObject {
         return new FullyQualifiedName(newNames);
     }
 
+    /** Create a new {@link FullyQualifiedName} and adds ``other.names`` to it. */
+    public FullyQualifiedName append(FullyQualifiedName other) {
+        List<Name> newNames = new ArrayList<>(names);
+        newNames.addAll(other.names);
+        return new FullyQualifiedName(newNames);
+    }
+
     /** Return the last name of the {@link FullyQualifiedName}. */
     public Name getLastName() {
         return names.get(names.size() - 1);

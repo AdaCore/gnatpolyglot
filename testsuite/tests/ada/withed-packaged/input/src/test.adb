@@ -14,5 +14,10 @@ package body Test is
       end loop;
    end P2;
 
+   procedure P3(V: Alias.T) is
+   begin
+      Put_Line ("P3");
+   end P3;
+
 end Test;
 

@@ -23,7 +23,10 @@ public class AdaTypeMatcher {
     /** Return whether the subprogram is a controlled type primitive. */
     public static boolean isControlledPrimitve(Libadalang.BasicDecl subprogram) {
         return Stream.of(subprogram.pBaseSubpDeclarations(false))
-                .anyMatch(d -> d.pFullyQualifiedName().startsWith("Ada.Finalization."));
+                .anyMatch(
+                        d ->
+                                d.pFullyQualifiedName().startsWith("Ada.Finalization.")
+                                        && !(d instanceof Libadalang.SyntheticSubpDecl));
     }
 
     /** Return whether the BaseTypeDecl is the Standard.String type, or an array of character. */
@@ -53,5 +56,9 @@ public class AdaTypeMatcher {
 
     public static boolean isNonClassWideTagged(Libadalang.BaseTypeDecl typeDecl) {
         return typeDecl.pIsTaggedType(NONE) && !(typeDecl instanceof Libadalang.ClasswideTypeDecl);
+    }
+
+    public static boolean isNumber(Libadalang.BaseTypeDecl type) {
+        return type.pIsScalarType(NONE) && !isEnum(type);
     }
 }

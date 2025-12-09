@@ -3,6 +3,7 @@ vim: filetype=jteada
 Template file to generate package specs.
 --%>
 @import com.adacore.polyglot.ada2proxy.AdaAPI
+@import com.adacore.polyglot.ada2proxy.WithCollector
 @import com.adacore.polyglot.ada2proxy.proxy.Array
 @import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration
 @import com.adacore.polyglot.ada2proxy.proxy.AdaException
@@ -13,15 +14,23 @@ Template file to generate package specs.
 @param AdaAPI api
 @param Package pack
 
-!{String packageName = pack.getFullyQualifiedName();}
+!{
+   String packageName = pack.getProxyUnitName();
+   String parentPackage = pack.getFullyQualifiedName();
+}
 
 with Interfaces.C;
 with System;
 
 with Polyglot.Ada.Arrays;
 with Polyglot.Ada.Strings;
+@for(var necessaryWith : WithCollector.getIncludes(pack))
+   with ${necessaryWith};
+@endfor
 
-package ${packageName}.Proxy is
+with ${parentPackage};
+
+package ${packageName} is
 @for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>
     @if(decl instanceof Subprogram subp)
         @if(subp.isProcedure())
@@ -39,4 +48,4 @@ package ${packageName}.Proxy is
         @template.array(api, array)
     @endif
 @endfor
-end ${packageName}.Proxy;
+end ${packageName};

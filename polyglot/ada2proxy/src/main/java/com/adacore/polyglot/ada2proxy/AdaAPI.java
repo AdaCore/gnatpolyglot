@@ -159,6 +159,11 @@ public class AdaAPI extends LanguageAPI {
         return makeTypeExpr(typeExpr.pDesignatedTypeDecl());
     }
 
+    /** Create a proxy Name from an Ada defining name, using its canonical text */
+    public static Name getName(Libadalang.DefiningName name) {
+        return Name.fromLower(name.pCanonicalText().text);
+    }
+
     /**
      * Create the list of strings containing the interfaces generated from the json proxy for the
      * gpr project file.
@@ -167,7 +172,7 @@ public class AdaAPI extends LanguageAPI {
         return packages.stream()
                 .flatMap(
                         p -> {
-                            return Stream.of(AdaAPI.toAdaFilename(p, "-proxy.ads").toString());
+                            return Stream.of(AdaAPI.toAdaFilename(p, ".ads").toString());
                         })
                 .map(s -> "\"%s\"".formatted(s))
                 .collect(Collectors.joining(", "));
@@ -208,12 +213,17 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
+    public static String getDisplayName(Libadalang.BasicDecl type) {
+        if (type instanceof Libadalang.AnonymousTypeDecl anon) return anon.getImage();
+        return type.pFullyQualifiedName();
+    }
+
     public String getProxyAccessFullyQualifiedName(Libadalang.BaseTypeDecl type) {
         if (type.equals(type.pStdStringType())) return "Polyglot.Ada.Strings.String_Access";
-        return type.pParentBasicDecl()
-                .pFullyQualifiedName()
-                .concat(".Proxy.")
-                .concat(asAccess(type));
+        Libadalang.BasePackageDecl pack = (Libadalang.BasePackageDecl) type.pParentBasicDecl();
+        if (Package.isAdaRuntimePackage(pack))
+            return Package.getProxyUnitName(pack).concat(".").concat(asAccess(type));
+        return pack.pFullyQualifiedName().concat(".Proxy.").concat(asAccess(type));
     }
 
     /** Return the typename of the parameter */
@@ -308,7 +318,6 @@ public class AdaAPI extends LanguageAPI {
      * C API, to the `type` Ada type.
      */
     public String makeParamConversion(Name name, Libadalang.BaseTypeDecl type, boolean isOutMode) {
-        type = (Libadalang.BaseTypeDecl) type.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
         String valueVarTypename = type.pFullyQualifiedName();
 
         StringBuilder builder = new StringBuilder();
@@ -316,7 +325,7 @@ public class AdaAPI extends LanguageAPI {
         String tempVarValue = null;
         String converter = null;
         // Class wide types need a pointer conversion function.
-        if (type.pIsRecordType(Libadalang.AdaNode.NONE)) {
+        if (type.pIsRecordType(Libadalang.AdaNode.NONE) || type.pIsPrivate()) {
             Libadalang.BaseTypeDecl specificType = type.pSpecificType();
             String accessType = makeTemp(name, asAccess(specificType));
             converter = makeTemp(name, "Converter");
@@ -431,7 +440,7 @@ public class AdaAPI extends LanguageAPI {
             //
             // If the array type is not unconstrained, the bounds will not be generated.
             builder.append(" renames ").append(tempVarValue).append(".all");
-        } else if (type.pIsRecordType(Libadalang.AdaNode.NONE)) {
+        } else if (type.pIsRecordType(Libadalang.AdaNode.NONE) || type.pIsPrivate()) {
             builder.append(" renames ").append(tempVarValue).append(".all");
         } else if (AdaTypeMatcher.isArrayAccess(type)) {
             builder.append(" := ")
@@ -525,11 +534,8 @@ public class AdaAPI extends LanguageAPI {
     /** Create the necessary declarations for the return statement. */
     public String makeReturnDeclarations(Libadalang.BaseTypeDecl returnedType) {
         StringBuilder builder = new StringBuilder();
-        returnedType =
-                (Libadalang.BaseTypeDecl)
-                        returnedType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
         String typename = returnedType.pFullyQualifiedName();
-        if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)) {
+        if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE) || returnedType.pIsPrivate()) {
             // When returning records, we need to convert an access to `System.Address`: declare a
             // converter.
             builder.append("package Return_Type_Converter is new")
@@ -556,9 +562,6 @@ public class AdaAPI extends LanguageAPI {
      */
     public String makeReturnConversion(Libadalang.BaseTypeDecl returnedType, String returnedValue) {
         StringBuilder builder = new StringBuilder();
-        returnedType =
-                (Libadalang.BaseTypeDecl)
-                        returnedType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
 
         String typeName = returnedType.pFullyQualifiedName();
         if (returnedType.equals(returnedType.pBoolType())) {
@@ -578,7 +581,8 @@ public class AdaAPI extends LanguageAPI {
                     .append("'(")
                     .append(returnedValue)
                     .append("))");
-        } else if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)) {
+        } else if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)
+                || returnedType.pIsPrivate()) {
             // If the type returned is an address (i.e. not a scalar), convert the returned value to
             // ``System.Address`` using the entity created by ``makeReturnTypeConverter``.
             //
@@ -677,7 +681,7 @@ public class AdaAPI extends LanguageAPI {
     /** Return the file name of a module with a given extension. */
     public static Path toAdaFilename(Package pack, String suffix) {
         StringBuilder builder = new StringBuilder();
-        builder.append(pack.getFullyQualifiedName().toLowerCase().replace(".", "-"));
+        builder.append(pack.getProxyUnitName().toLowerCase().replace(".", "-"));
         if (suffix != null) builder.append(suffix);
         return Path.of(builder.toString());
     }
@@ -728,7 +732,7 @@ public class AdaAPI extends LanguageAPI {
         if (AdaTypeMatcher.isReturnedAsAddress(typeDecl)) return "System.Address";
         if (AdaTypeMatcher.isEnum(typeDecl)) return cInterfaceNativeTypename(NativeType.SINT32);
 
-        throw new UnsupportedOperationException("Type not supported");
+        throw new UnsupportedOperationException(typeDecl + " is not supported");
     }
 
     /**
@@ -787,9 +791,6 @@ public class AdaAPI extends LanguageAPI {
 
     public String makeShadowReturnDecl(Libadalang.BaseTypeDecl returnedType) {
         StringBuilder builder = new StringBuilder();
-        returnedType =
-                (Libadalang.BaseTypeDecl)
-                        returnedType.pMostVisiblePart(Libadalang.AdaNode.NONE, false);
         String typename =
                 AdaTypeMatcher.isNonClassWideTagged(returnedType)
                         ? returnedType.pRelativeName().getText() + "_Shadow"
@@ -799,6 +800,7 @@ public class AdaAPI extends LanguageAPI {
                         ? typename + "_Shadow"
                         : asAccess(returnedType);
         if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)
+                || returnedType.pIsPrivate()
                 || returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
             // When returning records, we need to convert an Address to an access`: declare a
             // converter.
@@ -857,15 +859,14 @@ public class AdaAPI extends LanguageAPI {
     /** Return the return statement of shadow dispatching functions. */
     public String makeShadowReturn(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
-        Libadalang.BaseTypeDecl returnedType =
-                (Libadalang.BaseTypeDecl)
-                        subp.getReturnType().pMostVisiblePart(Libadalang.AdaNode.NONE, false);
+        Libadalang.BaseTypeDecl returnedType = subp.getReturnType();
         String typename =
                 AdaTypeMatcher.isNonClassWideTagged(returnedType)
                         ? returnedType.pRelativeName().getText() + "_Shadow"
                         : returnedType.pFullyQualifiedName();
         builder.append("return Result : ").append(typename).append(" := ");
         if (returnedType.pIsRecordType(Libadalang.AdaNode.NONE)
+                || returnedType.pIsPrivate()
                 || returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
             // Values are returned on the heap from the target language. However, the parent of the
             // shadow function does not expect an acess or an address, but a value type instead. We
