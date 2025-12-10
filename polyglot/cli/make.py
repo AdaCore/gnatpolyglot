@@ -5,7 +5,7 @@ import subprocess
 
 BIN_DIR = P.join(P.dirname(__file__), "..", "bin")
 
-def look_for_files_in_env(files: list[str], env_var_name: str) -> dict[str, str] | None:
+def look_for_files_in_env(files: list[str], env_var_name: str) -> dict[str, None | str] | None:
     """
     Look for required `files` in directories listed in the value of the
     environment variable `env_var_name`. Return the dictionary associating each
@@ -13,12 +13,11 @@ def look_for_files_in_env(files: list[str], env_var_name: str) -> dict[str, str]
     cannot be retrieved this function returns `None` and displays error message
     about file not being found.
     """
-    res = {f: None for f in files}
+    res : dict[str, None | str] = {f: None for f in files}
     for dir in os.environ.get(env_var_name, "").split(os.pathsep):
         for file in files:
             if os.path.isfile(os.path.join(dir, file)):
                 res[file] = dir
-                break
     one_not_found = False
     for file, dir in res.items():
         if dir is None:
