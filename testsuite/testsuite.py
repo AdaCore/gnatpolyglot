@@ -5,12 +5,12 @@ from os.path import isdir
 import sys
 
 from e3.os import process
-from e3.os.fs import which
 from e3.testsuite import Testsuite
 
 from drivers import (
     junit_driver, proxy2print_driver, python_driver, scan2proxy_driver
 )
+from python_support.utils import add_path
 
 
 class PolyglotTestsuite(Testsuite):
@@ -72,14 +72,20 @@ class PolyglotTestsuite(Testsuite):
             runtime_dir = os.environ["POLYGLOT_RUNTIME"]
         except KeyError:
             runtime_dir = os.path.join(
-                os.path.dirname(which("polyglot")), "..", "polyglot", "runtimes"
+                os.path.dirname(__file__), "..", "polyglot", "runtimes"
             )
+            os.environ["POLYGLOT_RUNTIME"] = runtime_dir
 
         for gpr_file in [
             os.path.join(runtime_dir, "polyglot", "polyglot.gpr"),
             os.path.join(runtime_dir, "ada", "polyglot-ada.gpr"),
         ]:
             process.Run(["gprbuild", "-P", gpr_file, "-p", "-f"])
+        for gpr_path in [
+            os.path.join(runtime_dir, "polyglot"),
+            os.path.join(runtime_dir, "ada"),
+        ]:
+            add_path(os.environ, "GPR_PROJECT_PATH", gpr_path)
 
         # Check if the internal testsuite is present
         self.env.control_condition_env = {
