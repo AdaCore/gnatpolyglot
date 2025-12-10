@@ -1,4 +1,4 @@
-export PATH=${PWD}/polyglot/bin:${PATH}
+export PATH=${PWD}/polyglot/bin:${PWD}/polyglot/cli:${PATH}
 export GPR_PROJECT_PATH=${PWD}/polyglot/runtimes/polyglot:${GPR_PROJECT_PATH}
 export GPR_PROJECT_PATH=${PWD}/polyglot/runtimes/ada:${GPR_PROJECT_PATH}
 export CPATH=${PWD}/polyglot/runtimes/polyglot/src:${CPATH}
