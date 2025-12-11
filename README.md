@@ -21,7 +21,12 @@ $[polyglot]> java \
         com.adacore.polylot.cli.PolyglotMain
 ```
 
-Or using the native-image build:
+To enable the native-image build, use the `native` profile:
+```sh
+$[polyglot]> mvn package -f polyglot/pom.xml -Pnative
+```
+
+You can then run the native application using:
 
 ```
 $[polyglot]> ./polyglot/bin/polyglot
