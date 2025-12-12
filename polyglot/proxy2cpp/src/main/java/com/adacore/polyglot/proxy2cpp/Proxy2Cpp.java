@@ -8,21 +8,23 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "proxy2cpp", description = "create the C++ interface of a proxy representation")
+@Command(name = "proxy2cpp", description = "Create the C++ interface of a proxy representation")
 public class Proxy2Cpp implements Callable<Integer> {
 
     @Parameters(index = "0", paramLabel = "proxy_file", description = "input proxy json file")
-    Path gprfile;
+    Path proxyFile;
 
     @Option(
             names = {"-o", "--output"},
-            description = "output path",
+            description =
+                    "path to the directory in which the C++ interface should be generated."
+                            + " Directories along the path are created if they do not exist yet.",
             required = true)
     Path outputPath;
 
     @Override
     public Integer call() throws Exception {
-        CppPrinter printer = new CppPrinter(gprfile);
+        CppPrinter printer = new CppPrinter(proxyFile);
 
         try {
             Files.createDirectories(outputPath);

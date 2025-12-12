@@ -14,7 +14,9 @@ import picocli.CommandLine.Option;
 
 @Command(
         name = "ada2proxy",
-        description = "create a proxy for an ada project",
+        description =
+                "Create a proxy for an ada project."
+                        + " If no unit are explicitly given, process all of them.",
         abbreviateSynopsis = true,
         sortOptions = false)
 public class Ada2Proxy implements Callable<Integer> {
@@ -22,19 +24,19 @@ public class Ada2Proxy implements Callable<Integer> {
     @Option(
             names = {"-P"},
             paramLabel = "project_file",
-            description = "input project file",
+            description = "input GPR project file",
             required = true)
     Path project;
 
     @Option(
             names = {"-o", "--output"},
-            description = "output path",
+            description = "output path for the proxy project",
             required = true)
     Path outputPath;
 
     @Option(
             names = {"--units"},
-            description = "output path")
+            description = "filenames of the units of the input project to bind")
     List<String> units = new ArrayList<>();
 
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;

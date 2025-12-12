@@ -13,7 +13,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 /** Inspect a Proxy and verify that values are correct according to the Proxy IR specification. */
-@Command(name = "validator", description = "validate a json proxy")
+@Command(name = "validator", description = "Validate a json proxy")
 public class ProxyValidator implements Callable<Integer> {
 
     public static class Validator implements ProxyVisitor<Boolean> {
