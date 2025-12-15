@@ -24,6 +24,7 @@ import com.adacore.polyglot.proxy.TypeExpr;
 import com.adacore.polyglot.proxy.VTableEntry;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CppAPI {
@@ -153,9 +154,15 @@ public class CppAPI {
         return cppTypename(typeExpr);
     }
 
+    private static Set<Name> reservedGlobalEntities = Set.of(Name.fromLower("system"));
+
     private String lastNameToCppName(FullyQualifiedName fqn) {
-        if (context.getTypeDecl(fqn) != null) return fqn.getLastName().toPascal();
-        return fqn.getLastName().toLower();
+        Name lastName = fqn.getLastName();
+        if (context.getTypeDecl(fqn) != null) return lastName.toPascal();
+        String res = lastName.toLower();
+        if (fqn.names.size() == 1 && reservedGlobalEntities.contains(lastName)
+                || CppKeyword.isKeyword(lastName)) res += "_";
+        return res;
     }
 
     /** Return the refered C type's name. */
@@ -203,7 +210,7 @@ public class CppAPI {
 
     /** Create the string of the C++ namespace of the corresponding module. */
     public String namespacePath(Module module) {
-        return module.name.join(r -> r.getLastName().toLower(), "", "::", "");
+        return module.name.join(this::lastNameToCppName, "", "::", "");
     }
 
     /** Return the path to the source file of the corresponing module. */
