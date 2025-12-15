@@ -50,12 +50,20 @@ public class Ada2Proxy implements Callable<Integer> {
             description = "Name of the runtime (RTS) to use when loading the project")
     String rts;
 
+    @Option(
+            names = {"--target"},
+            description = "Specify a target for cross platforms")
+    String target;
+
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
 
     private Libadalang.ProjectOptions getProjectOptions() {
         Libadalang.ProjectOptions options = new Libadalang.ProjectOptions();
         if (rts != null) {
             options.addSwitch(Libadalang.ProjectOption.RTS, rts);
+        }
+        if (target != null) {
+            options.addSwitch(Libadalang.ProjectOption.TARGET, target);
         }
         for (var scenarioVariable : scenarioVariables) {
             options.addSwitch(Libadalang.ProjectOption.X, scenarioVariable);
