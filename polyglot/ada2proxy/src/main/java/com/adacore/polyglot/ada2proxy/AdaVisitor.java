@@ -251,7 +251,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
      * their return type.
      */
     public boolean hasNamingConflict(Subprogram lhs, Subprogram rhs) {
-        if (!lhs.name.equals(rhs.name) || lhs.parameters.size() != lhs.parameters.size())
+        if (!lhs.name.equals(rhs.name) || lhs.parameters.size() != rhs.parameters.size())
             return false;
         for (int i = 0; i < lhs.parameters.size(); i++) {
             if (!lhs.parameters.get(i).equals(rhs.parameters.get(i))) return false;
