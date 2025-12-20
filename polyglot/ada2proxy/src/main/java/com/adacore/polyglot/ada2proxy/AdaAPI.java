@@ -565,11 +565,21 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
+    public String getParamForCall(Component component) {
+        Name name = component.name;
+        BaseTypeDecl type = component.getType();
+        if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
+            return "%s (%s)".formatted(type.pFullyQualifiedName(), valueName(name));
+        }
+        return valueName(name);
+    }
+
     private String getParamForCall(SubpParam param) {
         Name name = param.name;
         BaseTypeDecl type = param.getType();
-        if (type.pIsArrayType(Libadalang.AdaNode.NONE))
+        if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
             return "%s (%s)".formatted(type.pFullyQualifiedName(), valueName(name));
+        }
         return valueName(name);
     }
 
@@ -692,7 +702,8 @@ public class AdaAPI extends LanguageAPI {
 
     /** Return the type that must be used when returning from a getter. */
     public String getterReturnTypename(Libadalang.BaseTypeDecl type) {
-        if (type.pIsArrayType(Libadalang.AdaNode.NONE)) return "Polyglot.Ada.Arrays.Polyglot_Array";
+        if (type.pIsArrayType(Libadalang.AdaNode.NONE) || AdaTypeMatcher.isArrayAccess(type))
+            return "Polyglot.Ada.Arrays.Polyglot_Array";
         return "System.Address";
     }
 
@@ -711,6 +722,21 @@ public class AdaAPI extends LanguageAPI {
                     .append("Data => ")
                     .append(componentAccess)
                     .append("'Address)");
+        } else if (AdaTypeMatcher.isArrayAccess(type)) {
+            builder.append("(if ")
+                    .append(type.pParentBasicDecl().pFullyQualifiedName())
+                    .append(".\"=\" (")
+                    .append(componentAccess)
+                    .append(", null) then (1, 0, System.Null_Address) else ")
+                    .append("(First => Interfaces.C.int (")
+                    .append(componentAccess)
+                    .append(".all'First),")
+                    .append(" Last => Interfaces.C.int (")
+                    .append(componentAccess)
+                    .append(".all'Last),")
+                    .append(" Data => ")
+                    .append(componentAccess)
+                    .append(".all'Address))");
         } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
             builder.append("Access_Converter (").append(componentAccess).append(")");
         } else {

@@ -75,8 +75,8 @@ package body Polyglot.Ada.Arrays is
       pragma Import (Ada, To_Value);
 
       function Address_Converter is new
-        Standard.Ada.Unchecked_Conversion (System.Address, Arr_Type_Access);
-      Data_Access : Arr_Type_Access := Address_Converter (From.Data);
+        Standard.Ada.Unchecked_Conversion (System.Address, Arr_Type_C_Access);
+      Data_Access : Arr_Type_C_Access := Address_Converter (From.Data);
       Arr         : Arr_Type_Access := new Arr_Type'(Data_Access.all);
    begin
       To_Value.First := From.First;
