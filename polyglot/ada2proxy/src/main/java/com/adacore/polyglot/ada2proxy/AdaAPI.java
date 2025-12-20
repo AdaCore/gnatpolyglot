@@ -153,7 +153,7 @@ public class AdaAPI extends LanguageAPI {
 
         if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl) {
             if (AdaTypeMatcher.isStringType(typeDecl)) return NativeType.STRING;
-            if (AdaTypeMatcher.isCharacter(typeDecl)) return NativeType.UINT8;
+            if (AdaTypeMatcher.isCharacter(typeDecl)) return NativeType.CHAR;
             if (typeDecl.pIsIntType(Libadalang.AdaNode.NONE)) {
                 // Compute the number of required bits to hold the values of the type and
                 // find the smallest type able to hold it.
@@ -529,6 +529,12 @@ public class AdaAPI extends LanguageAPI {
             // Boolean types do not exist in the Interfaces.C package: they are instead binded as
             // Ints.
             builder.append(" := ").append(argName).append(" /= 0");
+        } else if (AdaTypeMatcher.isCharacter(type)) {
+            builder.append(" := ")
+                    .append(valueVarTypename)
+                    .append(" (Interfaces.C.To_Ada (")
+                    .append(argName)
+                    .append("))");
         } else if (AdaTypeMatcher.isEnum(type)) {
             builder.append(" := ")
                     .append(valueVarTypename)
@@ -643,6 +649,10 @@ public class AdaAPI extends LanguageAPI {
                     .append("'Enum_Rep (")
                     .append(returnedValue)
                     .append(")");
+        } else if (AdaTypeMatcher.isCharacter(returnedType)) {
+            builder.append("return Interfaces.C.To_C (Character (")
+                    .append(returnedValue)
+                    .append("))");
         } else if (returnedType.pIsScalarType(Libadalang.AdaNode.NONE)) {
             // If the value is a scalar, simply cast to the C interface type.
             builder.append("return ")
@@ -786,7 +796,7 @@ public class AdaAPI extends LanguageAPI {
                 return "Interfaces.C.double";
             case UINT8:
             case SINT8:
-                return "Interfaces.C.char";
+                return "Interfaces.C.signed_char";
             case UINT16:
             case SINT16:
                 return "Interfaces.C.short";
@@ -799,6 +809,8 @@ public class AdaAPI extends LanguageAPI {
             case UINT128:
             case SINT128:
                 return "Interfaces.C.long";
+            case CHAR:
+                return "Interfaces.C.char";
             case STRING:
                 return "Polyglot.Ada.Strings.Polyglot_String";
             case VOID:
@@ -965,6 +977,8 @@ public class AdaAPI extends LanguageAPI {
             builder.append("Returned_Access.all'Unchecked_Access");
         } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
             builder.append("Converter (Returned_Value)");
+        } else if (AdaTypeMatcher.isCharacter(returnedType)) {
+            builder.append(typename).append(" (Interfaces.C.To_Ada (Returned_Value))");
         } else if (returnedType.pIsEnumType(Libadalang.AdaNode.NONE)) {
             builder.append(returnedType.pFullyQualifiedName()).append("'Enum_Val (Returned_Value)");
         } else {
@@ -990,6 +1004,11 @@ public class AdaAPI extends LanguageAPI {
                     .append(" := ")
                     .append(argName)
                     .append("'Address");
+        } else if (AdaTypeMatcher.isCharacter(type)) {
+            builder.append(cInterfaceParamTypename(param))
+                    .append(" := Interfaces.C.To_C (Character (")
+                    .append(argName)
+                    .append("))");
         } else if (type.pIsEnumType(Libadalang.AdaNode.NONE)) {
             builder.append(cInterfaceParamTypename(param))
                     .append(" := ")

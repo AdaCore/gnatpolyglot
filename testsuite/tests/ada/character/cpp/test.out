@@ -1,0 +1,20 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling test main program...
+Running test main program...
+
+Got 'A' = 65
+Got 'B' = 66
+C++ value:B
+Got 'e' = 101
+Got 'f' = 102
+C++ value:f
+Got 'f' = 102
+C++ value:e
+j
+e
+f
+
+Done.

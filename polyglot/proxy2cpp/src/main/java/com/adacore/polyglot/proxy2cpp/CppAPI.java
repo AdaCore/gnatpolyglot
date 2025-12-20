@@ -98,6 +98,8 @@ public class CppAPI {
                 return "uint128_t";
             case SINT128:
                 return "int128_t";
+            case CHAR:
+                return "char";
             case STRING:
                 return "polyglot::ada::strings::polyglot_string";
             case VOID:
