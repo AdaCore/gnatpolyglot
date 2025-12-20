@@ -531,7 +531,10 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             // that is the case, then process the parent type, but do not register it.
             Record rec = makeRecord(node.fRecordExtension(), parentDecl);
             Libadalang.ConcreteTypeDecl parentType =
-                    (Libadalang.ConcreteTypeDecl) node.fSubtypeIndication().pDesignatedTypeDecl();
+                    (Libadalang.ConcreteTypeDecl)
+                            node.fSubtypeIndication()
+                                    .pDesignatedTypeDecl()
+                                    .pBaseSubtype(Libadalang.AdaNode.NONE);
             if (!parentType.isNone()) {
                 if (parentType.fTypeDef() instanceof Libadalang.DerivedTypeDef derived)
                     rec.parent = makeRecord(derived.fRecordExtension(), parentType);
