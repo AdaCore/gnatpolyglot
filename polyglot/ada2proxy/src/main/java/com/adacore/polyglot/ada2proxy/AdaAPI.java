@@ -876,7 +876,7 @@ public class AdaAPI extends LanguageAPI {
                     .append("Free (Returned_Access);\n")
                     .append("end return");
         } else if (AdaTypeMatcher.isArrayAccess(returnedType)) {
-            builder.append(returnedType.pFullyQualifiedName()).append(" (Returned_Access)");
+            builder.append("Returned_Access.all'Unchecked_Access");
         } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
             builder.append("Converter (Returned_Value)");
         } else if (returnedType.pIsEnumType(Libadalang.AdaNode.NONE)) {
