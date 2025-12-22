@@ -157,7 +157,8 @@ public class AdaScanner extends Scanner {
     }
 
     @Override
-    public void generate(Path path) throws IOException {
+    public void generate(Path path, Path runtimeLocation) throws IOException {
+
         // Write the json proxy file.
         Proxy jsonProxy = getProxy();
         AdaAPI api = new AdaAPI(Name.fromLower(projectName));
@@ -179,6 +180,8 @@ public class AdaScanner extends Scanner {
                             path.relativize(projectFile).toString(),
                             "projectName",
                             Name.fromLower(projectName),
+                            "runtimeLocation",
+                            path.relativize(runtimeLocation).toString(),
                             "proxy",
                             proxy),
                     gprOutput);
@@ -197,7 +200,7 @@ public class AdaScanner extends Scanner {
                             "proxy",
                             proxy,
                             "runtimeLocation",
-                            getRuntimeLocation(),
+                            path.relativize(runtimeLocation).toString(),
                             "sources",
                             interfaces),
                     gprOutput);
