@@ -1,7 +1,10 @@
 package com.adacore.polyglot.cli;
 
+import java.nio.file.Path;
+
 import com.adacore.polyglot.ada2proxy.Ada2Proxy;
 import com.adacore.polyglot.proxy.ProxyValidator;
+import com.adacore.polyglot.proxy.PolyglotSetup;
 import com.adacore.polyglot.proxy2cpp.Proxy2Cpp;
 
 import picocli.CommandLine;
@@ -13,7 +16,8 @@ import picocli.CommandLine.Option;
     subcommands = {
         ProxyValidator.class,
         Ada2Proxy.class,
-        Proxy2Cpp.class
+        Proxy2Cpp.class,
+        PolyglotSetup.class
     },
     version="0.1",
     description="Polyglot driver."
