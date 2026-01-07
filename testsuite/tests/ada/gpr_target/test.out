@@ -1,0 +1,120 @@
+========================================
+Target x86_64-linux:
+{
+ "kind": "function",
+ "parameters": [
+  {
+   "name": "i",
+   "type": {
+    "kind": "typename",
+    "name": {
+     "names": [
+      "sint32"
+     ]
+    }
+   },
+   "transfer": {
+    "required_owner": "any"
+   }
+  }
+ ],
+ "return_type": {
+  "kind": "typename",
+  "name": {
+   "names": [
+    "sint64"
+   ]
+  }
+ },
+ "return_owner": "unknown"
+}
+========================================
+Target x86-linux:
+{
+ "kind": "function",
+ "parameters": [
+  {
+   "name": "i",
+   "type": {
+    "kind": "typename",
+    "name": {
+     "names": [
+      "sint32"
+     ]
+    }
+   },
+   "transfer": {
+    "required_owner": "any"
+   }
+  }
+ ],
+ "return_type": {
+  "kind": "typename",
+  "name": {
+   "names": [
+    "sint32"
+   ]
+  }
+ },
+ "return_owner": "unknown"
+}
+========================================
+Target x86_64-windows:
+{
+ "kind": "function",
+ "parameters": [
+  {
+   "name": "i",
+   "type": {
+    "kind": "typename",
+    "name": {
+     "names": [
+      "sint32"
+     ]
+    }
+   },
+   "transfer": {
+    "required_owner": "any"
+   }
+  }
+ ],
+ "return_type": {
+  "kind": "typename",
+  "name": {
+   "names": [
+    "sint32"
+   ]
+  }
+ },
+ "return_owner": "unknown"
+}
+========================================
+Target x86-windows:
+{
+ "kind": "function",
+ "parameters": [
+  {
+   "name": "i",
+   "type": {
+    "kind": "typename",
+    "name": {
+     "names": [
+      "sint32"
+     ]
+    }
+   },
+   "transfer": {
+    "required_owner": "any"
+   }
+  }
+ ],
+ "return_type": {
+  "kind": "typename",
+  "name": {
+   "names": [
+    "sint32"
+   ]
+  }
+ },
+ "return_owner": "unknown"
+}

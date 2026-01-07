@@ -1,7 +1,7 @@
 driver: scan2proxy
 
 input_lang: ada
-project_file: gnatcoll/gnatcoll.gpr
+project_file: gnatcoll/minimal/gnatcoll_minimal.gpr
 sync_tree:
   - ../../../internal/sources
 units:
@@ -14,6 +14,5 @@ control:
   - [SKIP, skip_internal, "Internal testsuite sources are not available"]
 
 local_project_path:
-  - gnatcoll/
   - gpr/
   - xmlada/

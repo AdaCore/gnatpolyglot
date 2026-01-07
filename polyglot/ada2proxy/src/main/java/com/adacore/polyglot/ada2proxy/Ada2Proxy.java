@@ -1,5 +1,6 @@
 package com.adacore.polyglot.ada2proxy;
 
+import com.adacore.libadalang.Libadalang;
 import com.adacore.polyglot.proxy.Proxy;
 import java.io.FileNotFoundException;
 import java.nio.file.FileAlreadyExistsException;
@@ -39,14 +40,43 @@ public class Ada2Proxy implements Callable<Integer> {
             description = "filenames of the units of the input project to bind")
     List<String> units = new ArrayList<>();
 
+    @Option(
+            names = {"-X"},
+            description = "Scenario variables to pass to the project file")
+    List<String> scenarioVariables = new ArrayList<>();
+
+    @Option(
+            names = {"--RTS"},
+            description = "Name of the runtime (RTS) to use when loading the project")
+    String rts;
+
+    @Option(
+            names = {"--target"},
+            description = "Specify a target for cross platforms")
+    String target;
+
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
+
+    private Libadalang.ProjectOptions getProjectOptions() {
+        Libadalang.ProjectOptions options = new Libadalang.ProjectOptions();
+        if (rts != null) {
+            options.addSwitch(Libadalang.ProjectOption.RTS, rts);
+        }
+        if (target != null) {
+            options.addSwitch(Libadalang.ProjectOption.TARGET, target);
+        }
+        for (var scenarioVariable : scenarioVariables) {
+            options.addSwitch(Libadalang.ProjectOption.X, scenarioVariable);
+        }
+        return options;
+    }
 
     @Override
     public Integer call() throws Exception {
         AdaScanner scanner = new AdaScanner();
 
         try {
-            scanner.scanProject(project, units);
+            scanner.scanProject(project, units, getProjectOptions());
         } catch (FileNotFoundException e) {
             spec.commandLine().getColorScheme().errorText(null);
             System.err.println(

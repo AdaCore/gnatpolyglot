@@ -1,0 +1,40 @@
+Running scanner test.
+Running the scanner...
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.
+{
+ "kind": "function",
+ "parameters": [
+  {
+   "name": "i",
+   "type": {
+    "kind": "reference",
+    "type_expr": {
+     "kind": "typename",
+     "name": {
+      "names": [
+       "ada",
+       "text_io",
+       "custom_runtime_type"
+      ]
+     }
+    },
+    "is_const": true
+   },
+   "transfer": {
+    "required_owner": "any"
+   }
+  }
+ ],
+ "return_type": {
+  "kind": "typename",
+  "name": {
+   "names": [
+    "void"
+   ]
+  }
+ },
+ "return_owner": "unknown"
+}

@@ -1,0 +1,23 @@
+driver: python
+
+input_lang: ada
+project_file: test.gpr
+
+input_lib_flags:
+  - "--RTS=./rts-custom"
+
+output_lib_flags:
+  - "--RTS=../rts-custom"
+
+scanner_extra_args:
+  - "--RTS=./rts-custom"
+
+# Using a custom Ada runtime implies that we need to recompile the Polyglot
+# runtime too.
+sync_tree:
+  - ../../../../../polyglot/runtimes
+  - ../../../internal/sources
+
+local_project_path:
+  - "./ada"
+  - "./polyglot"
