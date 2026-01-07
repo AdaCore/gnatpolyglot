@@ -31,6 +31,11 @@ template <typename T> struct ref_selector<T, false> {
   using type = typename T::view;
 };
 
+// Specialization for pointer types: pointers are not returned by reference.
+template <typename T> struct ref_selector<polyglot_ptr<T>, false> {
+  using type = polyglot_ptr<T>;
+};
+
 template <typename T> class polyglot_array {
 public:
     class view {

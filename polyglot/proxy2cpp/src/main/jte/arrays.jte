@@ -40,6 +40,10 @@ namespace ${api.namespacePath(module)} {
         ${api.cppReturnTypename(functionDecl.type.returnType)}
         ${api.functionDefinitionName(functionDecl)}
             (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)} {
+        @for(var param : functionDecl.type.parameters)
+            ${api.verifyOwnership(param)}
+            ${api.createPointerBuffer(param)}
+        @endfor
             ${api.makeReturnStatement(functionDecl, api.callCSymbol(functionDecl))};
         }
     @endif
