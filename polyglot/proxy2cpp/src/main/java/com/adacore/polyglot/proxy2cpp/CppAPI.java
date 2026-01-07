@@ -179,6 +179,11 @@ public class CppAPI {
             if (!ref.isConst && ref.typeExpr instanceof PointerTypeExpr ptr) {
                 if (context.isClassType(ptr.typeExpr)) return constness + "void **";
             }
+            if (ref.isConst
+                    && ref.typeExpr instanceof PointerTypeExpr ptr
+                    && ptr.typeExpr instanceof ArrayTypeExpr) {
+                return cTypename(ptr.typeExpr);
+            }
             return constness + "void *";
         } else if (typeExpr instanceof PointerTypeExpr ptr) {
             String constness = ptr.isConst ? "const " : "";
@@ -298,10 +303,17 @@ public class CppAPI {
     }
 
     public String getParamForConstructor(Parameter p) {
-        if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr
-                || p.type instanceof PointerTypeExpr) {
+        PointerTypeExpr ptrType = null;
+        if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr ptr)
+            ptrType = ptr;
+        else if (p.type instanceof PointerTypeExpr ptr) ptrType = ptr;
+        if (ptrType != null) {
             String name = p.name.toLower();
-            return "%s.get() == nullptr ? nullptr : %s->data()".formatted(name, name);
+            String nullValue =
+                    ptrType.typeExpr instanceof ArrayTypeExpr
+                            ? "polyglot::ada::arrays::array_data{0, 0, nullptr}"
+                            : "nullptr";
+            return "%s.get() == nullptr ? %s : %s->data()".formatted(name, nullValue, name);
         }
         return getParamForCall(p);
     }
