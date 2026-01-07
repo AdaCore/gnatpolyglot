@@ -10,6 +10,7 @@ import com.adacore.polyglot.proxy.FunctionTypeExpr;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Parameter;
+import com.adacore.polyglot.proxy.PointerTypeExpr;
 import com.adacore.polyglot.proxy.Role;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.Transfer;
@@ -167,6 +168,15 @@ public class Array extends AdaDeclaration {
                             FunctionDecl.Staticness.NON_STATIC));
 
             // Declare the getter
+            TypeExpr getterReturnType =
+                    componentTypeExpr instanceof PointerTypeExpr
+                            ? componentTypeExpr
+                            : componentTypeExpr.makeReference(false);
+            // If the array component is an access type, the owner must be the library: it is
+            // technically already escaped since contained in the array, and returned by copy so the
+            // user will have its own instance of the pointer instead of a reference.
+            // Otherwise, since we are returning a reference to the component of an entity, it
+            // should never be freed so its owner is static.
             functions.add(
                     new FunctionDecl(
                             moduleName.append(Name.fromLower("get")),
@@ -183,13 +193,20 @@ public class Array extends AdaDeclaration {
                                                     Name.fromLower("index"),
                                                     NativeType.SINT32.typeExpr,
                                                     new Transfer(RequiredOwner.ANY))),
-                                    arrayTypeExpr.typeExpr.makeReference(false),
-                                    Owner.UNKNOWN),
+                                    getterReturnType,
+                                    componentTypeExpr instanceof PointerTypeExpr
+                                            ? Owner.LIBRARY
+                                            : Owner.STATIC),
                             FunctionDecl.Visibility.PUBLIC,
                             FunctionDecl.Overridability.FINAL,
                             FunctionDecl.Staticness.NON_STATIC));
 
             // Declare the setter
+            //
+            // If the component is an access type, the owner must be library: the subprogram
+            // explicitely escapes the pointer.
+            // In other cases, the owner does not mater as the element will be copied, creating a
+            // new instance in the array.
             functions.add(
                     new FunctionDecl(
                             moduleName.append(Name.fromLower("set")),
@@ -209,7 +226,12 @@ public class Array extends AdaDeclaration {
                                             new Parameter(
                                                     Name.fromLower("new_val"),
                                                     arrayTypeExpr.typeExpr.makeReference(true),
-                                                    new Transfer(RequiredOwner.ANY))),
+                                                    new Transfer(
+                                                            componentTypeExpr
+                                                                            instanceof
+                                                                            PointerTypeExpr
+                                                                    ? RequiredOwner.LIBRARY
+                                                                    : RequiredOwner.ANY))),
                                     NativeType.VOID.typeExpr,
                                     Owner.UNKNOWN),
                             FunctionDecl.Visibility.PUBLIC,

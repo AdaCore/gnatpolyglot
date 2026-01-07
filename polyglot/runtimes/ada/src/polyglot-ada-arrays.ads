@@ -47,12 +47,24 @@ package Polyglot.Ada.Arrays is
 
    generic
       type C is private;
+   function Get_Access
+     (Self : Polyglot_Array; Index : Interfaces.C.Int) return System.Address;
+
+   generic
+      type C is private;
    procedure Set
      (Self : Polyglot_Array; Index : Interfaces.C.Int; New_Val : C);
 
    generic
       type C is private;
    procedure Set_Record
+     (Self    : Polyglot_Array;
+      Index   : Interfaces.C.Int;
+      New_Val_Addr : System.Address);
+
+   generic
+      type C is private;
+   procedure Set_Access
      (Self    : Polyglot_Array;
       Index   : Interfaces.C.Int;
       New_Val_Addr : System.Address);
