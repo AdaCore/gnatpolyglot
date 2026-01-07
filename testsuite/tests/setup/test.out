@@ -1,0 +1,5 @@
+warning: runtimes/ada/polyglot-ada.gpr is missing
+warning: consider running `polyglot setup --prefix=runtimes'
+
+warning: runtimes/polyglot/polyglot.gpr was modified
+warning: consider running `polyglot setup --prefix=runtimes'
