@@ -10,6 +10,9 @@ POLYGLOT_HOME = os.path.realpath(
 RUNTIME_DIR = os.path.join(POLYGLOT_HOME, "runtimes")
 
 NATIVE_RUN = "--native" in sys.argv
+POLYGLOT_EXEC = "polyglot.py"
+if NATIVE_RUN:
+    POLYGLOT_EXEC = "polyglot"
 
 def run(argv: list[str], env: dict[str, str] | None = None) -> None:
     p = subprocess.run(
@@ -35,21 +38,16 @@ def run_java(main_class: str, class_path: str, argv: list[str]) -> None:
     extra_args = ["--enable-native-access=ALL-UNNAMED"]
     run([java_exec, "-cp", class_path, *extra_args, main_class, *argv])
 
-def run_native(subcommand: str, argv: list[str]):
-    run(["polyglot", subcommand, *argv])
+
+def run_polyglot(subcommand: str, argv: list[str]):
+    run([POLYGLOT_EXEC, subcommand, *argv])
+
 
 def run_proxy_validator(proxy_location: str) -> None:
     """
     Run the proxy validator on the given proxy json file.
     """
-    if NATIVE_RUN:
-        run_native("validator", [proxy_location])
-    else:
-        run_java(
-            "com.adacore.polyglot.cli.PolyglotMain",
-            os.path.join(POLYGLOT_HOME, "cli", "target", "cli.jar"),
-            ["validator", proxy_location],
-        )
+    run_polyglot("validator", [proxy_location])
 
 
 def run_scanner(
@@ -65,17 +63,10 @@ def run_scanner(
     if extra_args is None:
         extra_args = []
     if input_lang == "ada":
-        if NATIVE_RUN:
-            run_native(
-                "ada2proxy",
-                ["-P", project_file, "-o", output_path, *extra_args]
-            )
-        else:
-            run_java(
-                "com.adacore.polyglot.cli.PolyglotMain",
-                os.path.join(POLYGLOT_HOME, "cli", "target", "cli.jar"),
-                ["ada2proxy", "-P", project_file, "-o", output_path, *extra_args],
-            )
+        run_polyglot(
+            "ada2proxy",
+            ["-P", project_file, "-o", output_path, *extra_args]
+        )
     else:
         raise Exception(f"Unknown language: {input_lang}")
 
@@ -153,22 +144,17 @@ def run_printer(output_lang: str, proxy_file: str, output_path: str) -> None:
     ``output_path``.
     """
     if output_lang == "c++":
-        if NATIVE_RUN:
-            run_native("proxy2cpp", [proxy_file, "-o", output_path])
-        else:
-            run_java(
-                "com.adacore.polyglot.cli.PolyglotMain",
-                os.path.join(POLYGLOT_HOME, "cli", "target", "cli.jar"),
-                ["proxy2cpp", proxy_file, "-o", output_path],
-            )
+        run_polyglot("proxy2cpp", [proxy_file, "-o", output_path])
     else:
         raise Exception(f"Unknown language: {output_lang}")
+
 
 def add_path(env: dict[str, str], env_var: str, path: str):
     """
     Adds the path to the ``env_var`` path variable in ``env``
     """
     env[env_var] = "{}{}{}".format(path, os.path.pathsep, env.get(env_var, ""))
+
 
 def valgrind_cmd(argv: list[str]):
     suppression_file = os.path.join(
@@ -190,3 +176,10 @@ def get_proxy_lib_file(input_lang: str, proxy_location: str) -> str:
     if input_lang == "ada":
         return str(list(Path(proxy_location).glob("*agg.gpr"))[0])
     return ""
+
+
+def run_setup(prefix: str = "runtimes", check_only=False):
+    argv = [f"--prefix={prefix}"]
+    if check_only:
+        argv.append("--check-only")
+    run_polyglot("setup", argv)

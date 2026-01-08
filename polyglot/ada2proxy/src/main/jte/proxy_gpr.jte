@@ -9,11 +9,12 @@ Template file to generate a gprbuild specification of the Ada bindings.
 @param AdaAPI api
 @param String relLibPath
 @param Name projectName
+@param String runtimeLocation
 @param AdaProxy proxy
 
 with "${relLibPath}";
-with "polyglot-ada.gpr";
-with "polyglot.gpr";
+with "${runtimeLocation}/ada/polyglot-ada.gpr";
+with "${runtimeLocation}/polyglot/polyglot.gpr";
 
 library project ${projectName.toPascalWithUnderscore()}.Proxy is
 

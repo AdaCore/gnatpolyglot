@@ -1,6 +1,7 @@
 package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.polyglot.proxy.PolyglotSetup;
 import com.adacore.polyglot.proxy.Proxy;
 import java.io.FileNotFoundException;
 import java.nio.file.FileAlreadyExistsException;
@@ -55,6 +56,12 @@ public class Ada2Proxy implements Callable<Integer> {
             description = "Specify a target for cross platforms")
     String target;
 
+    @Option(
+            names = {"--with-runtime"},
+            description =
+                    "location of the polyglot runtime to use. Defaults to <outputPath>/runtimes.")
+    Path withRuntime;
+
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
 
     private Libadalang.ProjectOptions getProjectOptions() {
@@ -99,7 +106,11 @@ public class Ada2Proxy implements Callable<Integer> {
             return 1;
         }
 
-        scanner.generate(outputPath);
+        if (withRuntime == null) {
+            withRuntime = outputPath.resolve("runtimes");
+            new PolyglotSetup(withRuntime, Files.isDirectory(withRuntime)).call();
+        }
+        scanner.generate(outputPath, withRuntime);
         return 0;
     }
 }

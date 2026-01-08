@@ -24,13 +24,8 @@ public abstract class Scanner {
     }
 
     /** Generate the code for the proxy. */
-    public abstract void generate(Path path) throws IOException;
+    public abstract void generate(Path path, Path runtimeLocation) throws IOException;
 
     /** Get the proxy for the project. */
     public abstract Proxy getProxy();
-
-    /** Return the location of the runtime found in the "POLYGLOT_RUNTIME" environment variable. */
-    public static String getRuntimeLocation() {
-        return System.getenv("POLYGLOT_RUNTIME");
-    }
 }

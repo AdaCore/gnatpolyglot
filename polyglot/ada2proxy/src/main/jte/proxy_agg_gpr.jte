@@ -33,7 +33,7 @@ aggregate library project ${projectName.toPascalWithUnderscore()}.Proxy.Agg is
    Library_Standalone : Library_Standalone_Type := external
       ("LIBRARY_STANDALONE", "encapsulated");
 
-   Polyglot_Runtime := external ("POLYGLOT_RUNTIME", "${runtimeLocation}");
+   Polyglot_Runtime := "${runtimeLocation}";
 
    for Project_Files use (
       "${relLibPath}",
