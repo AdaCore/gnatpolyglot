@@ -517,10 +517,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             Record rec = makeRecord(node.fRecordExtension(), parentDecl);
             Libadalang.ConcreteTypeDecl parentType =
                     (Libadalang.ConcreteTypeDecl) node.fSubtypeIndication().pDesignatedTypeDecl();
-            // TODO eng/libadalang/polyglot#29: Declarations from foreign libraries are not yet
-            // binded, so we must ignore types from the runtime too (for controlled types
-            // especially).
-            if (!parentType.isNone() && !parentType.pFullyQualifiedName().startsWith("Ada.")) {
+            if (!parentType.isNone()) {
                 if (parentType.fTypeDef() instanceof Libadalang.DerivedTypeDef derived)
                     rec.parent = makeRecord(derived.fRecordExtension(), parentType);
                 else if (parentType.fTypeDef() instanceof Libadalang.RecordTypeDef subrec)
