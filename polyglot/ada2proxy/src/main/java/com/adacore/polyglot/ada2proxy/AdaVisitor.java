@@ -121,6 +121,17 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return pack;
     }
 
+    /** Return whether the binded type was registed in the declaration list of its parent package */
+    public boolean registedInParentPackage(Libadalang.BaseTypeDecl type) {
+        Libadalang.BasicDecl decl = type.pParentBasicDecl();
+        AdaDeclaration mappedType = mappedTypes.get(type);
+        if (mappedType != null && decl instanceof Libadalang.BasePackageDecl packageDecl) {
+            Package pack = mappedPackages.get(packageDecl);
+            return pack != null && pack.declarations.contains(mappedType);
+        }
+        return false;
+    }
+
     /**
      * Create a list of all the packages with the types that are missing in the proxy.
      *
@@ -145,7 +156,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             } else if (decl instanceof Libadalang.BaseTypeDecl type) {
                 // If the type was already visited, it is already in a package's list of
                 // declaration. Also ignore types from the Std unit or native types.
-                if (mappedTypes.containsKey(type)
+                if (registedInParentPackage(type)
                         || declChecker.seenUnbindable(decl)
                         || type.getUnit().equals(type.pStandardUnit())
                         || AdaTypeMatcher.isNumber(type)
