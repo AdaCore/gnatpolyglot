@@ -2,6 +2,7 @@ import sys
 import os
 import glob
 import subprocess
+import yaml
 from pathlib import Path
 
 POLYGLOT_HOME = os.path.realpath(
@@ -53,6 +54,50 @@ def run_proxy_validator(proxy_location: str) -> None:
     run_polyglot("validator", [proxy_location])
 
 
+class ScannerConfig:
+
+    def __init__(self, path) -> None:
+        with open(os.path.join(path, "test.yaml")) as f:
+            self._cfg = yaml.safe_load(f)
+        self._root = path
+
+    @property
+    def project_file(self) -> str:
+        return os.path.join(self._root, self._cfg["project_file"])
+
+    @property
+    def input_lib_name(self) -> str:
+        if self.input_lang == "ada":
+            # Remove the `.gpr` file extension to get the name of the lib
+            return os.path.basename(self.project_file)[:-4]
+        raise Exception(f"Unknown language {self.input_lang}")
+
+    @property
+    def input_lang(self) -> str:
+        return self._cfg["input_lang"]
+
+    @property
+    def extra_args(self) -> list[str]:
+        args = []
+        units = ",".join(self._cfg.get("units", []))
+        if units != "":
+            args.append(f"--units={units}")
+        args.extend(self._cfg.get("scanner_extra_args", []))
+        return args
+
+    @property
+    def input_lib_flags(self) -> list[str]:
+        return self._cfg.get("input_lib_flags", [])
+
+    @property
+    def output_lib_flags(self) -> list[str]:
+        return self._cfg.get("output_lib_flags", [])
+
+    def set_env(self) -> None:
+        for p in self._cfg.get("local_project_path", []):
+            add_path(os.environ, "GPR_PROJECT_PATH", os.path.join(self._root, p))
+
+
 def run_scanner(
     input_lang: str,
     project_file: str,
@@ -80,6 +125,8 @@ def compile_main(
     output_proxy: str,
     input_proxy: str,
     input_lib: str,
+    cflags: list[str] | None = None,
+    ldflags: list[str] | None = None,
 ) -> str:
     """
     Compile the main test file and return a path to its corresponding
@@ -87,16 +134,19 @@ def compile_main(
     """
     if output_lang == "c++":
         proxy_c_files = glob.glob(os.path.join(output_proxy, "*.cpp"))
-        C_FLAGS = [
-            "-Wall",
-            "-Wextra",
-            "-Werror",
-            "-std=c++11",
-        ]
+        # We may want to use cflags that are incompatible with the ones we use
+        # by default (eg. `--std=c++17 when using C++17 constructs...): specifying
+        # cflags will overwrite.
+        C_FLAGS = (
+            cflags
+            if cflags is not None
+            else ["-Wall", "-Wextra", "-Werror", "-std=c++11"]
+        )
 
         LD_FLAGS = [
             f"-L{os.path.join(input_proxy, 'lib_agg', 'static', 'dev')}",
             f"-l{input_lib}_proxy_agg",
+            *(ldflags if ldflags else [])
         ]
         if os.name != "nt":
             LD_FLAGS.extend(["-ldl", "-lpthread"])
@@ -108,8 +158,8 @@ def compile_main(
             "main",
             test_file,
             *proxy_c_files,
-            *C_FLAGS,
             *LD_FLAGS,
+            *C_FLAGS,
         ]
         run(argv)
         return os.path.realpath("main")
@@ -139,6 +189,35 @@ def compile_lib(
         run(["make", "--silent", "-B", "-C", lib_location])
     else:
         raise Exception(f"Unknown language: {input_lang}")
+
+
+class PrinterConfig():
+
+    def __init__(self, path) -> None:
+        with open(os.path.join(path, "test.yaml")) as f:
+            self._cfg = yaml.safe_load(f)
+        self._root = path
+
+    @property
+    def output_lang(self) -> str:
+        return self._cfg["output_lang"]
+
+    @property
+    def test_file(self) -> str:
+        return self._cfg["test_file"]
+
+    @property
+    def cflags(self) -> list[str] | None:
+        return self._cfg.get("main_cargs")
+
+    @property
+    def ldflags(self) -> list[str] | None:
+        ld_flags = self._cfg.get("main_ldflags", {})
+        if ld_flags:
+            if os.name == "nt":
+                return ld_flags.get("windows")
+            else:
+                return ld_flags.get("linux")
 
 
 def run_printer(output_lang: str, proxy_file: str, output_path: str) -> None:
