@@ -14,7 +14,7 @@ POLYGLOT_EXEC = "polyglot.py"
 if NATIVE_RUN:
     POLYGLOT_EXEC = "polyglot"
 
-def run(argv: list[str], env: dict[str, str] | None = None) -> None:
+def run(argv: list[str], env: dict[str, str] | None = None, pipe: bool = False) -> str | None:
     p = subprocess.run(
         argv,
         stdin=subprocess.DEVNULL,
@@ -23,9 +23,12 @@ def run(argv: list[str], env: dict[str, str] | None = None) -> None:
         encoding="utf-8",
         env=env,
     )
-    sys.stdout.write(p.stdout)
-    sys.stdout.flush()
+    out = p.stdout
+    if not pipe:
+        sys.stdout.write(out)
+        sys.stdout.flush()
     p.check_returncode()
+    return out
 
 
 def run_java(main_class: str, class_path: str, argv: list[str]) -> None:
@@ -36,11 +39,11 @@ def run_java(main_class: str, class_path: str, argv: list[str]) -> None:
     java_exec = os.path.realpath(os.path.join(os.environ["JAVA_HOME"], "bin", "java"))
 
     extra_args = ["--enable-native-access=ALL-UNNAMED"]
-    run([java_exec, "-cp", class_path, *extra_args, main_class, *argv])
+    return run([java_exec, "-cp", class_path, *extra_args, main_class, *argv])
 
 
-def run_polyglot(subcommand: str, argv: list[str]):
-    run([POLYGLOT_EXEC, subcommand, *argv])
+def run_polyglot(subcommand: str, argv: list[str], pipe: bool = False):
+    return run([POLYGLOT_EXEC, subcommand, *argv], pipe=pipe)
 
 
 def run_proxy_validator(proxy_location: str) -> None:
@@ -182,4 +185,6 @@ def run_setup(prefix: str = "runtimes", check_only=False):
     argv = [f"--prefix={prefix}"]
     if check_only:
         argv.append("--check-only")
-    run_polyglot("setup", argv)
+    out = run_polyglot("setup", argv, pipe=True)
+    if check_only and len(out) > 0:
+        print(out.replace("\\", "/"), end="")
