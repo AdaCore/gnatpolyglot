@@ -6,3 +6,6 @@ test_file: main.cpp
 
 control:
   - [SKIP, skip_internal, "Internal testsuite sources are not available"]
+
+main_ldflags:
+  windows: ["-lpsapi", "-lntdll"]
