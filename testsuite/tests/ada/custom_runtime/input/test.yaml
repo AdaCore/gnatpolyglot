@@ -3,6 +3,9 @@ driver: python
 input_lang: ada
 project_file: test.gpr
 
+control:
+  - [SKIP, "env.build.platform != 'x86_64-linux'", "Custom runtime is for x86_64-linux only"]
+
 input_lib_flags:
   - "--RTS=./rts-custom"
 
