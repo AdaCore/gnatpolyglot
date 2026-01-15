@@ -21,6 +21,7 @@ import com.adacore.polyglot.proxy.Role;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.Transfer;
 import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -333,24 +334,18 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     /** Return whether ``subp`` is dot callable with ``type``. */
     private boolean isDotCallable(Libadalang.BaseSubpSpec spec, Libadalang.BaseTypeDecl type) {
-        Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
-
         // TODO: When eng/libadalang/libadalang#1547 is resoled, use the new property.
-        return !primitiveType.isNone()
+        return !type.isNone()
                 // Native and array types do not create new types in the proxy, so we cannot attach
                 // methods
-                && AdaAPI.checkNativeType(primitiveType) == null
-                && !primitiveType.pIsEnumType(Libadalang.AdaNode.NONE)
-                && !primitiveType.pIsArrayType(Libadalang.AdaNode.NONE)
-                && !primitiveType.pIsAccessType(Libadalang.AdaNode.NONE)
+                && AdaAPI.checkNativeType(type) == null
+                && !type.pIsEnumType(Libadalang.AdaNode.NONE)
+                && !type.pIsArrayType(Libadalang.AdaNode.NONE)
+                && !type.pIsAccessType(Libadalang.AdaNode.NONE)
                 // The first argument of the subprogram must be compatible with the primitive type.
                 && spec.pParams().length != 0
-                && (spec.pParams()[0]
-                                .pFormalType(Libadalang.AdaNode.NONE)
-                                .pMatchingType(primitiveType, Libadalang.AdaNode.NONE)
-                        || type.pIsDerivedType(
-                                spec.pParams()[0].pFormalType(Libadalang.AdaNode.NONE),
-                                Libadalang.AdaNode.NONE));
+                && (spec.pParamTypes(Libadalang.AdaNode.NONE)[0].pMatchingType(
+                        type, Libadalang.AdaNode.NONE));
     }
 
     public void processSubprogram(Libadalang.BasicDecl node) {
@@ -375,6 +370,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
         // Get the list of parameters.
         List<SubpParam> parameters = new ArrayList<>();
+        Libadalang.BaseTypeDecl[] types = spec.pParamTypes(Libadalang.AdaNode.NONE);
+        int typeIndex = 0;
         for (var paramSpec : spec.pAbstractFormalParams()) {
             // Enqueue the parameter's type in case we do not visit it in the required list of
             // units
@@ -396,12 +393,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             for (var p : paramSpec.pDefiningNames())
                 parameters.add(
                         new SubpParam(
-                                paramSpec, Name.fromLower(p.pCanonicalText().text), transfer));
+                                paramSpec,
+                                Name.fromLower(p.pCanonicalText().text),
+                                transfer,
+                                types[typeIndex++]));
         }
-
-        // When the subprogram is an inherited primitive of a derived type, we need to update its
-        // first parameter's type.
-        if (derivedType != null && role != null) parameters.get(0).setType(primitiveType);
 
         Libadalang.BaseTypeDecl returnType = spec.pReturnType(Libadalang.AdaNode.NONE);
         if (!returnType.isNone()) queuedDecls.add(returnType);
@@ -560,6 +556,15 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             declarations.add(array);
             mappedTypes.put(parentDecl, array);
             queuedDecls.add(parentDecl.pCompType(false, Libadalang.AdaNode.NONE));
+        } else if (AdaTypeMatcher.isEnum(parentDecl)) {
+            EnumType enumType = createEnumType(parentDecl);
+            declarations.add(enumType);
+            mappedTypes.put(parentDecl, enumType);
+            this.derivedType = parentDecl;
+            for (var prim : parentDecl.pGetPrimitives(true, false)) {
+                if (!(prim instanceof Libadalang.EnumLiteralDecl)) processSubprogram(prim);
+            }
+            this.derivedType = null;
         } else if (!parentDecl.pIsScalarType(Libadalang.AdaNode.NONE))
             throw new IllegalArgumentException("Unsupported derivation of types " + node);
 
@@ -590,25 +595,36 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return null;
     }
 
+    private boolean contains(List<Libadalang.EvalDiscreteRange> ranges, int enumPos) {
+        BigInteger value = BigInteger.valueOf(enumPos);
+        return ranges.stream()
+                .anyMatch(
+                        r -> value.compareTo(r.lowBound) >= 0 && value.compareTo(r.highBound) <= 0);
+    }
+
+    private EnumType createEnumType(Libadalang.TypeDecl decl) {
+        List<Libadalang.EvalDiscreteRange> ranges = List.of(decl.pDiscreteStaticValues());
+        List<EnumLiteral> enumValues =
+                Stream.of(decl.pGetPrimitives(false, false))
+                        .filter(p -> p instanceof Libadalang.EnumLiteralDecl)
+                        .map(p -> (Libadalang.EnumLiteralDecl) p)
+                        .filter(lit -> contains(ranges, lit.childIndex()))
+                        .map(
+                                lit -> {
+                                    return new EnumLiteral(
+                                            lit,
+                                            AdaAPI.getName(lit.pDefiningName()),
+                                            lit.pEnumRep().intValue());
+                                })
+                        .toList();
+        return new EnumType(decl, AdaAPI.getName(decl.pDefiningName()), enumValues);
+    }
+
     public Void visit(Libadalang.EnumTypeDef node) {
         Libadalang.ConcreteTypeDecl parentDecl =
                 (Libadalang.ConcreteTypeDecl) node.pParentBasicDecl();
 
-        List<EnumLiteral> enumValues =
-                Stream.of(node.fEnumLiterals().children())
-                        .map(
-                                lit -> {
-                                    Libadalang.EnumLiteralDecl enumLit =
-                                            (Libadalang.EnumLiteralDecl) lit;
-                                    return new EnumLiteral(
-                                            enumLit,
-                                            AdaAPI.getName(enumLit.pDefiningName()),
-                                            enumLit.pEnumRep().intValue());
-                                })
-                        .toList();
-
-        EnumType enumType =
-                new EnumType(parentDecl, AdaAPI.getName(parentDecl.pDefiningName()), enumValues);
+        EnumType enumType = createEnumType(parentDecl);
         declarations.add(enumType);
         mappedTypes.put(parentDecl, enumType);
         return null;

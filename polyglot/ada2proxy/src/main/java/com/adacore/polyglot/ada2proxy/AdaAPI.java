@@ -112,10 +112,25 @@ public class AdaAPI extends LanguageAPI {
     public static NativeType checkNativeType(Libadalang.BaseTypeDecl bTypeDecl) {
         if (bTypeDecl.isNone()) return NativeType.VOID;
 
+        // Derivating from an enum (i.e. booleans) should not result in its root native type:
+        //
+        // package Test is
+        //    type My_Boolean is new My_Boolean;
+        //    procedure Print_My_Boolean (B: My_Boolean);
+        // end Test;
+        //
+        // In this example, a separate enumeration should appear in the proxy, and we don't want to
+        // bind Print_My_Boolean as `void print_my_boolean(bool)`. Since native type checks are done
+        // on the root type in order to ensure that the correct size of integer is used, we check
+        // that `bTypeDecl` not the `Standard.Boolean` type before getting its root type.
+        //
+        // This does not apply to other native types.
+        if (bTypeDecl.pBaseSubtype(Libadalang.AdaNode.NONE).equals(bTypeDecl.pBoolType()))
+            return NativeType.BOOL;
+
         bTypeDecl = bTypeDecl.pRootType(Libadalang.AdaNode.NONE);
 
         if (bTypeDecl instanceof Libadalang.TypeDecl typeDecl) {
-            if (typeDecl.equals(typeDecl.pBoolType())) return NativeType.BOOL;
             if (AdaTypeMatcher.isStringType(typeDecl)) return NativeType.STRING;
             if (AdaTypeMatcher.isCharacter(typeDecl)) return NativeType.UINT8;
             if (typeDecl.pIsIntType(Libadalang.AdaNode.NONE)) {

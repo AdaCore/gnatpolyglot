@@ -39,4 +39,7 @@ int main() {
    std::cout << static_cast<int>(test::call_t_f(c, test::Enum1::A)) << "\n";
    std::cout << static_cast<int>(test::call_t_f(c, test::Enum1::B)) << "\n";
    std::cout << static_cast<int>(test::call_t_f(c, test::Enum1::C)) << "\n";
+
+   test::Enum3 e3 = test::Enum3::A;
+   p_enum_1(e3);
 }
