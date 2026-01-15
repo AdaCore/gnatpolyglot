@@ -1,0 +1,245 @@
+# Proxy2Cpp
+
+## Modules
+
+Modules in the JSON Proxy are translated to namespaces and are each in a
+separate file. Nested modules become nested namespaces.
+
+```ada
+-- example.ads
+package Example is
+   procedure Foo;
+end Example;
+
+-- example-child.ads
+package Example.Child is
+   procedure Bar;
+end Example.Child;
+```
+
+```cpp
+// example.h
+namespace example {
+
+void Foo();
+
+} // namespace example
+
+// example.h
+namespace example {
+namespace child {
+
+void Bar();
+
+} // namespace child
+} // namespace example
+```
+
+## Functions
+
+### Function placement
+
+By default, functions will be placed in their parent namespace. Functions with
+roles become member functions to the type of the role.
+
+```json
+{
+  "kind": "function",
+  "name": {"names": ["n1", "f"]},
+  ...
+},
+{
+  "kind": "class",
+  "name": {"names": ["n1", "c"]},
+  ...
+},
+{
+  "kind": "function",
+  "name": {"names": ["n1", "fm"]},
+  "role": {
+    "kind": "method",
+    "type": {"kind": "typename", "name": {names": ["n1", "c"]}},
+    ...
+  }
+  ...
+}
+```
+
+```cpp
+namespace n1 {
+
+void f();
+
+class C {
+  void fm();
+};
+
+} // namespace n1
+```
+
+### Operators
+
+Functions from a proxy that have a name matching a placeholder name will be
+translated to an operator overload.
+
+```ada
+function "+"(I: Long_Integer; D: Long_Float) return Integer;
+```
+
+```json
+{
+  "kind": "function",
+  "name": {"names": ["operator_plus"]},
+  ...
+}
+```
+
+```cpp
+int operator+(long i, double d);
+```
+
+## Class types
+
+### Final types
+
+TODO: do some stuff to prevent inheritance for these (i.e. private constructor in C++98, C++11 use "final" keyword)
+      currently, nothing prevents users from inheriting from these types, leading to incorrect behaviors in cases.
+
+### Function members
+
+As mentionned previously, functions with a role will be function members of the
+class. The first parameter has to be of the same type as the role's. The latter
+becomes the implicit `this` value. If the first argument type in the proxy is
+constant, then the the function member will be marked as `const`.
+
+### Inheritance
+
+Types with a shadow constructor can be inherited. It is mandatory to use the
+shadow constructor in order to enable overriding non static function members
+from binded types.
+
+The shadow constructor can be distinguished by its last argument: when
+constructing the shadow object of a type `T`, its constructor will expect a
+`T*`. This argument expects the `this` value.
+
+```cpp
+class Bar : public example::Foo {
+    // valid: creates a shadow object
+    Bar() : example::Foo(this) {}
+
+    // Invalid: the input library will not create a shadow object, dispatching
+    // will not work
+    Bar() : example::Foo() {}
+}
+```
+
+> This is necessary due to C++ initializing the vtable for a given type only at
+> the time that is it being constructed. When executing `example::Foo`'s
+> constructor, the vtable of `Bar` is not yet initialized, meaning that it
+> cannot be aware that the object being constructed actually inhertis from
+> `example::Foo`.
+
+### Overriding virtual functions
+
+Virtual funtions from Binded types can be overriden. This allows inside the
+binded libraries to dynamically dispatch back to overrides.
+
+```ada
+package Example is
+   type Foo is tagged private;
+
+   procedure Hello (F : Foo) is
+   begin
+      Put_Line ("Hello from Ada");
+   end Hello;
+
+   procedure Call_Hello (F : Foo'Class) is
+   begin
+      F.Hello; -- Dispatching call
+   end Call_Hello;
+end Example;
+```
+
+```cpp
+class Bar : example::Foo {
+    Bar() : example::Foo(this) {}
+
+    void hello() const override {
+        std::cout << "Hello from C++\n";
+    }
+};
+
+int main() {
+    example::Foo foo;
+    Bar bar;
+    example::call_hello(foo); // Hello from Ada;
+    example::call_hello(bar); // Hello from C++;
+}
+```
+
+#### Uncopyable classes (copy ellision (C++17))
+
+C++ only supports guaranted copy ellision since C++17. However, there may be
+times where input languages support returning uncopyable values through similar
+concepts to copy ellision. In order to avoid errors with invalid code
+generation, when these values are returned before with standards prior to
+C++17, they will be returned though a pointer. These value, since cloned before
+by the proxy before returning, will be owned by the user.
+
+## Polyglot pointers
+
+Pointer types are represented using a ref-counted smart pointer
+(`polyglot_ptr`) in order to avoid manual memory management. It holds
+information on the ownership of the underlying pointer.
+
+Creating a pointer from an existing object sets the owner to `STATIC`. It
+implies that the memory should not be freed when the pointer goes out of scope,
+and the owner cannot be changed.
+
+When passing a pointer to a function, the function excpects a minimum level of
+ownership. This is to make sure that after calling a function that may escape
+the pointer, the latter should not be freed inadvertently which could leave
+dangling pointer.
+
+TODO: example of pointer escaping
+
+## References and view types
+
+Returning non-scalar references is not possible, so instead, view types are
+generated. Similarly to the `std::vector<bool>::reference` specialization,
+their goal is to provide a value that can be used as a reference of their
+underlying type. As a comparison, a pointer with a `static` ownership would
+result in a similar result, but the outcome would not reflect the behavior of
+the interface as well.
+
+Destruction of such view objects do not cause the underlying data to be freed.
+
+References to Scalar type are still translated to usual C++ references.
+
+TODO: example
+
+## Exceptions
+
+Exceptions are bound as classes that inherit the `std::exception` type.
+Polyglot guarantees the consistency of C++ exception types at run time.
+
+```ada
+package Example is
+
+   Exc : exception;
+
+   procedure Raise_Exc is
+   begin
+      raise Exc with "message";
+   end Raise_Exc;
+
+end Example;
+```
+
+```cpp
+try {
+    example::raise_exc();
+} catch (const example::Exc& ex) {
+    std::cout << ex.what() << '\n';
+}
+```

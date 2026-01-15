@@ -69,7 +69,7 @@ int main() {
 }
 ```
 
-# Inheritable types
+## Inheritable types
 
 In Ada, tagged type primitives can have multiple controlling parameters, and
 can also have a controlling return type (dynamic dispatch based on return
@@ -166,7 +166,12 @@ polymorphic copies out of the box, so when inheriting a binded types, it is
 necessary to manually provide a way to perform such copies through the
 overridable `internal_clone` function member:
 
+
+```ada
+type Root is tagged private;
 ```
+
+```cpp
 class Child : public Root {
 protected:
     Root *internal_clone(void *data) {
