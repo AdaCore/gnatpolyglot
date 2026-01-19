@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Command(name = "setup", description = "setup the Polyglot runtime")
+@Command(name = "setup", description = "Setup the Polyglot runtime")
 public class PolyglotSetup implements Callable<Integer> {
 
     @Option(
