@@ -22,6 +22,12 @@ public class PolyglotSetup implements Callable<Integer> {
                     "do not copy the runtime. Instead, emitt warnings if the runtime was modified.")
     boolean checkOnly;
 
+    @Option(
+            names = {"-h", "--help"},
+            usageHelp = true,
+            description = "display sub-command usage and exit")
+    boolean helpRequested;
+
     public PolyglotSetup() {}
 
     public PolyglotSetup(Path prefixPath, boolean checkOnly) {

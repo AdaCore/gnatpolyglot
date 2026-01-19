@@ -22,6 +22,12 @@ public class Proxy2Cpp implements Callable<Integer> {
             required = true)
     Path outputPath;
 
+    @Option(
+            names = {"-h", "--help"},
+            usageHelp = true,
+            description = "display sub-command usage and exit")
+    boolean helpRequested;
+
     @Override
     public Integer call() throws Exception {
         CppPrinter printer = new CppPrinter(proxyFile);

@@ -62,6 +62,12 @@ public class Ada2Proxy implements Callable<Integer> {
                     "location of the polyglot runtime to use. Defaults to <outputPath>/runtimes.")
     Path withRuntime;
 
+    @Option(
+            names = {"-h", "--help"},
+            usageHelp = true,
+            description = "display sub-command usage and exit")
+    boolean helpRequested;
+
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
 
     private Libadalang.ProjectOptions getProjectOptions() {

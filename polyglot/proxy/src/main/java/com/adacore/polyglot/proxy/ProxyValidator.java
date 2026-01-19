@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 /** Inspect a Proxy and verify that values are correct according to the Proxy IR specification. */
@@ -402,6 +403,12 @@ public class ProxyValidator implements Callable<Integer> {
             return null;
         }
     }
+
+    @Option(
+            names = {"-h", "--help"},
+            usageHelp = true,
+            description = "display sub-command usage and exit")
+    boolean helpRequested;
 
     @Parameters(index = "0", paramLabel = "json_proxy", description = "json file of the proxy")
     private File jsonProxy;
