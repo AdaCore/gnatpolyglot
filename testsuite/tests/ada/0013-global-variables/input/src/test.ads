@@ -18,4 +18,6 @@ package Test is
 
    procedure Increment_Arr (A : in out Arr);
 
+   Global_A, Global_B : Integer := 42;
+
 end Test;

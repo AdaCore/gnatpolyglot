@@ -15,15 +15,25 @@ import java.util.List;
 
 public class GlobalVariable extends AdaDeclaration {
 
+    /** Origin node in the LAL tree. */
     private final Libadalang.ObjectDecl origin;
+
+    /**
+     * Specific defining name of this global variable.
+     *
+     * <p>Useful when the ``origin`` ObjectDecl has multiple defining names, to identify the
+     * specific one that this instance represents.
+     */
+    private final Libadalang.DefiningName definingName;
 
     private FunctionDecl getter;
 
     private FunctionDecl setter;
 
-    public GlobalVariable(Libadalang.ObjectDecl origin, Name name) {
+    public GlobalVariable(Libadalang.ObjectDecl origin, Libadalang.DefiningName dn, Name name) {
         super(name);
         this.origin = origin;
+        this.definingName = dn;
     }
 
     /** Create a symbol for generated member functions. */
@@ -35,7 +45,7 @@ public class GlobalVariable extends AdaDeclaration {
     }
 
     public String getFullyQualifiedName() {
-        return origin.pFullyQualifiedName();
+        return definingName.pFullyQualifiedName();
     }
 
     public Libadalang.BaseTypeDecl getType() {
@@ -46,7 +56,7 @@ public class GlobalVariable extends AdaDeclaration {
         if (getter == null) {
             getter =
                     new FunctionDecl(
-                            AdaAPI.makeProxyFullyQualifiedName(origin)
+                            AdaAPI.makeProxyFullyQualifiedName(definingName)
                                     .append(Name.fromLower("get").concat(name)),
                             "Return a reference to " + getFullyQualifiedName(),
                             null,
@@ -72,7 +82,7 @@ public class GlobalVariable extends AdaDeclaration {
                 setterType = setterType.makeReference(true);
             setter =
                     new FunctionDecl(
-                            AdaAPI.makeProxyFullyQualifiedName(origin)
+                            AdaAPI.makeProxyFullyQualifiedName(definingName)
                                     .append(Name.fromLower("set").concat(name)),
                             "Set the value of " + getFullyQualifiedName(),
                             null,

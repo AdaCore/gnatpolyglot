@@ -689,7 +689,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     public Void visit(Libadalang.ObjectDecl node) {
         if (!(node.pParentBasicDecl() instanceof Libadalang.PackageDecl)) return null;
         for (var id : node.fIds()) {
-            declarations.add(new GlobalVariable(node, AdaAPI.getName(id)));
+            declarations.add(new GlobalVariable(node, id, AdaAPI.getName(id)));
         }
         return null;
     }
