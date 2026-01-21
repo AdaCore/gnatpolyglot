@@ -597,8 +597,9 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.ExceptionDecl node) {
-        declarations.add(
-                new AdaException(AdaAPI.getName(node.pDefiningName()), node, exceptionNumber++));
+        for (var dn : node.pDefiningNames()) {
+            declarations.add(new AdaException(AdaAPI.getName(dn), node, dn, exceptionNumber++));
+        }
         return null;
     }
 

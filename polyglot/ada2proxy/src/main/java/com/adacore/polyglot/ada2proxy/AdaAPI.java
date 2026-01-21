@@ -83,7 +83,14 @@ public class AdaAPI extends LanguageAPI {
         };
     }
 
-    /** Create a {@link FullyQualifiedName} to decl, or its parent if ``onlyParent`` is true. */
+    /** Create a {@link FullyQualifiedName} to ``dn``. */
+    public static FullyQualifiedName makeProxyFullyQualifiedName(Libadalang.DefiningName dn) {
+        Libadalang.Symbol[] symbols = dn.pFullyQualifiedNameArray();
+        return new FullyQualifiedName(
+                Stream.of(symbols).map(s -> s.text).map(s -> functionProxyName(s)).toList());
+    }
+
+    /** Create a {@link FullyQualifiedName} to ``decl``, or its parent if ``onlyParent`` is true. */
     public static FullyQualifiedName makeProxyFullyQualifiedName(Libadalang.BasicDecl decl) {
         if (decl instanceof Libadalang.BaseTypeDecl typeDecl) {
             NativeType nativeType = checkNativeType(typeDecl);

@@ -1,7 +1,6 @@
 package Test is
 
-   Exc1 : exception;
-   Exc2 : exception;
+   Exc1, Exc2 : exception;
 
    procedure Get_Exception (I: Integer);
 
