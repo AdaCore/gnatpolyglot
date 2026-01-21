@@ -133,6 +133,7 @@ public class AdaScanner extends Scanner {
                 getFilesToAnalyze(projectManager, units).stream()
                         .map(s -> ctx.getUnitFromFile(s))
                         .map(u -> visitor.analyzeSpec(u))
+                        .filter(p -> p != null)
                         .toList();
         modules =
                 Stream.concat(modules.stream(), visitor.getNonVisitedPackages().stream()).toList();
