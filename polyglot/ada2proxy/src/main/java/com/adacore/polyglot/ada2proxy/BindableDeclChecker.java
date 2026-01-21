@@ -81,6 +81,10 @@ public class BindableDeclChecker {
         // assume that decl is bindable (to avoid infinite loops)
         bindableDecls.add(decl);
 
+        if (decl instanceof Libadalang.GenericDecl gen) {
+            throw new UnbindableDeclException(decl, "Generic declarations are not bindable");
+        }
+
         if (decl.pIsSubprogram()) {
             Libadalang.BaseSubpSpec spec = decl.pSubpSpecOrNull(false);
             for (var paramType : spec.pParamTypes(Libadalang.AdaNode.NONE)) {

@@ -206,7 +206,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     @Override
     public Void visit(Libadalang.LibraryItem node) {
         if (!node.fHasPrivate().pAsBool()) {
-            node.fItem().accept(this);
+            visitDecl(node.fItem());
         }
         return null;
     }
