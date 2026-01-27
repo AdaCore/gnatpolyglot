@@ -1,0 +1,68 @@
+Running `polyglot  --help`
+================================================================================
+
+Usage: polyglot [-hv] [COMMAND]
+Polyglot driver.
+  -h, --help      display usage and exit
+  -v, --version   display version and exit
+Commands:
+  validator  Validate a json proxy
+  ada2proxy  Create a proxy for an Ada project. If no unit is explicitly given,
+               process all of them.
+  proxy2cpp  Create the C++ interface of a proxy representation
+  setup      Setup the Polyglot runtime
+
+
+Running `polyglot setup --help`
+================================================================================
+
+Usage: polyglot setup [-h] [--check-only] --prefix=<prefixPath>
+Setup the Polyglot runtime
+      --check-only   do not copy the runtime. Instead, emitt warnings if the
+                       runtime was modified.
+  -h, --help         display sub-command usage and exit
+      --prefix=<prefixPath>
+                     installation path
+
+
+Running `polyglot validator --help`
+================================================================================
+
+Usage: polyglot validator [-h] json_proxy
+Validate a json proxy
+      json_proxy   json file of the proxy
+  -h, --help       display sub-command usage and exit
+
+
+Running `polyglot ada2proxy --help`
+================================================================================
+
+Usage: polyglot ada2proxy [OPTIONS]
+Create a proxy for an Ada project. If no unit is explicitly given, process all
+of them.
+  -P=project_file           input GPR project file
+  -o, --output=<outputPath> output path for the proxy project
+      --units=<units>       filenames of the units of the input project to bind
+  -X=<scenarioVariables>    Scenario variables to pass to the project file
+      --RTS=<rts>           Name of the runtime (RTS) to use when loading the
+                              project
+      --target=<target>     Specify a target for cross platforms
+      --with-runtime=<withRuntime>
+                            location of the polyglot runtime to use. Defaults
+                              to <outputPath>/runtimes.
+  -h, --help                display sub-command usage and exit
+
+
+Running `polyglot proxy2cpp --help`
+================================================================================
+
+Usage: polyglot proxy2cpp [-h] -o=<outputPath> proxy_file
+Create the C++ interface of a proxy representation
+      proxy_file   input proxy json file
+  -h, --help       display sub-command usage and exit
+  -o, --output=<outputPath>
+                   path to the directory in which the C++ interface should be
+                     generated. Directories along the path are created if they
+                     do not exist yet.
+
+

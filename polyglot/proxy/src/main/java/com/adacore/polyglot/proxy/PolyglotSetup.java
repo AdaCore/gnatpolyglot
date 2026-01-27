@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-@Command(name = "setup", description = "setup the Polyglot runtime")
+@Command(name = "setup", description = "Setup the Polyglot runtime")
 public class PolyglotSetup implements Callable<Integer> {
 
     @Option(
@@ -21,6 +21,12 @@ public class PolyglotSetup implements Callable<Integer> {
             description =
                     "do not copy the runtime. Instead, emitt warnings if the runtime was modified.")
     boolean checkOnly;
+
+    @Option(
+            names = {"-h", "--help"},
+            usageHelp = true,
+            description = "display sub-command usage and exit")
+    boolean helpRequested;
 
     public PolyglotSetup() {}
 

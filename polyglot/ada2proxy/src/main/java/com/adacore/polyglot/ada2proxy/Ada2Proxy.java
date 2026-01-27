@@ -17,8 +17,8 @@ import picocli.CommandLine.Option;
 @Command(
         name = "ada2proxy",
         description =
-                "Create a proxy for an ada project."
-                        + " If no unit are explicitly given, process all of them.",
+                "Create a proxy for an Ada project."
+                        + " If no unit is explicitly given, process all of them.",
         abbreviateSynopsis = true,
         sortOptions = false)
 public class Ada2Proxy implements Callable<Integer> {
@@ -61,6 +61,12 @@ public class Ada2Proxy implements Callable<Integer> {
             description =
                     "location of the polyglot runtime to use. Defaults to <outputPath>/runtimes.")
     Path withRuntime;
+
+    @Option(
+            names = {"-h", "--help"},
+            usageHelp = true,
+            description = "display sub-command usage and exit")
+    boolean helpRequested;
 
     @CommandLine.Spec CommandLine.Model.CommandSpec spec;
 
