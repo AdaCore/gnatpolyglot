@@ -42,6 +42,8 @@ public class BindableDeclChecker {
 
         // Check that we are able to compute the size of a given scalar type.
         else if (AdaTypeMatcher.isNumber(decl)) {
+            if (decl.pIsFixedPoint(Libadalang.AdaNode.NONE))
+                throw new UnbindableDeclException(decl, "Fixed-point types are not supported");
             try {
                 AdaAPI.checkNativeType(decl);
             } catch (Libadalang.LangkitException e) {
