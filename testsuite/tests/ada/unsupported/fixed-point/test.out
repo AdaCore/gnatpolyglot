@@ -1,0 +1,10 @@
+Running scanner test.
+Running the scanner...
+fixeds.ads:4:4: warning: Could not bind Fixeds.My_Delta: Fixed-point types are not supported
+fixeds.ads:6:4: warning: Could not bind Fixeds.F_Delta: Used type `Fixeds.My_Delta` is not bindable
+fixeds.ads:8:4: warning: Could not bind Fixeds.Decimal: Fixed-point types are not supported
+fixeds.ads:10:4: warning: Could not bind Fixeds.F_Decimal: Used type `Fixeds.Decimal` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

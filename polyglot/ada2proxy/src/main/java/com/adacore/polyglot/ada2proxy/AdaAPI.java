@@ -2,7 +2,6 @@ package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
-import com.adacore.libadalang.Libadalang.Expr;
 import com.adacore.polyglot.LanguageAPI;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
@@ -93,16 +92,21 @@ public class AdaAPI extends LanguageAPI {
 
     /** Create a {@link TypeExpr} to ``decl``. */
     public static TypeExpr makeTypeExpr(Libadalang.BasicDecl decl) {
-        if (decl instanceof Libadalang.TypeDecl typeDecl) {
-            if (typeDecl.fTypeDef() instanceof Libadalang.ArrayTypeDef arrayTypeDef) {
-                if (AdaTypeMatcher.isStringType(typeDecl)) return NativeType.STRING.typeExpr;
-                return makeTypeExpr(arrayTypeDef.fComponentType().fTypeExpr()).makeArray();
-            }
-            if (typeDecl.fTypeDef() instanceof Libadalang.TypeAccessDef access) {
-                return makeTypeExpr(access.fSubtypeIndication())
-                        .makePointer(
-                                access.fHasConstant() instanceof Libadalang.ConstantPresent,
-                                access.fHasNotNull() instanceof Libadalang.NotNullPresent);
+        if (decl.isNone()) return NativeType.VOID.typeExpr;
+        else if (decl instanceof Libadalang.BaseTypeDecl typeDecl) {
+            if (AdaTypeMatcher.isStringType(typeDecl)) return NativeType.STRING.typeExpr;
+            else if (typeDecl.pIsArrayType(Libadalang.AdaNode.NONE)) {
+                return makeTypeExpr(typeDecl.pCompType(false, Libadalang.AdaNode.NONE)).makeArray();
+            } else if (typeDecl.pIsAccessType(Libadalang.AdaNode.NONE)) {
+                Libadalang.TypeDecl rootType =
+                        (Libadalang.TypeDecl) typeDecl.pRootType(Libadalang.AdaNode.NONE);
+                Libadalang.AccessDef accessDef = (Libadalang.AccessDef) rootType.fTypeDef();
+                boolean hasNonNull = accessDef.fHasNotNull().pAsBool();
+                boolean hasConst = false;
+                if (rootType.fTypeDef() instanceof Libadalang.TypeAccessDef access)
+                    hasConst = access.fHasConstant().pAsBool();
+                return makeTypeExpr(typeDecl.pAccessedType(Libadalang.AdaNode.NONE))
+                        .makePointer(hasNonNull, hasConst);
             }
         }
         return makeProxyFullyQualifiedName(decl).asTypeExpr();
@@ -136,32 +140,49 @@ public class AdaAPI extends LanguageAPI {
             if (typeDecl.pIsIntType(Libadalang.AdaNode.NONE)) {
                 // Compute the number of required bits to hold the values of the type and
                 // find the smallest type able to hold it.
-                if (typeDecl.fTypeDef() instanceof Libadalang.SignedIntTypeDef signed) {
-                    Expr expr = signed.fRange().fRange();
-                    if (expr instanceof Libadalang.BinOp binop) {
+                try {
+                    if (typeDecl.fTypeDef() instanceof Libadalang.SignedIntTypeDef) {
+                        Libadalang.DiscreteRange range = typeDecl.pDiscreteRange();
                         int bitLength =
                                 Math.max(
-                                                binop.fLeft().pEvalAsInt().bitLength(),
-                                                binop.fRight().pEvalAsInt().bitLength())
+                                                range.lowBound.pEvalAsInt().bitLength(),
+                                                range.highBound.pEvalAsInt().bitLength())
                                         + 1;
                         if (bitLength <= 8) return NativeType.SINT8;
                         if (bitLength <= 16) return NativeType.SINT16;
                         if (bitLength <= 32) return NativeType.SINT32;
                         if (bitLength <= 64) return NativeType.SINT64;
                         if (bitLength <= 128) return NativeType.SINT128;
-                    } else {
-                        throw new IllegalArgumentException(
-                                "Illegal integer type definition: " + expr.getImage());
+                        throw new UnbindableDeclException(
+                                typeDecl, "Unsupported integer size (%s)".formatted(bitLength));
                     }
+                    if (typeDecl.fTypeDef() instanceof Libadalang.ModIntTypeDef) {
+                        Libadalang.DiscreteRange range = typeDecl.pDiscreteRange();
+                        int bitLength = range.highBound.pEvalAsInt().bitLength();
+                        if (bitLength <= 8) return NativeType.UINT8;
+                        if (bitLength <= 16) return NativeType.UINT16;
+                        if (bitLength <= 32) return NativeType.UINT32;
+                        if (bitLength <= 64) return NativeType.UINT64;
+                        if (bitLength <= 128) return NativeType.UINT128;
+                        throw new UnbindableDeclException(
+                                typeDecl, "Unsupported integer size (%s)".formatted(bitLength));
+                    }
+                } catch (Libadalang.LangkitException e) {
+                    throw new UnbindableDeclException(bTypeDecl, e.getLocalizedMessage());
                 }
             }
-            if (typeDecl.fTypeDef() instanceof Libadalang.ModIntTypeDef unsigned) {
-                int bitLength = unsigned.fExpr().pEvalAsInt().bitLength();
-                if (bitLength <= 8) return NativeType.UINT8;
-                if (bitLength <= 16) return NativeType.UINT16;
-                if (bitLength <= 32) return NativeType.UINT32;
-                if (bitLength <= 64) return NativeType.UINT64;
-                if (bitLength <= 128) return NativeType.UINT128;
+            if (typeDecl.pIsFloatType(Libadalang.AdaList.NONE)) {
+                try {
+                    int digits = 0;
+                    if (typeDecl.fTypeDef() instanceof Libadalang.FloatingPointDef floating) {
+                        digits = floating.fNumDigits().pEvalAsInt().intValue();
+                    }
+                    if (digits >= 18) return NativeType.FLOAT128;
+                    if (digits >= 11) return NativeType.FLOAT64;
+                    return NativeType.FLOAT32;
+                } catch (Libadalang.LangkitException e) {
+                    throw new UnbindableDeclException(bTypeDecl, e.getLocalizedMessage());
+                }
             }
         }
 
@@ -991,6 +1012,7 @@ public class AdaAPI extends LanguageAPI {
         BaseTypeDecl returnType = subp.getReturnType();
         if (AdaTypeMatcher.isCharacter(returnType))
             return "return Interfaces.C.To_C ( Character'Val(0))";
+        if (returnType.pIsFloatType(Libadalang.AdaNode.NONE)) return "return 0.0";
         if (returnType.pIsScalarType(Libadalang.AdaNode.NONE)) return "return 0";
         if (returnType.pIsArrayType(Libadalang.AdaNode.NONE)
                 || AdaTypeMatcher.isArrayAccess(subp.getReturnType()))
