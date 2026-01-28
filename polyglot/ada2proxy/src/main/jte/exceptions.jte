@@ -27,13 +27,13 @@ package Polyglot.Exceptions.${projectName.toPascalWithUnderscore()} is
    type Exception_Kind is (
       Anon_Kind
    @for(var exception : exceptions)
-      , ${exception.name.toPascalWithUnderscore()}_Kind
+      , ${exception.getEnumIdentifier()}
    @endfor
       );
    for Exception_Kind use (
          Anon_Kind => 0
    @for(var exception : exceptions)
-      , ${exception.name.toPascalWithUnderscore()}_Kind
+      , ${exception.getEnumIdentifier()}
          => ${String.valueOf(exception.getValue())}
    @endfor
       );
@@ -44,7 +44,6 @@ package Polyglot.Exceptions.${projectName.toPascalWithUnderscore()} is
 
 @for(var pack : ExceptionCollector.getPackagesToInclude(proxy))
 with ${pack.getFullyQualifiedName()};
-use ${pack.getFullyQualifiedName()};
 @endfor
 
 package body Polyglot.Exceptions.${projectName.toPascalWithUnderscore()} is
@@ -52,9 +51,9 @@ package body Polyglot.Exceptions.${projectName.toPascalWithUnderscore()} is
    function Identify_Exception (Id : Exception_Id) return Interfaces.C.Int is
    begin
       @for(var exception : ExceptionCollector.getExceptions(proxy))
-         if Id = ${exception.name.toPascalWithUnderscore()}'Identity then
+         if Id = Standard.${exception.getFullyQualifiedName()}'Identity then
             return Exception_Kind'Enum_Rep
-               (${exception.name.toPascalWithUnderscore()}_Kind);
+               (${exception.getEnumIdentifier()});
          end if;
       @endfor
       if Id = Constraint_Error'Identity then

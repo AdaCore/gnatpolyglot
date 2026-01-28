@@ -75,6 +75,10 @@ public class AdaException extends AdaDeclaration {
         return definingName.pFullyQualifiedName();
     }
 
+    public String getEnumIdentifier() {
+        return getFullyQualifiedName().replace(".", "_").concat("_Kind");
+    }
+
     public List<FunctionDecl> getAllocFunctions() {
         if (allocFunctions == null) {
             allocFunctions = new ArrayList<>();
