@@ -26,6 +26,14 @@ vim: filetype=jtecpp
 
 @if(!isSource)
     class ${className} ${inherits}{
+    private:
+    @if(!api.isCopyable(classDecl))
+        ${className} &operator=(const ${className}&) = delete;
+    @endif
+
+    @if(!api.isCopyConstructible(classDecl))
+        ${className}(const ${className}&) = delete;
+    @endif
 
     protected:
     @for(var alloc : members.allocFunctions)

@@ -141,7 +141,7 @@ public class Record extends AdaDeclaration {
 
     /** Return the copying function of the type, or generate a new one if necessary. */
     public FunctionDecl getCopyFunction() {
-        if (this.copyFunction == null)
+        if (this.copyFunction == null && !origin.pIsLimitedType())
             this.copyFunction =
                     new FunctionDecl(
                             getProxyFullyQualifiedName()
@@ -282,7 +282,7 @@ public class Record extends AdaDeclaration {
 
     /** Return the cloning function of the type, or generate a new one if necessary. */
     public FunctionDecl getCloneFunction() {
-        if (this.cloneFunction == null) {
+        if (this.cloneFunction == null && !origin.pIsLimitedType()) {
             NameTypeExpr type = getTypeExpr();
             this.cloneFunction =
                     new FunctionDecl(
@@ -428,5 +428,9 @@ public class Record extends AdaDeclaration {
 
     public boolean isControlled() {
         return AdaTypeMatcher.isControlledType(origin);
+    }
+
+    public boolean isLimited() {
+        return origin.pIsLimitedType();
     }
 }

@@ -36,7 +36,7 @@ Template file to generate shadow types for tagged records.
 @if(!isBody)
    <%-- Shadow type for inheritance --%>
 
-   type ${shadowTypename} is new
+   type ${shadowTypename} is ${rec.isLimited() ? "limited" : ""} new
          ${recordFullName} and Polyglot.Ada.Shadow_Interface with record
       Shadow: Polyglot.Ada.Shadow_Data;
    end record;
