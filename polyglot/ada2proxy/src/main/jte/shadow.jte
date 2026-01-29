@@ -123,7 +123,7 @@ Template file to generate shadow types for tagged records.
          package Converter is new
            System.Address_To_Access_Conversions (${instantiableRecordName});
          Tmp : ${shadowAccess} := new ${shadowTypename}'(
-            ${rec.extensionAggregate()}
+            ${rec.extensionAggregate(true)}
             @for(var p : allocFunc.type.parameters)
                @if(rec.getComponent(p.name) != null)
                   ${api.valueName(p.name)},

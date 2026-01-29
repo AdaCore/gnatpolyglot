@@ -10,7 +10,7 @@
           "doc": "class_type documentation",
           "size": 8,
           "fields": [],
-          "is_final": false
+          "inheritability": "inheritable"
         }
       ]
     },
@@ -23,7 +23,7 @@
           "doc": "class_type documentation",
           "size": 8,
           "fields": [],
-          "is_final": false
+          "inheritability": "inheritable"
         }
       ]
     }

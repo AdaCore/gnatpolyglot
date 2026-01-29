@@ -24,12 +24,18 @@ public class AdaAPI extends LanguageAPI {
 
     private Name projectName;
 
+    private final BindableDeclChecker declChecker = new BindableDeclChecker();
+
     public AdaAPI(Name projectName) {
         this.projectName = projectName;
     }
 
     public Name getProjectName() {
         return projectName;
+    }
+
+    public BindableDeclChecker getDeclChecker() {
+        return declChecker;
     }
 
     /** Return `name` as it is used for declaring arguments in the generated code. */

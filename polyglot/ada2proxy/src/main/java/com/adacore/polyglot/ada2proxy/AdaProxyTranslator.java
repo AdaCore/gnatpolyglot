@@ -16,6 +16,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.polyglot.proxy.ClassDecl;
+import com.adacore.polyglot.proxy.ClassDecl.Inheritability;
 import com.adacore.polyglot.proxy.Declaration;
 import com.adacore.polyglot.proxy.EnumItem;
 import com.adacore.polyglot.proxy.EnumerationDecl;
@@ -40,6 +41,18 @@ public class AdaProxyTranslator {
     private static class Visitor implements AdaProxyVisitor<ProxyObject> {
 
         private List<Declaration> declarations;
+
+        AdaAPI api;
+
+        public Visitor(AdaAPI api) {
+            this.api = api;
+        }
+
+        private Inheritability getInheritability(Record rec) {
+            if (!rec.isInheritable(api)) return Inheritability.FINAL;
+            if (rec.isAbstract()) return Inheritability.VIRTUAL;
+            return Inheritability.INHERITABLE;
+        }
 
         @Override
         public Proxy visit(AdaProxy proxy) {
@@ -96,9 +109,7 @@ public class AdaProxyTranslator {
                             AdaAPI.makeTypeExpr(subprogram.getReturnType()),
                             subprogram.owner),
                     FunctionDecl.Visibility.PUBLIC,
-                    subprogram.isFinal()
-                            ? FunctionDecl.Overridability.FINAL
-                            : FunctionDecl.Overridability.OVERRIDABLE,
+                    subprogram.getOverridability(),
                     FunctionDecl.Staticness.NON_STATIC);
         }
 
@@ -134,7 +145,7 @@ public class AdaProxyTranslator {
 
         private List<VTableEntry> makeVtable(Record classDecl) {
             // Only tagged types can have a vtable.
-            if (!classDecl.isInheritable()) return null;
+            if (!classDecl.isInheritable(api)) return null;
             List<VTableEntry> entries = new ArrayList<>();
             for (var m : classDecl.getAllMethods()) {
                 Name name = m.name;
@@ -158,7 +169,7 @@ public class AdaProxyTranslator {
             declarations.add(rec.getCloneFunction());
             declarations.add(rec.getCopyFunction());
             declarations.addAll(rec.getGettersAndSetters());
-            if (rec.isInheritable()) declarations.addAll(rec.getShadowAllocFunctions());
+            if (rec.isInheritable(api)) declarations.addAll(rec.getShadowAllocFunctions());
             if (rec.getTypeDef() instanceof Libadalang.RecordTypeDef
                     || rec.getTypeDef() instanceof Libadalang.PrivateTypeDef
                     || rec.getTypeDef() instanceof Libadalang.DerivedTypeDef) {
@@ -169,7 +180,7 @@ public class AdaProxyTranslator {
                         rec.getDoc(),
                         parentType,
                         8,
-                        !rec.isInheritable(),
+                        getInheritability(rec),
                         rec.components.stream().map(c -> (Field) c.accept(this)).toList(),
                         makeVtable(rec));
             }
@@ -206,8 +217,8 @@ public class AdaProxyTranslator {
         }
     }
 
-    public static Proxy translate(AdaProxy proxy) {
-        Visitor visitor = new Visitor();
+    public static Proxy translate(AdaProxy proxy, AdaAPI api) {
+        Visitor visitor = new Visitor(api);
         return visitor.visit(proxy);
     }
 }

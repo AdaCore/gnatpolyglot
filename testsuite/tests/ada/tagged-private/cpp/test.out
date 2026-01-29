@@ -1,0 +1,21 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling test main program...
+Running test main program...
+
+(A => 2, B => 3)
+
+(A => 3, B => 5)
+(A => 4, B => 7)
+
+i = 4
+
+(A => 5, B => 9)
+i = 4
+
+(A => 6, B => 11)
+i = 5
+
+Done.

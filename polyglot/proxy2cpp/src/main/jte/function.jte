@@ -13,7 +13,8 @@ vim: filetype=jtecpp
 @if(!isSource)
     !{boolean overrides = api.isOverriding(functionDecl);}
     ${api.formatDoc(functionDecl.doc, 1)}
-    @if(functionDecl.overridability == Overridability.OVERRIDABLE && !overrides)
+    <%-- Both overridable functions and abstract funtions must be marked virtual --%>
+    @if(functionDecl.overridability.compareTo(Overridability.OVERRIDABLE) >= 0 && !overrides)
         virtual
     @endif
     ${api.cppReturnTypename(functionDecl.type.returnType)} ${api.functionName(functionDecl)}
@@ -21,8 +22,11 @@ vim: filetype=jtecpp
     @if(overrides)
         override
     @endif
+    @if (functionDecl.overridability == Overridability.ABSTRACT)
+        = 0
+    @endif
     ;
-@else
+@elseif(functionDecl.overridability != Overridability.ABSTRACT)
     extern "C" ${api.cTypename(functionDecl.type.returnType)} ${functionDecl.symbol}
         (${api.cParameters(functionDecl)});
     ${api.cppReturnTypename(functionDecl.type.returnType)}

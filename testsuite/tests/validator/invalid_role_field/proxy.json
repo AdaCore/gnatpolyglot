@@ -45,7 +45,7 @@
               }
             }
           ],
-          "is_final": false
+          "inheritability": "inheritable"
         }
       ]
     }

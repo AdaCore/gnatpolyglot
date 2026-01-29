@@ -1,5 +1,6 @@
 package com.adacore.polyglot.proxy;
 
+import com.adacore.polyglot.proxy.FunctionDecl.Overridability;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import java.io.File;
 import java.io.IOException;
@@ -209,7 +210,12 @@ public class ProxyValidator implements Callable<Integer> {
                 location.pop();
             }
 
-            validateNonNull("symbol", functionDecl.symbol);
+            if (functionDecl.overridability != Overridability.ABSTRACT
+                    && functionDecl.symbol == null)
+                addDiagnostic(".symbol", "non abstract functions must have a symbol");
+            else if (functionDecl.overridability == Overridability.ABSTRACT
+                    && functionDecl.symbol != null)
+                addDiagnostic(".symbol", "abstract functions cannot have a symbol");
             if (functionDecl.symbol != null && !symbols.add(functionDecl.symbol)) {
                 addDiagnostic(".symbol", "duplicate symbol");
             }

@@ -97,6 +97,9 @@ class Root {
 };
 ```
 
+If one of the tagged type's primitives is not bindable, then the type will also
+be marked as final.
+
 # Proxy2Cpp
 
 ## C++ objet construction

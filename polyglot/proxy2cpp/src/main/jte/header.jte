@@ -33,14 +33,20 @@ vim: filetype=jtecpp
 namespace ${api.namespacePath(module)} {
 
 @for (var decl : module.declarations)
+    @if (decl instanceof ClassDecl classDecl)
+        class ${classDecl.getLastName().toPascal()};
+    @elseif (decl instanceof EnumerationDecl enumDecl)
+        @template.enum(api, enumDecl)
+    @endif
+@endfor
+
+@for (var decl : module.declarations)
     @if (decl instanceof FunctionDecl functionDecl && functionDecl.role == null)
         @template.function(api, functionDecl, false)
     @elseif (decl instanceof ClassDecl classDecl)
         @template.class(api, classDecl, false)
     @elseif (decl instanceof ExceptionDecl exceptionDecl)
         @template.exception(api, exceptionDecl, false)
-    @elseif (decl instanceof EnumerationDecl enumDecl)
-        @template.enum(api, enumDecl)
     @endif
 @endfor
 

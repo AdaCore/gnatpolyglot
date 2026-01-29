@@ -1,0 +1,16 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling test main program...
+Running test main program...
+
+Root.P1
+Child.P 1
+Root.P1
+Root.P1
+CppChild::p2 2
+Root.P1
+CppChild::p2 4
+
+Done.

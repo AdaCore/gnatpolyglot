@@ -21,9 +21,6 @@ import java.util.stream.Stream;
 /** Scanner for the Ada language. */
 public class AdaScanner extends Scanner {
 
-    /** The Ada visitor. */
-    private final AdaVisitor visitor = new AdaVisitor();
-
     /** The template rendering engine. */
     private final TemplateEngine templateEngine =
             TemplateEngine.createPrecompiled(
@@ -31,6 +28,9 @@ public class AdaScanner extends Scanner {
                     ContentType.Plain,
                     AdaScanner.class.getClassLoader(),
                     "gg.jte.generate.precompiled.ada2proxy");
+
+    /** The Ada visitor. */
+    private AdaVisitor visitor;
 
     /** The path to the Gpr project file. */
     private Path projectFile;
@@ -43,6 +43,8 @@ public class AdaScanner extends Scanner {
 
     /** The Ada proxy. */
     private AdaProxy proxy;
+
+    private AdaAPI api;
 
     private static void prettyPrint(UnbindableDeclException exc, String message, String kind) {
         Libadalang.BasicDecl decl = exc.getDecl();
@@ -113,6 +115,8 @@ public class AdaScanner extends Scanner {
                         .getFileName()
                         .toString()
                         .substring(0, projectFile.getFileName().toString().lastIndexOf(".gpr"));
+        this.api = new AdaAPI(Name.fromLower(projectName));
+        this.visitor = new AdaVisitor(api);
 
         // Analyze all the ``.ads`` source files.
         ProjectOptions gprOptions = null;
@@ -129,6 +133,7 @@ public class AdaScanner extends Scanner {
                 getFilesToAnalyze(projectManager, units).stream()
                         .map(s -> ctx.getUnitFromFile(s))
                         .map(u -> visitor.analyzeSpec(u))
+                        .filter(p -> p != null)
                         .toList();
         modules =
                 Stream.concat(modules.stream(), visitor.getNonVisitedPackages().stream()).toList();
@@ -153,7 +158,7 @@ public class AdaScanner extends Scanner {
 
     @Override
     public Proxy getProxy() {
-        return AdaProxyTranslator.translate(proxy);
+        return AdaProxyTranslator.translate(proxy, api);
     }
 
     @Override
@@ -161,7 +166,6 @@ public class AdaScanner extends Scanner {
 
         // Write the json proxy file.
         Proxy jsonProxy = getProxy();
-        AdaAPI api = new AdaAPI(Name.fromLower(projectName));
         try {
             jsonProxy.writeProxy(path.resolve("proxy.json").toFile());
         } catch (Exception e) {
