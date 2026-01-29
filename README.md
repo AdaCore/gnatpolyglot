@@ -32,3 +32,18 @@ You can then run the native application using:
 $[polyglot]> ./polyglot/bin/polyglot
 ```
 
+## License
+This work is licensed under `GPL-3.0-or-later AND Apache-2.0`.
+
+The tools located in
+- `polyglot/ada2proxy`
+- `polyglot/cli`
+- `polyglot/proxy`
+- `polyglot/proxy2cpp`
+
+directories are licensed under `GPL-3.0-or-later`,
+
+The libraries in the `polyglot/runtimes` directory are licensed under
+`Apache-2.0`.
+
+`SPDX-License-Identifier: GPL-3.0-or-later AND Apache-2.0`
