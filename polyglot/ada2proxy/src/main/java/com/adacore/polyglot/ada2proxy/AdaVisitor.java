@@ -670,6 +670,17 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     }
 
     @Override
+    public Void visit(Libadalang.TypeAccessDef node) {
+        queuedDecls.add(node.fSubtypeIndication().pDesignatedTypeDecl());
+        return null;
+    }
+
+    public Void visit(Libadalang.ClasswideTypeDecl node) {
+        queuedDecls.add(node.pSpecificType());
+        return null;
+    }
+
+    @Override
     public Void visit(Libadalang.SubtypeDecl node) {
         // TODO: Apply type constraints if any
         queuedDecls.add(node.pSpecificType());

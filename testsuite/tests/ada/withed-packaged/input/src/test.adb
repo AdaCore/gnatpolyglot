@@ -19,5 +19,10 @@ package body Test is
       Put_Line ("P3");
    end P3;
 
+   procedure P4(V: A4) is
+   begin
+      Put_Line ("P4");
+   end P4;
+
 end Test;
 

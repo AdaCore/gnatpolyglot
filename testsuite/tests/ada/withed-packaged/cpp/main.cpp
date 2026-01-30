@@ -1,3 +1,4 @@
+#include "polyglot_ptr.h"
 #include "test.h"
 #include "renamed.h"
 
@@ -12,4 +13,7 @@ int main() {
     test::p2(arr);
 
     test::p3(renamed::T());
+
+    rec4::R4 r4;
+    test::p4(polyglot::polyglot_ptr<rec4::R4>(r4));
 }
