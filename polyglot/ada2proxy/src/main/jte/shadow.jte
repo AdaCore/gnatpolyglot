@@ -126,7 +126,7 @@ Template file to generate shadow types for tagged records.
             ${rec.extensionAggregate(true)}
             @for(var p : allocFunc.type.parameters)
                @if(rec.getComponent(p.name) != null)
-                  ${api.valueName(p.name)},
+                  ${api.getParamForCall(rec.getComponent(p.name))},
                @endif
             @endfor
             Shadow =>

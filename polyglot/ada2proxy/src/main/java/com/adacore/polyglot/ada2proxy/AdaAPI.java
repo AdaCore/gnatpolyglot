@@ -423,10 +423,13 @@ public class AdaAPI extends LanguageAPI {
         } else if (AdaTypeMatcher.isArrayAccess(type)) {
             Libadalang.BaseTypeDecl arrayType = type.pAccessedType(Libadalang.AdaNode.NONE);
             String arrayTypename = arrayType.pFullyQualifiedName();
+            String arrayDataType = cInterfaceTypename(arrayType);
             if (isOutMode) {
                 String polyglotArrayValue = makeTemp(name, "Polyglot_Array");
                 builder.append(polyglotArrayValue)
-                        .append(" : Polyglot.Ada.Arrays.Polyglot_Array with Address => ")
+                        .append(" : ")
+                        .append(arrayDataType)
+                        .append(" with Address => ")
                         .append(argName)
                         .append("; pragma Import(Ada, ")
                         .append(polyglotArrayValue)
@@ -440,9 +443,9 @@ public class AdaAPI extends LanguageAPI {
                         .append(" is new ")
                         .append(arrayTypename)
                         .append(" (")
-                        .append(createBoundCast(argName, type, true))
+                        .append(createBoundCast(argName, arrayType, true))
                         .append(" .. ")
-                        .append(createBoundCast(argName, type, false))
+                        .append(createBoundCast(argName, arrayType, false))
                         .append(");\n");
                 arrayTypename = constrainedArray;
             }
@@ -565,11 +568,21 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
+    public String getParamForCall(Component component) {
+        Name name = component.name;
+        BaseTypeDecl type = component.getType();
+        if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
+            return "%s (%s)".formatted(type.pFullyQualifiedName(), valueName(name));
+        }
+        return valueName(name);
+    }
+
     private String getParamForCall(SubpParam param) {
         Name name = param.name;
         BaseTypeDecl type = param.getType();
-        if (type.pIsArrayType(Libadalang.AdaNode.NONE))
+        if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
             return "%s (%s)".formatted(type.pFullyQualifiedName(), valueName(name));
+        }
         return valueName(name);
     }
 
@@ -692,6 +705,8 @@ public class AdaAPI extends LanguageAPI {
 
     /** Return the type that must be used when returning from a getter. */
     public String getterReturnTypename(Libadalang.BaseTypeDecl type) {
+        if (AdaTypeMatcher.isArrayAccess(type))
+            return cInterfaceTypename(type.pAccessedType(Libadalang.AdaNode.NONE));
         if (type.pIsArrayType(Libadalang.AdaNode.NONE)) return "Polyglot.Ada.Arrays.Polyglot_Array";
         return "System.Address";
     }
@@ -711,6 +726,21 @@ public class AdaAPI extends LanguageAPI {
                     .append("Data => ")
                     .append(componentAccess)
                     .append("'Address)");
+        } else if (AdaTypeMatcher.isArrayAccess(type)) {
+            builder.append("(if ")
+                    .append(type.pParentBasicDecl().pFullyQualifiedName())
+                    .append(".\"=\" (")
+                    .append(componentAccess)
+                    .append(", null) then (1, 0, System.Null_Address) else ")
+                    .append("(First => Interfaces.C.int (")
+                    .append(componentAccess)
+                    .append(".all'First),")
+                    .append(" Last => Interfaces.C.int (")
+                    .append(componentAccess)
+                    .append(".all'Last),")
+                    .append(" Data => ")
+                    .append(componentAccess)
+                    .append(".all'Address))");
         } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
             builder.append("Access_Converter (").append(componentAccess).append(")");
         } else {
@@ -768,8 +798,9 @@ public class AdaAPI extends LanguageAPI {
     public String cInterfaceTypename(Libadalang.BaseTypeDecl typeDecl) {
         NativeType nativeType = checkNativeType(typeDecl);
         if (nativeType != null) return cInterfaceNativeTypename(nativeType);
-        if (typeDecl.pIsArrayType(Libadalang.AdaNode.NONE)
-                || AdaTypeMatcher.isArrayAccess(typeDecl))
+        if (AdaTypeMatcher.isArrayAccess(typeDecl))
+            return cInterfaceTypename(typeDecl.pAccessedType(Libadalang.AdaNode.NONE));
+        if (typeDecl.pIsArrayType(Libadalang.AdaNode.NONE))
             return "Polyglot.Ada.Arrays.Polyglot_Array";
         if (AdaTypeMatcher.isReturnedAsAddress(typeDecl)) return "System.Address";
         if (AdaTypeMatcher.isEnum(typeDecl)) return cInterfaceNativeTypename(NativeType.SINT32);
@@ -973,7 +1004,8 @@ public class AdaAPI extends LanguageAPI {
                     .append(argName)
                     .append("'Address)");
         } else if (AdaTypeMatcher.isArrayAccess(param.getType())) {
-            builder.append("Polyglot.Ada.Arrays.Polyglot_Array := ")
+            builder.append(cInterfaceTypename(param.getType()))
+                    .append(" := ")
                     .append("(if ")
                     .append(param.getType().pParentBasicDecl().pFullyQualifiedName())
                     .append(".\"=\" (")
@@ -1036,7 +1068,11 @@ public class AdaAPI extends LanguageAPI {
                     param.getType().pParentBasicDecl().pFullyQualifiedName() + ".\"=\"(";
             builder.append("declare\n")
                     .append(polyglotArray)
-                    .append(" : Polyglot.Ada.Arrays.Polyglot_Array with Address => ")
+                    .append(" : ")
+                    .append(
+                            cInterfaceTypename(
+                                    param.getType().pAccessedType(Libadalang.AdaNode.NONE)))
+                    .append(" with Address => ")
                     .append(argName(param.name))
                     .append("; pragma Import(Ada, ")
                     .append(polyglotArray)

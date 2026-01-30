@@ -45,9 +45,17 @@ package Polyglot.Ada.Arrays.Non_Native is
             String interfaceType = api.cInterfaceTypename(component);
          }
          @if (f.role.kind == RoleKind.GETTER)
-            function ${subpName} is new Get (${componentTypename});
+            @if (component.pIsAccessType(Libadalang.AdaNode.NONE))
+               function ${subpName} is new Get_Access (${componentTypename});
+            @else
+               function ${subpName} is new Get (${componentTypename});
+            @endif
          @elseif (f.role.kind == RoleKind.SETTER)
-            procedure ${subpName} is new Set_Record (${componentTypename});
+            @if (component.pIsAccessType(Libadalang.AdaNode.NONE))
+               procedure ${subpName} is new Set_Access (${componentTypename});
+            @else
+               procedure ${subpName} is new Set_Record (${componentTypename});
+            @endif
          @elseif (f.role.kind == RoleKind.FREE)
             procedure ${subpName} is new Free (${componentTypename});
          @elseif (f.role.kind == RoleKind.ALLOC)

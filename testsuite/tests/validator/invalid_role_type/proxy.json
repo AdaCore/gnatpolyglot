@@ -70,6 +70,37 @@
           "visibility": "protected",
           "overridability": "overridable",
           "staticness": "non_static"
+        },
+        {
+          "kind": "function",
+          "name": { "names": ["module_1", "func_3"] },
+          "doc": "func_1 documentation",
+          "symbol": "func_3_symbol",
+          "type": {
+            "kind": "function",
+            "parameters": [],
+            "return_type": {
+              "kind": "typename",
+              "name": { "names": ["void"] }
+            },
+            "return_owner": "unknown"
+          },
+          "role": {
+            "kind": "getter",
+            "type": {
+              "kind": "array",
+              "type_expr": {
+                "kind": "pointer",
+                "type_expr": {
+                  "kind": "typename",
+                  "name": { "names": ["uint32"] }
+                }
+              }
+            }
+          },
+          "visibility": "protected",
+          "overridability": "overridable",
+          "staticness": "non_static"
         }
       ]
     }

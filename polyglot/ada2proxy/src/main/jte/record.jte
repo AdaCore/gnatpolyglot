@@ -4,6 +4,7 @@ Template file to generate bindings for record types.
 --%>
 @import java.util.List
 @import com.adacore.libadalang.Libadalang
+@import com.adacore.polyglot.ada2proxy.AdaTypeMatcher
 @import com.adacore.polyglot.ada2proxy.AdaAPI
 @import com.adacore.polyglot.ada2proxy.proxy.Component
 @import com.adacore.polyglot.ada2proxy.proxy.Record
@@ -131,7 +132,7 @@ Template file to generate bindings for record types.
                  --%>
                ${rec.extensionAggregate(false)}
                @for(var p : allocFunc.type.parameters)
-                  ${api.valueName(p.name)},
+                  ${api.getParamForCall(rec.getComponent(p.name))},
                @endfor
                others => <>
             );
@@ -192,7 +193,8 @@ Template file to generate bindings for record types.
             Self_Access : Converter.Object_Pointer :=
                Converter.To_Pointer (Self);
             Self_Value : ${recordName} renames Self_Access.all;
-         @if(componentType.pIsAccessType(Libadalang.AdaNode.NONE))
+         @if(componentType.pIsAccessType(Libadalang.AdaNode.NONE)
+               && !AdaTypeMatcher.isArrayAccess(componentType))
             function Access_Converter is new Ada.Unchecked_Conversion
               (${componentType.pFullyQualifiedName()}, System.Address);
          @endif
@@ -212,7 +214,9 @@ Template file to generate bindings for record types.
             Self_Value : ${recordName} renames Self_Access.all;
             ${api.makeParamConversion(component)};
          begin
-            ${componentAccess} := ${api.valueName(component.name)};
+            ${componentAccess} :=
+              ${component.getType().pFullyQualifiedName()}
+                 (${api.valueName(component.name)});
          end ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()};
       @endif
     @endfor

@@ -163,8 +163,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 if (registedInParentPackage(type)
                         || api.getDeclChecker().seenUnbindable(decl)
                         || type.getUnit().equals(type.pStandardUnit())
-                        || AdaTypeMatcher.isNumber(type)
-                        || AdaAPI.checkNativeType(type) != null) continue;
+                        || AdaTypeMatcher.isNumber(type)) continue;
                 if (type.pParentBasicDecl() instanceof Libadalang.BasePackageDecl p) {
                     Package pack = mappedPackages.get(p);
                     // If the type's package does not yet exist, enqueue the package and the type.

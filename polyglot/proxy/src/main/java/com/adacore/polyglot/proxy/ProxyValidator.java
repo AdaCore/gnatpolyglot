@@ -317,10 +317,9 @@ public class ProxyValidator implements Callable<Integer> {
             // Verify that there are no TypeExpr other than ArrayTypeExpr and NameTypeExpr in the
             // role's type.
             TypeExpr roleType = role.type;
-            while (roleType instanceof ArrayTypeExpr arrayType) roleType = arrayType.typeExpr;
-            if (!(roleType instanceof NameTypeExpr))
-                addDiagnostic(
-                        ".type", "the type of a role can only be comprised of arrays and names");
+            if (!(roleType instanceof NameTypeExpr) && !(roleType instanceof ArrayTypeExpr)) {
+                addDiagnostic(".type", "the type of a role can only be an array or a name");
+            }
 
             validateNonNull("kind", role.kind);
             // The ``field`` field should only be non null when ``kind`` is ``GETTER`` or ``SETTER``

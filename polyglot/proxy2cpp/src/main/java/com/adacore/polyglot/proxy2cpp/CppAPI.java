@@ -179,11 +179,16 @@ public class CppAPI {
             if (!ref.isConst && ref.typeExpr instanceof PointerTypeExpr ptr) {
                 if (context.isClassType(ptr.typeExpr)) return constness + "void **";
             }
+            if (ref.isConst
+                    && ref.typeExpr instanceof PointerTypeExpr ptr
+                    && ptr.typeExpr instanceof ArrayTypeExpr) {
+                return cTypename(ptr.typeExpr);
+            }
             return constness + "void *";
         } else if (typeExpr instanceof PointerTypeExpr ptr) {
             String constness = ptr.isConst ? "const " : "";
-            return constness
-                    + (ptr.typeExpr instanceof ArrayTypeExpr ? cTypename(ptr.typeExpr) : "void *");
+            if (isStringOrArray(ptr.typeExpr)) return constness + cTypename(ptr.typeExpr);
+            return constness + "void *";
         }
         throw new UnsupportedOperationException("Unsupported C type");
     }
@@ -237,6 +242,10 @@ public class CppAPI {
             builder.append(builder.isEmpty() ? "" : ", ").append("void *_self, void *vtable");
         }
         return builder.toString();
+    }
+
+    public boolean isStringOrArray(TypeExpr typeExpr) {
+        return typeExpr instanceof ArrayTypeExpr || context.isStringType(typeExpr);
     }
 
     public boolean isMethod(FunctionDecl functionDecl) {
@@ -298,10 +307,14 @@ public class CppAPI {
     }
 
     public String getParamForConstructor(Parameter p) {
-        if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr
-                || p.type instanceof PointerTypeExpr) {
+        PointerTypeExpr ptrType = null;
+        if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr ptr)
+            ptrType = ptr;
+        else if (p.type instanceof PointerTypeExpr ptr) ptrType = ptr;
+        if (ptrType != null) {
             String name = p.name.toLower();
-            return "%s.get() == nullptr ? nullptr : %s->data()".formatted(name, name);
+            return "%s.get() == nullptr ? %s : %s->data()"
+                    .formatted(name, nullValue(ptrType), name);
         }
         return getParamForCall(p);
     }
@@ -373,7 +386,7 @@ public class CppAPI {
                     "%s%s == nullptr ? nullptr : new %s(%s), %s"
                             .formatted(
                                     returnedValue,
-                                    ptr.typeExpr instanceof ArrayTypeExpr ? ".data" : "",
+                                    isStringOrArray(ptr.typeExpr) ? ".data" : "",
                                     cppTypename(ptr.typeExpr),
                                     returnedValue,
                                     cppOwner(functionDecl.type.returnOwner));
@@ -473,11 +486,11 @@ public class CppAPI {
         // pointers.
         if (type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr ptr) {
             builder.append(cTypename(ptr.typeExpr))
-                    .append(ptr.typeExpr instanceof ArrayTypeExpr ? "*" : "")
+                    .append(isStringOrArray(ptr.typeExpr) ? "*" : "")
                     .append(" __")
                     .append(param.name.toLower())
                     .append(" = ");
-            if (ptr.typeExpr instanceof ArrayTypeExpr) {
+            if (isStringOrArray(ptr.typeExpr)) {
                 builder.append("(").append(cTypename(ptr.typeExpr)).append("*)");
                 data = "*__" + param.name.toLower();
             } else {
@@ -585,24 +598,23 @@ public class CppAPI {
      * not be used by the library.
      */
     public String makeDispatchDefaultReturn(FunctionTypeExpr function) {
-        if (function.returnType instanceof ArrayTypeExpr
-                || function.returnType instanceof PointerTypeExpr ptr
-                        && ptr.typeExpr instanceof ArrayTypeExpr)
-            return "return polyglot::ada::arrays::array_data{0, 0, nullptr};";
+        if (function.returnType instanceof ArrayTypeExpr)
+            return "return polyglot::ada::arrays::array_data{1, 0, nullptr};";
         if (function.returnType instanceof NameTypeExpr name) {
             TypeDecl returnType = context.getTypeDecl(name.name);
             if (returnType instanceof NativeTypeDecl nat) {
                 return switch (nat.nativeType) {
                     case VOID -> "";
                     case BOOL -> "return false;";
-                    case STRING -> "return polyglot::ada::strings::string_data{0, 0, nullptr};";
+                    case STRING -> "return polyglot::ada::strings::string_data{1, 0, nullptr};";
                     default -> "return 0;";
                 };
             } else if (returnType instanceof EnumerationDecl) {
                 return "return 0;";
             }
+            return "return nullptr;";
         }
-        return "return nullptr;";
+        return "return %s;".formatted(nullValue((PointerTypeExpr) function.returnType));
     }
 
     public String verifyOwnership(Parameter param) {
@@ -634,7 +646,7 @@ public class CppAPI {
         if (ptrType != null) {
             String name = param.name.toLower();
             boolean isArray = ptrType.typeExpr instanceof ArrayTypeExpr;
-            String dataType = isArray ? "polyglot::ada::arrays::array_data" : "void *";
+            String dataType = cTypename(ptrType);
 
             builder.append(dataType)
                     .append(" _")
@@ -642,10 +654,7 @@ public class CppAPI {
                     .append("_data = ")
                     .append(name)
                     .append(".get() == nullptr ? ")
-                    .append(
-                            isArray
-                                    ? "polyglot::ada::arrays::array_data{0, -1, nullptr}"
-                                    : "nullptr")
+                    .append(nullValue(ptrType))
                     .append(" : ")
                     .append(name)
                     .append(".get()->data();");
@@ -670,7 +679,7 @@ public class CppAPI {
                 && ref.typeExpr instanceof PointerTypeExpr ptr) {
             String name = param.name.toLower();
             String dataName = "_" + param.name.toLower() + "_data";
-            String addressAccessor = ptr.typeExpr instanceof ArrayTypeExpr ? ".data" : "";
+            String addressAccessor = isStringOrArray(ptr.typeExpr) ? ".data" : "";
             String copyName = "__" + param.name.toLower() + "_data";
             builder.append("if (")
                     .append(dataName)
@@ -698,14 +707,12 @@ public class CppAPI {
                 && ref.typeExpr instanceof PointerTypeExpr ptr) {
             String dataName = "_" + param.name.toLower();
             builder.append("*");
-            if (ptr.typeExpr instanceof ArrayTypeExpr) builder.append("__");
+            if (isStringOrArray(ptr.typeExpr)) builder.append("__");
             builder.append(param.name.toLower())
                     .append(" = ")
                     .append(dataName)
-                    .append(".get() == nullptr ? ");
-            if (ptr.typeExpr instanceof ArrayTypeExpr)
-                builder.append("polyglot::ada::arrays::array_data{0, -1, nullptr}");
-            else builder.append("nullptr");
+                    .append(".get() == nullptr ? ")
+                    .append(nullValue(ptr));
             builder.append(" : ").append(dataName).append("->data();");
         }
         return builder.toString();
@@ -723,5 +730,13 @@ public class CppAPI {
                 .filter(alloc -> alloc.type.parameters.size() == 1)
                 .map(alloc -> alloc.type.parameters.getFirst().type)
                 .anyMatch(funcParam -> copyParams.stream().anyMatch(p -> p.equals(funcParam)));
+    }
+
+    public String nullValue(PointerTypeExpr typeExpr) {
+        if (typeExpr.typeExpr instanceof ArrayTypeExpr)
+            return "polyglot::ada::arrays::array_data{1, 0, nullptr}";
+        if (context.isStringType(typeExpr.typeExpr))
+            return "polyglot::ada::strings::string_data{1, 0, nullptr}";
+        return "nullptr";
     }
 }

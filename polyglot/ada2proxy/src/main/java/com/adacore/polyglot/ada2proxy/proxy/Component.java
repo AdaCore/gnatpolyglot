@@ -1,6 +1,7 @@
 package com.adacore.polyglot.ada2proxy.proxy;
 
 import com.adacore.libadalang.Libadalang;
+import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import com.adacore.polyglot.ada2proxy.AdaAPI;
 import com.adacore.polyglot.ada2proxy.AdaTypeMatcher;
 import com.adacore.polyglot.proxy.Name;
@@ -31,9 +32,12 @@ public class Component implements AdaProxyObject {
      */
     public TypeExpr getSetterType() {
         // Get the type of the setter's new value.
-        TypeExpr setterType = AdaAPI.makeTypeExpr(getType());
-        if (!getType().pIsScalarType(Libadalang.AdaNode.NONE))
-            // If the argument is not a scalar, get a const reference to the new value.
+        BaseTypeDecl type = getType();
+        TypeExpr setterType = AdaAPI.makeTypeExpr(type);
+        if (!type.pIsScalarType(Libadalang.AdaNode.NONE)
+                && !type.pIsAccessType(Libadalang.AdaNode.NONE))
+            // If the argument is not a scalar not an access, get a const reference to the new
+            // value.
             setterType = setterType.makeReference(true);
         return setterType;
     }
