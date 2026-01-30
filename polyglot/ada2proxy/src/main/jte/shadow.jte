@@ -109,39 +109,42 @@ Template file to generate shadow types for tagged records.
       @if(!allocFunc.type.parameters.isEmpty() || allocFunc.role.kind == RoleKind.SHADOW_ALLOC)
          (${api.cInterfaceParameters(rec, allocFunc)})
       @endif
-         return System.Address
-      is
-         @for(var p : allocFunc.type.parameters)
-            <%-- The Self and Vtable arguments do not have a corresponding
-                 component in the Record, but they are always there. --%>
-            @if(rec.getComponent(p.name) != null)
-            ${api.makeParamConversion(rec.getComponent(p.name))};
-            @endif
-         @endfor
-         Self_Value : System.Address := Self_Arg;
-         Vtable_Value : System.Address := Vtable_Arg;
-         package Converter is new
-           System.Address_To_Access_Conversions (${instantiableRecordName});
-         Tmp : ${shadowAccess} := new ${shadowTypename}'(
-            ${rec.extensionAggregate(true)}
+         return System.Address is
+      begin
+         declare
             @for(var p : allocFunc.type.parameters)
+               <%-- The Self and Vtable arguments do not have a corresponding
+                    component in the Record, but they are always there. --%>
                @if(rec.getComponent(p.name) != null)
-                  ${api.getParamForCall(rec.getComponent(p.name))},
+               ${api.makeParamConversion(rec.getComponent(p.name))};
                @endif
             @endfor
-            Shadow =>
-               (Ada.Finalization.Controlled with
-                Self => Self_Value,
-                Vtable => Vtable_Value,
-                Self_Owner => Polyglot.Ada.User,
-                Back_Ref_Converter => ${shadowTypename}_Back_Ref_Converter'Access),
-            others => <>
-         );
-      begin
-         @if(rec.isControlled() && allocFunc.type.parameters.isEmpty())
-         ${recordName} (Tmp.all).Initialize;
-         @endif
-         return Converter.To_Address (Converter.Object_Pointer (Tmp));
+            Self_Value : System.Address := Self_Arg;
+            Vtable_Value : System.Address := Vtable_Arg;
+            package Converter is new
+              System.Address_To_Access_Conversions (${instantiableRecordName});
+            Tmp : ${shadowAccess} := new ${shadowTypename}'(
+               ${rec.extensionAggregate(true)}
+               @for(var p : allocFunc.type.parameters)
+                  @if(rec.getComponent(p.name) != null)
+                     ${api.getParamForCall(rec.getComponent(p.name))},
+                  @endif
+               @endfor
+               Shadow =>
+                  (Ada.Finalization.Controlled with
+                   Self => Self_Value,
+                   Vtable => Vtable_Value,
+                   Self_Owner => Polyglot.Ada.User,
+                   Back_Ref_Converter => ${shadowTypename}_Back_Ref_Converter'Access),
+               others => <>
+            );
+         begin
+            @if(rec.isControlled() && allocFunc.type.parameters.isEmpty())
+            ${recordName} (Tmp.all).Initialize;
+            @endif
+            return Converter.To_Address (Converter.Object_Pointer (Tmp));
+         end;
+      @template.exception_handler(api, rec.getOrigin())
       end ${allocFunc.getLastName().toPascalWithUnderscore()};
    @endfor
 

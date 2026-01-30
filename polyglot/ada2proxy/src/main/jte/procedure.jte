@@ -21,6 +21,8 @@ Template file to generate binded procedures.
       (${api.cInterfaceParameters(subp)})
     @endif
    is
+   begin
+      declare
     @for(var p : subp.parameters)
       ${api.makeParamConversion(p)};
     @endfor
@@ -29,14 +31,7 @@ Template file to generate binded procedures.
     @for(var p : subp.parameters)
       ${api.syncParamValue(p)}
     @endfor
-   exception
-      when E: others =>
-         Polyglot.Exceptions.Clear_Last_Exception (Polyglot.Get_Kernel);
-         Polyglot.Exceptions.Raise_Exception
-           (Polyglot.Get_Kernel,
-            Ada.Exceptions.Save_Occurrence (E),
-            Polyglot.Exceptions
-                  .${api.getProjectName().toPascalWithUnderscore()}
-                  .Identify_Exception'Access);
+    end;
+   @template.exception_handler(api, null)
    end ${api.proxyName(subp)};
 @endif

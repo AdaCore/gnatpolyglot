@@ -588,6 +588,10 @@ public class CppAPI {
         return exc.name.join(n -> lastNameToCppName(n), "::", "::", "");
     }
 
+    public String exceptionEnumIdentifier(ExceptionDecl exc) {
+        return exc.name.join(n -> lastNameToCppName(n), "", "_", "_kind");
+    }
+
     /**
      * Create a return statement that returns a default value for when a dynamically-dispatched
      * called function is exitted by a thrown exception.

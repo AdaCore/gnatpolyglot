@@ -83,7 +83,14 @@ public class AdaAPI extends LanguageAPI {
         };
     }
 
-    /** Create a {@link FullyQualifiedName} to decl, or its parent if ``onlyParent`` is true. */
+    /** Create a {@link FullyQualifiedName} to ``dn``. */
+    public static FullyQualifiedName makeProxyFullyQualifiedName(Libadalang.DefiningName dn) {
+        Libadalang.Symbol[] symbols = dn.pFullyQualifiedNameArray();
+        return new FullyQualifiedName(
+                Stream.of(symbols).map(s -> s.text).map(s -> functionProxyName(s)).toList());
+    }
+
+    /** Create a {@link FullyQualifiedName} to ``decl``, or its parent if ``onlyParent`` is true. */
     public static FullyQualifiedName makeProxyFullyQualifiedName(Libadalang.BasicDecl decl) {
         if (decl instanceof Libadalang.BaseTypeDecl typeDecl) {
             NativeType nativeType = checkNativeType(typeDecl);
@@ -1046,17 +1053,23 @@ public class AdaAPI extends LanguageAPI {
      * Create a return statement that returns a dummy value for when an exception is thrown. This
      * value should never reach the user and is only used for the correctness of the generated code.
      */
-    public String makeDefaultReturn(Subprogram subp) {
-        BaseTypeDecl returnType = subp.getReturnType();
+    public String makeDefaultReturn(Libadalang.BaseTypeDecl returnType) {
         if (AdaTypeMatcher.isCharacter(returnType))
             return "return Interfaces.C.To_C ( Character'Val(0))";
         if (returnType.pIsFloatType(Libadalang.AdaNode.NONE)) return "return 0.0";
         if (returnType.pIsScalarType(Libadalang.AdaNode.NONE)) return "return 0";
         if (returnType.pIsArrayType(Libadalang.AdaNode.NONE)
-                || AdaTypeMatcher.isArrayAccess(subp.getReturnType()))
+                || AdaTypeMatcher.isArrayAccess(returnType))
             return " return(1, 0, System.Null_Address)";
         if (AdaTypeMatcher.isReturnedAsAddress(returnType)) return "return System.Null_Address";
         return "return (others => <>)";
+    }
+
+    public String makeDefaultGetterReturn(Libadalang.BaseTypeDecl returnType) {
+        if (returnType.pIsArrayType(Libadalang.AdaNode.NONE)
+                || AdaTypeMatcher.isArrayAccess(returnType))
+            return "return (1, 0, System.Null_Address)";
+        return "return System.Null_Address";
     }
 
     public String syncParamValue(SubpParam param) {

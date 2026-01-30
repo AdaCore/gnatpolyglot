@@ -2,21 +2,44 @@ with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 package body Polyglot.Exceptions is
 
+   -----------------------------------
+   -- Identify_Standard_Exceptions  --
+   -----------------------------------
+
+   function Identify_Standard_Exception
+     (Id : Exception_Id) return Interfaces.C.int is
+   begin
+      if Id = Constraint_Error'Identity then
+         return Interfaces.C.int (-4);
+      elsif Id = Program_Error'Identity then
+         return Interfaces.C.int (-3);
+      elsif Id = Storage_Error'Identity then
+         return Interfaces.C.int (-2);
+      elsif Id = Tasking_error'Identity then
+         return Interfaces.C.int (-1);
+      end if;
+      return Interfaces.C.int (0);
+   end Identify_Standard_Exception;
+
    ---------------------
    -- Raise_Exception --
    ---------------------
 
    procedure Raise_Exception
-     (K        : Kernel_Access;
-      Exc      : Exception_Occurrence_Access;
-      Identify : Identify_Exception_Type)
+     (Exc : Exception_Occurrence; Identify : Identify_Exception_Type)
    is
-      Id : Exception_Id := Exception_Identity (Exc.all);
+      K     : Kernel_Access := Polyglot.Get_Kernel;
+      Id    : Exception_Id := Exception_Identity (Exc);
+      Exc_A : Exception_Occurrence_Access :=
+        Standard.Ada.Exceptions.Save_Occurrence (Exc);
    begin
+      -- Make sure to free any uncaught exceptions.
+      Clear_Last_Exception (K);
       K.Exc_Info.Exception_Id := Identify (Id);
-      K.Exc_Info.Current_Exception := Exc_To_Addr (Exc);
+      K.Exc_Info.Current_Exception := Exc_To_Addr (Exc_A);
       K.Exc_Info.Message :=
-        Interfaces.C.Strings.New_String (Exception_Message (Exc.all));
+        Interfaces.C.Strings.New_String (Exception_Message (Exc));
+      -- Provide the caller a handler to clear the exception when it catches it
       K.Exc_Info.Clear_Exception := Clear_Last_Exception'Access;
    end Raise_Exception;
 

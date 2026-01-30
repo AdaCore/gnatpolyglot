@@ -24,6 +24,8 @@ Template file to generate binded functions.
       (${api.cInterfaceParameters(subp)})
     @endif
       return ${returnType} is
+   begin
+      declare
     @for(var p : subp.parameters)
       ${api.makeParamConversion(p)};
     @endfor
@@ -54,14 +56,7 @@ Template file to generate binded functions.
        @endfor
          ${api.makeReturnConversion(subp.getReturnType(), "Value_Returned")};
    @endif
-   exception
-      when E: others =>
-         Polyglot.Exceptions.Clear_Last_Exception (Polyglot.Get_Kernel);
-         Polyglot.Exceptions.Raise_Exception
-           (Polyglot.Get_Kernel,
-            Ada.Exceptions.Save_Occurrence (E),
-            Polyglot.Exceptions.${api.getProjectName().toPascalWithUnderscore()}
-               .Identify_Exception'Access);
-      ${api.makeDefaultReturn(subp)};
+      end;
+   @template.exception_handler(api, subp.getReturnType())
    end ${api.proxyName(subp)};
 @endif

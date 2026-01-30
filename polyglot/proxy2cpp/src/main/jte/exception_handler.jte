@@ -43,7 +43,7 @@ namespace polyglot::exceptions::${projectName} {
 enum class exception_kind {
     anon_kind = 0
 @for(var exc: exceptions)
-    , ${exc.name.getLastName().toLower()}_kind = ${String.valueOf(exc.enumValue)}
+    , ${api.exceptionEnumIdentifier(exc)} = ${String.valueOf(exc.enumValue)}
 @endfor
 };
 
@@ -60,7 +60,7 @@ void rethrow_if_exc() {
     try {
         switch (kind) {
         @for(var exc : exceptions)
-            case static_cast<int>(exception_kind::${exc.name.getLastName().toLower()}_kind):
+            case static_cast<int>(exception_kind::${api.exceptionEnumIdentifier(exc)}):
                 throw ${api.exceptionFullyQualifiedName(exc)} (data, message);
         @endfor
             default:

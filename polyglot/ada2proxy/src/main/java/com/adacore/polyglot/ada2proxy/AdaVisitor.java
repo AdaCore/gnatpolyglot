@@ -101,7 +101,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     private Libadalang.PackageDecl analyzedPackage;
 
     /** Map Ada declarations to their AdaProxy objects. */
-    private HashMap<Libadalang.TypeDecl, AdaDeclaration> mappedTypes = new HashMap<>();
+    private HashMap<Libadalang.BasicDecl, AdaDeclaration> mappedDecls = new HashMap<>();
 
     /** Map Ada PackageDecl to their AdaProxy Package. */
     private HashMap<Libadalang.PackageDecl, Package> mappedPackages = new HashMap<>();
@@ -128,10 +128,10 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     /** Return whether the binded type was registed in the declaration list of its parent package */
     public boolean registedInParentPackage(Libadalang.BaseTypeDecl type) {
         Libadalang.BasicDecl decl = type.pParentBasicDecl();
-        AdaDeclaration mappedType = mappedTypes.get(type);
-        if (mappedType != null && decl instanceof Libadalang.BasePackageDecl packageDecl) {
+        AdaDeclaration mappedDecl = mappedDecls.get(type);
+        if (mappedDecl != null && decl instanceof Libadalang.BasePackageDecl packageDecl) {
             Package pack = mappedPackages.get(packageDecl);
-            return pack != null && pack.declarations.contains(mappedType);
+            return pack != null && pack.declarations.contains(mappedDecl);
         }
         return false;
     }
@@ -181,6 +181,23 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                     AdaScanner.error(
                             new UnbindableDeclException(decl, "Unsupported parent declaration"));
                 }
+            } else if (decl instanceof Libadalang.ExceptionDecl exc
+                    && decl.pParentBasicDecl() instanceof Libadalang.BasePackageDecl p) {
+                Package pack = mappedPackages.get(p);
+                // If the type's package does not yet exist, enqueue the package and the type.
+                // The package needs to exist before the mapped type.
+                if (pack == null) {
+                    queuedDecls.add(p);
+                    queuedDecls.add(decl);
+                } else {
+                    // pack may be null when the type is an array.
+                    if (pack != null) declarations = pack.declarations;
+                    visitDecl(exc);
+                    declarations = null;
+                }
+            } else {
+                AdaScanner.error(
+                        new UnbindableDeclException(decl, "Unsupported parent declaration"));
             }
         }
         return packages;
@@ -430,7 +447,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
         Subprogram subProg = new Subprogram(node, name, parameters, symbol, role, returnOwner);
         if (role != null && role.kind == RoleKind.METHOD) {
-            ((Record) mappedTypes.get(primitiveType)).methods.add(subProg);
+            ((Record) mappedDecls.get(primitiveType)).methods.add(subProg);
         }
         // Create a similar subprogram for "/=" when the current subprogram is "="
         if (name.equals(Name.operatorEq)) {
@@ -465,7 +482,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.ConcreteTypeDecl node) {
-        AdaDeclaration decl = mappedTypes.get(node);
+        AdaDeclaration decl = mappedDecls.get(node);
         // The type could have been (partially) processed when processing a child type.
         // IFF it was not already processed and is not a derived type, then process it.
         if (decl == null || node.fTypeDef() instanceof Libadalang.DerivedTypeDef) {
@@ -478,7 +495,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     public Record makeRecord(
             Libadalang.BaseRecordDef recordDef, Libadalang.ConcreteTypeDecl parentDecl) {
-        Record rec = (Record) mappedTypes.get(parentDecl);
+        Record rec = (Record) mappedDecls.get(parentDecl);
         if (rec != null) return rec;
         // Get the components of the record.
         ArrayList<Component> components = new ArrayList<>();
@@ -495,7 +512,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             }
         }
         rec = new Record(parentDecl, AdaAPI.getName(parentDecl.pDefiningName()), components);
-        mappedTypes.put(parentDecl, rec);
+        mappedDecls.put(parentDecl, rec);
         return rec;
     }
 
@@ -563,12 +580,12 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         } else if (parentDecl.pIsArrayType(Libadalang.AdaNode.NONE)) {
             Array array = new Array(parentDecl);
             declarations.add(array);
-            mappedTypes.put(parentDecl, array);
+            mappedDecls.put(parentDecl, array);
             queuedDecls.add(parentDecl.pCompType(false, Libadalang.AdaNode.NONE));
         } else if (AdaTypeMatcher.isEnum(parentDecl)) {
             EnumType enumType = createEnumType(parentDecl);
             declarations.add(enumType);
-            mappedTypes.put(parentDecl, enumType);
+            mappedDecls.put(parentDecl, enumType);
             for (var prim : parentDecl.pGetPrimitives(true, false)) {
                 if (!(prim instanceof Libadalang.EnumLiteralDecl)) processSubprogram(prim);
             }
@@ -589,7 +606,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         } else {
             Array array = new Array(parentDecl);
             declarations.add(array);
-            mappedTypes.put(parentDecl, array);
+            mappedDecls.put(parentDecl, array);
             queuedDecls.add(componentType);
         }
         return null;
@@ -597,8 +614,19 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.ExceptionDecl node) {
-        declarations.add(
-                new AdaException(AdaAPI.getName(node.pDefiningName()), node, exceptionNumber++));
+        if (mappedDecls.containsKey(node)) return null;
+
+        if (node.fRenames().isNone()) {
+            for (var dn : node.pDefiningNames()) {
+                AdaException exception =
+                        new AdaException(AdaAPI.getName(dn), node, dn, exceptionNumber++);
+                declarations.add(exception);
+                mappedDecls.put(node, exception);
+            }
+        } else {
+            queuedDecls.add(node.pParentBasicDecl());
+            queuedDecls.add(node.fRenames().fRenamedObject().pReferencedDecl(false));
+        }
         return null;
     }
 
@@ -633,7 +661,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
         EnumType enumType = createEnumType(parentDecl);
         declarations.add(enumType);
-        mappedTypes.put(parentDecl, enumType);
+        mappedDecls.put(parentDecl, enumType);
         return null;
     }
 

@@ -80,6 +80,11 @@ public class Record extends AdaDeclaration {
         return this.ref;
     }
 
+    /** Get the origin Ada type. */
+    public Libadalang.BaseTypeDecl getOrigin() {
+        return origin;
+    }
+
     /** Return the component with the given name. */
     public Component getComponent(Name name) {
         return getAllComponents().stream().filter(c -> c.name.equals(name)).findFirst().get();

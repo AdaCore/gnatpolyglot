@@ -60,6 +60,7 @@ aggregate library project ${projectName.toPascalWithUnderscore()}.Proxy.Agg is
             "polyglot-ada-strings.ads",
             "polyglot-ada-strings.adb",
             "polyglot-ada-arrays-non_native.ads",
+            "polyglot-exceptions.ads",
             ${api.getProxyInterfaces(proxy.packages)},
             ${
                sources.stream()

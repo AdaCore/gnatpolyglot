@@ -21,15 +21,25 @@ public class AdaException extends AdaDeclaration {
     /** Origin node in the LAL tree. */
     private final Libadalang.ExceptionDecl origin;
 
+    /**
+     * Specific defining name of this exception.
+     *
+     * <p>Useful when the ``origin`` ExceptionDecl has multiple defining names, to identify the
+     * specific one that this instance represents.
+     */
+    private final Libadalang.DefiningName definingName;
+
     /** Enum value in the proxy. */
     private final int value;
 
     /** Default allocating function of the exception. */
     private ArrayList<FunctionDecl> allocFunctions;
 
-    public AdaException(Name name, Libadalang.ExceptionDecl origin, int value) {
+    public AdaException(
+            Name name, Libadalang.ExceptionDecl origin, Libadalang.DefiningName dn, int value) {
         super(name);
         this.origin = origin;
+        this.definingName = dn;
         this.value = value;
     }
 
@@ -48,7 +58,7 @@ public class AdaException extends AdaDeclaration {
     }
 
     public FullyQualifiedName getProxyFullyQualifiedName() {
-        return AdaAPI.makeProxyFullyQualifiedName(origin)
+        return AdaAPI.makeProxyFullyQualifiedName(definingName)
                 .getParentFullyQualifiedName()
                 .append(name);
     }
@@ -62,7 +72,11 @@ public class AdaException extends AdaDeclaration {
     }
 
     public String getFullyQualifiedName() {
-        return origin.pFullyQualifiedName();
+        return definingName.pFullyQualifiedName();
+    }
+
+    public String getEnumIdentifier() {
+        return getFullyQualifiedName().replace(".", "_").concat("_Kind");
     }
 
     public List<FunctionDecl> getAllocFunctions() {

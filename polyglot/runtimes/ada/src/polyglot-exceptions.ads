@@ -26,10 +26,11 @@ package Polyglot.Exceptions is
    type Identify_Exception_Type is
      access function (Id : Exception_Id) return Interfaces.C.Int;
 
+   function Identify_Standard_Exception
+     (Id : Exception_Id) return Interfaces.C.int;
+
    procedure Raise_Exception
-     (K        : Kernel_Access;
-      Exc      : Exception_Occurrence_Access;
-      Identify : Identify_Exception_Type);
+     (Exc : Exception_Occurrence; Identify : Identify_Exception_Type);
 
    procedure Clear_Last_Exception (K : Kernel_Access);
    pragma Export (C, Clear_Last_Exception);
