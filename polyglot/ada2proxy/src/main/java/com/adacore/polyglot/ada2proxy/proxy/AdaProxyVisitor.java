@@ -22,4 +22,6 @@ public interface AdaProxyVisitor<T> {
     T visit(AdaException adaException);
 
     T visit(GlobalVariable globalVariable);
+
+    T visit(Subtype subtype);
 }

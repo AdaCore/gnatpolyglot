@@ -14,6 +14,7 @@ import com.adacore.polyglot.ada2proxy.proxy.Package;
 import com.adacore.polyglot.ada2proxy.proxy.Record;
 import com.adacore.polyglot.ada2proxy.proxy.SubpParam;
 import com.adacore.polyglot.ada2proxy.proxy.Subprogram;
+import com.adacore.polyglot.ada2proxy.proxy.Subtype;
 import com.adacore.polyglot.proxy.BadNameSyntaxException;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Owner;
@@ -563,12 +564,15 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 queuedDecls.add(parentType);
             }
             declarations.add(rec);
-        } else if (parentDecl.pIsRecordType(Libadalang.AdaNode.NONE)) {
+        } else if (parentDecl.pIsRecordType(Libadalang.AdaNode.NONE)
+                || AdaTypeMatcher.isPrivate(parentDecl)) {
             // If the parent is a non-tagged record, simply copy the fields of the root type.
             Libadalang.TypeDecl rootType =
                     (Libadalang.TypeDecl) parentDecl.pRootType(Libadalang.AdaNode.NONE);
             if (rootType.fTypeDef() instanceof Libadalang.RecordTypeDef recordDef) {
                 declarations.add(makeRecord(recordDef.fRecordDef(), parentDecl));
+            } else {
+                declarations.add(makeRecord(Libadalang.BaseRecordDef.NONE, parentDecl));
             }
 
             // When derivating from a record, we need to get the primitives of said record too.
@@ -662,6 +666,28 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         EnumType enumType = createEnumType(parentDecl);
         declarations.add(enumType);
         mappedDecls.put(parentDecl, enumType);
+        return null;
+    }
+
+    @Override
+    public Void visit(Libadalang.TypeAccessDef node) {
+        queuedDecls.add(node.fSubtypeIndication().pDesignatedTypeDecl());
+        return null;
+    }
+
+    public Void visit(Libadalang.ClasswideTypeDecl node) {
+        queuedDecls.add(node.pSpecificType());
+        return null;
+    }
+
+    @Override
+    public Void visit(Libadalang.SubtypeDecl node) {
+        // TODO: Apply type constraints if any
+        queuedDecls.add(node.pSpecificType());
+        Subtype subtype =
+                new Subtype(node, Name.fromLower(node.pDefiningName().pCanonicalText().text));
+        declarations.add(subtype);
+        mappedDecls.put(node, subtype);
         return null;
     }
 

@@ -11,6 +11,7 @@ Template file to generate package specs.
 @import com.adacore.polyglot.ada2proxy.proxy.Package
 @import com.adacore.polyglot.ada2proxy.proxy.Record
 @import com.adacore.polyglot.ada2proxy.proxy.Subprogram
+@import com.adacore.polyglot.ada2proxy.proxy.Subtype
 @import com.adacore.polyglot.proxy.FunctionDecl.Overridability
 @param AdaAPI api
 @param Package pack
@@ -47,6 +48,8 @@ package ${packageName} is
         @template.global_var(api, gv, false)
     @elseif(decl instanceof Array array)
         @template.array(api, array)
+    @elseif(decl instanceof Subtype subtype)
+        @template.subtype(api, subtype)
     @endif
 @endfor
 end ${packageName};

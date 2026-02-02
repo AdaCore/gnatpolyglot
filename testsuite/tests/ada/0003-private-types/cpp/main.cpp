@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "test.h"
+#include "derivation.h"
 
 test::Pair t(test::Pair p) {
   p.print();
@@ -23,4 +24,8 @@ int main() {
   t(p);
   // `p` should still be allocated.
   p.print();
+
+  // Verify that primitives were cloned
+  derivation::OtherPair op = derivation::init_pair(1, 2);
+  op.print();
 }
