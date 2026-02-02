@@ -108,27 +108,35 @@ public class CppAPI {
     }
 
     /** Return the refered C++ type's name. */
-    public String cppTypename(TypeExpr typeExpr) {
+    public String cppTypename(TypeExpr typeExpr, boolean addLeadingColons) {
+        String prefix = addLeadingColons ? "::" : "";
         if (typeExpr instanceof NameTypeExpr name) {
             TypeDecl typeDecl = context.getTypeDecl(name.name);
             if (typeDecl instanceof NativeTypeDecl nativeType)
                 return nativeTypeName(nativeType.nativeType);
             if (typeDecl instanceof ClassDecl || typeDecl instanceof EnumerationDecl)
-                return name.name.join(fqn -> lastNameToCppName(fqn), "", "::", "");
+                return name.name.join(fqn -> lastNameToCppName(fqn), prefix, "::", "");
         } else if (typeExpr instanceof ArrayTypeExpr array) {
-            return "polyglot::ada::arrays::polyglot_array<" + cppTypename(array.typeExpr) + ">";
+            return prefix
+                    + "polyglot::ada::arrays::polyglot_array<"
+                    + cppTypename(array.typeExpr)
+                    + ">";
         } else if (typeExpr instanceof ReferenceTypeExpr ref) {
             StringBuilder builder = new StringBuilder();
             if (ref.isConst) builder.append("const ");
             builder.append(cppTypename(ref.typeExpr)).append(" &");
             return builder.toString();
         } else if (typeExpr instanceof PointerTypeExpr pointer) {
-            StringBuilder builder = new StringBuilder("polyglot::polyglot_ptr<");
+            StringBuilder builder = new StringBuilder(prefix).append("polyglot::polyglot_ptr<");
             if (pointer.isConst) builder.append("const ");
             builder.append(cppTypename(pointer.typeExpr)).append(">");
             return builder.toString();
         }
         throw new UnsupportedOperationException("Unsupported Cpp type");
+    }
+
+    public String cppTypename(TypeExpr typeExpr) {
+        return cppTypename(typeExpr, true);
     }
 
     /**
@@ -428,7 +436,9 @@ public class CppAPI {
 
         if (!isMethod(functionDecl)) return functionName;
         StringBuilder builder = new StringBuilder();
-        builder.append(cppTypename(functionDecl.role.type)).append("::").append(functionName);
+        builder.append(cppTypename(functionDecl.role.type, false))
+                .append("::")
+                .append(functionName);
         return builder.toString();
     }
 

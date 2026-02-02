@@ -46,26 +46,26 @@ package Polyglot.Ada.Arrays.Non_Native is
          }
          @if (f.role.kind == RoleKind.GETTER)
             @if (component.pIsAccessType(Libadalang.AdaNode.NONE))
-               function ${subpName} is new Get_Access (${componentTypename});
+               function ${subpName} is new Get_Access (Standard.${componentTypename});
             @else
-               function ${subpName} is new Get (${componentTypename});
+               function ${subpName} is new Get (Standard.${componentTypename});
             @endif
          @elseif (f.role.kind == RoleKind.SETTER)
             @if (component.pIsAccessType(Libadalang.AdaNode.NONE))
-               procedure ${subpName} is new Set_Access (${componentTypename});
+               procedure ${subpName} is new Set_Access (Standard.${componentTypename});
             @else
-               procedure ${subpName} is new Set_Record (${componentTypename});
+               procedure ${subpName} is new Set_Record (Standard.${componentTypename});
             @endif
          @elseif (f.role.kind == RoleKind.FREE)
-            procedure ${subpName} is new Free (${componentTypename});
+            procedure ${subpName} is new Free (Standard.${componentTypename});
          @elseif (f.role.kind == RoleKind.ALLOC)
             function ${subpName} is new
                ${f.name.getLastName().toPascalWithUnderscore()}
-               (${componentTypename});
+               (Standard.${componentTypename});
          @elseif (f.role.kind == RoleKind.CONSTRUCT)
             procedure ${subpName} is new
                ${f.name.getLastName().toPascalWithUnderscore()}
-               (${componentTypename});
+               (Standard.${componentTypename});
          @endif
          pragma Export (C, ${subpName}, "${f.symbol}");
       @endfor
