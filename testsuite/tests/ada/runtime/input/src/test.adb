@@ -1,4 +1,5 @@
 with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Calendar.Formatting;
 
 package body Test is
 
@@ -26,5 +27,15 @@ package body Test is
       Append (S, ":");
       Append_Int (S, Sec);
    end Append;
+
+   procedure Append_Arr(S: in out Unbounded_String; Arr : Time_Array) is
+   begin
+      for T of Arr loop
+         if Ada.Strings.Unbounded.Length (S) /= 0 then
+            Append (S, " ");
+         end if;
+         Append (S, T);
+      end loop;
+   end Append_Arr;
 
 end Test;

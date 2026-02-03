@@ -15,4 +15,8 @@ package Test is
    function Get_Time return Time
    is (Time_Of (Year => 2025, Month => 12, Day => 25, Seconds => 12345.0));
 
+   type Time_Array is array (Positive range <>) of Time;
+
+   procedure Append_Arr(S: in out Unbounded_String; Arr : Time_Array);
+
 end Test;

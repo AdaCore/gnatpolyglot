@@ -251,7 +251,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
      * their return type.
      */
     public boolean hasNamingConflict(Subprogram lhs, Subprogram rhs) {
-        if (!lhs.name.equals(rhs.name) || lhs.parameters.size() != lhs.parameters.size())
+        if (!lhs.name.equals(rhs.name) || lhs.parameters.size() != rhs.parameters.size())
             return false;
         for (int i = 0; i < lhs.parameters.size(); i++) {
             if (!lhs.parameters.get(i).equals(rhs.parameters.get(i))) return false;
@@ -283,9 +283,9 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                         prefix = NativeType.VOID.declaration.name.getLastName();
                     } else {
                         prefix =
-                                Name.fromPascalWithUnderscore(
+                                Name.fromLower(
                                         subp.getReturnType()
-                                                .pFullyQualifiedName()
+                                                .pCanonicalFullyQualifiedName()
                                                 .replace(".", "_"));
                     }
                     subp.name = prefix.concat(subp.name);
@@ -421,11 +421,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             // For each parameter declared in the spec, add a parameter.
             for (var p : paramSpec.pDefiningNames())
                 parameters.add(
-                        new SubpParam(
-                                paramSpec,
-                                Name.fromLower(p.pCanonicalText().text),
-                                transfer,
-                                types[typeIndex++]));
+                        new SubpParam(paramSpec, AdaAPI.getName(p), transfer, types[typeIndex++]));
         }
 
         Libadalang.BaseTypeDecl returnType = spec.pReturnType(Libadalang.AdaNode.NONE);
@@ -684,8 +680,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     public Void visit(Libadalang.SubtypeDecl node) {
         // TODO: Apply type constraints if any
         queuedDecls.add(node.pSpecificType());
-        Subtype subtype =
-                new Subtype(node, Name.fromLower(node.pDefiningName().pCanonicalText().text));
+        Subtype subtype = new Subtype(node, AdaAPI.getName(node.pDefiningName()));
         declarations.add(subtype);
         mappedDecls.put(node, subtype);
         return null;

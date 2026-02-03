@@ -375,8 +375,7 @@ public class AdaAPI extends LanguageAPI {
         String converter = null;
         // Class wide types need a pointer conversion function.
         if (AdaTypeMatcher.isBindedAsClass(type)) {
-            Libadalang.BaseTypeDecl specificType = type.pSpecificType();
-            String accessType = makeTemp(name, asAccess(specificType));
+            String accessType = makeTemp(name, "Access_Type");
             converter = makeTemp(name, "Converter");
             tempVarValue = makeTemp(name, "Access");
             builder.append("type ")

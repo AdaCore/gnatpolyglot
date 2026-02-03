@@ -24,6 +24,7 @@ import com.adacore.polyglot.proxy.TypeExpr;
 import com.adacore.polyglot.proxy.VTableEntry;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CppAPI {
@@ -108,27 +109,35 @@ public class CppAPI {
     }
 
     /** Return the refered C++ type's name. */
-    public String cppTypename(TypeExpr typeExpr) {
+    public String cppTypename(TypeExpr typeExpr, boolean addLeadingColons) {
+        String prefix = addLeadingColons ? "::" : "";
         if (typeExpr instanceof NameTypeExpr name) {
             TypeDecl typeDecl = context.getTypeDecl(name.name);
             if (typeDecl instanceof NativeTypeDecl nativeType)
                 return nativeTypeName(nativeType.nativeType);
             if (typeDecl instanceof ClassDecl || typeDecl instanceof EnumerationDecl)
-                return name.name.join(fqn -> lastNameToCppName(fqn), "", "::", "");
+                return name.name.join(fqn -> lastNameToCppName(fqn), prefix, "::", "");
         } else if (typeExpr instanceof ArrayTypeExpr array) {
-            return "polyglot::ada::arrays::polyglot_array<" + cppTypename(array.typeExpr) + ">";
+            return prefix
+                    + "polyglot::ada::arrays::polyglot_array<"
+                    + cppTypename(array.typeExpr)
+                    + ">";
         } else if (typeExpr instanceof ReferenceTypeExpr ref) {
             StringBuilder builder = new StringBuilder();
             if (ref.isConst) builder.append("const ");
             builder.append(cppTypename(ref.typeExpr)).append(" &");
             return builder.toString();
         } else if (typeExpr instanceof PointerTypeExpr pointer) {
-            StringBuilder builder = new StringBuilder("polyglot::polyglot_ptr<");
+            StringBuilder builder = new StringBuilder(prefix).append("polyglot::polyglot_ptr<");
             if (pointer.isConst) builder.append("const ");
             builder.append(cppTypename(pointer.typeExpr)).append(">");
             return builder.toString();
         }
         throw new UnsupportedOperationException("Unsupported Cpp type");
+    }
+
+    public String cppTypename(TypeExpr typeExpr) {
+        return cppTypename(typeExpr, true);
     }
 
     /**
@@ -145,9 +154,15 @@ public class CppAPI {
         return cppTypename(typeExpr);
     }
 
+    private static Set<Name> reservedGlobalEntities = Set.of(Name.fromLower("system"));
+
     private String lastNameToCppName(FullyQualifiedName fqn) {
-        if (context.getTypeDecl(fqn) != null) return fqn.getLastName().toPascal();
-        return fqn.getLastName().toLower();
+        Name lastName = fqn.getLastName();
+        if (context.getTypeDecl(fqn) != null) return lastName.toPascal();
+        String res = lastName.toLower();
+        if (fqn.names.size() == 1 && reservedGlobalEntities.contains(lastName)
+                || CppKeyword.isKeyword(lastName)) res += "_";
+        return res;
     }
 
     /** Return the refered C type's name. */
@@ -195,7 +210,7 @@ public class CppAPI {
 
     /** Create the string of the C++ namespace of the corresponding module. */
     public String namespacePath(Module module) {
-        return module.name.join(r -> r.getLastName().toLower(), "", "::", "");
+        return module.name.join(this::lastNameToCppName, "", "::", "");
     }
 
     /** Return the path to the source file of the corresponing module. */
@@ -419,7 +434,8 @@ public class CppAPI {
         else if (lastName.equals(Name.operatorBitOr)) return "operator|";
         else if (lastName.equals(Name.operatorBitXor)) return "operator^";
         else if (lastName.equals(Name.operatorBitNot)) return "operator~";
-        else return lastName.toLower();
+        if (CppKeyword.isKeyword(lastName)) return lastName.toLower() + "_";
+        return lastName.toLower();
     }
 
     /** Return the C++ name of the function to define ``functionDecl``. */
@@ -428,7 +444,9 @@ public class CppAPI {
 
         if (!isMethod(functionDecl)) return functionName;
         StringBuilder builder = new StringBuilder();
-        builder.append(cppTypename(functionDecl.role.type)).append("::").append(functionName);
+        builder.append(cppTypename(functionDecl.role.type, false))
+                .append("::")
+                .append(functionName);
         return builder.toString();
     }
 
