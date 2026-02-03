@@ -395,7 +395,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     }
 
     public void processSubprogram(Libadalang.BasicDecl node) {
-        Libadalang.BaseSubpSpec spec = node.pSubpSpecOrNull(false);
+        Libadalang.BaseSubpSpec spec = node.pSubpSpecOrNull(true);
 
         // Get the C symbol of the function.
         String symbol = null;
@@ -457,7 +457,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                     || returnType.pIsArrayType(Libadalang.AdaNode.NONE)) returnOwner = Owner.USER;
         }
 
-        Name name = AdaAPI.functionProxyName(spec.pName().pCanonicalText().text);
+        Name name = AdaAPI.functionProxyName(node.pDefiningName().pCanonicalText().text);
 
         Subprogram subProg = new Subprogram(node, name, parameters, symbol, role, returnOwner);
         if (role != null && role.kind == RoleKind.METHOD) {
@@ -490,6 +490,12 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.NullSubpDecl node) {
+        processSubprogram(node);
+        return null;
+    }
+
+    @Override
+    public Void visit(Libadalang.GenericSubpInstantiation node) {
         processSubprogram(node);
         return null;
     }
