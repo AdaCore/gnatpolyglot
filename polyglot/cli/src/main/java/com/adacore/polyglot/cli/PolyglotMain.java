@@ -11,8 +11,17 @@ import picocli.CommandLine.Option;
 @Command(
         name = "polyglot",
         subcommands = {ProxyValidator.class, Ada2Proxy.class, Proxy2Cpp.class, PolyglotSetup.class},
-        version = "0.1",
-        description = "Polyglot driver.")
+        // Version information are substituted by anod for production builds
+        version = {
+            "Polyglot <POLYGLOT_VERSION>",
+            "Copyright (C) 2025-2026, AdaCore.",
+            "Tools are licensed under GPL-3.0-or-later.",
+            "Runtime libraries are licensed under Apache-2.0."
+        },
+        description = {
+            "Polyglot - Multi-language interface generator.",
+            "See documentation for more information."
+        })
 public class PolyglotMain {
     @Option(
             names = {"-h", "--help"},
