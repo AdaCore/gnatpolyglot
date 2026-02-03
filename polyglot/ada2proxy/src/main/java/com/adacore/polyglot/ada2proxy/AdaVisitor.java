@@ -137,6 +137,21 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return false;
     }
 
+    public static boolean isPrivateUnit(Libadalang.AnalysisUnit unit) {
+        if (unit.getRoot() instanceof Libadalang.CompilationUnit cu
+                && cu.fBody() instanceof Libadalang.LibraryItem li
+                && li.pTopLevelDecl(unit) instanceof Libadalang.BasePackageDecl packageDecl) {
+            boolean isPrivate = li.fHasPrivate().pAsBool();
+            // Verify that the parent is not a private package either
+            if (!isPrivate
+                    && packageDecl.fPackageName().fName() instanceof Libadalang.DottedName name) {
+                return isPrivateUnit(name.fPrefix().pReferencedDecl(false).getUnit());
+            }
+            return isPrivate;
+        }
+        return false;
+    }
+
     /**
      * Create a list of all the packages with the types that are missing in the proxy.
      *
@@ -216,7 +231,9 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.CompilationUnit node) {
-        node.fBody().accept(this);
+        if (!isPrivateUnit(node.getUnit())) {
+            node.fBody().accept(this);
+        }
         return null;
     }
 
