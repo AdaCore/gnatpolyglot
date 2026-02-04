@@ -86,7 +86,7 @@ public class BindableDeclChecker {
         }
 
         if (decl.pIsSubprogram()) {
-            Libadalang.BaseSubpSpec spec = decl.pSubpSpecOrNull(false);
+            Libadalang.BaseSubpSpec spec = decl.pSubpSpecOrNull(true);
             for (var paramType : spec.pParamTypes(Libadalang.AdaNode.NONE)) {
                 checkUse(decl, paramType);
             }

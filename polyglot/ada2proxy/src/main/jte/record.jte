@@ -23,7 +23,7 @@ Template file to generate bindings for record types.
         : rec.getFullyQualifiedName();
     String recordPrefix = recordName.replace(".", "_");
     String recordAccessName = rec.name.toPascalWithUnderscore() + "_Access";
-    String cwAccessName = api.makeTemp(rec.name, "Cw_Access");
+    String cwAccessName = rec.name.toPascalWithUnderscore() + "_Classwide";
     FunctionDecl freeFunc = rec.getFreeFunction();
     FunctionDecl copyFunc = rec.getCopyFunction();
     List<FunctionDecl> allocFuncs = rec.getAllocFunctions();
@@ -31,6 +31,13 @@ Template file to generate bindings for record types.
 }
 
 @if(!isBody)
+   <%-- Define an Access type for the record --%>
+   type ${recordAccessName} is access all ${recordName};
+   @if(rec.isTaggedType())
+   <%-- Define a classwide Access type for the record --%>
+   type ${cwAccessName} is access all ${recordName}'Class;
+   @endif
+
    <%-- Declare the allocation/freeing functions --%>
    procedure ${freeFunc.getLastName().toPascalWithUnderscore()} (Self: System.Address);
    pragma Export (C, ${freeFunc.getLastName().toPascalWithUnderscore()}, "${freeFunc.symbol}");
@@ -84,12 +91,6 @@ Template file to generate bindings for record types.
    @endif
 
 @else
-   <%-- Define an Access type for the record --%>
-   type ${recordAccessName} is access all ${recordName};
-   @if(rec.isTaggedType())
-   <%-- Define a classwide Access type for the record --%>
-   type ${cwAccessName} is access all ${recordName}'Class;
-   @endif
 
    <%-- Define the allocation/freeing functions --%>
    procedure ${freeFunc.getLastName().toPascalWithUnderscore()}

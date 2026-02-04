@@ -1,3 +1,5 @@
+with Ada.Unchecked_Deallocation;
+
 package Test is
 
    type Rec is record
@@ -5,6 +7,8 @@ package Test is
    end record;
 
    type Rec_Access is access all Rec;
+
+   procedure Free is new Ada.Unchecked_Deallocation (Rec, Rec_Access);
 
    type Arr is array (Positive range <>) of Integer;
 

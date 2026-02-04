@@ -39,7 +39,7 @@ Template file to generate binded functions.
    @if (subp.getReturnType().pIsLimitedType())
       begin
          return Value_Returned : ${returnType} :=
-           Return_Type_Converter.To_Address
+           Return_Type_Converter
              (new ${subp.getReturnType().pFullyQualifiedName()}'
                (${api.call(subp)})) do
           @for(var p : subp.parameters)

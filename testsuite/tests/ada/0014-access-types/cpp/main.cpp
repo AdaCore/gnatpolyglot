@@ -76,6 +76,12 @@ void simple_rec() {
     other.set_owner(polyglot::memory_owner::USER);
 }
 
+void use_free() {
+    polyglot::polyglot_ptr<test::Rec> ptr1(
+          new test::Rec(1), polyglot::memory_owner::LIBRARY);
+    test::free(ptr1);
+}
+
 void recursive_rec() {
     lists::List list(polyglot::polyglot_ptr<lists::ListItem>(nullptr));
     polyglot::polyglot_ptr<lists::ListItem> item1(new lists::ListItem(1));
@@ -131,6 +137,7 @@ void array() {
 int main() {
     test_polyglot_ptr();
     simple_rec();
+    use_free();
     std::cout << "\n";
     recursive_rec();
     std::cout << "\n";

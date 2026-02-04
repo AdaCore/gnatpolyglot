@@ -1,4 +1,4 @@
 Running validator test.
 Errors found in the proxy:
- * $.modules[0][1]: an other type exists with the same name and parent
+ * $.modules[0].declarations[1]: an other type exists with the same name and parent
 Done.

@@ -161,6 +161,7 @@ public class ProxyValidator implements Callable<Integer> {
 
         private void registerModuleDecls(Module module) {
             if (module.declarations != null) {
+                location.add(".declarations");
                 for (int i = 0; i < module.declarations.size(); i++) {
                     if (module.declarations.get(i) instanceof TypeDecl typeDecl) {
                         location.add("[" + i + "]");
@@ -169,6 +170,7 @@ public class ProxyValidator implements Callable<Integer> {
                         location.pop();
                     }
                 }
+                location.pop();
             }
         }
 

@@ -14,6 +14,8 @@ package Test is
       C : Cont;
    end record;
 
+   function Get_Cont return Cont;
+
    procedure P (Value: Cont);
 
    procedure P_Make_Copy (Value: Cont'Class);
@@ -43,5 +45,8 @@ private
       C : Rec_Access;
       Generation : Positive := 1;
    end record;
+
+   function Get_Cont return Cont is
+   (Ada.Finalization.Controlled with C => new Rec'(5, 6), Generation => 1);
 
 end Test;

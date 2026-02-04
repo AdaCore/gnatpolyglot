@@ -45,7 +45,7 @@ public class Subprogram extends AdaDeclaration {
 
     /** Return the SubpSpec of the origin. */
     private Libadalang.BaseSubpSpec getSpec() {
-        return origin.pSubpSpecOrNull(false);
+        return origin.pSubpSpecOrNull(true);
     }
 
     @Override

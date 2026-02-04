@@ -42,7 +42,7 @@ public class IncludeCollector {
 
         @Override
         public Void visit(FunctionDecl functionDecl) {
-            functionDecl.type.parameters.forEach(p -> p.type.visit(this));
+            functionDecl.type.visit(this);
             return null;
         }
 
