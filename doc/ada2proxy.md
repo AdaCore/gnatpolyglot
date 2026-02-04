@@ -1,6 +1,6 @@
 # Ada2Proxy
 
-Creates functions that uses the C ABI as a common way to communicate outside of
+Creates functions that use the C ABI as a common way to communicate outside of
 the Ada world.
 
 ## Types
@@ -76,11 +76,11 @@ As a limitation, Polyglot does not yet support discriminant components.
 #### Private types
 
 Any private type is binded as a class. Any private component will not have a
-corresponding getter, nor setter generated.
+corresponding getter or setter generated.
 
 ### Tagged types
 
-A tagged type is binded as non-final types and can be inherited in generated
+A tagged type is binded as a non-final type and can be inherited in generated
 bindings through the use of a shadow type.
 
 #### Shadow types
@@ -124,14 +124,14 @@ Interfaces are not yet supported.
 
 ### Limited types
 
-Limited types are binded as regular type with the exception that no additional
+Limited types are binded as regular types with the exception that no additional
 copy and clone functions are generated.
 
 ### Arrays
 
 #### Unconstrained arrays
 
-All unconstrained arrays are binded as generic arrays Bounds informations are
+All unconstrained arrays are binded as generic arrays. Bounds information is
 kept (First & Last), so care for constraint errors.
 
 ```ada
@@ -143,13 +143,13 @@ type Arr2 is array (Positive range <>) of Integer;
 #### Constrained arrays, or pragma'd
 
 TODO: Not yet supported, will be binded as regular records since their internal
-representation may defer from unconstrained arrays, with regular getter and
+representation may differ from unconstrained arrays, with regular getter and
 setter for nth component.
 
 ### Strings
 
 All unconstrained arrays of character are binded as regular strings. Since
-there are incompatibility with Ada strings and strings from other languages, an
+there are incompatibilities with Ada strings and strings from other languages, an
 explicit copy is necessary to convert an Ada string.
 
 Similarly to arrays, all bounds informations are kept.
@@ -158,7 +158,7 @@ Similarly to arrays, all bounds informations are kept.
 
 Only one level of indirection is implemented; Polyglot does not support access
 to access types and getters that may return an access component do not return
-references.. However, passing access values by references (`out` parameter) are
+references. However, passing access values by reference (`out` parameter) are
 supported.
 
 ## Subprograms
@@ -180,7 +180,7 @@ proxy. This allows the subprogram to become a member function/method of the
 type in the generated proxy, even to non-tagged types (similarly to the dot
 notation while using the `-gnatX` extension).
 
-Primitives that do not match this criterias will remain as free functions.
+Primitives that do not match these criteria will remain as free functions.
 
 ### Operators
 

@@ -1,6 +1,6 @@
 # Polyglot
 
-Polyglot is a high-level bindings generator
+Polyglot is a high-level bindings generator.
 
 The generation of bindings is done in a two step process:
 - Generation of the Proxy IR, and glue code to expose an interface for binded
@@ -26,9 +26,9 @@ Generates Ada code that interfaces with the C ABI, and a `proxy.json` file
 - proxy
   - Contains all the code that uses the C ABI
 - proxy aggregate:
-  Aggregate of the binded library, polyglot runtime and bindings
+  Aggregate of the binded library, polyglot runtime and bindings.
   Can be compiled as an ESAL to avoid future dependencies with Ada runtime, etc...
-  Danger: read limitations of ESAL (gpr doc)
+  Danger: read limitations of ESAL (gpr doc).
 
 ```sh
 $> polyglot -Ptest.gpr -o./2proxy
@@ -51,7 +51,7 @@ $> find <output_path>
 ```
 
 Generates all .cpp files that call the functions described in the json proxy IR.
-Include files are located in the `<output_path>/include` directory
+Include files are located in the `<output_path>/include` directory.
 
 ```sh
 $> polyglot proxy2cpp 2proxy/proxy.json -o./2cpp
@@ -62,7 +62,7 @@ $> find /2cpp
 2cpp/include/*.h
 ```
 
-Use build system of choice to build these
+Use build system of choice to build these.
 
 # Example: Generating Ada to C++ bindings
 

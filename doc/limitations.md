@@ -102,9 +102,9 @@ be marked as final.
 
 # Proxy2Cpp
 
-## C++ objet construction
+## C++ object construction
 
-The parent constructor is called first. it will initialize its own vtable
+The parent constructor is called first. It will initialize its own vtable
 *only*.
 
 It is not possible to know at this point if the ctor was called by a child or
@@ -149,17 +149,17 @@ becomes necessary to call the constructor with the extra parameter:
 
 ```cpp
 class Bar : public Foo {
-    // Correct: will constructor a shadow type.
+    // Correct: will construct a shadow type.
     Bar(int a) : Foo(a, this) { }
 
-    // Incorrect: will constructor a simple `Foo` object in the library.
+    // Incorrect: will construct a simple `Foo` object in the library.
     Bar(int a) : Foo(a) { }
 }
 ```
 
 ## Polymorphic copies
 
-Some binded languages may be able to perform Polymorphic copies (e.g Ada). When
+Some binded languages may be able to perform polymorphic copies (e.g Ada). When
 they occur on Shadow types, it is necessary to also make a clone of the C++
 object to which they have a reference. C++ does not provide a way to perform
 polymorphic copies out of the box, so when inheriting a binded types, it is

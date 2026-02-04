@@ -28,7 +28,7 @@ Classes are binded as class wrappers around a dynamically allocated internal obj
 
 ## Strings and arrays
 
-Strings and arrays have an inlined structure holding informations about the array: address, bounds...
+Strings and arrays have an inlined structure holding information about the array: address, bounds...
 
 | Type                  | Convention                        | C++ Type           | Internal C type |
 | --------------------- | --------------------------------- | ------------------ | --------------- |
@@ -39,7 +39,7 @@ Strings and arrays have an inlined structure holding informations about the arra
 
 ## Pointers
 
-Pointers to pointers are not supported
+Pointers to pointers are not supported.
 
 ## References
 

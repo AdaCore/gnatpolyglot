@@ -107,7 +107,7 @@ TODO: do some stuff to prevent inheritance for these (i.e. private constructor i
 
 ### Function members
 
-As mentionned previously, functions with a role will be function members of the
+As mentioned previously, functions with a role will be function members of the
 class. The first parameter has to be of the same type as the role's. The latter
 becomes the implicit `this` value. If the first argument type in the proxy is
 constant, then the the function member will be marked as `const`.
@@ -136,12 +136,12 @@ class Bar : public example::Foo {
 > This is necessary due to C++ initializing the vtable for a given type only at
 > the time that is it being constructed. When executing `example::Foo`'s
 > constructor, the vtable of `Bar` is not yet initialized, meaning that it
-> cannot be aware that the object being constructed actually inhertis from
+> cannot be aware that the object being constructed actually inherits from
 > `example::Foo`.
 
 ### Overriding virtual functions
 
-Virtual funtions from Binded types can be overriden. This allows inside the
+Virtual functions from Binded types can be overriden. This allows inside the
 binded libraries to dynamically dispatch back to overrides.
 
 ```ada
@@ -177,13 +177,13 @@ int main() {
 }
 ```
 
-#### Uncopyable classes (copy ellision (C++17))
+#### Uncopyable classes (copy elision (C++17))
 
-C++ only supports guaranted copy ellision since C++17. However, there may be
+C++ only supports guaranteed copy elision since C++17. However, there may be
 times where input languages support returning uncopyable values through similar
-concepts to copy ellision. In order to avoid errors with invalid code
+concepts to copy elision. In order to avoid errors with invalid code
 generation, when these values are returned before with standards prior to
-C++17, they will be returned though a pointer. These value, since cloned before
+C++17, they will be returned though a pointer. These values, since cloned before
 by the proxy before returning, will be owned by the user.
 
 ## Polyglot pointers
@@ -196,9 +196,9 @@ Creating a pointer from an existing object sets the owner to `STATIC`. It
 implies that the memory should not be freed when the pointer goes out of scope,
 and the owner cannot be changed.
 
-When passing a pointer to a function, the function excpects a minimum level of
+When passing a pointer to a function, the function expects a minimum level of
 ownership. This is to make sure that after calling a function that may escape
-the pointer, the latter should not be freed inadvertently which could leave
+the pointer, the latter should not be freed inadvertently which could leave a
 dangling pointer.
 
 TODO: example of pointer escaping
