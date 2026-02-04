@@ -115,6 +115,7 @@
         <configuration>
           <java>
             <includes>
+              <include>cli/src/*/java/**/*.java</include>
               <include>proxy/src/*/java/**/*.java</include>
               <include>ada2proxy/src/*/java/**/*.java</include>
               <include>proxy2cpp/src/*/java/**/*.java</include>

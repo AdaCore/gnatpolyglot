@@ -7,17 +7,19 @@ import os
 from utils import run_polyglot
 
 
-def print_help(subcommand: str):
-    print(f"Running `polyglot {subcommand} --help`")
+def print_cmd(subcommand: str, args: list[str]):
+    print(f"Running `polyglot {subcommand} {" ".join(args)}`")
     print("=" * 80)
     print()
-    run_polyglot(subcommand, ["--help"])
+    run_polyglot(subcommand, args)
     print()
     print()
 
 
-print_help("")
-print_help("setup")
-print_help("validator")
-print_help("ada2proxy")
-print_help("proxy2cpp")
+print_cmd("", ["--version"])
+
+print_cmd("", ["--help"])
+print_cmd("setup", ["--help"])
+print_cmd("validator", ["--help"])
+print_cmd("ada2proxy", ["--help"])
+print_cmd("proxy2cpp", ["--help"])
