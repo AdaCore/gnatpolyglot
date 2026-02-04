@@ -21,20 +21,20 @@ public class BindableDeclChecker {
         }
 
         if (decl.pIsTaggedType(Libadalang.AdaNode.NONE)) {
-            BaseTypeDecl baseType = decl.pBaseType(Libadalang.AdaNode.NONE);
+            BaseTypeDecl baseType = decl.pBaseType(decl);
             if (!baseType.isNone()) checkUse(decl, baseType);
         }
 
         if (decl.pIsRecordType(Libadalang.AdaNode.NONE)) {
-            for (var shape : decl.pShapes(false, Libadalang.AdaNode.NONE)) {
+            for (var shape : decl.pShapes(false, decl)) {
                 for (var comp : shape.components) {
-                    checkUse(decl, comp.pFormalType(Libadalang.AdaNode.NONE));
+                    checkUse(decl, comp.pFormalType(decl));
                 }
             }
         }
 
         // For other type, we must ignore any type derivation
-        decl = decl.pRootType(Libadalang.AdaNode.NONE);
+        decl = decl.pRootType(decl);
 
         if (decl.pParentBasicDecl() instanceof Libadalang.GenericPackageDecl)
             throw new UnbindableDeclException(
@@ -57,11 +57,11 @@ public class BindableDeclChecker {
             throw new UnbindableDeclException(
                     decl, "Anonymous type declarations are not yet supported");
         else if (decl.pIsAccessType(Libadalang.AdaNode.NONE)) {
-            if (decl.pRootType(Libadalang.AdaNode.NONE) instanceof Libadalang.TypeDecl typeDecl
+            if (decl.pRootType(decl) instanceof Libadalang.TypeDecl typeDecl
                     && typeDecl.fTypeDef() instanceof Libadalang.AccessToSubpDef)
                 throw new UnbindableDeclException(
                         decl, "Access to subprograms are not yet supported");
-            Libadalang.BaseTypeDecl accessedType = decl.pAccessedType(Libadalang.AdaNode.NONE);
+            Libadalang.BaseTypeDecl accessedType = decl.pAccessedType(decl);
             if (accessedType.pIsClasswide())
                 throw new UnbindableDeclException(
                         decl, "Access to classwide types are not yet supported");
@@ -71,7 +71,7 @@ public class BindableDeclChecker {
 
             checkUse(decl, accessedType);
         } else if (decl.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            checkUse(decl, decl.pCompType(false, Libadalang.AdaNode.NONE));
+            checkUse(decl, decl.pCompType(false, decl));
         } else if (decl.equals(decl.pStdWideWideCharType())
                 || decl.equals(decl.pStdWideCharType())) {
             throw new UnbindableDeclException(
@@ -97,10 +97,10 @@ public class BindableDeclChecker {
 
         if (decl.pIsSubprogram()) {
             Libadalang.BaseSubpSpec spec = decl.pSubpSpecOrNull(true);
-            for (var paramType : spec.pParamTypes(Libadalang.AdaNode.NONE)) {
+            for (var paramType : spec.pParamTypes(decl)) {
                 checkUse(decl, paramType);
             }
-            Libadalang.BaseTypeDecl returnType = spec.pReturnType(Libadalang.AdaNode.NONE);
+            Libadalang.BaseTypeDecl returnType = spec.pReturnType(decl);
             if (!returnType.isNone()) {
                 if (returnType.pIsClasswide())
                     throw new UnbindableDeclException(

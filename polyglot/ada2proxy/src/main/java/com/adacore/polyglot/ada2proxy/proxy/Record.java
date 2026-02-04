@@ -394,7 +394,7 @@ public class Record extends AdaDeclaration {
         if (isShadow && origin.pIsPrivate()) {
             return origin.pFullyQualifiedName() + " with";
         }
-        return Arrays.stream(origin.pFullView().pBaseTypes(Libadalang.AdaNode.NONE))
+        return Arrays.stream(origin.pFullView().pBaseTypes(origin))
                 .filter(b -> b.pIsPrivate())
                 .findFirst()
                 .map((b) -> b.pFullyQualifiedName() + " with")
@@ -423,9 +423,8 @@ public class Record extends AdaDeclaration {
                                 p -> {
                                     Libadalang.BaseSubpSpec spec = p.pSubpSpecOrNull(false);
                                     return api.getDeclChecker().seenUnbindable(p)
-                                            || spec.pReturnType(Libadalang.AdaNode.NONE)
-                                                    .equals(origin)
-                                            || Stream.of(spec.pParamTypes(Libadalang.AdaNode.NONE))
+                                            || spec.pReturnType(spec).equals(origin)
+                                            || Stream.of(spec.pParamTypes(spec))
                                                     .skip(1)
                                                     .anyMatch(t -> t.equals(origin));
                                 });

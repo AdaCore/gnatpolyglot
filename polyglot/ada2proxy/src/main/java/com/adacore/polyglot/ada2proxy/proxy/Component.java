@@ -23,7 +23,7 @@ public class Component implements AdaProxyObject {
     public boolean hasDefaultValue() {
         return !origin.fDefaultExpr().isNone()
                 // Component who are of a controlled type implicitely have a default value.
-                || AdaTypeMatcher.isControlledType(origin.pFormalType(Libadalang.AdaNode.NONE));
+                || AdaTypeMatcher.isControlledType(origin.pFormalType(origin));
     }
 
     /**
@@ -54,7 +54,7 @@ public class Component implements AdaProxyObject {
 
     /** Return the type of the component. */
     public Libadalang.BaseTypeDecl getType() {
-        return this.origin.pFormalType(Libadalang.AdaNode.NONE);
+        return this.origin.pFormalType(origin);
     }
 
     @Override

@@ -246,7 +246,7 @@ public class Array extends AdaDeclaration {
     }
 
     public Libadalang.BaseTypeDecl getComponentType() {
-        return arrayType.pCompType(false, Libadalang.AdaNode.NONE);
+        return arrayType.pCompType(false, arrayType);
     }
 
     @Override

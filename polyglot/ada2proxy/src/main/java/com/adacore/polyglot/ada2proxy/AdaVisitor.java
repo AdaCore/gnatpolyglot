@@ -73,14 +73,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                                     .toPascalWithUnderscore());
         else builder.append(spec.pName().pFullyQualifiedName().replace(".", "_"));
 
-        if (spec.pReturnType(Libadalang.AdaNode.NONE).isNone()) {
+        if (spec.pReturnType(spec).isNone()) {
             builder.append("Void");
         } else {
             builder.append(
-                    spec.pReturnType(Libadalang.AdaNode.NONE)
-                            .pSpecificType()
-                            .pFullyQualifiedName()
-                            .replace(".", "_"));
+                    spec.pReturnType(spec).pSpecificType().pFullyQualifiedName().replace(".", "_"));
         }
         String res = builder.toString();
         int count = 0;
@@ -390,8 +387,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 && !type.pIsAccessType(Libadalang.AdaNode.NONE)
                 // The first argument of the subprogram must be compatible with the primitive type.
                 && spec.pParams().length != 0
-                && (spec.pParamTypes(Libadalang.AdaNode.NONE)[0].pMatchingType(
-                        type, Libadalang.AdaNode.NONE));
+                && (spec.pParamTypes(spec)[0].pMatchingType(type, spec));
     }
 
     public void processSubprogram(Libadalang.BasicDecl node) {
@@ -416,12 +412,12 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
         // Get the list of parameters.
         List<SubpParam> parameters = new ArrayList<>();
-        Libadalang.BaseTypeDecl[] types = spec.pParamTypes(Libadalang.AdaNode.NONE);
+        Libadalang.BaseTypeDecl[] types = spec.pParamTypes(node);
         int typeIndex = 0;
         for (var paramSpec : spec.pAbstractFormalParams()) {
             // Enqueue the parameter's type in case we do not visit it in the required list of
             // units
-            queuedDecls.add(paramSpec.pFormalType(Libadalang.AdaNode.NONE));
+            queuedDecls.add(paramSpec.pFormalType(node));
 
             // Record value types are given through an address, but later **copied** into the
             // arguments, so the ownership does not matter.
@@ -429,9 +425,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             // handled.
             Transfer transfer =
                     new Transfer(
-                            paramSpec
-                                            .pFormalType(Libadalang.AdaNode.NONE)
-                                            .pIsAccessType(Libadalang.AdaNode.NONE)
+                            paramSpec.pFormalType(node).pIsAccessType(Libadalang.AdaNode.NONE)
                                     ? RequiredOwner.LIBRARY
                                     : RequiredOwner.ANY);
 
@@ -441,7 +435,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                         new SubpParam(paramSpec, AdaAPI.getName(p), transfer, types[typeIndex++]));
         }
 
-        Libadalang.BaseTypeDecl returnType = spec.pReturnType(Libadalang.AdaNode.NONE);
+        Libadalang.BaseTypeDecl returnType = spec.pReturnType(node);
         if (!returnType.isNone()) queuedDecls.add(returnType);
 
         Owner returnOwner = Owner.UNKNOWN;
@@ -524,7 +518,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 if (c instanceof Libadalang.NullComponentDecl) break;
 
                 Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
-                queuedDecls.add(componentDecl.pFormalType(Libadalang.AdaNode.NONE));
+                queuedDecls.add(componentDecl.pFormalType(recordDef));
                 for (var name : componentDecl.fIds()) {
                     components.add(new Component(componentDecl, AdaAPI.getName(name)));
                 }
@@ -565,9 +559,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             Record rec = makeRecord(node.fRecordExtension(), parentDecl);
             Libadalang.TypeDecl parentType =
                     (Libadalang.TypeDecl)
-                            node.fSubtypeIndication()
-                                    .pDesignatedTypeDecl()
-                                    .pBaseSubtype(Libadalang.AdaNode.NONE);
+                            node.fSubtypeIndication().pDesignatedTypeDecl().pBaseSubtype(node);
 
             if (!parentType.isNone()) {
                 if (parentType.fTypeDef() instanceof Libadalang.DerivedTypeDef derived)
@@ -583,8 +575,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         } else if (parentDecl.pIsRecordType(Libadalang.AdaNode.NONE)
                 || AdaTypeMatcher.isPrivate(parentDecl)) {
             // If the parent is a non-tagged record, simply copy the fields of the root type.
-            Libadalang.TypeDecl rootType =
-                    (Libadalang.TypeDecl) parentDecl.pRootType(Libadalang.AdaNode.NONE);
+            Libadalang.TypeDecl rootType = (Libadalang.TypeDecl) parentDecl.pRootType(node);
             if (rootType.fTypeDef() instanceof Libadalang.RecordTypeDef recordDef) {
                 declarations.add(makeRecord(recordDef.fRecordDef(), parentDecl));
             } else {
@@ -601,7 +592,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             Array array = new Array(parentDecl);
             declarations.add(array);
             mappedDecls.put(parentDecl, array);
-            queuedDecls.add(parentDecl.pCompType(false, Libadalang.AdaNode.NONE));
+            queuedDecls.add(parentDecl.pCompType(false, node));
         } else if (AdaTypeMatcher.isEnum(parentDecl)) {
             EnumType enumType = createEnumType(parentDecl);
             declarations.add(enumType);

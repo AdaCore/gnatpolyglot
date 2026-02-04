@@ -77,7 +77,7 @@ public class Subprogram extends AdaDeclaration {
 
     /** Return the return type of the Ada subprogram. */
     public Libadalang.BaseTypeDecl getReturnType() {
-        return getSpec().pReturnType(Libadalang.AdaNode.NONE);
+        return getSpec().pReturnType(origin);
     }
 
     /** Return whether the subprogram is final or can be overriden. */
