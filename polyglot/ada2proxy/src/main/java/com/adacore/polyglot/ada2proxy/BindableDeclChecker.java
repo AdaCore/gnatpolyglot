@@ -3,6 +3,7 @@ package com.adacore.polyglot.ada2proxy;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import com.adacore.polyglot.NativeType;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -83,6 +84,12 @@ public class BindableDeclChecker {
 
         // assume that decl is bindable (to avoid infinite loops)
         bindableDecls.add(decl);
+
+        if (Arrays.stream(decl.pDefiningNames())
+                .filter(d -> !d.isNone())
+                .anyMatch(Libadalang.DefiningName::pIsGhostCode)) {
+            throw new UnbindableDeclException(decl, "Ghost code declarations are not bindable");
+        }
 
         if (decl instanceof Libadalang.GenericDecl gen) {
             throw new UnbindableDeclException(decl, "Generic declarations are not bindable");

@@ -273,9 +273,10 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
-    public static String getDisplayName(Libadalang.BasicDecl type) {
-        if (type instanceof Libadalang.AnonymousTypeDecl anon) return anon.getImage();
-        return type.pFullyQualifiedName();
+    public static String getDisplayName(Libadalang.BasicDecl decl) {
+        if (decl instanceof Libadalang.AnonymousTypeDecl anon) return anon.getImage();
+        if (decl.pDefiningNames().length > 1) return decl.getImage();
+        return decl.pFullyQualifiedName();
     }
 
     public String getProxyAccessFullyQualifiedName(Libadalang.BaseTypeDecl type) {
