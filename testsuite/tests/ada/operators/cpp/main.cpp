@@ -28,4 +28,8 @@ int main() {
     print(Pair(1, 2) | Pair(3, 4));
     print(Pair(-1, -1) ^ Pair(1, 2));
     print(~Pair(~3, ~4));
+
+    std::cout
+       << polyglot::ada::strings::to_string(test::operator_mult(4, 'c'))
+       << "\n";
 }

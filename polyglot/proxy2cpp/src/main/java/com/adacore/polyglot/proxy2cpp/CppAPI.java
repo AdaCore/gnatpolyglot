@@ -25,6 +25,7 @@ import com.adacore.polyglot.proxy.VTableEntry;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class CppAPI {
@@ -421,21 +422,38 @@ public class CppAPI {
 
     public String functionName(FunctionDecl functionDecl) {
         Name lastName = functionDecl.name.getLastName();
-        if (lastName.equals(Name.operatorPlus)) return "operator+";
-        else if (lastName.equals(Name.operatorMinus)) return "operator-";
-        else if (lastName.equals(Name.operatorMult)) return "operator*";
-        else if (lastName.equals(Name.operatorDiv)) return "operator/";
-        else if (lastName.equals(Name.operatorMod)) return "operator%";
-        else if (lastName.equals(Name.operatorEq)) return "operator==";
-        else if (lastName.equals(Name.operatorNe)) return "operator!=";
-        else if (lastName.equals(Name.operatorLt)) return "operator<";
-        else if (lastName.equals(Name.operatorLe)) return "operator<=";
-        else if (lastName.equals(Name.operatorGt)) return "operator>";
-        else if (lastName.equals(Name.operatorGe)) return "operator>=";
-        else if (lastName.equals(Name.operatorBitAnd)) return "operator&";
-        else if (lastName.equals(Name.operatorBitOr)) return "operator|";
-        else if (lastName.equals(Name.operatorBitXor)) return "operator^";
-        else if (lastName.equals(Name.operatorBitNot)) return "operator~";
+        // An operator function must have at least one function parameter or implicit object
+        // parameter whose type is a class, a reference to a class, an enumeration, or a reference
+        // to an enumeration.
+        Predicate<Parameter> predicate = null;
+        predicate =
+                (p) -> {
+                    TypeExpr typeExpr = p.type;
+                    if (typeExpr instanceof ReferenceTypeExpr ref) typeExpr = ref.typeExpr;
+                    if (typeExpr instanceof NameTypeExpr name) {
+                        TypeDecl typeDecl = context.getTypeDecl(name.name);
+                        return typeDecl instanceof EnumerationDecl || typeDecl instanceof ClassDecl;
+                    }
+                    // Arrays and pointers are binded as classes, so it works
+                    return typeExpr instanceof ArrayTypeExpr || typeExpr instanceof PointerTypeExpr;
+                };
+        if (functionDecl.type.parameters.stream().anyMatch(predicate)) {
+            if (lastName.equals(Name.operatorPlus)) return "operator+";
+            else if (lastName.equals(Name.operatorMinus)) return "operator-";
+            else if (lastName.equals(Name.operatorMult)) return "operator*";
+            else if (lastName.equals(Name.operatorDiv)) return "operator/";
+            else if (lastName.equals(Name.operatorMod)) return "operator%";
+            else if (lastName.equals(Name.operatorEq)) return "operator==";
+            else if (lastName.equals(Name.operatorNe)) return "operator!=";
+            else if (lastName.equals(Name.operatorLt)) return "operator<";
+            else if (lastName.equals(Name.operatorLe)) return "operator<=";
+            else if (lastName.equals(Name.operatorGt)) return "operator>";
+            else if (lastName.equals(Name.operatorGe)) return "operator>=";
+            else if (lastName.equals(Name.operatorBitAnd)) return "operator&";
+            else if (lastName.equals(Name.operatorBitOr)) return "operator|";
+            else if (lastName.equals(Name.operatorBitXor)) return "operator^";
+            else if (lastName.equals(Name.operatorBitNot)) return "operator~";
+        }
         if (CppKeyword.isKeyword(lastName)) return lastName.toLower() + "_";
         return lastName.toLower();
     }

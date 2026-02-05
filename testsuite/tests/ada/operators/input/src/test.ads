@@ -1,3 +1,5 @@
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
 package Test is
 
    type Pair is record
@@ -25,5 +27,8 @@ package Test is
    function "or" (P : Pair; P2 : Pair) return Pair;
    function "xor" (P : Pair; P2 : Pair) return Pair;
    function "not" (P : Pair) return Pair;
+
+   function "*" (I : Integer; C : Character) return String
+   is (To_String (I * C));
 
 end Test;
