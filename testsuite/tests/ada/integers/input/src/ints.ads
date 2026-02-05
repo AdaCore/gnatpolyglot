@@ -17,7 +17,7 @@ package Ints is
 
    procedure P (S : My_Small) is null;
 
-   type My_Positive is mod (2**32 - 1);
+   type My_Positive is mod (2**32);
 
    function F_Positive return Positive;       -- subtype of integer: Should map
                                               -- int32 to

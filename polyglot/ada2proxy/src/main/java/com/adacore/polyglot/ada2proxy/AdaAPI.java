@@ -18,6 +18,7 @@ import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.Name;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeExpr;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -175,7 +176,8 @@ public class AdaAPI extends LanguageAPI {
                     }
                     if (typeDecl.fTypeDef() instanceof Libadalang.ModIntTypeDef) {
                         Libadalang.DiscreteRange range = typeDecl.pDiscreteRange();
-                        int bitLength = range.highBound.pEvalAsInt().bitLength();
+                        int bitLength =
+                                range.highBound.pEvalAsInt().subtract(BigInteger.ONE).bitLength();
                         if (bitLength <= 8) return NativeType.UINT8;
                         if (bitLength <= 16) return NativeType.UINT16;
                         if (bitLength <= 32) return NativeType.UINT32;
