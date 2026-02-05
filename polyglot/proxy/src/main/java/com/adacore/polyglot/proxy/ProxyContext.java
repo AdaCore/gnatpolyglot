@@ -107,8 +107,9 @@ public class ProxyContext {
 
     public boolean isNativeScalar(TypeExpr typeExpr) {
         return typeExpr instanceof NameTypeExpr name
-                && getTypeDecl(name.name) instanceof NativeTypeDecl nativeType
-                && !nativeType.equals(NativeType.STRING.declaration);
+                && (getTypeDecl(name.name) instanceof EnumerationDecl
+                        || getTypeDecl(name.name) instanceof NativeTypeDecl nativeType
+                                && !nativeType.equals(NativeType.STRING.declaration));
     }
 
     public boolean isClassType(TypeExpr typeExpr) {

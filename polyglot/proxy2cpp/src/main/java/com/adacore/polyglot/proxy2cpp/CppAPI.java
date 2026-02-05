@@ -382,6 +382,15 @@ public class CppAPI {
                 // Note that unlike class types that require a wrapping proxy objects, native types
                 // can be directely addressed, thus we can return real C++ references.
                 builder.append("*");
+                if (ref.typeExpr instanceof NameTypeExpr name
+                        && context.getTypeDecl(name.name) instanceof EnumerationDecl) {
+                    // Scoped enums cannot be instantiated with a list initializer until C++17. Use
+                    // a static_cast instead.
+                    builder.append("static_cast<")
+                            .append(ref.isConst ? "const " : "")
+                            .append(cppTypename(name))
+                            .append("*>");
+                }
             } else {
                 // When the returned pointer to an opaque data is `const void *`, we must return a
                 // const view.
@@ -780,5 +789,15 @@ public class CppAPI {
         if (context.isStringType(typeExpr.typeExpr))
             return "polyglot::ada::strings::string_data{1, 0, nullptr}";
         return "nullptr";
+    }
+
+    public String getEnumSizeType(EnumerationDecl enumDecl) {
+        int lastValue = enumDecl.items.getLast().value;
+        if (lastValue < (1 << 8)) return nativeTypeName(NativeType.UINT8);
+        if (lastValue < (1 << 16)) return nativeTypeName(NativeType.UINT16);
+        if (lastValue < (1 << 32)) return nativeTypeName(NativeType.UINT32);
+        if (lastValue < (1 << 64)) return nativeTypeName(NativeType.UINT64);
+        throw new UnsupportedOperationException(
+                "enumerations of size %d are not supported".formatted(lastValue));
     }
 }
