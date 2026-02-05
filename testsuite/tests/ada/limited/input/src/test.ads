@@ -12,6 +12,8 @@ package Test is
    procedure P(V: in out Tagged_Value);
    procedure Call_P(V: in out Tagged_Value'Class);
 
+   Global : Tagged_Value := (10, 11);
+
 private
 
    type Value is limited record
