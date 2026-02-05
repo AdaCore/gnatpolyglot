@@ -190,7 +190,8 @@ public class Record extends AdaDeclaration {
     public List<FunctionDecl> getAllocFunctions() {
         if (this.allocFunctions != null) return this.allocFunctions;
         this.allocFunctions = new ArrayList<>(2);
-        if (!isAbstract()) {
+        if (!isAbstract()
+                && !(origin.fDiscriminants() instanceof Libadalang.UnknownDiscriminantPart)) {
             NameTypeExpr type = getTypeExpr();
             this.allocFunctions.add(
                     new FunctionDecl(
