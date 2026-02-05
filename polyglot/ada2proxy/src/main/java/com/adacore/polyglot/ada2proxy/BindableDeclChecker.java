@@ -85,6 +85,20 @@ public class BindableDeclChecker {
         // assume that decl is bindable (to avoid infinite loops)
         bindableDecls.add(decl);
 
+        for (var d : decl.pDefiningNames()) {
+            if (d.isNone()) continue;
+            Libadalang.Symbol symbol = Libadalang.Symbol.create("Import");
+            Libadalang.PragmaNode pragma = d.pGetPragma(symbol);
+            if (!pragma.isNone() && pragma.fId().pNameIs(symbol)) {
+                if (((Libadalang.BaseAssoc) pragma.fArgs().getChild(0))
+                        .pAssocExpr()
+                        .getText()
+                        .toLowerCase()
+                        .equals("intrinsic"))
+                    throw new UnbindableDeclException(decl, "Intrinsics are not bindable");
+            }
+        }
+
         if (Arrays.stream(decl.pDefiningNames())
                 .filter(d -> !d.isNone())
                 .anyMatch(Libadalang.DefiningName::pIsGhostCode)) {
