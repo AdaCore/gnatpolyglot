@@ -123,17 +123,6 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return pack;
     }
 
-    /** Return whether the binded type was registed in the declaration list of its parent package */
-    public boolean registedInParentPackage(Libadalang.BaseTypeDecl type) {
-        Libadalang.BasicDecl decl = type.pParentBasicDecl();
-        AdaDeclaration mappedDecl = mappedDecls.get(type);
-        if (mappedDecl != null && decl instanceof Libadalang.BasePackageDecl packageDecl) {
-            Package pack = mappedPackages.get(packageDecl);
-            return pack != null && pack.declarations.contains(mappedDecl);
-        }
-        return false;
-    }
-
     public static boolean isPrivateUnit(Libadalang.AnalysisUnit unit) {
         if (unit.getRoot() instanceof Libadalang.CompilationUnit cu
                 && cu.fBody() instanceof Libadalang.LibraryItem li
@@ -149,6 +138,17 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return false;
     }
 
+    /** Return the package that contains decl. */
+    public Libadalang.BasePackageDecl getOwningPackage(Libadalang.BasicDecl decl) {
+        Libadalang.BasicDecl parent = decl.pParentBasicDecl();
+        while (!parent.isNone()) {
+            if (parent instanceof Libadalang.BasePackageDecl packageDecl) return packageDecl;
+            parent = parent.pParentBasicDecl();
+        }
+        AdaScanner.warning(new UnbindableDeclException(decl, "Could not find a parent package"));
+        return Libadalang.BasePackageDecl.NONE;
+    }
+
     /**
      * Create a list of all the packages with the types that are missing in the proxy.
      *
@@ -162,58 +162,15 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         List<Package> packages = new ArrayList<>();
         while (!queuedDecls.isEmpty()) {
             Libadalang.BasicDecl decl = queuedDecls.poll();
-            if (decl instanceof Libadalang.PackageDecl p) {
+            if (decl instanceof Libadalang.BasePackageDecl p
+                    && !p.getUnit().equals(p.pStandardUnit())) {
                 if (mappedPackages.containsKey(p)) continue;
-                // When a package was not visited, create an empty one. We do not want to visit all
-                // its declarations.
-                Package pack = new Package(p, new ArrayList<>());
-                packages.add(pack);
-                enqueueParentPackages(p);
-                mappedPackages.put(p, pack);
-            } else if (decl instanceof Libadalang.BaseTypeDecl type) {
-                // If the type was already visited, it is already in a package's list of
-                // declaration. Also ignore types from the Std unit or native types.
-                if (registedInParentPackage(type)
-                        || api.getDeclChecker().seenUnbindable(decl)
-                        || type.getUnit().equals(type.pStandardUnit())
-                        || AdaTypeMatcher.isNumber(type)) continue;
-                if (type.pParentBasicDecl() instanceof Libadalang.BasePackageDecl p) {
-                    Package pack = mappedPackages.get(p);
-                    // If the type's package does not yet exist, enqueue the package and the type.
-                    // The package needs to exist before the mapped type.
-                    if (pack == null) {
-                        queuedDecls.add(p);
-                        queuedDecls.add(type);
-                    } else {
-                        // pack may be null when the type is an array.
-                        if (pack != null) declarations = pack.declarations;
-                        visitDecl(type);
-                        declarations = null;
-                    }
-                } else {
-                    AdaScanner.error(
-                            new UnbindableDeclException(decl, "Unsupported parent declaration"));
-                }
-            } else if (decl instanceof Libadalang.ExceptionDecl exc
-                    && decl.pParentBasicDecl() instanceof Libadalang.BasePackageDecl p) {
-                Package pack = mappedPackages.get(p);
-                // If the type's package does not yet exist, enqueue the package and the type.
-                // The package needs to exist before the mapped type.
-                if (pack == null) {
-                    queuedDecls.add(p);
-                    queuedDecls.add(decl);
-                } else {
-                    // pack may be null when the type is an array.
-                    if (pack != null) declarations = pack.declarations;
-                    visitDecl(exc);
-                    declarations = null;
-                }
-            } else {
-                AdaScanner.error(
-                        new UnbindableDeclException(decl, "Unsupported parent declaration"));
+                packages.add(analyzeSpec(p.getUnit()));
+            } else if (!decl.getUnit().equals(decl.pStandardUnit())) {
+                queuedDecls.add(getOwningPackage(decl));
             }
         }
-        return packages;
+        return packages.stream().filter(p -> p != null).toList();
     }
 
     @Override
