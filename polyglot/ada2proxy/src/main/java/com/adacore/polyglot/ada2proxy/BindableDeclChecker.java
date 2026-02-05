@@ -2,6 +2,7 @@ package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
+import com.adacore.polyglot.NativeType;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -45,7 +46,9 @@ public class BindableDeclChecker {
             if (decl.pIsFixedPoint(Libadalang.AdaNode.NONE))
                 throw new UnbindableDeclException(decl, "Fixed-point types are not supported");
             try {
-                AdaAPI.checkNativeType(decl);
+                NativeType nativeType = AdaAPI.checkNativeType(decl);
+                if (nativeType.equals(NativeType.UINT128) || nativeType.equals(NativeType.SINT128))
+                    throw new UnbindableDeclException(decl, "Unsupported integer size (128)");
             } catch (Libadalang.LangkitException e) {
                 throw new UnbindableDeclException(decl, e);
             }
