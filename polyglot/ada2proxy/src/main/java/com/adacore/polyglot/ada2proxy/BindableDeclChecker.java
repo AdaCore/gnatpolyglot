@@ -95,6 +95,11 @@ public class BindableDeclChecker {
             throw new UnbindableDeclException(decl, "Generic declarations are not bindable");
         }
 
+        if (decl instanceof Libadalang.PackageDecl packageDecl
+                && Arrays.stream(packageDecl.parents(false))
+                        .anyMatch(p -> p instanceof Libadalang.PackageDecl))
+            throw new UnbindableDeclException(decl, "Nested packages are not yet supported");
+
         if (decl.pIsSubprogram()) {
             Libadalang.BaseSubpSpec spec = decl.pSubpSpecOrNull(true);
             for (var paramType : spec.pParamTypes(decl)) {
