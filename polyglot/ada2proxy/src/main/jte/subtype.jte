@@ -13,6 +13,8 @@ Template file to generate subtype related types of the Ada bindings.
 @param AdaAPI api
 @param Subtype subtype
 
+@if(!subtype.getDecl().pIsAccessType(Libadalang.AdaNode.NONE))
    type ${api.asAccess(subtype.getDecl())} is
       access all ${subtype.getFullyQualifiedName()}
    with Size => Standard'Address_Size;
+@endif

@@ -14,4 +14,10 @@ package Test is
 
    procedure Foo (Value: C);
 
+   type Acc is access all A;
+
+   subtype D is Acc;
+
+   function Identity (Value: D) return D is (Value);
+
 end Test;
