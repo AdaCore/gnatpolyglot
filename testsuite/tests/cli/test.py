@@ -7,16 +7,18 @@ import os
 from utils import run_polyglot
 
 
-def print_cmd(subcommand: str, args: list[str]):
+def print_cmd(subcommand: str, args: list[str], discard_first_lines: int = 0):
     print(f"Running `polyglot {subcommand} {" ".join(args)}`")
     print("=" * 80)
     print()
-    run_polyglot(subcommand, args)
+    res = run_polyglot(subcommand, args, pipe=True)
+    lines = res.split("\n", discard_first_lines)
+    print(lines[discard_first_lines], end="")
     print()
     print()
 
 
-print_cmd("", ["--version"])
+print_cmd("", ["--version"], discard_first_lines=1)
 
 print_cmd("", ["--help"])
 print_cmd("setup", ["--help"])
