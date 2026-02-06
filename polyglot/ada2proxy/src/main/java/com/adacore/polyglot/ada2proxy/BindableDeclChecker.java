@@ -53,10 +53,10 @@ public class BindableDeclChecker {
             } catch (Libadalang.LangkitException e) {
                 throw new UnbindableDeclException(decl, e);
             }
-        } else if (decl instanceof Libadalang.AnonymousTypeDecl)
+        } else if (decl instanceof Libadalang.AnonymousTypeDecl) {
             throw new UnbindableDeclException(
                     decl, "Anonymous type declarations are not yet supported");
-        else if (decl.pIsAccessType(Libadalang.AdaNode.NONE)) {
+        } else if (decl.pIsAccessType(Libadalang.AdaNode.NONE)) {
             if (decl.pRootType(decl) instanceof Libadalang.TypeDecl typeDecl
                     && typeDecl.fTypeDef() instanceof Libadalang.AccessToSubpDef)
                 throw new UnbindableDeclException(
@@ -68,10 +68,23 @@ public class BindableDeclChecker {
             if (accessedType.pIsAccessType(Libadalang.AdaNode.NONE))
                 throw new UnbindableDeclException(
                         decl, "Access to access types are not yet supported");
+            if (AdaTypeMatcher.isArrayAccess(decl)) {
+                checkUse(decl, decl.pCompType(false, decl));
+                if (decl.pHasAspect(Libadalang.Symbol.create("size"), false, false))
+                    throw new UnbindableDeclException(
+                            decl, "Array accesses with the Size aspect are not bindable");
+            }
 
             checkUse(decl, accessedType);
         } else if (decl.pIsArrayType(Libadalang.AdaNode.NONE)) {
             checkUse(decl, decl.pCompType(false, decl));
+            if (!AdaTypeMatcher.isStringType(decl)) {
+                if (decl.pHasAspect(Libadalang.Symbol.create("component_size"), false, false))
+                    throw new UnbindableDeclException(
+                            decl, "Arrays with the Component_Size aspect are not bindable");
+                if (decl.pHasAspect(Libadalang.Symbol.create("pack"), false, false))
+                    throw new UnbindableDeclException(decl, "Packed array are not bindable");
+            }
         } else if (decl.equals(decl.pStdWideWideCharType())
                 || decl.equals(decl.pStdWideCharType())) {
             throw new UnbindableDeclException(
