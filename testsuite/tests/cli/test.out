@@ -9,11 +9,13 @@ Runtime libraries are licensed under Apache-2.0.
 Running `polyglot  --help`
 ================================================================================
 
-Usage: polyglot [-hv] [COMMAND]
+Usage: polyglot [-hqv] [--version] [COMMAND]
 Polyglot - Multi-language interface generator.
 See documentation for more information.
   -h, --help      display usage and exit
-  -v, --version   display version and exit
+  -q              be quiet
+  -v              verbose output
+      --version   display version and exit
 Commands:
   validator  Validate a json proxy
   ada2proxy  Create a proxy for an Ada project. If no unit is explicitly given,
@@ -25,22 +27,26 @@ Commands:
 Running `polyglot setup --help`
 ================================================================================
 
-Usage: polyglot setup [-h] [--check-only] --prefix=<prefixPath>
+Usage: polyglot setup [-hqv] [--check-only] --prefix=<prefixPath>
 Setup the Polyglot runtime
       --check-only   do not copy the runtime. Instead, emitt warnings if the
                        runtime was modified.
   -h, --help         display sub-command usage and exit
       --prefix=<prefixPath>
                      installation path
+  -q                 be quiet
+  -v                 verbose output
 
 
 Running `polyglot validator --help`
 ================================================================================
 
-Usage: polyglot validator [-h] json_proxy
+Usage: polyglot validator [-hqv] json_proxy
 Validate a json proxy
       json_proxy   json file of the proxy
   -h, --help       display sub-command usage and exit
+  -q               be quiet
+  -v               verbose output
 
 
 Running `polyglot ada2proxy --help`
@@ -60,12 +66,14 @@ of them.
                             location of the polyglot runtime to use. Defaults
                               to <outputPath>/runtimes.
   -h, --help                display sub-command usage and exit
+  -q                        be quiet
+  -v                        verbose output
 
 
 Running `polyglot proxy2cpp --help`
 ================================================================================
 
-Usage: polyglot proxy2cpp [-h] -o=<outputPath> proxy_file
+Usage: polyglot proxy2cpp [-hqv] -o=<outputPath> proxy_file
 Create the C++ interface of a proxy representation
       proxy_file   input proxy json file
   -h, --help       display sub-command usage and exit
@@ -73,5 +81,7 @@ Create the C++ interface of a proxy representation
                    path to the directory in which the C++ interface should be
                      generated. Directories along the path are created if they
                      do not exist yet.
+  -q               be quiet
+  -v               verbose output
 
 
