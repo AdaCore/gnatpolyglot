@@ -750,7 +750,7 @@ public class AdaAPI extends LanguageAPI {
                     .append(componentAccess)
                     .append(".all'Address))");
         } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
-            builder.append("Access_Converter (").append(componentAccess).append(")");
+            builder.append("Return_Type_Converter (").append(componentAccess).append(")");
         } else {
             // Otherwise, just get the address.
             builder.append(componentAccess).append("'Address");
