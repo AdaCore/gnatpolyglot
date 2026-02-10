@@ -79,9 +79,9 @@ class ScannerConfig:
     @property
     def extra_args(self) -> list[str]:
         args = []
-        units = ",".join(self._cfg.get("units", []))
-        if units != "":
-            args.append(f"--units={units}")
+        specFiles = ",".join(self._cfg.get("spec_files", []))
+        if specFiles != "":
+            args.append(f"--spec-files={specFiles}")
         args.extend(self._cfg.get("scanner_extra_args", []))
         return args
 

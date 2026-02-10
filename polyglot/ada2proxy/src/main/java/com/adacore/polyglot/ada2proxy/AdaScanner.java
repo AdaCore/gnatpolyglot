@@ -84,35 +84,35 @@ public class AdaScanner extends Scanner {
         PolyglotUtils.emitError(location, message);
     }
 
-    private List<String> getFilesToAnalyze(ProjectManager projectManager, List<String> units)
+    private List<String> getFilesToAnalyze(ProjectManager projectManager, List<String> specFiles)
             throws FileNotFoundException {
         Stream<String> filenames =
                 Stream.of(projectManager.getFiles(SourceFileMode.DEFAULT))
                         .filter(s -> s.endsWith(".ads"));
-        if (units == null || units.isEmpty()) return filenames.toList();
-        // Filter all the units to bind.
+        if (specFiles == null || specFiles.isEmpty()) return filenames.toList();
+        // Filter all the spec files to bind.
         List<String> result =
                 filenames
                         .filter(
-                                units == null || units.isEmpty()
+                                specFiles == null || specFiles.isEmpty()
                                         ? (s -> true)
                                         : (s ->
-                                                units.contains(
+                                                specFiles.contains(
                                                         Path.of(s).getFileName().toString())))
                         .toList();
-        // Verify that all the units in ``units`` have been found.
+        // Verify that all the files in ``specFiles`` have been found.
         List<Path> resultBasenames = result.stream().map(s -> Path.of(s).getFileName()).toList();
-        for (var unit : units) {
-            units.stream()
-                    .filter(u -> resultBasenames.contains(Path.of(u)))
+        for (var file : specFiles) {
+            specFiles.stream()
+                    .filter(f -> resultBasenames.contains(Path.of(f)))
                     .findFirst()
-                    .orElseThrow(() -> new FileNotFoundException(unit));
+                    .orElseThrow(() -> new FileNotFoundException(file));
         }
         return result;
     }
 
     @Override
-    public void scanProject(Path projectFile, List<String> units, Object options)
+    public void scanProject(Path projectFile, List<String> specFiles, Object options)
             throws FileNotFoundException {
         this.projectFile = projectFile;
         // Get the name of the project
@@ -136,7 +136,7 @@ public class AdaScanner extends Scanner {
         ProjectManager projectManager = new ProjectManager(gprOptions, false);
         AnalysisContext ctx = projectManager.createContext(null, null, true, 8);
         List<Package> modules =
-                getFilesToAnalyze(projectManager, units).stream()
+                getFilesToAnalyze(projectManager, specFiles).stream()
                         .map(s -> ctx.getUnitFromFile(s))
                         .map(u -> visitor.analyzeSpec(u))
                         .filter(p -> p != null)

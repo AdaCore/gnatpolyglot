@@ -37,9 +37,9 @@ public class Ada2Proxy implements Callable<Integer> {
     Path outputPath;
 
     @Option(
-            names = {"--units"},
+            names = {"--spec-files"},
             description = "filenames of the units of the input project to bind")
-    List<String> units = new ArrayList<>();
+    List<String> specFiles = new ArrayList<>();
 
     @Option(
             names = {"-X"},
@@ -89,7 +89,7 @@ public class Ada2Proxy implements Callable<Integer> {
         AdaScanner scanner = new AdaScanner();
 
         try {
-            scanner.scanProject(project, units, getProjectOptions());
+            scanner.scanProject(project, specFiles, getProjectOptions());
         } catch (FileNotFoundException e) {
             spec.commandLine().getColorScheme().errorText(null);
             System.err.println(
