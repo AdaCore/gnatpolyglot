@@ -18,7 +18,6 @@ import com.adacore.polyglot.proxy.Transfer;
 import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.polyglot.proxy.TypeExpr;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -190,7 +189,8 @@ public class Record extends AdaDeclaration {
     public List<FunctionDecl> getAllocFunctions() {
         if (this.allocFunctions != null) return this.allocFunctions;
         this.allocFunctions = new ArrayList<>(2);
-        if (!isAbstract()) {
+        if (!isAbstract()
+                && !(origin.fDiscriminants() instanceof Libadalang.UnknownDiscriminantPart)) {
             NameTypeExpr type = getTypeExpr();
             this.allocFunctions.add(
                     new FunctionDecl(
@@ -386,6 +386,15 @@ public class Record extends AdaDeclaration {
         return origin.pDoc();
     }
 
+    public Libadalang.BaseTypeDecl getFirstPrivateParentType() {
+        Libadalang.BaseTypeDecl parentType = origin.pBaseType(origin);
+        while (!parentType.isNone()) {
+            if (parentType.pIsPrivate()) return parentType;
+            parentType = parentType.pBaseType(parentType);
+        }
+        return Libadalang.BaseTypeDecl.NONE;
+    }
+
     /**
      * Return a string of the extension aggrate necessary to construct a record when inheriting from
      * a private type, or an empty string.
@@ -394,11 +403,11 @@ public class Record extends AdaDeclaration {
         if (isShadow && origin.pIsPrivate()) {
             return origin.pFullyQualifiedName() + " with";
         }
-        return Arrays.stream(origin.pFullView().pBaseTypes(Libadalang.AdaNode.NONE))
-                .filter(b -> b.pIsPrivate())
-                .findFirst()
-                .map((b) -> b.pFullyQualifiedName() + " with")
-                .orElse("");
+        Libadalang.BaseTypeDecl parentType = getFirstPrivateParentType();
+        if (!parentType.isNone() && parentType.pIsPrivate())
+            return parentType.pFullyQualifiedName() + " with";
+        // No private parent found: return an empty string for "no extension aggregate".
+        return "";
     }
 
     public boolean isAbstract() {
@@ -423,9 +432,8 @@ public class Record extends AdaDeclaration {
                                 p -> {
                                     Libadalang.BaseSubpSpec spec = p.pSubpSpecOrNull(false);
                                     return api.getDeclChecker().seenUnbindable(p)
-                                            || spec.pReturnType(Libadalang.AdaNode.NONE)
-                                                    .equals(origin)
-                                            || Stream.of(spec.pParamTypes(Libadalang.AdaNode.NONE))
+                                            || spec.pReturnType(spec).equals(origin)
+                                            || Stream.of(spec.pParamTypes(spec))
                                                     .skip(1)
                                                     .anyMatch(t -> t.equals(origin));
                                 });

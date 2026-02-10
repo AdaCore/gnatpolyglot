@@ -10,6 +10,7 @@ import com.adacore.polyglot.proxy.TypeDecl;
 public enum NativeType {
     VOID,
     BOOL,
+    CHAR,
     STRING,
     SINT8,
     SINT16,

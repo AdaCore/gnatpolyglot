@@ -1,0 +1,64 @@
+package com.adacore.polyglot;
+
+public class PolyglotUtils {
+    public enum VerboseLevel {
+        /** Suppress warnings and infos */
+        QUIET,
+        /** Suppress infos */
+        NORMAL,
+        /** Keep all emissions */
+        VERBOSE
+    }
+
+    private static VerboseLevel verbose = VerboseLevel.NORMAL;
+
+    public static void setVerbose(VerboseLevel level) {
+        verbose = level;
+    }
+
+    private static void emit(String location, String kind, String messsage) {
+        System.err.print(location);
+        System.err.print(": ");
+        System.err.print(kind);
+        System.err.print(": ");
+        System.err.println(messsage);
+    }
+
+    private static void emit(String kind, String messsage) {
+        System.err.print(kind);
+        System.err.print(": ");
+        System.err.println(messsage);
+    }
+
+    public static void emitWarning(String location, String messsage) {
+        if (!verbose.equals(VerboseLevel.QUIET)) {
+            emit(location, "warning", messsage);
+        }
+    }
+
+    public static void emitWarning(String messsage) {
+        if (!verbose.equals(VerboseLevel.QUIET)) {
+            emit("warning", messsage);
+        }
+    }
+
+    public static void emitError(String location, String messsage) {
+        emit(location, "error", messsage);
+    }
+
+    public static void emitError(String messsage) {
+        emit("error", messsage);
+    }
+
+    public static void emitInfo(String location, String messsage) {
+        if (verbose.equals(VerboseLevel.QUIET)) {
+            emit(location, "info", messsage);
+        }
+    }
+
+    public static void emitInfo(String messsage) {
+        if (verbose.equals(VerboseLevel.QUIET)) {
+            emit("info", messsage);
+        }
+    }
+}

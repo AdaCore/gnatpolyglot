@@ -38,7 +38,7 @@ with Polyglot.Ada.Strings;
 
 with ${parentPackage}; use ${parentPackage};
 
-@for(var necessaryWith : WithCollector.getIncludes(pack))
+@for(var necessaryWith : WithCollector.getIncludes(pack, api))
    with ${necessaryWith}; use ${necessaryWith};
 @endfor
 

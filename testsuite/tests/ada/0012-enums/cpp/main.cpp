@@ -42,4 +42,8 @@ int main() {
 
    test::Enum3 e3 = test::Enum3::A;
    p_enum_1(e3);
+
+   std::cout << static_cast<int>(c.get_e()) << "\n";
+   c.set_e(test::Enum1::B);
+   std::cout << static_cast<int>(c.get_e()) << "\n";
 }

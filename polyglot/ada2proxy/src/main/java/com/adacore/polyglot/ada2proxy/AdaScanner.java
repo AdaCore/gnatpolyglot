@@ -2,6 +2,7 @@ package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.*;
+import com.adacore.polyglot.PolyglotUtils;
 import com.adacore.polyglot.Scanner;
 import com.adacore.polyglot.ada2proxy.proxy.AdaProxy;
 import com.adacore.polyglot.ada2proxy.proxy.Package;
@@ -45,36 +46,42 @@ public class AdaScanner extends Scanner {
 
     private AdaAPI api;
 
-    private static void prettyPrint(UnbindableDeclException exc, String message, String kind) {
-        Libadalang.BasicDecl decl = exc.getDecl();
-        System.err.println(
-                "%s%s: Could not bind %s: %s"
-                        .formatted(
-                                decl.fullSlocImage(), kind, AdaAPI.getDisplayName(decl), message));
+    private static String prettyPrint(Libadalang.BasicDecl decl, String message) {
+        return "Could not bind %s: %s".formatted(AdaAPI.getDisplayName(decl), message);
     }
 
     public static void warning(UnbindableDeclException exc) {
         Throwable cause = exc.getCause();
+        Libadalang.BasicDecl decl = exc.getDecl();
+        String location = decl.fullSlocImage();
+        location = location.substring(0, location.length() - 2);
+        String message;
         if (cause == null) {
-            prettyPrint(exc, exc.getMessage(), "warning");
+            message = prettyPrint(exc.getDecl(), exc.getMessage());
         } else if (cause instanceof UnbindableDeclException c) {
             warning(c);
-            prettyPrint(exc, exc.getMessage(), "warning");
+            message = prettyPrint(exc.getDecl(), exc.getMessage());
         } else {
-            prettyPrint(exc, cause.toString(), "warning");
+            message = prettyPrint(exc.getDecl(), cause.toString());
         }
+        PolyglotUtils.emitWarning(location, message);
     }
 
     public static void error(UnbindableDeclException exc) {
         Throwable cause = exc.getCause();
+        Libadalang.BasicDecl decl = exc.getDecl();
+        String location = decl.fullSlocImage();
+        location = location.substring(0, location.length() - 2);
+        String message;
         if (cause == null) {
-            prettyPrint(exc, exc.getMessage(), "error");
+            message = prettyPrint(exc.getDecl(), exc.getMessage());
         } else if (cause instanceof UnbindableDeclException c) {
             error(c);
-            prettyPrint(exc, exc.getMessage(), "error");
+            message = prettyPrint(exc.getDecl(), exc.getMessage());
         } else {
-            prettyPrint(exc, cause.toString(), "error");
+            message = prettyPrint(exc.getDecl(), cause.toString());
         }
+        PolyglotUtils.emitError(location, message);
     }
 
     private List<String> getFilesToAnalyze(ProjectManager projectManager, List<String> units)

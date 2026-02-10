@@ -74,7 +74,7 @@ public class GlobalVariable extends AdaDeclaration {
     }
 
     public FunctionDecl getSetter() {
-        if (setter == null && !origin.pIsConstantObject()) {
+        if (setter == null && !origin.pIsConstantObject() && !getType().pIsLimitedType()) {
             // Get the type of the setter's new value.
             TypeExpr setterType = AdaAPI.makeTypeExpr(getType());
             if (!getType().pIsScalarType(Libadalang.AdaNode.NONE))

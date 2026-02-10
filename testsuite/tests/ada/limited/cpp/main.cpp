@@ -35,4 +35,7 @@ int main() {
 
   Child y;
   y.p();
+
+  test::get_global()->p();
+  test::get_global()->p();
 }

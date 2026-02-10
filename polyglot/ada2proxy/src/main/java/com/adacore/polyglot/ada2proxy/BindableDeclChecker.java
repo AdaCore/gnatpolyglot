@@ -2,6 +2,8 @@ package com.adacore.polyglot.ada2proxy;
 
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
+import com.adacore.polyglot.NativeType;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,20 +21,20 @@ public class BindableDeclChecker {
         }
 
         if (decl.pIsTaggedType(Libadalang.AdaNode.NONE)) {
-            BaseTypeDecl baseType = decl.pBaseType(Libadalang.AdaNode.NONE);
+            BaseTypeDecl baseType = decl.pBaseType(decl);
             if (!baseType.isNone()) checkUse(decl, baseType);
         }
 
         if (decl.pIsRecordType(Libadalang.AdaNode.NONE)) {
-            for (var shape : decl.pShapes(false, Libadalang.AdaNode.NONE)) {
+            for (var shape : decl.pShapes(false, decl)) {
                 for (var comp : shape.components) {
-                    checkUse(decl, comp.pFormalType(Libadalang.AdaNode.NONE));
+                    checkUse(decl, comp.pFormalType(decl));
                 }
             }
         }
 
         // For other type, we must ignore any type derivation
-        decl = decl.pRootType(Libadalang.AdaNode.NONE);
+        decl = decl.pRootType(decl);
 
         if (decl.pParentBasicDecl() instanceof Libadalang.GenericPackageDecl)
             throw new UnbindableDeclException(
@@ -45,29 +47,44 @@ public class BindableDeclChecker {
             if (decl.pIsFixedPoint(Libadalang.AdaNode.NONE))
                 throw new UnbindableDeclException(decl, "Fixed-point types are not supported");
             try {
-                AdaAPI.checkNativeType(decl);
+                NativeType nativeType = AdaAPI.checkNativeType(decl);
+                if (nativeType.equals(NativeType.UINT128) || nativeType.equals(NativeType.SINT128))
+                    throw new UnbindableDeclException(decl, "Unsupported integer size (128)");
             } catch (Libadalang.LangkitException e) {
                 throw new UnbindableDeclException(decl, e);
             }
-        } else if (decl instanceof Libadalang.AnonymousTypeDecl)
+        } else if (decl instanceof Libadalang.AnonymousTypeDecl) {
             throw new UnbindableDeclException(
                     decl, "Anonymous type declarations are not yet supported");
-        else if (decl.pIsAccessType(Libadalang.AdaNode.NONE)) {
-            if (decl.pRootType(Libadalang.AdaNode.NONE) instanceof Libadalang.TypeDecl typeDecl
+        } else if (decl.pIsAccessType(Libadalang.AdaNode.NONE)) {
+            if (decl.pRootType(decl) instanceof Libadalang.TypeDecl typeDecl
                     && typeDecl.fTypeDef() instanceof Libadalang.AccessToSubpDef)
                 throw new UnbindableDeclException(
                         decl, "Access to subprograms are not yet supported");
-            Libadalang.BaseTypeDecl accessedType = decl.pAccessedType(Libadalang.AdaNode.NONE);
+            Libadalang.BaseTypeDecl accessedType = decl.pAccessedType(decl);
             if (accessedType.pIsClasswide())
                 throw new UnbindableDeclException(
                         decl, "Access to classwide types are not yet supported");
             if (accessedType.pIsAccessType(Libadalang.AdaNode.NONE))
                 throw new UnbindableDeclException(
                         decl, "Access to access types are not yet supported");
+            if (AdaTypeMatcher.isArrayAccess(decl)) {
+                checkUse(decl, decl.pCompType(false, decl));
+                if (decl.pHasAspect(Libadalang.Symbol.create("size"), false, false))
+                    throw new UnbindableDeclException(
+                            decl, "Array accesses with the Size aspect are not bindable");
+            }
 
             checkUse(decl, accessedType);
         } else if (decl.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            checkUse(decl, decl.pCompType(false, Libadalang.AdaNode.NONE));
+            checkUse(decl, decl.pCompType(false, decl));
+            if (!AdaTypeMatcher.isStringType(decl)) {
+                if (decl.pHasAspect(Libadalang.Symbol.create("component_size"), false, false))
+                    throw new UnbindableDeclException(
+                            decl, "Arrays with the Component_Size aspect are not bindable");
+                if (decl.pHasAspect(Libadalang.Symbol.create("pack"), false, false))
+                    throw new UnbindableDeclException(decl, "Packed array are not bindable");
+            }
         } else if (decl.equals(decl.pStdWideWideCharType())
                 || decl.equals(decl.pStdWideCharType())) {
             throw new UnbindableDeclException(
@@ -81,16 +98,41 @@ public class BindableDeclChecker {
         // assume that decl is bindable (to avoid infinite loops)
         bindableDecls.add(decl);
 
+        for (var d : decl.pDefiningNames()) {
+            if (d.isNone()) continue;
+            Libadalang.Symbol symbol = Libadalang.Symbol.create("Import");
+            Libadalang.PragmaNode pragma = d.pGetPragma(symbol);
+            if (!pragma.isNone() && pragma.fId().pNameIs(symbol)) {
+                if (((Libadalang.BaseAssoc) pragma.fArgs().getChild(0))
+                        .pAssocExpr()
+                        .getText()
+                        .toLowerCase()
+                        .equals("intrinsic"))
+                    throw new UnbindableDeclException(decl, "Intrinsics are not bindable");
+            }
+        }
+
+        if (Arrays.stream(decl.pDefiningNames())
+                .filter(d -> !d.isNone())
+                .anyMatch(Libadalang.DefiningName::pIsGhostCode)) {
+            throw new UnbindableDeclException(decl, "Ghost code declarations are not bindable");
+        }
+
         if (decl instanceof Libadalang.GenericDecl gen) {
             throw new UnbindableDeclException(decl, "Generic declarations are not bindable");
         }
 
+        if (decl instanceof Libadalang.PackageDecl packageDecl
+                && Arrays.stream(packageDecl.parents(false))
+                        .anyMatch(p -> p instanceof Libadalang.PackageDecl))
+            throw new UnbindableDeclException(decl, "Nested packages are not yet supported");
+
         if (decl.pIsSubprogram()) {
             Libadalang.BaseSubpSpec spec = decl.pSubpSpecOrNull(true);
-            for (var paramType : spec.pParamTypes(Libadalang.AdaNode.NONE)) {
+            for (var paramType : spec.pParamTypes(decl)) {
                 checkUse(decl, paramType);
             }
-            Libadalang.BaseTypeDecl returnType = spec.pReturnType(Libadalang.AdaNode.NONE);
+            Libadalang.BaseTypeDecl returnType = spec.pReturnType(decl);
             if (!returnType.isNone()) {
                 if (returnType.pIsClasswide())
                     throw new UnbindableDeclException(

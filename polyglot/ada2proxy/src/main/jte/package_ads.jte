@@ -26,7 +26,7 @@ with System;
 
 with Polyglot.Ada.Arrays;
 with Polyglot.Ada.Strings;
-@for(var necessaryWith : WithCollector.getIncludes(pack))
+@for(var necessaryWith : WithCollector.getIncludes(pack, api))
    with ${necessaryWith};
 @endfor
 

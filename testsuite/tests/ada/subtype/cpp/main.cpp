@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "polyglot_ptr.h"
 #include "test.h"
 #include "tagged_type.h"
 
@@ -10,4 +11,6 @@ int main() {
   std::cout << v.get_v() << " " << x.get_v() << "\n";
 
   test::foo(tagged_type::T{});
+  std::cout << test::identity(polyglot::polyglot_ptr<test::A>(v))->get_v()
+            << "\n";
 }

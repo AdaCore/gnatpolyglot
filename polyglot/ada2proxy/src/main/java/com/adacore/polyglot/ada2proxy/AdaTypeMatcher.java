@@ -10,14 +10,12 @@ public class AdaTypeMatcher {
 
     /** Return whether the BaseTypeDecl is an access type to an array. */
     public static boolean isArrayAccess(Libadalang.BaseTypeDecl typeDecl) {
-        return typeDecl.pIsAccessType(NONE) && typeDecl.pAccessedType(NONE).pIsArrayType(NONE);
+        return typeDecl.pIsAccessType(NONE) && typeDecl.pAccessedType(typeDecl).pIsArrayType(NONE);
     }
 
     /** Return whether the BaseTypeDecl is a controlled type. */
     public static boolean isControlledType(Libadalang.BaseTypeDecl typeDecl) {
-        return typeDecl.pRootType(Libadalang.AdaNode.NONE)
-                .pFullyQualifiedName()
-                .startsWith("Ada.Finalization.");
+        return typeDecl.pRootType(typeDecl).pFullyQualifiedName().startsWith("Ada.Finalization.");
     }
 
     /** Return whether the subprogram is a controlled type primitive. */
@@ -31,13 +29,12 @@ public class AdaTypeMatcher {
 
     /** Return whether the BaseTypeDecl is the Standard.String type, or an array of character. */
     public static boolean isStringType(Libadalang.BaseTypeDecl typeDecl) {
-        return typeDecl.pIsArrayType(Libadalang.AdaNode.NONE)
-                && isCharacter(typeDecl.pCompType(false, NONE));
+        return typeDecl.pIsArrayType(NONE) && isCharacter(typeDecl.pCompType(false, typeDecl));
     }
 
     /** Return whether the BaseTypeDecl is the Standard.Character type. */
     public static boolean isCharacter(Libadalang.BaseTypeDecl typeDecl) {
-        return typeDecl.pRootType(Libadalang.AdaNode.NONE).equals(typeDecl.pStdCharType());
+        return typeDecl.pRootType(typeDecl).equals(typeDecl.pStdCharType());
     }
 
     /**
@@ -45,21 +42,19 @@ public class AdaTypeMatcher {
      * type, since they are treated differently by polyglot.
      */
     public static boolean isEnum(Libadalang.BaseTypeDecl typeDecl) {
-        return typeDecl.pIsEnumType(Libadalang.AdaNode.NONE) && !isCharacter(typeDecl);
+        return typeDecl.pIsEnumType(NONE) && !isCharacter(typeDecl);
     }
 
     public static boolean isReturnedAsAddress(Libadalang.BaseTypeDecl typeDecl) {
-        return isBindedAsClass(typeDecl) || typeDecl.pIsAccessType(Libadalang.AdaNode.NONE);
+        return isBindedAsClass(typeDecl) || typeDecl.pIsAccessType(NONE);
     }
 
     public static boolean isBindedAsClass(Libadalang.BaseTypeDecl typeDecl) {
-        return isPrivate(typeDecl)
-                || typeDecl.pIsRecordType(Libadalang.AdaNode.NONE)
-                || typeDecl.pIsTaggedType(Libadalang.AdaNode.NONE);
+        return isPrivate(typeDecl) || typeDecl.pIsRecordType(NONE) || typeDecl.pIsTaggedType(NONE);
     }
 
     public static boolean isPrivate(Libadalang.BaseTypeDecl typeDecl) {
-        return typeDecl.pRootType(NONE).pIsPrivate() && !typeDecl.pIsTaggedType(NONE);
+        return typeDecl.pRootType(typeDecl).pIsPrivate() && !typeDecl.pIsTaggedType(NONE);
     }
 
     public static boolean isNonClassWideTagged(Libadalang.BaseTypeDecl typeDecl) {

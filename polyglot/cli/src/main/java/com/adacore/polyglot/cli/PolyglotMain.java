@@ -1,5 +1,7 @@
 package com.adacore.polyglot.cli;
 
+import com.adacore.polyglot.PolyglotUtils;
+import com.adacore.polyglot.PolyglotUtils.VerboseLevel;
 import com.adacore.polyglot.ada2proxy.Ada2Proxy;
 import com.adacore.polyglot.proxy.PolyglotSetup;
 import com.adacore.polyglot.proxy.ProxyValidator;
@@ -7,6 +9,7 @@ import com.adacore.polyglot.proxy2cpp.Proxy2Cpp;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ScopeType;
 
 @Command(
         name = "polyglot",
@@ -30,10 +33,30 @@ public class PolyglotMain {
     boolean helpRequested;
 
     @Option(
-            names = {"-v", "--version"},
+            names = {"--version"},
             versionHelp = true,
             description = "display version and exit")
     boolean versionRequested;
+
+    @Option(
+            names = {"-q"},
+            description = "be quiet",
+            scope = ScopeType.INHERIT,
+            order = 1)
+    public void setQuiet(boolean quiet) {
+        if (quiet) PolyglotUtils.setVerbose(VerboseLevel.QUIET);
+    }
+
+    @Option(
+            names = {
+                "-v",
+            },
+            description = "verbose output",
+            scope = ScopeType.INHERIT,
+            order = 2)
+    public void setVerbose(boolean verbose) {
+        if (verbose) PolyglotUtils.setVerbose(VerboseLevel.VERBOSE);
+    }
 
     public static void main(String... args) {
         System.exit(new CommandLine(new PolyglotMain()).execute(args));

@@ -25,6 +25,7 @@ import com.adacore.polyglot.proxy.VTableEntry;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class CppAPI {
@@ -98,6 +99,8 @@ public class CppAPI {
                 return "uint128_t";
             case SINT128:
                 return "int128_t";
+            case CHAR:
+                return "char";
             case STRING:
                 return "polyglot::ada::strings::polyglot_string";
             case VOID:
@@ -379,6 +382,15 @@ public class CppAPI {
                 // Note that unlike class types that require a wrapping proxy objects, native types
                 // can be directely addressed, thus we can return real C++ references.
                 builder.append("*");
+                if (ref.typeExpr instanceof NameTypeExpr name
+                        && context.getTypeDecl(name.name) instanceof EnumerationDecl) {
+                    // Scoped enums cannot be instantiated with a list initializer until C++17. Use
+                    // a static_cast instead.
+                    builder.append("static_cast<")
+                            .append(ref.isConst ? "const " : "")
+                            .append(cppTypename(name))
+                            .append("*>");
+                }
             } else {
                 // When the returned pointer to an opaque data is `const void *`, we must return a
                 // const view.
@@ -419,21 +431,38 @@ public class CppAPI {
 
     public String functionName(FunctionDecl functionDecl) {
         Name lastName = functionDecl.name.getLastName();
-        if (lastName.equals(Name.operatorPlus)) return "operator+";
-        else if (lastName.equals(Name.operatorMinus)) return "operator-";
-        else if (lastName.equals(Name.operatorMult)) return "operator*";
-        else if (lastName.equals(Name.operatorDiv)) return "operator/";
-        else if (lastName.equals(Name.operatorMod)) return "operator%";
-        else if (lastName.equals(Name.operatorEq)) return "operator==";
-        else if (lastName.equals(Name.operatorNe)) return "operator!=";
-        else if (lastName.equals(Name.operatorLt)) return "operator<";
-        else if (lastName.equals(Name.operatorLe)) return "operator<=";
-        else if (lastName.equals(Name.operatorGt)) return "operator>";
-        else if (lastName.equals(Name.operatorGe)) return "operator>=";
-        else if (lastName.equals(Name.operatorBitAnd)) return "operator&";
-        else if (lastName.equals(Name.operatorBitOr)) return "operator|";
-        else if (lastName.equals(Name.operatorBitXor)) return "operator^";
-        else if (lastName.equals(Name.operatorBitNot)) return "operator~";
+        // An operator function must have at least one function parameter or implicit object
+        // parameter whose type is a class, a reference to a class, an enumeration, or a reference
+        // to an enumeration.
+        Predicate<Parameter> predicate = null;
+        predicate =
+                (p) -> {
+                    TypeExpr typeExpr = p.type;
+                    if (typeExpr instanceof ReferenceTypeExpr ref) typeExpr = ref.typeExpr;
+                    if (typeExpr instanceof NameTypeExpr name) {
+                        TypeDecl typeDecl = context.getTypeDecl(name.name);
+                        return typeDecl instanceof EnumerationDecl || typeDecl instanceof ClassDecl;
+                    }
+                    // Arrays and pointers are binded as classes, so it works
+                    return typeExpr instanceof ArrayTypeExpr || typeExpr instanceof PointerTypeExpr;
+                };
+        if (functionDecl.type.parameters.stream().anyMatch(predicate)) {
+            if (lastName.equals(Name.operatorPlus)) return "operator+";
+            else if (lastName.equals(Name.operatorMinus)) return "operator-";
+            else if (lastName.equals(Name.operatorMult)) return "operator*";
+            else if (lastName.equals(Name.operatorDiv)) return "operator/";
+            else if (lastName.equals(Name.operatorMod)) return "operator%";
+            else if (lastName.equals(Name.operatorEq)) return "operator==";
+            else if (lastName.equals(Name.operatorNe)) return "operator!=";
+            else if (lastName.equals(Name.operatorLt)) return "operator<";
+            else if (lastName.equals(Name.operatorLe)) return "operator<=";
+            else if (lastName.equals(Name.operatorGt)) return "operator>";
+            else if (lastName.equals(Name.operatorGe)) return "operator>=";
+            else if (lastName.equals(Name.operatorBitAnd)) return "operator&";
+            else if (lastName.equals(Name.operatorBitOr)) return "operator|";
+            else if (lastName.equals(Name.operatorBitXor)) return "operator^";
+            else if (lastName.equals(Name.operatorBitNot)) return "operator~";
+        }
         if (CppKeyword.isKeyword(lastName)) return lastName.toLower() + "_";
         return lastName.toLower();
     }
@@ -760,5 +789,15 @@ public class CppAPI {
         if (context.isStringType(typeExpr.typeExpr))
             return "polyglot::ada::strings::string_data{1, 0, nullptr}";
         return "nullptr";
+    }
+
+    public String getEnumSizeType(EnumerationDecl enumDecl) {
+        int lastValue = enumDecl.items.getLast().value;
+        if (lastValue < (1 << 8)) return nativeTypeName(NativeType.UINT8);
+        if (lastValue < (1 << 16)) return nativeTypeName(NativeType.UINT16);
+        if (lastValue < (1 << 32)) return nativeTypeName(NativeType.UINT32);
+        if (lastValue < (1 << 64)) return nativeTypeName(NativeType.UINT64);
+        throw new UnsupportedOperationException(
+                "enumerations of size %d are not supported".formatted(lastValue));
     }
 }

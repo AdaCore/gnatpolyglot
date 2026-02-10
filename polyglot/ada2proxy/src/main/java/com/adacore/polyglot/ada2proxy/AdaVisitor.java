@@ -73,14 +73,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                                     .toPascalWithUnderscore());
         else builder.append(spec.pName().pFullyQualifiedName().replace(".", "_"));
 
-        if (spec.pReturnType(Libadalang.AdaNode.NONE).isNone()) {
+        if (spec.pReturnType(spec).isNone()) {
             builder.append("Void");
         } else {
             builder.append(
-                    spec.pReturnType(Libadalang.AdaNode.NONE)
-                            .pSpecificType()
-                            .pFullyQualifiedName()
-                            .replace(".", "_"));
+                    spec.pReturnType(spec).pSpecificType().pFullyQualifiedName().replace(".", "_"));
         }
         String res = builder.toString();
         int count = 0;
@@ -126,17 +123,6 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return pack;
     }
 
-    /** Return whether the binded type was registed in the declaration list of its parent package */
-    public boolean registedInParentPackage(Libadalang.BaseTypeDecl type) {
-        Libadalang.BasicDecl decl = type.pParentBasicDecl();
-        AdaDeclaration mappedDecl = mappedDecls.get(type);
-        if (mappedDecl != null && decl instanceof Libadalang.BasePackageDecl packageDecl) {
-            Package pack = mappedPackages.get(packageDecl);
-            return pack != null && pack.declarations.contains(mappedDecl);
-        }
-        return false;
-    }
-
     public static boolean isPrivateUnit(Libadalang.AnalysisUnit unit) {
         if (unit.getRoot() instanceof Libadalang.CompilationUnit cu
                 && cu.fBody() instanceof Libadalang.LibraryItem li
@@ -152,6 +138,17 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return false;
     }
 
+    /** Return the package that contains decl. */
+    public Libadalang.BasePackageDecl getOwningPackage(Libadalang.BasicDecl decl) {
+        Libadalang.BasicDecl parent = decl.pParentBasicDecl();
+        while (!parent.isNone()) {
+            if (parent instanceof Libadalang.BasePackageDecl packageDecl) return packageDecl;
+            parent = parent.pParentBasicDecl();
+        }
+        AdaScanner.warning(new UnbindableDeclException(decl, "Could not find a parent package"));
+        return Libadalang.BasePackageDecl.NONE;
+    }
+
     /**
      * Create a list of all the packages with the types that are missing in the proxy.
      *
@@ -165,58 +162,15 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         List<Package> packages = new ArrayList<>();
         while (!queuedDecls.isEmpty()) {
             Libadalang.BasicDecl decl = queuedDecls.poll();
-            if (decl instanceof Libadalang.PackageDecl p) {
+            if (decl instanceof Libadalang.BasePackageDecl p
+                    && !p.getUnit().equals(p.pStandardUnit())) {
                 if (mappedPackages.containsKey(p)) continue;
-                // When a package was not visited, create an empty one. We do not want to visit all
-                // its declarations.
-                Package pack = new Package(p, new ArrayList<>());
-                packages.add(pack);
-                enqueueParentPackages(p);
-                mappedPackages.put(p, pack);
-            } else if (decl instanceof Libadalang.BaseTypeDecl type) {
-                // If the type was already visited, it is already in a package's list of
-                // declaration. Also ignore types from the Std unit or native types.
-                if (registedInParentPackage(type)
-                        || api.getDeclChecker().seenUnbindable(decl)
-                        || type.getUnit().equals(type.pStandardUnit())
-                        || AdaTypeMatcher.isNumber(type)) continue;
-                if (type.pParentBasicDecl() instanceof Libadalang.BasePackageDecl p) {
-                    Package pack = mappedPackages.get(p);
-                    // If the type's package does not yet exist, enqueue the package and the type.
-                    // The package needs to exist before the mapped type.
-                    if (pack == null) {
-                        queuedDecls.add(p);
-                        queuedDecls.add(type);
-                    } else {
-                        // pack may be null when the type is an array.
-                        if (pack != null) declarations = pack.declarations;
-                        visitDecl(type);
-                        declarations = null;
-                    }
-                } else {
-                    AdaScanner.error(
-                            new UnbindableDeclException(decl, "Unsupported parent declaration"));
-                }
-            } else if (decl instanceof Libadalang.ExceptionDecl exc
-                    && decl.pParentBasicDecl() instanceof Libadalang.BasePackageDecl p) {
-                Package pack = mappedPackages.get(p);
-                // If the type's package does not yet exist, enqueue the package and the type.
-                // The package needs to exist before the mapped type.
-                if (pack == null) {
-                    queuedDecls.add(p);
-                    queuedDecls.add(decl);
-                } else {
-                    // pack may be null when the type is an array.
-                    if (pack != null) declarations = pack.declarations;
-                    visitDecl(exc);
-                    declarations = null;
-                }
-            } else {
-                AdaScanner.error(
-                        new UnbindableDeclException(decl, "Unsupported parent declaration"));
+                packages.add(analyzeSpec(p.getUnit()));
+            } else if (!decl.getUnit().equals(decl.pStandardUnit())) {
+                queuedDecls.add(getOwningPackage(decl));
             }
         }
-        return packages;
+        return packages.stream().filter(p -> p != null).toList();
     }
 
     @Override
@@ -390,8 +344,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 && !type.pIsAccessType(Libadalang.AdaNode.NONE)
                 // The first argument of the subprogram must be compatible with the primitive type.
                 && spec.pParams().length != 0
-                && (spec.pParamTypes(Libadalang.AdaNode.NONE)[0].pMatchingType(
-                        type, Libadalang.AdaNode.NONE));
+                && (spec.pParamTypes(spec)[0].pMatchingType(type, spec));
     }
 
     public void processSubprogram(Libadalang.BasicDecl node) {
@@ -416,12 +369,12 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
         // Get the list of parameters.
         List<SubpParam> parameters = new ArrayList<>();
-        Libadalang.BaseTypeDecl[] types = spec.pParamTypes(Libadalang.AdaNode.NONE);
+        Libadalang.BaseTypeDecl[] types = spec.pParamTypes(node);
         int typeIndex = 0;
         for (var paramSpec : spec.pAbstractFormalParams()) {
             // Enqueue the parameter's type in case we do not visit it in the required list of
             // units
-            queuedDecls.add(paramSpec.pFormalType(Libadalang.AdaNode.NONE));
+            queuedDecls.add(paramSpec.pFormalType(node));
 
             // Record value types are given through an address, but later **copied** into the
             // arguments, so the ownership does not matter.
@@ -429,9 +382,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             // handled.
             Transfer transfer =
                     new Transfer(
-                            paramSpec
-                                            .pFormalType(Libadalang.AdaNode.NONE)
-                                            .pIsAccessType(Libadalang.AdaNode.NONE)
+                            paramSpec.pFormalType(node).pIsAccessType(Libadalang.AdaNode.NONE)
                                     ? RequiredOwner.LIBRARY
                                     : RequiredOwner.ANY);
 
@@ -441,7 +392,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                         new SubpParam(paramSpec, AdaAPI.getName(p), transfer, types[typeIndex++]));
         }
 
-        Libadalang.BaseTypeDecl returnType = spec.pReturnType(Libadalang.AdaNode.NONE);
+        Libadalang.BaseTypeDecl returnType = spec.pReturnType(node);
         if (!returnType.isNone()) queuedDecls.add(returnType);
 
         Owner returnOwner = Owner.UNKNOWN;
@@ -524,7 +475,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 if (c instanceof Libadalang.NullComponentDecl) break;
 
                 Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
-                queuedDecls.add(componentDecl.pFormalType(Libadalang.AdaNode.NONE));
+                queuedDecls.add(componentDecl.pFormalType(recordDef));
                 for (var name : componentDecl.fIds()) {
                     components.add(new Component(componentDecl, AdaAPI.getName(name)));
                 }
@@ -565,9 +516,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             Record rec = makeRecord(node.fRecordExtension(), parentDecl);
             Libadalang.TypeDecl parentType =
                     (Libadalang.TypeDecl)
-                            node.fSubtypeIndication()
-                                    .pDesignatedTypeDecl()
-                                    .pBaseSubtype(Libadalang.AdaNode.NONE);
+                            node.fSubtypeIndication().pDesignatedTypeDecl().pBaseSubtype(node);
 
             if (!parentType.isNone()) {
                 if (parentType.fTypeDef() instanceof Libadalang.DerivedTypeDef derived)
@@ -583,8 +532,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         } else if (parentDecl.pIsRecordType(Libadalang.AdaNode.NONE)
                 || AdaTypeMatcher.isPrivate(parentDecl)) {
             // If the parent is a non-tagged record, simply copy the fields of the root type.
-            Libadalang.TypeDecl rootType =
-                    (Libadalang.TypeDecl) parentDecl.pRootType(Libadalang.AdaNode.NONE);
+            Libadalang.TypeDecl rootType = (Libadalang.TypeDecl) parentDecl.pRootType(node);
             if (rootType.fTypeDef() instanceof Libadalang.RecordTypeDef recordDef) {
                 declarations.add(makeRecord(recordDef.fRecordDef(), parentDecl));
             } else {
@@ -601,7 +549,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             Array array = new Array(parentDecl);
             declarations.add(array);
             mappedDecls.put(parentDecl, array);
-            queuedDecls.add(parentDecl.pCompType(false, Libadalang.AdaNode.NONE));
+            queuedDecls.add(parentDecl.pCompType(false, node));
         } else if (AdaTypeMatcher.isEnum(parentDecl)) {
             EnumType enumType = createEnumType(parentDecl);
             declarations.add(enumType);

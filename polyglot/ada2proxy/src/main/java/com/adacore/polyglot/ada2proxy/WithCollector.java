@@ -30,6 +30,12 @@ public class WithCollector {
 
         public HashSet<String> units = new HashSet<>();
 
+        AdaAPI api;
+
+        public Visitor(AdaAPI api) {
+            this.api = api;
+        }
+
         /**
          * Return whether returning type in a binded subprogram uses the accessed type declared in
          * its corresponding proxy package.
@@ -47,19 +53,18 @@ public class WithCollector {
         void includeDecl(Libadalang.BasicDecl decl) {
             if (decl instanceof Libadalang.PackageRenamingDecl pack)
                 includeDecl(pack.pRenamedPackage());
-            else if (decl instanceof Libadalang.BasePackageDecl pack)
+            else if (decl instanceof Libadalang.BasePackageDecl pack) {
                 units.add(Package.getProxyUnitName(pack));
-            else includeDecl(decl.pParentBasicDecl());
+                units.add(pack.pFullyQualifiedName());
+            } else includeDecl(decl.pParentBasicDecl());
         }
 
         void checkDecl(Libadalang.BasicDecl decl) {
-            if (decl.isNone()
-                    || decl instanceof Libadalang.BaseTypeDecl type
-                            && AdaAPI.checkNativeType(type) != null) return;
+            if (decl.isNone() || decl.getUnit().equals(decl.pStandardUnit())) return;
             if (decl instanceof Libadalang.PackageRenamingDecl pack)
                 checkDecl(pack.pRenamedPackage());
             else if (decl instanceof Libadalang.BasePackageDecl pack) {
-                if (Package.isAdaRuntimePackage(pack)) includeDecl(decl);
+                includeDecl(pack);
             } else checkDecl(decl.pParentBasicDecl());
         }
 
@@ -95,13 +100,7 @@ public class WithCollector {
             for (var param : subprogram.parameters) {
                 checkDecl(param.getType());
             }
-            BaseTypeDecl returnType = subprogram.getReturnType();
-            checkDecl(returnType);
-            // Being able to reaching the access type of return types is necessary. Types such as
-            // records or arrays have an access type generated in the corresponding proxy package of
-            // their parent package.
-            if (returnTypeUsesAccess(returnType)) includeDecl(returnType);
-
+            checkDecl(subprogram.getReturnType());
             return null;
         }
 
@@ -112,8 +111,21 @@ public class WithCollector {
 
         @Override
         public Void visit(Record rec) {
-            // Functions added by polyglot are always in the same package of the access type
-            // generated for any record type: packages should not try to with themselves.
+            for (var c : rec.getAllComponents()) {
+                checkDecl(c.getType());
+            }
+
+            // It is necessary to with the package that contains the first private parent
+            // type for extension aggregate.
+            Libadalang.BaseTypeDecl parent = rec.getFirstPrivateParentType();
+            if (!parent.isNone()) includeDecl(parent);
+
+            // We need to include all types that the shadow type will override.
+            if (rec.isInheritable(api)) {
+                for (var m : rec.getAllMethods()) {
+                    m.accept(this);
+                }
+            }
             return null;
         }
 
@@ -123,7 +135,7 @@ public class WithCollector {
             // Since a function is generated to return the global variable, we need to be able to
             // reach the declaration of the global variable's type access similarly to regular
             // functions.
-            if (returnTypeUsesAccess(type)) includeDecl(type);
+            if (returnTypeUsesAccess(type)) checkDecl(type);
             return null;
         }
 
@@ -152,10 +164,10 @@ public class WithCollector {
      * Collect the list of all package names that are necessary to with for generating the input
      * proxy package.
      */
-    public static List<String> getIncludes(Package pack) {
-        Visitor visitor = new Visitor();
+    public static List<String> getIncludes(Package pack, AdaAPI api) {
+        Visitor visitor = new Visitor(api);
         visitor.visit(pack);
         visitor.units.remove(pack.getProxyUnitName());
-        return visitor.units.stream().toList();
+        return visitor.units.stream().sorted().toList();
     }
 }

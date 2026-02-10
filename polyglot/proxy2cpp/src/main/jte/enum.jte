@@ -6,7 +6,7 @@ vim: filetype=jtecpp
 @param CppAPI api
 @param EnumerationDecl enumDecl
 
-    enum class ${enumDecl.getLastName().toPascal()} {
+    enum class ${enumDecl.getLastName().toPascal()}: ${api.getEnumSizeType(enumDecl)} {
     @for(var lit : enumDecl.items)
         ${lit.name.toUpper()} = ${String.valueOf(lit.value)},
     @endfor
