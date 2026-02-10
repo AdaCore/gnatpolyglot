@@ -8,4 +8,5 @@ int main() {
     test::delete_(address);
 
     test::system::Foo f;
+    test::foo(address);
 }

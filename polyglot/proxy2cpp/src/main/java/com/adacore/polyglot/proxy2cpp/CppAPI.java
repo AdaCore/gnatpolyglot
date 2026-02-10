@@ -68,6 +68,14 @@ public class CppAPI {
         return builder.toString();
     }
 
+    /**
+     * Return the result of toLower on the given name, appending an underscore at the end if the
+     * result conflicts with a C++ keyword.
+     */
+    public String toLower(Name name) {
+        return name.toLower().concat(CppKeyword.isKeyword(name) ? "_" : "");
+    }
+
     /** Return the C++ name of a native type. */
     public String nativeTypeName(NativeType nativeType) {
         switch (nativeType) {
@@ -162,7 +170,7 @@ public class CppAPI {
     private String lastNameToCppName(FullyQualifiedName fqn) {
         Name lastName = fqn.getLastName();
         if (context.getTypeDecl(fqn) != null) return lastName.toPascal();
-        String res = lastName.toLower();
+        String res = toLower(lastName);
         if (fqn.names.size() == 1 && reservedGlobalEntities.contains(lastName)
                 || CppKeyword.isKeyword(lastName)) res += "_";
         return res;
@@ -235,14 +243,14 @@ public class CppAPI {
     /** Create a string corresponding to the C parameter. */
     private String toCParam(Parameter parameter) {
         StringBuilder builder = new StringBuilder();
-        builder.append(cTypename(parameter.type)).append(" ").append(parameter.name.toLower());
+        builder.append(cTypename(parameter.type)).append(" ").append(toLower(parameter.name));
         return builder.toString();
     }
 
     /** Create a string corresponding to the C++ parameter. */
     private String toCppParam(Parameter parameter) {
         StringBuilder builder = new StringBuilder();
-        builder.append(cppTypename(parameter.type)).append(" ").append(parameter.name.toLower());
+        builder.append(cppTypename(parameter.type)).append(" ").append(toLower(parameter.name));
         return builder.toString();
     }
 
@@ -300,28 +308,28 @@ public class CppAPI {
 
     /** Return a string that gets the value of a parameter for the call to the Ada subprogram */
     public String getParamForCall(Parameter p) {
+        String lower = toLower(p.name);
         if (p.type instanceof NameTypeExpr name
                 && context.getTypeDecl(name.name) instanceof EnumerationDecl)
-            return "static_cast<int>(" + p.name.toLower() + ")";
+            return "static_cast<int>(" + lower + ")";
         // When the parameter is a reference to a scalar, get
         // the correspondign address.
         if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof NameTypeExpr name) {
             if (context.getTypeDecl(name.name) instanceof NativeTypeDecl nat)
                 return switch (nat.nativeType) {
-                    case STRING -> p.name.toLower() + ".data()";
-                    default -> "&" + p.name.toLower();
+                    case STRING -> lower + ".data()";
+                    default -> "&" + lower;
                 };
-            if (context.getTypeDecl(name.name) instanceof EnumerationDecl)
-                return "&" + p.name.toLower();
+            if (context.getTypeDecl(name.name) instanceof EnumerationDecl) return "&" + lower;
         }
         if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr)
-            return (ref.isConst ? "" : "&") + "_" + p.name.toLower() + "_data";
-        if (p.type instanceof PointerTypeExpr) return "_" + p.name.toLower() + "_data";
+            return (ref.isConst ? "" : "&") + "_" + lower + "_data";
+        if (p.type instanceof PointerTypeExpr) return "_" + lower + "_data";
         if ((p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof ArrayTypeExpr)
                 || p.type instanceof ArrayTypeExpr
                 || context.getTypeDecl(p.type.getName()) instanceof ClassDecl)
-            return p.name.toLower() + ".data()";
-        return p.name.toLower();
+            return lower + ".data()";
+        return lower;
     }
 
     public String getParamForConstructor(Parameter p) {
@@ -330,7 +338,7 @@ public class CppAPI {
             ptrType = ptr;
         else if (p.type instanceof PointerTypeExpr ptr) ptrType = ptr;
         if (ptrType != null) {
-            String name = p.name.toLower();
+            String name = toLower(p.name);
             return "%s.get() == nullptr ? %s : %s->data()"
                     .formatted(name, nullValue(ptrType), name);
         }
@@ -465,8 +473,7 @@ public class CppAPI {
             else if (lastName.equals(Name.operatorBitXor)) return "operator^";
             else if (lastName.equals(Name.operatorBitNot)) return "operator~";
         }
-        if (CppKeyword.isKeyword(lastName)) return lastName.toLower() + "_";
-        return lastName.toLower();
+        return toLower(lastName);
     }
 
     /** Return the C++ name of the function to define ``functionDecl``. */
@@ -528,7 +535,8 @@ public class CppAPI {
     public String convertForDispatch(Parameter param) {
         StringBuilder builder = new StringBuilder();
         TypeExpr type = param.type;
-        String data = param.name.toLower();
+        String lower = toLower(param.name);
+        String data = lower;
         // We need value types in cases where there are references, so use the
         // c++ return type in order to build view types when necessary.
         // Returning references to pointers is not possible, so manually enforce building simple
@@ -537,22 +545,19 @@ public class CppAPI {
             builder.append(cTypename(ptr.typeExpr))
                     .append(isStringOrArray(ptr.typeExpr) ? "*" : "")
                     .append(" __")
-                    .append(param.name.toLower())
+                    .append(lower)
                     .append(" = ");
             if (isStringOrArray(ptr.typeExpr)) {
                 builder.append("(").append(cTypename(ptr.typeExpr)).append("*)");
-                data = "*__" + param.name.toLower();
+                data = "*__" + lower;
             } else {
                 builder.append("*");
-                data = "__" + param.name.toLower();
+                data = "__" + lower;
             }
-            builder.append(param.name.toLower()).append(";\n");
+            builder.append(lower).append(";\n");
             type = ptr;
         }
-        builder.append(cppReturnTypename(type))
-                .append(" _")
-                .append(param.name.toLower())
-                .append(" = ");
+        builder.append(cppReturnTypename(type)).append(" _").append(lower).append(" = ");
 
         if (type instanceof ReferenceTypeExpr ref
                 && ref.typeExpr instanceof NameTypeExpr name
@@ -588,7 +593,7 @@ public class CppAPI {
                 .append(
                         function.functionType.parameters.stream()
                                 .skip(1)
-                                .map(p -> "_" + p.name.toLower())
+                                .map(p -> "_" + toLower(p.name))
                                 .collect(Collectors.joining(", ")))
                 .append(")");
         return builder.toString();
@@ -675,13 +680,14 @@ public class CppAPI {
         if ((param.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr
                         || param.type instanceof PointerTypeExpr)
                 && param.transfer.required_owner != RequiredOwner.ANY) {
+            String lower = toLower(param.name);
             builder.append("if (")
-                    .append(param.name.toLower())
+                    .append(lower)
                     .append(".get_owner() < polyglot::memory_owner::")
                     .append(param.transfer.required_owner.toString())
                     .append(") throw std::invalid_argument(")
                     .append("std::string(__FUNCTION__) + \": ")
-                    .append(param.name.toLower())
+                    .append(lower)
                     .append(": owner should be ")
                     .append(param.transfer.required_owner)
                     .append("\");");
@@ -697,7 +703,7 @@ public class CppAPI {
                 && ref.typeExpr instanceof PointerTypeExpr ptr) ptrType = ptr;
 
         if (ptrType != null) {
-            String name = param.name.toLower();
+            String name = toLower(param.name);
             boolean isArray = ptrType.typeExpr instanceof ArrayTypeExpr;
             String dataType = cTypename(ptrType);
 
@@ -730,10 +736,10 @@ public class CppAPI {
         if (param.type instanceof ReferenceTypeExpr ref
                 && !ref.isConst
                 && ref.typeExpr instanceof PointerTypeExpr ptr) {
-            String name = param.name.toLower();
-            String dataName = "_" + param.name.toLower() + "_data";
+            String name = toLower(param.name);
+            String dataName = "_" + name + "_data";
             String addressAccessor = isStringOrArray(ptr.typeExpr) ? ".data" : "";
-            String copyName = "__" + param.name.toLower() + "_data";
+            String copyName = "__" + name + "_data";
             builder.append("if (")
                     .append(dataName)
                     .append(addressAccessor)
@@ -758,10 +764,10 @@ public class CppAPI {
         StringBuilder builder = new StringBuilder();
         if (param.type instanceof ReferenceTypeExpr ref
                 && ref.typeExpr instanceof PointerTypeExpr ptr) {
-            String dataName = "_" + param.name.toLower();
+            String dataName = "_" + toLower(param.name);
             builder.append("*");
             if (isStringOrArray(ptr.typeExpr)) builder.append("__");
-            builder.append(param.name.toLower())
+            builder.append(toLower(param.name))
                     .append(" = ")
                     .append(dataName)
                     .append(".get() == nullptr ? ")
