@@ -1,0 +1,5 @@
+library project Test is
+   for Library_Name use "test";
+   for Library_Dir use "lib";
+   for Externally_Built use "true";
+end Test;
