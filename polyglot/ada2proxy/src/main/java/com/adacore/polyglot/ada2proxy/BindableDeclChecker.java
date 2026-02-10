@@ -85,6 +85,10 @@ public class BindableDeclChecker {
             return checkUse(decl, accessedType);
         } else if (decl.pIsArrayType(Libadalang.AdaNode.NONE)) {
             checkUse(decl, decl.pCompType(false, decl));
+            if (decl.pIndexType(0, decl).pIsEnumType(decl)) {
+                throw new UnbindableDeclException(
+                        decl, "Arrays indexed by enumeration types are not bindable");
+            }
             if (!AdaTypeMatcher.isStringType(decl)) {
                 if (decl.pHasAspect(Libadalang.Symbol.create("component_size"), false, false))
                     throw new UnbindableDeclException(
