@@ -72,6 +72,7 @@ public class Ada2Proxy implements Callable<Integer> {
 
     private Libadalang.ProjectOptions getProjectOptions() {
         Libadalang.ProjectOptions options = new Libadalang.ProjectOptions();
+        options.addSwitch(Libadalang.ProjectOption.P, project.toString());
         if (rts != null) {
             options.addSwitch(Libadalang.ProjectOption.RTS, rts);
         }
@@ -86,10 +87,10 @@ public class Ada2Proxy implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        AdaScanner scanner = new AdaScanner();
+        AdaScanner scanner = new AdaScanner(project, specFiles, getProjectOptions());
 
         try {
-            scanner.scanProject(project, specFiles, getProjectOptions());
+            scanner.scanProject();
         } catch (FileNotFoundException e) {
             spec.commandLine().getColorScheme().errorText(null);
             System.err.println(

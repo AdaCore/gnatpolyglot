@@ -38,6 +38,12 @@ public class AdaScanner extends Scanner {
     /** The name of the project. */
     private String projectName;
 
+    /** The list of files to process. */
+    private List<String> specFiles;
+
+    /** The options to use when loading the GPR project file. */
+    private ProjectOptions gprOptions;
+
     /** List of all interfaces used in the project. */
     private List<String> interfaces;
 
@@ -45,6 +51,19 @@ public class AdaScanner extends Scanner {
     private AdaProxy proxy;
 
     private AdaAPI api;
+
+    public AdaScanner(Path projectFile, List<String> specFiles, ProjectOptions options) {
+        this.projectFile = projectFile;
+        this.specFiles = specFiles;
+        this.gprOptions = options;
+        this.projectName =
+                projectFile
+                        .getFileName()
+                        .toString()
+                        .substring(0, projectFile.getFileName().toString().lastIndexOf(".gpr"));
+        this.api = new AdaAPI(Name.fromLower(projectName));
+        this.visitor = new AdaVisitor(api);
+    }
 
     private static String prettyPrint(Libadalang.BasicDecl decl, String message) {
         return "Could not bind %s: %s".formatted(AdaAPI.getDisplayName(decl), message);
@@ -84,7 +103,7 @@ public class AdaScanner extends Scanner {
         PolyglotUtils.emitError(location, message);
     }
 
-    private List<String> getFilesToAnalyze(ProjectManager projectManager, List<String> specFiles)
+    private List<String> getFilesToAnalyze(ProjectManager projectManager)
             throws FileNotFoundException {
         Stream<String> filenames =
                 Stream.of(projectManager.getFiles(SourceFileMode.DEFAULT))
@@ -112,31 +131,12 @@ public class AdaScanner extends Scanner {
     }
 
     @Override
-    public void scanProject(Path projectFile, List<String> specFiles, Object options)
-            throws FileNotFoundException {
-        this.projectFile = projectFile;
-        // Get the name of the project
-        this.projectName =
-                projectFile
-                        .getFileName()
-                        .toString()
-                        .substring(0, projectFile.getFileName().toString().lastIndexOf(".gpr"));
-        this.api = new AdaAPI(Name.fromLower(projectName));
-        this.visitor = new AdaVisitor(api);
-
+    public void scanProject() throws FileNotFoundException {
         // Analyze all the ``.ads`` source files.
-        ProjectOptions gprOptions = null;
-        if (options != null) {
-            if (options instanceof Libadalang.ProjectOptions opts) gprOptions = opts;
-            else throw new IllegalArgumentException("Options must be a Libadalang.ProjectOptions");
-        } else {
-            gprOptions = new ProjectOptions();
-        }
-        gprOptions.addSwitch(ProjectOption.P, projectFile.toString());
         ProjectManager projectManager = new ProjectManager(gprOptions, false);
         AnalysisContext ctx = projectManager.createContext(null, null, true, 8);
         List<Package> modules =
-                getFilesToAnalyze(projectManager, specFiles).stream()
+                getFilesToAnalyze(projectManager).stream()
                         .map(s -> ctx.getUnitFromFile(s))
                         .map(u -> visitor.analyzeSpec(u))
                         .filter(p -> p != null)
