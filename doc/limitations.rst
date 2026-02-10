@@ -105,6 +105,38 @@ language features will be marked as ``final`` in the proxy.
 If one of the tagged type's primitives is not bindable, then the type
 will also be marked as final.
 
+Limited Types
+~~~~~~~~~~~~~
+
+When creating a new object of a limited record type, a copy of all the
+parameters is done to initialize the components of the record. In the
+case where one of the component also has a limited type, it becomes
+impossible to perform the copy: Ada2Proxy is unable to add a
+constructor that would accept these parameters. Only a constructor that
+takes default values in consideration will be generated.
+
+.. code:: ada
+
+   type Rec1 is limited record
+      I : Integer := 1;
+   end record;
+
+   type Rec2 is limited record
+      R : Rec1;
+   end record;
+
+.. code:: cpp
+
+   class Rec1 {
+       Rec1();
+       Rec1(int);
+   };
+
+   class Rec2 {
+       Rec2();
+       // Rec2(const Rec1&) is not defined.
+   };
+
 Proxy2Cpp
 ---------
 

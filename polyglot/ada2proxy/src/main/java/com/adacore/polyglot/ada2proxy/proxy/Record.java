@@ -192,22 +192,28 @@ public class Record extends AdaDeclaration {
         if (!isAbstract()
                 && !(origin.fDiscriminants() instanceof Libadalang.UnknownDiscriminantPart)) {
             NameTypeExpr type = getTypeExpr();
-            this.allocFunctions.add(
-                    new FunctionDecl(
-                            getProxyFullyQualifiedName()
-                                    .append(name.concat(Name.fromLower("default_alloc"))),
-                            "Generated function to alloc a " + name.toPascalWithUnderscore(),
-                            new Role(RoleKind.ALLOC, type, null),
-                            buildMemberSymbol("_Default_Alloc"),
-                            new FunctionTypeExpr(constructorParameters(true), type, Owner.USER),
-                            FunctionDecl.Visibility.PUBLIC,
-                            FunctionDecl.Overridability.FINAL,
-                            FunctionDecl.Staticness.NON_STATIC));
+            List<Component> components = getAllComponents();
+            if (components.stream().noneMatch(c -> c.isLimited())) {
+                this.allocFunctions.add(
+                        new FunctionDecl(
+                                getProxyFullyQualifiedName()
+                                        .append(name.concat(Name.fromLower("default_alloc"))),
+                                "Generated function to alloc a " + name.toPascalWithUnderscore(),
+                                new Role(RoleKind.ALLOC, type, null),
+                                buildMemberSymbol("_Default_Alloc"),
+                                new FunctionTypeExpr(constructorParameters(true), type, Owner.USER),
+                                FunctionDecl.Visibility.PUBLIC,
+                                FunctionDecl.Overridability.FINAL,
+                                FunctionDecl.Staticness.NON_STATIC));
+            }
 
             // Private types and types that do not thave default values for any of their component
             // do not need a second specialized constructor.
+            // If a component does not have a default value and is a limited type, then we cannot
+            // add the constructor since a copy is forced.
             if (!origin.pIsPrivate()
-                    && getAllComponents().stream().anyMatch(c -> c.hasDefaultValue())) {
+                    && components.stream().anyMatch(c -> c.hasDefaultValue())
+                    && components.stream().allMatch(c -> c.hasDefaultValue() || !c.isLimited())) {
                 this.allocFunctions.add(
                         new FunctionDecl(
                                 getProxyFullyQualifiedName()
@@ -341,28 +347,30 @@ public class Record extends AdaDeclaration {
                                 FunctionDecl.Staticness.NON_STATIC));
                 // Create the setter function.
                 TypeExpr setterType = c.getSetterType();
-                componentAccessors.add(
-                        new FunctionDecl(
-                                getProxyFullyQualifiedName()
-                                        .append(Name.fromLower("set").concat(c.name)),
-                                "Sets the value of " + c.name.toPascalWithUnderscore(),
-                                new Role(RoleKind.SETTER, getTypeExpr(), c.name),
-                                buildMemberSymbol("_Setter_" + c.name.toPascalWithUnderscore()),
-                                new FunctionTypeExpr(
-                                        List.of(
-                                                new Parameter(
-                                                        Name.fromLower("self"),
-                                                        getTypeExpr().makeReference(false),
-                                                        new Transfer(RequiredOwner.ANY)),
-                                                new Parameter(
-                                                        Name.fromLower("new").concat(c.name),
-                                                        setterType,
-                                                        new Transfer(RequiredOwner.ANY))),
-                                        NativeType.VOID.typeExpr,
-                                        Owner.UNKNOWN),
-                                FunctionDecl.Visibility.PUBLIC,
-                                FunctionDecl.Overridability.FINAL,
-                                FunctionDecl.Staticness.NON_STATIC));
+                if (!c.isLimited()) {
+                    componentAccessors.add(
+                            new FunctionDecl(
+                                    getProxyFullyQualifiedName()
+                                            .append(Name.fromLower("set").concat(c.name)),
+                                    "Sets the value of " + c.name.toPascalWithUnderscore(),
+                                    new Role(RoleKind.SETTER, getTypeExpr(), c.name),
+                                    buildMemberSymbol("_Setter_" + c.name.toPascalWithUnderscore()),
+                                    new FunctionTypeExpr(
+                                            List.of(
+                                                    new Parameter(
+                                                            Name.fromLower("self"),
+                                                            getTypeExpr().makeReference(false),
+                                                            new Transfer(RequiredOwner.ANY)),
+                                                    new Parameter(
+                                                            Name.fromLower("new").concat(c.name),
+                                                            setterType,
+                                                            new Transfer(RequiredOwner.ANY))),
+                                            NativeType.VOID.typeExpr,
+                                            Owner.UNKNOWN),
+                                    FunctionDecl.Visibility.PUBLIC,
+                                    FunctionDecl.Overridability.FINAL,
+                                    FunctionDecl.Staticness.NON_STATIC));
+                }
             }
         }
         return componentAccessors;
