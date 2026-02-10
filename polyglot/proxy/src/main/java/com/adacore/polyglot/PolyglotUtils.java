@@ -61,4 +61,10 @@ public class PolyglotUtils {
             emit("info", messsage);
         }
     }
+
+    public static void emitStackTrace(Exception exc) {
+        if (verbose.equals(VerboseLevel.VERBOSE)) {
+            exc.printStackTrace(System.err);
+        }
+    }
 }

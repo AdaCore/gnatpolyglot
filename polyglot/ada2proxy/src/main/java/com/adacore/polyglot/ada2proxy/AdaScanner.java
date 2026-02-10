@@ -84,6 +84,7 @@ public class AdaScanner extends Scanner {
             message = prettyPrint(exc.getDecl(), cause.toString());
         }
         PolyglotUtils.emitWarning(location, message);
+        PolyglotUtils.emitStackTrace(exc);
     }
 
     public static void error(UnbindableDeclException exc) {
@@ -101,6 +102,7 @@ public class AdaScanner extends Scanner {
             message = prettyPrint(exc.getDecl(), cause.toString());
         }
         PolyglotUtils.emitError(location, message);
+        PolyglotUtils.emitStackTrace(exc);
     }
 
     private List<String> getFilesToAnalyze(ProjectManager projectManager)
