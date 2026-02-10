@@ -554,7 +554,7 @@ public class CppAPI {
 
         if (type instanceof ReferenceTypeExpr ref
                 && ref.typeExpr instanceof NameTypeExpr name
-                && context.getTypeDecl(name.name) instanceof NativeTypeDecl) {
+                && context.isNativeScalar(name)) {
             // When making a reference to a native type, dereference the pointer to make a reference
             builder.append("*");
         } else {
@@ -598,7 +598,9 @@ public class CppAPI {
      */
     public String makeReturnFromDispatch(FunctionTypeExpr functionType, String returnedValue) {
         StringBuilder builder = new StringBuilder();
-        if (functionType.returnType instanceof NameTypeExpr name) {
+        if (isStringOrArray(functionType.returnType)) {
+            builder.append("return ").append(returnedValue).append(".release();");
+        } else if (functionType.returnType instanceof NameTypeExpr name) {
             builder.append("return ");
             TypeDecl typeDecl = context.getTypeDecl(name.name);
             if (typeDecl instanceof NativeTypeDecl || typeDecl instanceof EnumerationDecl) {
@@ -610,8 +612,6 @@ public class CppAPI {
             } else {
                 builder.append(returnedValue).append(".release();");
             }
-        } else if (functionType.returnType instanceof ArrayTypeExpr) {
-            builder.append("return ").append(returnedValue).append(".release();");
         } else if (functionType.returnType instanceof PointerTypeExpr) {
             builder.append("if (")
                     .append(returnedValue)
