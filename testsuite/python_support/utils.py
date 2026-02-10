@@ -256,6 +256,12 @@ def get_proxy_lib_file(input_lang: str, proxy_location: str) -> str:
     return ""
 
 
+def list_generated_sources(proxy_dir: Path | str) -> list[str]:
+    sources = os.listdir(Path(proxy_dir, "src").as_posix())
+    sources.sort()
+    return sources
+
+
 def run_setup(prefix: str = "runtimes", check_only=False):
     argv = [f"--prefix={prefix}"]
     if check_only:

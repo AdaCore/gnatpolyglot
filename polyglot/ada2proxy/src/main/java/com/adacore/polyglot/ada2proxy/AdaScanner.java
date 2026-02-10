@@ -44,6 +44,9 @@ public class AdaScanner extends Scanner {
     /** The options to use when loading the GPR project file. */
     private ProjectOptions gprOptions;
 
+    /** The source file mode to use to retrieve sources to bind. */
+    private SourceFileMode sourceMode;
+
     /** List of all interfaces used in the project. */
     private List<String> interfaces;
 
@@ -52,10 +55,12 @@ public class AdaScanner extends Scanner {
 
     private AdaAPI api;
 
-    public AdaScanner(Path projectFile, List<String> specFiles, ProjectOptions options) {
+    public AdaScanner(
+            Path projectFile, List<String> specFiles, ProjectOptions options, SourceFileMode mode) {
         this.projectFile = projectFile;
         this.specFiles = specFiles;
         this.gprOptions = options;
+        this.sourceMode = mode;
         this.projectName =
                 projectFile
                         .getFileName()
@@ -108,8 +113,7 @@ public class AdaScanner extends Scanner {
     private List<String> getFilesToAnalyze(ProjectManager projectManager)
             throws FileNotFoundException {
         Stream<String> filenames =
-                Stream.of(projectManager.getFiles(SourceFileMode.DEFAULT))
-                        .filter(s -> s.endsWith(".ads"));
+                Stream.of(projectManager.getFiles(sourceMode)).filter(s -> s.endsWith(".ads"));
         if (specFiles == null || specFiles.isEmpty()) return filenames.toList();
         // Filter all the spec files to bind.
         List<String> result =
