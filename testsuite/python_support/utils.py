@@ -79,9 +79,9 @@ class ScannerConfig:
     @property
     def extra_args(self) -> list[str]:
         args = []
-        units = ",".join(self._cfg.get("units", []))
-        if units != "":
-            args.append(f"--units={units}")
+        specFiles = ",".join(self._cfg.get("spec_files", []))
+        if specFiles != "":
+            args.append(f"--spec-files={specFiles}")
         args.extend(self._cfg.get("scanner_extra_args", []))
         return args
 
@@ -254,6 +254,12 @@ def get_proxy_lib_file(input_lang: str, proxy_location: str) -> str:
     if input_lang == "ada":
         return str(list(Path(proxy_location).glob("*agg.gpr"))[0])
     return ""
+
+
+def list_generated_sources(proxy_dir: Path | str) -> list[str]:
+    sources = os.listdir(Path(proxy_dir, "src").as_posix())
+    sources.sort()
+    return sources
 
 
 def run_setup(prefix: str = "runtimes", check_only=False):

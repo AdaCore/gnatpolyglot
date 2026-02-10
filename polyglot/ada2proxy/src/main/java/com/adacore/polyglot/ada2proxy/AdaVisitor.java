@@ -149,6 +149,13 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return Libadalang.BasePackageDecl.NONE;
     }
 
+    public void enqueueDecl(Libadalang.BasicDecl decl) {
+        if (decl.isNone()) {
+            throw new IllegalArgumentException("Unexpected null decl");
+        }
+        queuedDecls.add(decl);
+    }
+
     /**
      * Create a list of all the packages with the types that are missing in the proxy.
      *
@@ -167,7 +174,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 if (mappedPackages.containsKey(p)) continue;
                 packages.add(analyzeSpec(p.getUnit()));
             } else if (!decl.getUnit().equals(decl.pStandardUnit())) {
-                queuedDecls.add(getOwningPackage(decl));
+                enqueueDecl(getOwningPackage(decl));
             }
         }
         return packages.stream().filter(p -> p != null).toList();
@@ -299,7 +306,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         Libadalang.Name name = node.fPackageName().fName();
         while (name instanceof Libadalang.DottedName dotted) {
             if (dotted.fPrefix().pReferencedDecl(false) instanceof Libadalang.PackageDecl p)
-                queuedDecls.add(p);
+                enqueueDecl(p);
             name = dotted.fPrefix();
         }
     }
@@ -374,7 +381,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         for (var paramSpec : spec.pAbstractFormalParams()) {
             // Enqueue the parameter's type in case we do not visit it in the required list of
             // units
-            queuedDecls.add(paramSpec.pFormalType(node));
+            enqueueDecl(paramSpec.pFormalType(node));
 
             // Record value types are given through an address, but later **copied** into the
             // arguments, so the ownership does not matter.
@@ -393,7 +400,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         }
 
         Libadalang.BaseTypeDecl returnType = spec.pReturnType(node);
-        if (!returnType.isNone()) queuedDecls.add(returnType);
+        if (!returnType.isNone()) enqueueDecl(returnType);
 
         Owner returnOwner = Owner.UNKNOWN;
         if (!returnType.isNone()) {
@@ -475,7 +482,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 if (c instanceof Libadalang.NullComponentDecl) break;
 
                 Libadalang.ComponentDecl componentDecl = (Libadalang.ComponentDecl) c;
-                queuedDecls.add(componentDecl.pFormalType(recordDef));
+                enqueueDecl(componentDecl.pFormalType(recordDef));
                 for (var name : componentDecl.fIds()) {
                     components.add(new Component(componentDecl, AdaAPI.getName(name)));
                 }
@@ -526,7 +533,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 else if (parentType.pIsPrivate())
                     rec.parent = makeRecord(BaseRecordDef.NONE, parentType);
                 else throw new RuntimeException("Could not process parent type");
-                queuedDecls.add(parentType);
+                enqueueDecl(parentType);
             }
             declarations.add(rec);
         } else if (parentDecl.pIsRecordType(Libadalang.AdaNode.NONE)
@@ -549,7 +556,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             Array array = new Array(parentDecl);
             declarations.add(array);
             mappedDecls.put(parentDecl, array);
-            queuedDecls.add(parentDecl.pCompType(false, node));
+            enqueueDecl(parentDecl.pCompType(false, node));
         } else if (AdaTypeMatcher.isEnum(parentDecl)) {
             EnumType enumType = createEnumType(parentDecl);
             declarations.add(enumType);
@@ -574,7 +581,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             Array array = new Array(parentDecl);
             declarations.add(array);
             mappedDecls.put(parentDecl, array);
-            queuedDecls.add(componentType);
+            enqueueDecl(componentType);
         }
         return null;
     }
@@ -591,8 +598,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 mappedDecls.put(node, exception);
             }
         } else {
-            queuedDecls.add(node.pParentBasicDecl());
-            queuedDecls.add(node.fRenames().fRenamedObject().pReferencedDecl(false));
+            enqueueDecl(node.pParentBasicDecl());
+            enqueueDecl(node.fRenames().fRenamedObject().pReferencedDecl(false));
         }
         return null;
     }
@@ -633,19 +640,19 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.TypeAccessDef node) {
-        queuedDecls.add(node.fSubtypeIndication().pDesignatedTypeDecl());
+        enqueueDecl(node.fSubtypeIndication().pDesignatedTypeDecl());
         return null;
     }
 
     public Void visit(Libadalang.ClasswideTypeDecl node) {
-        queuedDecls.add(node.pSpecificType());
+        enqueueDecl(node.pSpecificType());
         return null;
     }
 
     @Override
     public Void visit(Libadalang.SubtypeDecl node) {
         // TODO: Apply type constraints if any
-        queuedDecls.add(node.pSpecificType());
+        enqueueDecl(node.pSpecificType());
         Subtype subtype = new Subtype(node, AdaAPI.getName(node.pDefiningName()));
         declarations.add(subtype);
         mappedDecls.put(node, subtype);
@@ -657,7 +664,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         for (var id : node.fIds()) {
             declarations.add(new GlobalVariable(node, id, AdaAPI.getName(id)));
         }
-        queuedDecls.add(node.fTypeExpr().pDesignatedTypeDecl());
+        enqueueDecl(node.fTypeExpr().pDesignatedTypeDecl());
         return null;
     }
 

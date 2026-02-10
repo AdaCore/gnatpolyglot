@@ -4,7 +4,7 @@ input_lang: ada
 project_file: gnatcoll/minimal/gnatcoll_minimal.gpr
 sync_tree:
   - ../../../internal/sources
-units:
+spec_files:
   - "gnatcoll-boyer_moore.ads"
 
 input_lib_flags:

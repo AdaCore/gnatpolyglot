@@ -16,9 +16,19 @@ import picocli.CommandLine.Option;
 
 @Command(
         name = "ada2proxy",
-        description =
-                "Create a proxy for an Ada project."
-                        + " If no unit is explicitly given, process all of them.",
+        description = {
+            "Create a proxy for the given Ada project. ",
+            "If no unit is explicitly passed through --spec-files, process all sources of the"
+                    + " project tree, including those of the subprojects, but not those of the"
+                    + " Ada runtime.",
+            "If --process-runtime is set, also process all the sources of the runtime.",
+            "If --no-subprojects is set, only process files of the root project.",
+            "Note that --process-runtime and --no-subprojects are illegal as soon as --spec-files"
+                    + " is used.",
+            "Moreover, please note that polyglot will always make sure that the generated library"
+                + " is usable, which means it may have to include entities that were not part of"
+                + " the original files."
+        },
         abbreviateSynopsis = true,
         sortOptions = false)
 public class Ada2Proxy implements Callable<Integer> {
@@ -37,9 +47,9 @@ public class Ada2Proxy implements Callable<Integer> {
     Path outputPath;
 
     @Option(
-            names = {"--units"},
+            names = {"--spec-files"},
             description = "filenames of the units of the input project to bind")
-    List<String> units = new ArrayList<>();
+    List<String> specFiles = new ArrayList<>();
 
     @Option(
             names = {"-X"},
@@ -57,9 +67,19 @@ public class Ada2Proxy implements Callable<Integer> {
     String target;
 
     @Option(
+            names = {"--no-subprojects"},
+            description = "Only process units of the root project")
+    boolean noSubprojects;
+
+    @Option(
+            names = {"--process-runtime"},
+            description = "Also process the sources of the Ada runtime")
+    boolean processAdaRuntime;
+
+    @Option(
             names = {"--with-runtime"},
             description =
-                    "location of the polyglot runtime to use. Defaults to <outputPath>/runtimes.")
+                    "location of the polyglot runtime to use. Defaults to <outputPath>/runtimes")
     Path withRuntime;
 
     @Option(
@@ -72,6 +92,7 @@ public class Ada2Proxy implements Callable<Integer> {
 
     private Libadalang.ProjectOptions getProjectOptions() {
         Libadalang.ProjectOptions options = new Libadalang.ProjectOptions();
+        options.addSwitch(Libadalang.ProjectOption.P, project.toString());
         if (rts != null) {
             options.addSwitch(Libadalang.ProjectOption.RTS, rts);
         }
@@ -84,12 +105,29 @@ public class Ada2Proxy implements Callable<Integer> {
         return options;
     }
 
+    private Libadalang.SourceFileMode getSourceFileMode() {
+        Libadalang.SourceFileMode mode = Libadalang.SourceFileMode.WHOLE_PROJECT;
+
+        if (processAdaRuntime && noSubprojects) {
+            System.err.println(
+                    spec.commandLine()
+                            .getColorScheme()
+                            .errorText("--no-subprojects is incompatible with --process-runtime"));
+        } else if (noSubprojects) {
+            mode = Libadalang.SourceFileMode.ROOT_PROJECT;
+        } else if (processAdaRuntime) {
+            mode = Libadalang.SourceFileMode.WHOLE_PROJECT_WITH_RUNTIME;
+        }
+        return mode;
+    }
+
     @Override
     public Integer call() throws Exception {
-        AdaScanner scanner = new AdaScanner();
+        AdaScanner scanner =
+                new AdaScanner(project, specFiles, getProjectOptions(), getSourceFileMode());
 
         try {
-            scanner.scanProject(project, units, getProjectOptions());
+            scanner.scanProject();
         } catch (FileNotFoundException e) {
             spec.commandLine().getColorScheme().errorText(null);
             System.err.println(

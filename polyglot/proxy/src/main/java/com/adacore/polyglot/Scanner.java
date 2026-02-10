@@ -4,24 +4,16 @@ import com.adacore.polyglot.proxy.Proxy;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 
 /** Base class to analyze projects and emit a Json proxy along with the proxy code */
 public abstract class Scanner {
 
     /**
-     * Analyze a project and its files. If {@code units} is null or empty, all the files of the
-     * project will be analyzed.
+     * Analyze a project and its files.
      *
      * @throws FileNotFoundException
      */
-    public abstract void scanProject(Path projectFile, List<String> units, Object options)
-            throws FileNotFoundException;
-
-    /** Analyze a project and all its files. */
-    public void scanProject(Path projectFile) throws FileNotFoundException {
-        scanProject(projectFile, null, null);
-    }
+    public abstract void scanProject() throws FileNotFoundException;
 
     /** Generate the code for the proxy. */
     public abstract void generate(Path path, Path runtimeLocation) throws IOException;

@@ -18,8 +18,7 @@ See documentation for more information.
       --version   display version and exit
 Commands:
   validator  Validate a json proxy
-  ada2proxy  Create a proxy for an Ada project. If no unit is explicitly given,
-               process all of them.
+  ada2proxy  Create a proxy for the given Ada project.
   proxy2cpp  Create the C++ interface of a proxy representation
   setup      Setup the Polyglot runtime
 
@@ -53,18 +52,30 @@ Running `polyglot ada2proxy --help`
 ================================================================================
 
 Usage: polyglot ada2proxy [OPTIONS]
-Create a proxy for an Ada project. If no unit is explicitly given, process all
-of them.
+Create a proxy for the given Ada project.
+If no unit is explicitly passed through --spec-files, process all sources of
+the project tree, including those of the subprojects, but not those of the Ada
+runtime.
+If --process-runtime is set, also process all the sources of the runtime.
+If --no-subprojects is set, only process files of the root project.
+Note that --process-runtime and --no-subprojects are illegal as soon as
+--spec-files is used.
+Moreover, please note that polyglot will always make sure that the generated
+library is usable, which means it may have to include entities that were not
+part of the original files.
   -P=project_file           input GPR project file
   -o, --output=<outputPath> output path for the proxy project
-      --units=<units>       filenames of the units of the input project to bind
+      --spec-files=<specFiles>
+                            filenames of the units of the input project to bind
   -X=<scenarioVariables>    Scenario variables to pass to the project file
       --RTS=<rts>           Name of the runtime (RTS) to use when loading the
                               project
       --target=<target>     Specify a target for cross platforms
+      --no-subprojects      Only process units of the root project
+      --process-runtime     Also process the sources of the Ada runtime
       --with-runtime=<withRuntime>
                             location of the polyglot runtime to use. Defaults
-                              to <outputPath>/runtimes.
+                              to <outputPath>/runtimes
   -h, --help                display sub-command usage and exit
   -q                        be quiet
   -v                        verbose output

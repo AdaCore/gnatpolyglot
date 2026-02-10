@@ -1,0 +1,4 @@
+library project Lib_1 is
+   for Library_Name use "lib1";
+   for Library_Dir use "lib";
+end Lib_1;
