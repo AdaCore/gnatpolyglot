@@ -31,8 +31,16 @@ with Polyglot.Ada.Strings;
 @endfor
 
 with ${parentPackage};
+@if(packageName.contains(".System.") || packageName.endsWith(".System"))
+   pragma Warnings (Off, ${parentPackage});
+@endif
 
 package ${packageName} is
+
+    @if(packageName.contains(".System.") || packageName.endsWith(".System"))
+       package System renames Standard.System;
+    @endif
+
 @for(AdaDeclaration decl : pack.declarations) <%-- TODO: Handle more declarations --%>
     @if(decl instanceof Subprogram subp && subp.getOverridability() != Overridability.ABSTRACT)
         @if(subp.isProcedure())
