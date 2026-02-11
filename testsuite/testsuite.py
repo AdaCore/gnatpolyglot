@@ -8,7 +8,8 @@ from e3.os import process
 from e3.testsuite import Testsuite
 
 from drivers import (
-    junit_driver, proxy2print_driver, python_driver, scan2proxy_driver
+    junit_driver, proxy2print_driver, proxy_validator_driver, python_driver,
+    scan2proxy_driver
 )
 from python_support.utils import add_path
 
@@ -20,6 +21,7 @@ class PolyglotTestsuite(Testsuite):
         "python": python_driver.PythonDriver,
         "scan2proxy": scan2proxy_driver.Scan2Proxy,
         "proxy2print": proxy2print_driver.Proxy2Print,
+        "proxy_validator": proxy_validator_driver.ProxyValidator
     }
 
     def add_options(self, parser) -> None:

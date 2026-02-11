@@ -15,7 +15,12 @@ POLYGLOT_EXEC = "polyglot.py"
 if NATIVE_RUN:
     POLYGLOT_EXEC = "polyglot"
 
-def run(argv: list[str], env: dict[str, str] | None = None, pipe: bool = False) -> str | None:
+def run(
+    argv: list[str],
+    env: dict[str, str] | None = None,
+    pipe: bool = False,
+    expect_returncode: int = 0
+) -> str | None:
     p = subprocess.run(
         argv,
         stdin=subprocess.DEVNULL,
@@ -28,7 +33,10 @@ def run(argv: list[str], env: dict[str, str] | None = None, pipe: bool = False) 
     if not pipe:
         sys.stdout.write(out)
         sys.stdout.flush()
-    p.check_returncode()
+    if p.returncode != expect_returncode:
+        raise RuntimeError(
+            f"Expected return code {expect_returncode} but got {p.returncode}"
+        )
     return out
 
 
@@ -43,15 +51,28 @@ def run_java(main_class: str, class_path: str, argv: list[str]) -> None:
     return run([java_exec, "-cp", class_path, *extra_args, main_class, *argv])
 
 
-def run_polyglot(subcommand: str, argv: list[str], pipe: bool = False):
-    return run([POLYGLOT_EXEC, subcommand, *argv], pipe=pipe)
+def run_polyglot(
+    subcommand: str,
+    argv: list[str],
+    pipe: bool = False,
+    expect_returncode: int = 0
+):
+    return run(
+        [POLYGLOT_EXEC, subcommand, *argv],
+        pipe=pipe,
+        expect_returncode=expect_returncode
+    )
 
 
-def run_proxy_validator(proxy_location: str) -> None:
+def run_proxy_validator(proxy_location: str, expect_returncode: int = 0) -> None:
     """
     Run the proxy validator on the given proxy json file.
     """
-    run_polyglot("validator", [proxy_location])
+    run_polyglot(
+        "validator",
+        [proxy_location],
+        expect_returncode=expect_returncode
+    )
 
 
 class ScannerConfig:

@@ -53,11 +53,12 @@ Running `polyglot ada2proxy --help`
 
 Usage: polyglot ada2proxy [OPTIONS]
 Create a proxy for the given Ada project.
-If no unit is explicitly passed through --spec-files, process all sources of
-the project tree, including those of the subprojects, but not those of the Ada
+If no unit is explicitly passed through --spec-files, generate bindings for all
+sources of the project tree, including those of the subprojects, but not those
+of the Ada runtime.
+If --process-runtime is set, also generate bindings for all the sources of the
 runtime.
-If --process-runtime is set, also process all the sources of the runtime.
-If --no-subprojects is set, only process files of the root project.
+If --no-subprojects is set, only generate bindings for the root project.
 Note that --process-runtime and --no-subprojects are illegal as soon as
 --spec-files is used.
 Moreover, please note that polyglot will always make sure that the generated
@@ -65,8 +66,9 @@ library is usable, which means it may have to include entities that were not
 part of the original files.
   -P=project_file           input GPR project file
   -o, --output=<outputPath> output path for the proxy project
-      --spec-files=<specFiles>
-                            filenames of the units of the input project to bind
+      --spec-files=<specFiles>[,<specFiles>...]
+                            filenames of the units of the input project to
+                              bind, separated by commas
   -X=<scenarioVariables>    Scenario variables to pass to the project file
       --RTS=<rts>           Name of the runtime (RTS) to use when loading the
                               project

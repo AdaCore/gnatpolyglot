@@ -1,0 +1,3 @@
+--spec-files is incompatible with --no-subprojects
+--spec-files is incompatible with --process-runtime
+--no-subprojects is incompatible with --process-runtime

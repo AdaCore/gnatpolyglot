@@ -1,1 +1,2 @@
-driver: python
+driver: proxy_validator
+expect_returncode: 0

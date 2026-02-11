@@ -18,11 +18,12 @@ import picocli.CommandLine.Option;
         name = "ada2proxy",
         description = {
             "Create a proxy for the given Ada project. ",
-            "If no unit is explicitly passed through --spec-files, process all sources of the"
-                    + " project tree, including those of the subprojects, but not those of the"
-                    + " Ada runtime.",
-            "If --process-runtime is set, also process all the sources of the runtime.",
-            "If --no-subprojects is set, only process files of the root project.",
+            "If no unit is explicitly passed through --spec-files, generate bindings for all"
+                + " sources of the project tree, including those of the subprojects, but not those"
+                + " of the Ada runtime.",
+            "If --process-runtime is set, also generate bindings for all the sources of the"
+                    + " runtime.",
+            "If --no-subprojects is set, only generate bindings for the root project.",
             "Note that --process-runtime and --no-subprojects are illegal as soon as --spec-files"
                     + " is used.",
             "Moreover, please note that polyglot will always make sure that the generated library"
@@ -48,7 +49,9 @@ public class Ada2Proxy implements Callable<Integer> {
 
     @Option(
             names = {"--spec-files"},
-            description = "filenames of the units of the input project to bind")
+            description =
+                    "filenames of the units of the input project to bind, separated by commas",
+            split = ",")
     List<String> specFiles = new ArrayList<>();
 
     @Option(
@@ -108,11 +111,15 @@ public class Ada2Proxy implements Callable<Integer> {
     private Libadalang.SourceFileMode getSourceFileMode() {
         Libadalang.SourceFileMode mode = Libadalang.SourceFileMode.WHOLE_PROJECT;
 
-        if (processAdaRuntime && noSubprojects) {
-            System.err.println(
-                    spec.commandLine()
-                            .getColorScheme()
-                            .errorText("--no-subprojects is incompatible with --process-runtime"));
+        if (!specFiles.isEmpty() && noSubprojects) {
+            throw new IllegalArgumentException(
+                    "--spec-files is incompatible with --no-subprojects");
+        } else if (!specFiles.isEmpty() && processAdaRuntime) {
+            throw new IllegalArgumentException(
+                    "--spec-files is incompatible with --process-runtime");
+        } else if (processAdaRuntime && noSubprojects) {
+            throw new IllegalArgumentException(
+                    "--no-subprojects is incompatible with --process-runtime");
         } else if (noSubprojects) {
             mode = Libadalang.SourceFileMode.ROOT_PROJECT;
         } else if (processAdaRuntime) {
@@ -123,13 +130,18 @@ public class Ada2Proxy implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        AdaScanner scanner =
-                new AdaScanner(project, specFiles, getProjectOptions(), getSourceFileMode());
+        Libadalang.SourceFileMode mode;
+        try {
+            mode = getSourceFileMode();
+        } catch (IllegalArgumentException e) {
+            System.err.println(spec.commandLine().getColorScheme().errorText(e.getMessage()));
+            return 1;
+        }
+        AdaScanner scanner = new AdaScanner(project, specFiles, getProjectOptions(), mode);
 
         try {
             scanner.scanProject();
         } catch (FileNotFoundException e) {
-            spec.commandLine().getColorScheme().errorText(null);
             System.err.println(
                     spec.commandLine()
                             .getColorScheme()

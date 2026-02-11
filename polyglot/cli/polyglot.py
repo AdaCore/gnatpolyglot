@@ -25,7 +25,7 @@ if __name__ == '__main__':
         "PATH" if os.name == 'nt' else 'LD_LIBRARY_PATH', ''
     )
 
-    subprocess.run([
+    res = subprocess.run([
         java,
         '-cp', class_path,
         "--enable-native-access=ALL-UNNAMED",
@@ -34,4 +34,5 @@ if __name__ == '__main__':
         f'com.adacore.polyglot.cli.PolyglotMain',
         *sys.argv[1:]
     ])
+    sys.exit(res.returncode)
 
