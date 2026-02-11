@@ -18,11 +18,12 @@ import picocli.CommandLine.Option;
         name = "ada2proxy",
         description = {
             "Create a proxy for the given Ada project. ",
-            "If no unit is explicitly passed through --spec-files, process all sources of the"
-                    + " project tree, including those of the subprojects, but not those of the"
-                    + " Ada runtime.",
-            "If --process-runtime is set, also process all the sources of the runtime.",
-            "If --no-subprojects is set, only process files of the root project.",
+            "If no unit is explicitly passed through --spec-files, generate bindings for all"
+                + " sources of the project tree, including those of the subprojects, but not those"
+                + " of the Ada runtime.",
+            "If --process-runtime is set, also generate bindings for all the sources of the"
+                    + " runtime.",
+            "If --no-subprojects is set, only generate bindings for the root project.",
             "Note that --process-runtime and --no-subprojects are illegal as soon as --spec-files"
                     + " is used.",
             "Moreover, please note that polyglot will always make sure that the generated library"
