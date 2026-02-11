@@ -15,10 +15,10 @@ This lets us avoid having dependencies on the compiler from the input
 language.
 
 Generating Proxy IR
-===================
+-------------------
 
 Generating Ada Proxy layer
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: sh
 
@@ -51,10 +51,10 @@ file
    2proxy/src/*.ad[sb]
 
 Generating Language specific interfaces
-=======================================
+---------------------------------------
 
 Generating C++ interfaces
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: sh
 
@@ -77,7 +77,7 @@ directory.
 Use build system of choice to build these.
 
 Example: Generating Ada to C++ bindings
-=======================================
+---------------------------------------
 
 .. code:: sh
 

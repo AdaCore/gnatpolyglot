@@ -12,10 +12,10 @@ Welcome to Polyglot's documentation!
 
    usage
    ada2proxy
+   proxy2cpp
    call_convention
    limitations
-   proxy2cpp
-   
+
 
 Indices and tables
 ==================

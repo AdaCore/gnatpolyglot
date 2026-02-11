@@ -4,10 +4,10 @@ ABI
 Every function must use the C ABI as a common interface.
 
 Argument passing
-================
+----------------
 
 Scalars
--------
+~~~~~~~
 
 Scalars are binded 1-to-1
 
@@ -28,7 +28,7 @@ Scalars are binded 1-to-1
 +-------------------+--------------------------+----------------+------------+
 
 Classes
--------
+~~~~~~~
 
 Classes are binded as class wrappers around a dynamically allocated
 internal object from the source
@@ -48,7 +48,7 @@ internal object from the source
 +-----------------------+------------------------------------+-------------------+-------------+
 
 Strings and arrays
-------------------
+~~~~~~~~~~~~~~~~~~
 
 Strings and arrays have an inlined structure holding information about
 the array: address, bounds,...
@@ -67,18 +67,18 @@ the array: address, bounds,...
 +----------------+--------------------------+----------------------+------------------+
 
 Pointers
---------
+~~~~~~~~
 
 Pointers to pointers are not supported.
 
 References
-----------
+~~~~~~~~~~
 
 References cannot be contained inside other type (``Ptr { Ref {} }``) as
 they are implementation defined.
 
 Returning values
-================
+----------------
 
 .. _scalars-1:
 
@@ -98,7 +98,7 @@ Scalars
 .. _classes-1:
 
 Classes
--------
+~~~~~~~
 
 Classes (and arrays) use a ``view`` type to return them as a reference
 in order to avoid returning an object whose lifetime depends on the
@@ -122,7 +122,7 @@ the internal data. They do not free *anything* when they are destroyed.
 .. _strings-and-arrays-1:
 
 Strings and arrays
-------------------
+~~~~~~~~~~~~~~~~~~
 
 +------------+----------------------+----------------------+----------------+
 | Type       | Convention           | C++ Type             | Internal C     |
@@ -139,6 +139,6 @@ Strings and arrays
 +------------+----------------------+----------------------+----------------+
 
 Ref to Pointers
----------------
+~~~~~~~~~~~~~~~
 
 Cannot be returned.

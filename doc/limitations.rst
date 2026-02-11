@@ -5,10 +5,10 @@ This document introduces all limitations encountered when trying to bind
 specific language constructs or types.
 
 Ada2Proxy
-=========
+---------
 
 Controlled types
-----------------
+~~~~~~~~~~~~~~~~
 
 During the destruction of a C++ object, the vtable is also progressively
 destroyed. At the start of any destructor execution, it is no longer
@@ -74,7 +74,7 @@ controlled types was disabled.
    }
 
 Inheritable types
------------------
+~~~~~~~~~~~~~~~~~
 
 In Ada, tagged type primitives can have multiple controlling parameters,
 and can also have a controlling return type (dynamic dispatch based on
@@ -106,10 +106,10 @@ If one of the tagged type's primitives is not bindable, then the type
 will also be marked as final.
 
 Proxy2Cpp
-=========
+---------
 
 C++ object construction
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 The parent constructor is called first. It will initialize its own
 vtable *only*.
@@ -167,7 +167,7 @@ parameter:
    }
 
 Polymorphic copies
-------------------
+~~~~~~~~~~~~~~~~~~
 
 Some binded languages may be able to perform polymorphic copies (e.g
 Ada). When they occur on Shadow types, it is necessary to also make a
