@@ -102,6 +102,9 @@ language features will be marked as ``final`` in the proxy.
        Root f(const Root &r1, const Root &r2);
    };
 
+If one of the tagged type's primitives is not bindable, then the type
+will also be marked as final.
+
 Proxy2Cpp
 =========
 
