@@ -19,6 +19,7 @@ import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.polyglot.proxy.TypeExpr;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class Record extends AdaDeclaration {
@@ -432,19 +433,22 @@ public class Record extends AdaDeclaration {
      * <p>In order to be inheritable, a type should be tagged, and none of its primitives should
      * have no controlling parameters other than the first parameter. Lastly, if a primitive was
      * seen as unbindable, then the type is considered final in the proxy.
+     *
+     * <p>Until we implement type shadow type identification, we are unable to dispatch on
+     * subprograms that have a classwide parameter formal type
      */
     public boolean isInheritable(AdaAPI api) {
+        Predicate<Libadalang.BasicDecl> predicate =
+                p -> {
+                    Libadalang.BaseSubpSpec spec = p.pSubpSpecOrNull(false);
+                    return api.getDeclChecker().seenUnbindable(p)
+                            || spec.pReturnType(spec).equals(origin)
+                            || Stream.of(spec.pParamTypes(spec))
+                                    .skip(1)
+                                    .anyMatch(t -> t.equals(origin) || t.pIsClasswide());
+                };
         return isTaggedType()
-                && Stream.of(origin.pGetPrimitives(false, false))
-                        .noneMatch(
-                                p -> {
-                                    Libadalang.BaseSubpSpec spec = p.pSubpSpecOrNull(false);
-                                    return api.getDeclChecker().seenUnbindable(p)
-                                            || spec.pReturnType(spec).equals(origin)
-                                            || Stream.of(spec.pParamTypes(spec))
-                                                    .skip(1)
-                                                    .anyMatch(t -> t.equals(origin));
-                                });
+                && Stream.of(origin.pGetPrimitives(false, false)).noneMatch(predicate);
     }
 
     public boolean isControlled() {

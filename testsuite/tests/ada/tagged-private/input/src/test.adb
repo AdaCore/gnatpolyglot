@@ -10,10 +10,4 @@ package body Test is
       Put_Line ("(A =>" & R.A'Image & ", B =>" & R.B'Image & ")");
    end P1;
 
-   procedure P2 (R : in out Root; R2 : in out Root'Class) is
-   begin
-      R.P1;
-      R2.P1;
-   end P2;
-
 end Test;

@@ -20,7 +20,7 @@ r1 = 42
 r2 = 21
 r3 = 100
 P2 Ada
-P2 from C++ 1: (A => 1, B => 2)
+P2 from C++ 1: 21
 Returning from ada: 2, 3, 4, 5, 6,
 Got in ada: 2, 3, 4, 5, 6,
 Got in C++: 2, 3, 4, 5, 6, 

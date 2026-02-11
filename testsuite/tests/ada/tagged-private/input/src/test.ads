@@ -4,8 +4,6 @@ package Test is
 
    procedure P1 (R : in out Root);
 
-   procedure P2 (R : in out Root; R2: in out Root'Class);
-
 private
 
    type Root is tagged record
