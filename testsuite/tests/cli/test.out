@@ -65,8 +65,9 @@ library is usable, which means it may have to include entities that were not
 part of the original files.
   -P=project_file           input GPR project file
   -o, --output=<outputPath> output path for the proxy project
-      --spec-files=<specFiles>
-                            filenames of the units of the input project to bind
+      --spec-files=<specFiles>[,<specFiles>...]
+                            filenames of the units of the input project to
+                              bind, separated by commas
   -X=<scenarioVariables>    Scenario variables to pass to the project file
       --RTS=<rts>           Name of the runtime (RTS) to use when loading the
                               project

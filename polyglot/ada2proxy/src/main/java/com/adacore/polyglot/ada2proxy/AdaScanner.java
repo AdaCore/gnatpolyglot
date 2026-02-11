@@ -118,20 +118,14 @@ public class AdaScanner extends Scanner {
         // Filter all the spec files to bind.
         List<String> result =
                 filenames
-                        .filter(
-                                specFiles == null || specFiles.isEmpty()
-                                        ? (s -> true)
-                                        : (s ->
-                                                specFiles.contains(
-                                                        Path.of(s).getFileName().toString())))
+                        .filter((s -> specFiles.contains(Path.of(s).getFileName().toString())))
                         .toList();
         // Verify that all the files in ``specFiles`` have been found.
         List<Path> resultBasenames = result.stream().map(s -> Path.of(s).getFileName()).toList();
         for (var file : specFiles) {
-            specFiles.stream()
-                    .filter(f -> resultBasenames.contains(Path.of(f)))
-                    .findFirst()
-                    .orElseThrow(() -> new FileNotFoundException(file));
+            if (!resultBasenames.contains(Path.of(file).getFileName())) {
+                throw new FileNotFoundException(file);
+            }
         }
         return result;
     }
