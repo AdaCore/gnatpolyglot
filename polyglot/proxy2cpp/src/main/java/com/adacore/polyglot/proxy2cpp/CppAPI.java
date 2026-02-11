@@ -441,7 +441,9 @@ public class CppAPI {
                     if (typeExpr instanceof ReferenceTypeExpr ref) typeExpr = ref.typeExpr;
                     if (typeExpr instanceof NameTypeExpr name) {
                         TypeDecl typeDecl = context.getTypeDecl(name.name);
-                        return typeDecl instanceof EnumerationDecl || typeDecl instanceof ClassDecl;
+                        return typeDecl instanceof EnumerationDecl
+                                || typeDecl instanceof ClassDecl
+                                || context.isStringType(typeExpr);
                     }
                     // Arrays and pointers are binded as classes, so it works
                     return typeExpr instanceof ArrayTypeExpr || typeExpr instanceof PointerTypeExpr;
