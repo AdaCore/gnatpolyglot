@@ -111,11 +111,15 @@ public class Ada2Proxy implements Callable<Integer> {
     private Libadalang.SourceFileMode getSourceFileMode() {
         Libadalang.SourceFileMode mode = Libadalang.SourceFileMode.WHOLE_PROJECT;
 
-        if (processAdaRuntime && noSubprojects) {
-            System.err.println(
-                    spec.commandLine()
-                            .getColorScheme()
-                            .errorText("--no-subprojects is incompatible with --process-runtime"));
+        if (!specFiles.isEmpty() && noSubprojects) {
+            throw new IllegalArgumentException(
+                    "--spec-files is incompatible with --no-subprojects");
+        } else if (!specFiles.isEmpty() && processAdaRuntime) {
+            throw new IllegalArgumentException(
+                    "--spec-files is incompatible with --process-runtime");
+        } else if (processAdaRuntime && noSubprojects) {
+            throw new IllegalArgumentException(
+                    "--no-subprojects is incompatible with --process-runtime");
         } else if (noSubprojects) {
             mode = Libadalang.SourceFileMode.ROOT_PROJECT;
         } else if (processAdaRuntime) {
@@ -126,8 +130,14 @@ public class Ada2Proxy implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        AdaScanner scanner =
-                new AdaScanner(project, specFiles, getProjectOptions(), getSourceFileMode());
+        Libadalang.SourceFileMode mode;
+        try {
+            mode = getSourceFileMode();
+        } catch (IllegalArgumentException e) {
+            System.err.println(spec.commandLine().getColorScheme().errorText(e.getMessage()));
+            return 1;
+        }
+        AdaScanner scanner = new AdaScanner(project, specFiles, getProjectOptions(), mode);
 
         try {
             scanner.scanProject();
