@@ -1,0 +1,11 @@
+Running scanner test.
+Running the scanner...
+test.ads:4:4: warning: Could not bind Test.B: Discriminated types are not yet supported
+test.ads:6:4: warning: Could not bind Test.A: Discriminated types are not yet supported
+test.ads:10:4: warning: Could not bind Test.C: Used type `Test.B` is not bindable
+test.ads:9:4: warning: Could not bind Test.D: Used type `Test.C` is not bindable
+test.ads:14:4: warning: Could not bind Test.P: Used type `Test.D` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

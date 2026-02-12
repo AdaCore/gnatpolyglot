@@ -152,6 +152,7 @@ public class BindableDeclChecker {
 
     private void checkUse(Libadalang.BasicDecl decl, Libadalang.BaseTypeDecl use) {
         Throwable cause = null;
+        if (use instanceof Libadalang.IncompleteTypeDecl) use = use.pNextPart();
         try {
             checkIsBindable(use);
         } catch (Throwable t) {
