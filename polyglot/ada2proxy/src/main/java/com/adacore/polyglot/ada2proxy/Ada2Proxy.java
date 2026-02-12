@@ -147,6 +147,14 @@ public class Ada2Proxy implements Callable<Integer> {
                             .getColorScheme()
                             .errorText("File not found: %s".formatted(e.getMessage())));
             return 1;
+        } catch (Libadalang.ProjectManagerException e) {
+            System.err.println(
+                    spec.commandLine()
+                            .getColorScheme()
+                            .errorText(
+                                    "Error loading GPR project file: %s"
+                                            .formatted(e.getMessage())));
+            return 1;
         }
 
         Proxy p = scanner.getProxy();
