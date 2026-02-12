@@ -1,5 +1,6 @@
+***********
 Limitations
-===========
+***********
 
 This document introduces all limitations encountered when trying to bind
 specific language constructs or types.

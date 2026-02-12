@@ -1,5 +1,6 @@
+*********
 Ada2Proxy
-=========
+*********
 
 Creates functions that use the C ABI as a common way to communicate
 outside of the Ada world.
@@ -220,25 +221,25 @@ name will be kept in the resulting interface.
 ========= ====================
 Operator  Proxy name
 ========= ====================
-``"+"``   ``operator_plus``
-``"-"``   ``operator_minus``
-``"*"``   ``operator_mult``
-``"/"``   ``operator_div``
-``"**"``  ``operator_pow``
-``"mod"`` ``operator_mod``
-``"rem"`` ``operator_rem``
-``"abs"`` ``operator_abs``
-``"&"``   ``operator_concat``
-``"="``   ``operator_eq``
-``"/="``  ``operator_ne``
-``"<"``   ``operator_lt``
-``"<="``  ``operator_le``
-``">"``   ``operator_gt``
-``">="``  ``operator_ge``
-``"and"`` ``operator_bit_and``
-``"or"``  ``operator_bit_or``
-``"xor"`` ``operator_bit_xor``
-``"not"`` ``operator_bit_not``
+``+``     ``operator_plus``
+``-``     ``operator_minus``
+``*``     ``operator_mult``
+``/``     ``operator_div``
+``**``    ``operator_pow``
+``mod``   ``operator_mod``
+``rem``   ``operator_rem``
+``abs``   ``operator_abs``
+``&``     ``operator_concat``
+``=``     ``operator_eq``
+``/=``    ``operator_ne``
+``<``     ``operator_lt``
+``<=``    ``operator_le``
+``>``     ``operator_gt``
+``>=``    ``operator_ge``
+``and``   ``operator_bit_and``
+``or``    ``operator_bit_or``
+``xor``   ``operator_bit_xor``
+``not``   ``operator_bit_not``
 ========= ====================
 
 Global variables and constants

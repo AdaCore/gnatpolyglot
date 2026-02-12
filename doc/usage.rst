@@ -1,5 +1,6 @@
+********
 Polyglot
-========
+********
 
 Polyglot is a high-level bindings generator.
 
