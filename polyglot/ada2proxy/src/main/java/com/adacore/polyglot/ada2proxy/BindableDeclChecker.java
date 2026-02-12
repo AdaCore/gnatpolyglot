@@ -84,7 +84,8 @@ public class BindableDeclChecker {
 
             return checkUse(decl, accessedType);
         } else if (decl.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            checkUse(decl, decl.pCompType(false, decl));
+            BaseTypeDecl compType = decl.pCompType(false, decl);
+            checkUse(decl, compType);
             if (decl.pIndexType(0, decl).pIsEnumType(decl)) {
                 throw new UnbindableDeclException(
                         decl, "Arrays indexed by enumeration types are not bindable");
@@ -95,6 +96,10 @@ public class BindableDeclChecker {
                             decl, "Arrays with the Component_Size aspect are not bindable");
                 if (decl.pHasAspect(Libadalang.Symbol.create("pack"), false, false))
                     throw new UnbindableDeclException(decl, "Packed array are not bindable");
+            }
+            if (compType.pIsArrayType(decl) || AdaTypeMatcher.isArrayAccess(compType)) {
+                throw new UnbindableDeclException(
+                        decl, "Arrays of array or access to arrays are not yet supported");
             }
         } else if (decl.equals(decl.pStdWideWideCharType())
                 || decl.equals(decl.pStdWideCharType())) {
