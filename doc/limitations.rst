@@ -153,7 +153,7 @@ object to perform dynamic dispatch back to C++.
        Foo(int a);
    }
 
-In order for the binded library to make use of the overridden functions
+In order for the bound library to make use of the overridden functions
 of, it becomes necessary to call the constructor with the extra
 parameter:
 
@@ -170,11 +170,11 @@ parameter:
 Polymorphic copies
 ~~~~~~~~~~~~~~~~~~
 
-Some binded languages may be able to perform polymorphic copies (e.g
+Some bound languages may be able to perform polymorphic copies (e.g
 Ada). When they occur on Shadow types, it is necessary to also make a
 clone of the C++ object to which they have a reference. C++ does not
 provide a way to perform polymorphic copies out of the box, so when
-inheriting a binded types, it is necessary to manually provide a way to
+inheriting a bound type, it is necessary to manually provide a way to
 perform such copies through the overridable ``internal_clone`` function
 member:
 

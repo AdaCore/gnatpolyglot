@@ -10,7 +10,7 @@ Argument passing
 Scalars
 ~~~~~~~
 
-Scalars are binded 1-to-1
+Scalars are bound 1-to-1
 
 +-------------------+--------------------------+----------------+------------+
 | Type              | Convention               | C++            | Internal C |
@@ -31,7 +31,7 @@ Scalars are binded 1-to-1
 Classes
 ~~~~~~~
 
-Classes are binded as class wrappers around a dynamically allocated
+Classes are bound as class wrappers around a dynamically allocated
 internal object from the source
 
 +-----------------------+------------------------------------+-------------------+-------------+

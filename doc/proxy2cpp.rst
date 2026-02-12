@@ -129,7 +129,7 @@ Inheritance
 
 Types with a shadow constructor can be inherited. It is mandatory to use
 the shadow constructor in order to enable overriding non static function
-members from binded types.
+members from bound types.
 
 The shadow constructor can be distinguished by its last argument: when
 constructing the shadow object of a type ``T``, its constructor will
@@ -157,8 +157,8 @@ expect a ``T*``. This argument expects the ``this`` value.
 Overriding virtual functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Virtual functions from Binded types can be overriden. This allows inside
-the binded libraries to dynamically dispatch back to overrides.
+Virtual functions from bound types can be overriden. This allows inside
+the bound libraries to dynamically dispatch back to overrides.
 
 .. code:: ada
 

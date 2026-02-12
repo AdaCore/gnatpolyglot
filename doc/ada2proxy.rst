@@ -11,7 +11,7 @@ Types
 Scalars
 ~~~~~~~
 
-All scalars are binded as regular fixed-sized integers (e.g. u16, i32,...)
+All scalars are bound as regular fixed-sized integers (e.g. u16, i32,...)
 of their matching size.
 
 ====================================== =========================
@@ -31,7 +31,7 @@ exception will be propagated back to the caller.
 Enumeration types
 ~~~~~~~~~~~~~~~~~
 
-Enumerations are binded one-to-one in the proxy. The proxy holds the
+Enumerations are bound one-to-one in the proxy. The proxy holds the
 integer value of each enumeration literal.
 
 Subtyping or derivating from an enumeration creates a new enumeration,
@@ -73,7 +73,7 @@ are also supported.
 Record
 ~~~~~~
 
-Simple record types are binded as final classes in the proxy. Each
+Simple record types are bound as final classes in the proxy. Each
 component of the record definition will have a corresponding generated
 getter, and setter when possible.
 
@@ -85,13 +85,13 @@ As a limitation, Polyglot does not yet support discriminant components.
 Private types
 ^^^^^^^^^^^^^
 
-Any private type is binded as a class. Any private component will not
+Any private type is bound as a class. Any private component will not
 have a corresponding getter or setter generated.
 
 Tagged types
 ~~~~~~~~~~~~
 
-A tagged type is binded as a non-final type and can be inherited in
+A tagged type is bound as a non-final type and can be inherited in
 generated bindings through the use of a shadow type.
 
 Shadow types
@@ -140,7 +140,7 @@ Interfaces are not yet supported.
 Limited types
 ~~~~~~~~~~~~~
 
-Limited types are binded as regular types with the exception that no
+Limited types are bound as regular types with the exception that no
 additional copy and clone functions are generated.
 
 Arrays
@@ -149,7 +149,7 @@ Arrays
 Unconstrained arrays
 ^^^^^^^^^^^^^^^^^^^^
 
-All unconstrained arrays are binded as generic arrays. Bounds
+All unconstrained arrays are bound as generic arrays. Bounds
 information is kept (First & Last), so care for constraint errors.
 
 .. code:: ada
@@ -161,14 +161,14 @@ information is kept (First & Last), so care for constraint errors.
 Constrained arrays, or pragma’d
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO: Not yet supported, will be binded as regular records since their
+TODO: Not yet supported, will be bound as regular records since their
 internal representation may differ from unconstrained arrays, with
 regular getter and setter for nth component.
 
 Strings
 ~~~~~~~
 
-All unconstrained arrays of character are binded as regular strings.
+All unconstrained arrays of character are bound as regular strings.
 Since there are incompatibilities with Ada strings and strings from
 other languages, an explicit copy is necessary to convert an Ada string.
 
@@ -185,15 +185,15 @@ do not return references. However, passing access values by reference
 Subprograms
 -----------
 
-All subprograms are binded as regular functions in the proxy. Non
+All subprograms are bound as regular functions in the proxy. Non
 dispatchable subprograms are marked as ``final``.
 
 Parameter types
 ~~~~~~~~~~~~~~~
 
-By default, all non scalar and pointer types parameters are binded as
+By default, all non scalar and pointer types parameters are bound as
 constant references. This is to avoid unecessary copies on the caller
-side. ``out`` or ``in out`` parameters are all binded as non-constant
+side. ``out`` or ``in out`` parameters are all bound as non-constant
 references.
 
 Dot-callable Primitives
@@ -212,7 +212,7 @@ functions.
 Operators
 ~~~~~~~~~
 
-Operators are binded as regular functions, but are given a placeholder
+Operators are bound as regular functions, but are given a placeholder
 name that may be matched to later be translated to an operator
 overloading function when the target language supports it. If the target
 language does not support operator overloading, then the placeholder

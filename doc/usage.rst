@@ -7,7 +7,7 @@ Polyglot is a high-level bindings generator.
 The generation of bindings is done in a two step process:
 
 1.  Generation of the Proxy IR, and glue code to expose an interface
-    for binded constructs that relies on the C ABI.
+    for bound constructs that relies on the C ABI.
 
 2.  Generation of a high level
     interface in a given target language
@@ -35,7 +35,7 @@ file
 
 *  proxy : Contains all the code that uses the C ABI
 
-* proxy aggregate: Aggregate of the binded library,
+* proxy aggregate: Aggregate of the bound library,
   polyglot runtime and bindings. Can be compiled as an ESAL to avoid
   future dependencies with Ada runtime, etc. Danger: read limitations of
   ESAL (gpr doc).
