@@ -1,0 +1,5 @@
+Error loading GPR project file: fatal error, cannot load the project tree
+error: project file "/dummy/missing.gpr" not found
+Error loading GPR project file: fatal error, cannot load the project tree
+test.gpr:1:06: error: imported project file "missing.gpr" not found
+The following directories have been searched:

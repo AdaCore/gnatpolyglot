@@ -1,0 +1,5 @@
+with "missing.gpr";
+
+project Test_2 is
+
+end Test_2;
