@@ -9,11 +9,18 @@ import java.util.Set;
 
 public class BindableDeclChecker {
 
+    private enum CheckStatus {
+        OK,
+        UNSURE
+    }
+
     private Set<Libadalang.BasicDecl> unbindableDecls = new HashSet<>();
 
     private Set<Libadalang.BasicDecl> bindableDecls = new HashSet<>();
 
-    private void checkType(Libadalang.BaseTypeDecl decl) {
+    private Set<Libadalang.BasicDecl> visitedDecls = new HashSet<>();
+
+    private CheckStatus checkType(Libadalang.BaseTypeDecl decl) {
 
         if (decl.pDiscriminantsList(Libadalang.BaseTypeDecl.NONE, Libadalang.AdaNode.NONE).length
                 != 0) {
@@ -75,7 +82,7 @@ public class BindableDeclChecker {
                             decl, "Array accesses with the Size aspect are not bindable");
             }
 
-            checkUse(decl, accessedType);
+            return checkUse(decl, accessedType);
         } else if (decl.pIsArrayType(Libadalang.AdaNode.NONE)) {
             checkUse(decl, decl.pCompType(false, decl));
             if (!AdaTypeMatcher.isStringType(decl)) {
@@ -90,13 +97,13 @@ public class BindableDeclChecker {
             throw new UnbindableDeclException(
                     decl, "Wide and Wide_Wide characters types are not supported");
         }
+        return CheckStatus.OK;
     }
 
-    private void checkDecl(Libadalang.BasicDecl decl) {
-        if (bindableDecls.contains(decl) || unbindableDecls.contains(decl)) return;
+    private CheckStatus checkDecl(Libadalang.BasicDecl decl) {
+        if (bindableDecls.contains(decl) || unbindableDecls.contains(decl)) return CheckStatus.OK;
 
-        // assume that decl is bindable (to avoid infinite loops)
-        bindableDecls.add(decl);
+        visitedDecls.add(decl);
 
         for (var d : decl.pDefiningNames()) {
             if (d.isNone()) continue;
@@ -146,11 +153,12 @@ public class BindableDeclChecker {
         }
 
         if (decl instanceof Libadalang.BaseTypeDecl typeDecl) {
-            checkType(typeDecl);
+            return checkType(typeDecl);
         }
+        return CheckStatus.OK;
     }
 
-    private void checkUse(Libadalang.BasicDecl decl, Libadalang.BaseTypeDecl use) {
+    private CheckStatus checkUse(Libadalang.BasicDecl decl, Libadalang.BaseTypeDecl use) {
         Throwable cause = null;
         if (use instanceof Libadalang.IncompleteTypeDecl) use = use.pNextPart();
         // Do NOT check types in the private part. Due to inheritance, it is possible to to visit
@@ -159,9 +167,10 @@ public class BindableDeclChecker {
         Libadalang.BaseTypeDecl previousPart = use.pPreviousPart(false);
         if (!previousPart.isNone()) use = previousPart;
         try {
-            checkIsBindable(use);
+            return checkIsBindableInternal(use);
         } catch (Throwable t) {
             cause = t;
+            return CheckStatus.OK;
         } finally {
             if (unbindableDecls.contains(use))
                 throw new UnbindableDeclException(
@@ -171,19 +180,24 @@ public class BindableDeclChecker {
         }
     }
 
-    public void checkIsBindable(Libadalang.BasicDecl decl) {
-        // There is not enough information in incomplete types, so we must skip them.
-        if (decl instanceof Libadalang.IncompleteTypeDecl) return;
-
+    public CheckStatus checkIsBindableInternal(Libadalang.BasicDecl decl) {
+        if (visitedDecls.contains(decl)) return CheckStatus.UNSURE;
         try {
-            checkDecl(decl);
+            if (checkDecl(decl) == CheckStatus.OK) bindableDecls.add(decl);
+            return CheckStatus.OK;
         } catch (UnbindableDeclException e) {
-            // decl may have been assumed bindable
-            bindableDecls.remove(decl);
             unbindableDecls.add(decl);
             throw e;
+        } finally {
+            visitedDecls.remove(decl);
         }
-        bindableDecls.add(decl);
+    }
+
+    public void checkIsBindable(Libadalang.BasicDecl decl) {
+        // There is not enough information in incomplete types, instead of getting the full view of
+        // the type here, simply wait until we eventually encounter it.
+        if (decl instanceof Libadalang.IncompleteTypeDecl) return;
+        checkIsBindableInternal(decl);
     }
 
     public boolean seenUnbindable(Libadalang.BasicDecl decl) {
