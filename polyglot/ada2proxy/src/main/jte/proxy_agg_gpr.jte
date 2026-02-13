@@ -36,7 +36,6 @@ aggregate library project ${projectName.toPascalWithUnderscore()}.Proxy.Agg is
    Polyglot_Runtime := "${runtimeLocation}";
 
    for Project_Files use (
-      "${relLibPath}",
       "${projectName.toLower()}-proxy.gpr",
       Polyglot_Runtime & "/polyglot/polyglot.gpr",
       Polyglot_Runtime & "/ada/polyglot-ada.gpr"
@@ -61,12 +60,7 @@ aggregate library project ${projectName.toPascalWithUnderscore()}.Proxy.Agg is
             "polyglot-ada-strings.adb",
             "polyglot-ada-arrays-non_native.ads",
             "polyglot-exceptions.ads",
-            ${api.getProxyInterfaces(proxy.packages)},
-            ${
-               sources.stream()
-                  .map(s -> "\"%s\"".formatted(Path.of(s).getFileName()))
-                  .collect(Collectors.joining(", "))
-            }
+            ${api.getProxyInterfaces(proxy.packages)}
          );
       when "no" =>
          null;

@@ -1,0 +1,6 @@
+driver: scan2proxy
+
+input_lang: ada
+project_file: lib3/lib_3.gpr
+sync_tree:
+  - ../../sources
