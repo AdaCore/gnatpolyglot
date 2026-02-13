@@ -34,41 +34,45 @@ Enumeration types
 Enumerations are bound one-to-one in the proxy. The proxy holds the
 integer value of each enumeration literal.
 
-Subtyping or derivating from an enumeration creates a new enumeration,
+Subtyping or deriving from an enumeration creates a new enumeration,
 applying any constraint that could be determined for the list of
 literals of the new enumeration. Representation clauses for enumerations
 are also supported.
 
-.. code:: ada
+.. list-table::
+   :header-rows: 1
 
-   package Example is
-      type Enum is (A, B, C, D);
+   * - Ada declaration
+     - (ada2proxy →) proxy.json
+   * - .. code:: ada
 
-      type Derivation is new Enum (B .. C);
-   end Example;
+          package Example is
+             type Enum is (A, B, C, D);
 
-.. code:: json
+             type Derivation is new Enum (B .. C);
+          end Example;
+     - .. code:: json
 
-   [
-     {
-       "kind": "enum",
-       "name": { "names": ["example", "enum"] },
-       "items": [
-         { "name": "a", "value": 0, "doc": "" },
-         { "name": "b", "value": 1, "doc": "" },
-         { "name": "c", "value": 2, "doc": "" },
-         { "name": "d", "value": 3, "doc": "" }
-       ]
-     },
-     {
-       "kind": "enum",
-       "name": { "names": ["example", "derivation"] },
-       "items": [
-         { "name": "b", "value": 1, "doc": "" },
-         { "name": "c", "value": 2, "doc": "" }
-       ]
-     }
-   ]
+          [
+            {
+              "kind": "enum",
+              "name": { "names": ["example", "enum"] },
+              "items": [
+                { "name": "a", "value": 0, "doc": "" },
+                { "name": "b", "value": 1, "doc": "" },
+                { "name": "c", "value": 2, "doc": "" },
+                { "name": "d", "value": 3, "doc": "" }
+              ]
+            },
+            {
+              "kind": "enum",
+              "name": { "names": ["example", "derivation"] },
+              "items": [
+                { "name": "b", "value": 1, "doc": "" },
+                { "name": "c", "value": 2, "doc": "" }
+              ]
+            }
+          ]
 
 Record
 ~~~~~~
