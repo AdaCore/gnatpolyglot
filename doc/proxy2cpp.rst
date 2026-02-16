@@ -65,23 +65,19 @@ Functions with roles become member functions to the type of the role.
 
           {
             "kind": "function",
-            "name": {"names": ["n1", "f"]},
-            ...
+            "name": {"names": ["n1", "f"]}
           },
           {
             "kind": "class",
-            "name": {"names": ["n1", "c"]},
-            ...
+            "name": {"names": ["n1", "c"]}
           },
           {
             "kind": "function",
             "name": {"names": ["n1", "fm"]},
             "role": {
               "kind": "method",
-              "type": {"kind": "typename", "name": {names": ["n1", "c"]}},
-              ...
+              "type": {"kind": "typename", "name": {"names": ["n1", "c"]}}
             }
-            ...
           }
      - .. code:: cpp
 
@@ -116,8 +112,7 @@ be translated to an operator overload.
 
           {
             "kind": "function",
-            "name": {"names": ["operator_plus"]},
-            ...
+            "name": {"names": ["operator_plus"]}
           }
 
      - .. code:: cpp
