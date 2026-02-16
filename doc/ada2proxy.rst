@@ -134,7 +134,7 @@ Abstract types
 No base constructor is generated for abstract types. However, a shadow
 type is still generated. Only inheriting types should be able to call it
 to construct the underlying shadow object which will be able to reach
-the user’s overriding functions
+the user's overriding functions
 
 Interfaces
 ^^^^^^^^^^
@@ -162,7 +162,7 @@ information is kept (First & Last), so care for constraint errors.
    type Arr2 is array (Positive range <>) of Integer;
    -- Both types will be usable under a single "array of integer" type.
 
-Constrained arrays, or pragma’d
+Constrained arrays, or pragma'd
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 TODO: Not yet supported, will be bound as regular records since their
@@ -204,7 +204,7 @@ Dot-callable Primitives
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 When a primitive of a type has at least one parameter, and the first
-parameter is of the primitive’s types, it is given a role ``method`` to
+parameter is of the primitive's types, it is given a role ``method`` to
 this type in the proxy. This allows the subprogram to become a member
 function/method of the type in the generated proxy, even to non-tagged
 types (similarly to the dot notation while using the ``-gnatX``
@@ -222,28 +222,28 @@ overloading function when the target language supports it. If the target
 language does not support operator overloading, then the placeholder
 name will be kept in the resulting interface.
 
-========= ====================
-Operator  Proxy name
-========= ====================
-``+``     ``operator_plus``
-``-``     ``operator_minus``
-``*``     ``operator_mult``
-``/``     ``operator_div``
-``**``    ``operator_pow``
-``mod``   ``operator_mod``
-``rem``   ``operator_rem``
-``abs``   ``operator_abs``
-``&``     ``operator_concat``
-``=``     ``operator_eq``
-``/=``    ``operator_ne``
-``<``     ``operator_lt``
-``<=``    ``operator_le``
-``>``     ``operator_gt``
-``>=``    ``operator_ge``
-``and``   ``operator_bit_and``
-``or``    ``operator_bit_or``
-``xor``   ``operator_bit_xor``
-``not``   ``operator_bit_not``
+=========== ====================
+Operator    Proxy name
+=========== ====================
+``"+"``     ``operator_plus``
+``"-"``     ``operator_minus``
+``"*"``     ``operator_mult``
+``"/"``     ``operator_div``
+``"**"``    ``operator_pow``
+``"mod"``   ``operator_mod``
+``"rem"``   ``operator_rem``
+``"abs"``   ``operator_abs``
+``"&"``     ``operator_concat``
+``"="``     ``operator_eq``
+``"/="``    ``operator_ne``
+``"<"``     ``operator_lt``
+``"<="``    ``operator_le``
+``">"``     ``operator_gt``
+``">="``    ``operator_ge``
+``"and"``   ``operator_bit_and``
+``"or"``    ``operator_bit_or``
+``"xor"``   ``operator_bit_xor``
+``"not"``   ``operator_bit_not``
 ========= ====================
 
 Global variables and constants
