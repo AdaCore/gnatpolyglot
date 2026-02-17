@@ -561,7 +561,7 @@ public class CppAPI {
             builder.append("*");
         } else {
             // Otherwise, create a new object that wraps the returned pointer.
-            if (type instanceof ReferenceTypeExpr ref && ref.isConst)
+            if (type instanceof ReferenceTypeExpr ref)
                 builder.append(cppReturnTypename(ref.typeExpr.makeReference(false)))
                         .append("::create");
             else builder.append(cppReturnTypename(type));
