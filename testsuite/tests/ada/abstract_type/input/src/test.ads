@@ -15,4 +15,10 @@ package Test is
    procedure P_Root (R: Root'Class);
    procedure P2_Root (R: Root'Class; I: Integer);
 
+   type Not_Heritable is abstract tagged null record;
+
+   type Unbindable is access procedure;
+
+   procedure Foo (O: Not_Heritable; P: Unbindable) is null;
+
 end Test;

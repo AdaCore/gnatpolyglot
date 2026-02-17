@@ -50,8 +50,8 @@ public class AdaProxyTranslator {
         }
 
         private Inheritability getInheritability(Record rec) {
-            if (!rec.isInheritable(api)) return Inheritability.FINAL;
             if (rec.isAbstract()) return Inheritability.VIRTUAL;
+            if (!rec.isInheritable(api)) return Inheritability.FINAL;
             return Inheritability.INHERITABLE;
         }
 
@@ -146,7 +146,7 @@ public class AdaProxyTranslator {
 
         private List<VTableEntry> makeVtable(Record classDecl) {
             // Only tagged types can have a vtable.
-            if (!classDecl.isInheritable(api)) return null;
+            if (getInheritability(classDecl) == Inheritability.FINAL) return null;
             List<VTableEntry> entries = new ArrayList<>();
             for (var m : classDecl.getAllMethods()) {
                 Name name = m.name;
