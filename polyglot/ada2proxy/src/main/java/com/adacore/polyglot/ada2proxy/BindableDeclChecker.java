@@ -153,6 +153,11 @@ public class BindableDeclChecker {
     private void checkUse(Libadalang.BasicDecl decl, Libadalang.BaseTypeDecl use) {
         Throwable cause = null;
         if (use instanceof Libadalang.IncompleteTypeDecl) use = use.pNextPart();
+        // Do NOT check types in the private part. Due to inheritance, it is possible to to visit
+        // subprograms in the private part of packages. We do not want to have private visibility
+        // over the types used, so if a previous part exists, use it instead.
+        Libadalang.BaseTypeDecl previousPart = use.pPreviousPart(false);
+        if (!previousPart.isNone()) use = previousPart;
         try {
             checkIsBindable(use);
         } catch (Throwable t) {
