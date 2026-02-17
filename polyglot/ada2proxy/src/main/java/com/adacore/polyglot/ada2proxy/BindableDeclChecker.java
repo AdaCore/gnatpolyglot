@@ -139,6 +139,14 @@ public class BindableDeclChecker {
             for (var paramType : spec.pParamTypes(decl)) {
                 checkUse(decl, paramType);
             }
+            if ((decl.pHasAspect(Libadalang.Symbol.create("Pre'Class"), false, false)
+                            || decl.pHasAspect(
+                                    Libadalang.Symbol.create("Post'Class"), false, false))
+                    && spec.pPrimitiveSubpTaggedType(false).pIsAbstractType())
+                throw new UnbindableDeclException(
+                        decl,
+                        "Primitives of abstract types with classwide dynamic pre/post conditions"
+                                + " are not bindable");
             Libadalang.BaseTypeDecl returnType = spec.pReturnType(decl);
             if (!returnType.isNone()) {
                 if (returnType.pIsClasswide())
