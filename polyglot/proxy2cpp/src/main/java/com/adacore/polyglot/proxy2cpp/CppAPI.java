@@ -793,10 +793,10 @@ public class CppAPI {
 
     public String getEnumSizeType(EnumerationDecl enumDecl) {
         int lastValue = enumDecl.items.getLast().value;
-        if (lastValue < (1 << 8)) return nativeTypeName(NativeType.UINT8);
-        if (lastValue < (1 << 16)) return nativeTypeName(NativeType.UINT16);
-        if (lastValue < (1 << 32)) return nativeTypeName(NativeType.UINT32);
-        if (lastValue < (1 << 64)) return nativeTypeName(NativeType.UINT64);
+        if (lastValue < (1 << 8)) return nativeTypeName(NativeType.SINT8);
+        if (lastValue < (1 << 16)) return nativeTypeName(NativeType.SINT16);
+        if (lastValue < (1 << 32)) return nativeTypeName(NativeType.SINT32);
+        if (lastValue < (1 << 64)) return nativeTypeName(NativeType.SINT64);
         throw new UnsupportedOperationException(
                 "enumerations of size %d are not supported".formatted(lastValue));
     }
