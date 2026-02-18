@@ -81,5 +81,11 @@ public class CppPrinter extends Printer {
                     Map.of("api", api, "proxy", proxy, "isSource", true),
                     packageSpec);
         }
+
+        Path gprFilename = outputPath.resolve(proxy.name.toLower() + "_2cpp.gpr");
+        try (FileOutput packageSpec = new FileOutput(gprFilename)) {
+            templateEngine.render(
+                    "gpr_project.jte", Map.of("api", api, "proxy", proxy), packageSpec);
+        }
     }
 }

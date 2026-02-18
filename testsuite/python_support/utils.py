@@ -200,6 +200,7 @@ def compile_lib(
             lib_location,
             "-q",
             "-XLIBRARY_TYPE=static",
+            "--gpr=2",
             *extra_args,
         ])
     elif input_lang == "c++":
