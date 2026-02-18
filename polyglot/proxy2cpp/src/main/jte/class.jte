@@ -67,15 +67,40 @@ vim: filetype=jtecpp
         @endif
     @endfor
 
+        /**
+         * For internal use.
+         * Returns the address of the bound object.
+         */
         void *data() const;
+
+        /**
+         * For internal use.
+         * Returns the address of the bound object and releases the ownership
+         * of the bound object.
+         */
         void *release();
 
+        /**
+         * For internal use.
+         * Performs a polymorphic clone of the object. Must be overriden in
+         * order for the bound library to perform polymorphic copies of the
+         * object. The data parameter is the address of the bound object.
+         *
+         * Any inheriting type should have a `T(const &T, void*)` copy
+         * constructor that should be called using the `::new` operator. This
+         * function must return the resulting created object.
+         */
         virtual ${className} *internal_clone(void *data);
 
         template <typename U>
         friend class polyglot::polyglot_ptr;
     private:
 
+        /**
+         * For internal use.
+         * Return whether this object is of a type that inherits ${className},
+         * or if it is of the ${className} type.
+         */
         bool is_shadow();
 
     public:
