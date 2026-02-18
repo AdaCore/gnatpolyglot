@@ -168,6 +168,10 @@ public class BindableDeclChecker {
                             decl, "Returning class wide object is not yet supported");
                 checkUse(decl, returnType);
             }
+            if (decl instanceof Libadalang.AbstractSubpDecl
+                    && spec.pPrimitiveSubpTaggedType(false).isNone()) {
+                throw new UnbindableDeclException(decl, "Cannot bind disabled declarations");
+            }
         }
 
         if (decl instanceof Libadalang.ObjectDecl obj) {
