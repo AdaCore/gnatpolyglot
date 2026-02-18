@@ -134,6 +134,7 @@ Template file to generate bindings for record types.
                     --%>
                   ${rec.extensionAggregate(false)}
                   @for(var p : allocFunc.type.parameters)
+                     ${p.name.toPascalWithUnderscore()} =>
                      ${api.getParamForCall(rec.getComponent(p.name))},
                   @endfor
                   others => <>

@@ -16,4 +16,9 @@ package Test is
 
    procedure Print_Bis(P: Pair_Bis);
 
+   type Half_Default is record
+      V : Value := (V => 2);
+      I : Integer;
+   end record;
+
 end Test;

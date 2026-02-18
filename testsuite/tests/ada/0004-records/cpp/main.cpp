@@ -36,4 +36,7 @@ int main() {
   bis.get_v_2()->set_v(4);
   bis.print_bis();
   bis.print();
+
+  test::HalfDefault h1(test::Value(2), 3);
+  test::HalfDefault h2(3);
 }
