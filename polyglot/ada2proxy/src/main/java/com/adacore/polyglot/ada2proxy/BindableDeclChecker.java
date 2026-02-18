@@ -68,13 +68,18 @@ public class BindableDeclChecker {
                     && typeDecl.fTypeDef() instanceof Libadalang.AccessToSubpDef)
                 throw new UnbindableDeclException(
                         decl, "Access to subprograms are not yet supported");
-            Libadalang.BaseTypeDecl accessedType = decl.pAccessedType(decl);
+            Libadalang.BaseTypeDecl accessedType =
+                    (Libadalang.BaseTypeDecl)
+                            decl.pAccessedType(decl).pMostVisiblePart(decl, false);
             if (accessedType.pIsClasswide())
                 throw new UnbindableDeclException(
                         decl, "Access to classwide types are not yet supported");
             if (accessedType.pIsAccessType(Libadalang.AdaNode.NONE))
                 throw new UnbindableDeclException(
                         decl, "Access to access types are not yet supported");
+            if (accessedType.pIsScalarType(Libadalang.AdaNode.NONE))
+                throw new UnbindableDeclException(
+                        decl, "Access to scalar types are not yet supported");
             if (AdaTypeMatcher.isArrayAccess(decl)) {
                 checkUse(decl, decl.pCompType(false, decl));
                 if (decl.pHasAspect(Libadalang.Symbol.create("size"), false, false))
