@@ -266,7 +266,7 @@ public class AdaAPI extends LanguageAPI {
         Libadalang.BasePackageDecl pack = (Libadalang.BasePackageDecl) type.pParentBasicDecl();
         if (Package.isAdaRuntimePackage(pack))
             return Package.getProxyUnitName(pack).concat(".").concat(asAccess(type));
-        return pack.pFullyQualifiedName().concat(".Proxy.").concat(asAccess(type));
+        return pack.pFullyQualifiedName().concat(".Proxy_Package.").concat(asAccess(type));
     }
 
     /** Return the typename of the parameter */

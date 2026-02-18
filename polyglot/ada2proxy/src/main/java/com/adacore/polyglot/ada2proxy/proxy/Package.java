@@ -52,8 +52,7 @@ public class Package implements AdaProxyObject {
                 return name.replaceFirst("Interfaces", "Interfaces_Runtime");
             if (name.startsWith("System")) return name.replaceFirst("System", "System_Runtime");
         }
-        ;
-        return name.concat(".Proxy");
+        return name.concat(".Proxy_Package");
     }
 
     public String getProxyUnitName() {
