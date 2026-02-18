@@ -55,6 +55,7 @@ public class CppAPI {
 
     public String formatDoc(String doc, int indent) {
         StringBuilder builder = new StringBuilder();
+        doc = doc.replace("*/", "*\\/");
         builder.append("/** ");
         if (!doc.contains("\n")) builder.append(doc);
         else {
