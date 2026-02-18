@@ -170,10 +170,10 @@ public:
     }
 
     /** Internal use only */
-    array_data data() const { return this->_data; }
+    array_data data_() const { return this->_data; }
 
     /** Internal use only */
-    array_data release() {
+    array_data release_() {
         array_data data = this->_data;
         this->_data.begin = 0;
         this->_data.end = 0;

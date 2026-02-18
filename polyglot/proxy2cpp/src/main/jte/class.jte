@@ -71,14 +71,14 @@ vim: filetype=jtecpp
          * For internal use.
          * Returns the address of the bound object.
          */
-        void *data() const;
+        void *data_() const;
 
         /**
          * For internal use.
          * Returns the address of the bound object and releases the ownership
          * of the bound object.
          */
-        void *release();
+        void *release_();
 
         /**
          * For internal use.
@@ -90,7 +90,7 @@ vim: filetype=jtecpp
          * constructor that should be called using the `::new` operator. This
          * function must return the resulting created object.
          */
-        virtual ${className} *internal_clone(void *data);
+        virtual ${className} *internal_clone_(void *data);
 
         template <typename U>
         friend class polyglot::polyglot_ptr;
@@ -187,7 +187,7 @@ vim: filetype=jtecpp
                     ${api.makeReturnFromDispatch(method.functionType, "returned_value")}
                 @endif
                 } catch (polyglot::ada::exceptions::AdaException &e) {
-                    polyglot_get_kernel()->exc_info.exception_data = e.release();
+                    polyglot_get_kernel()->exc_info.exception_data = e.release_();
                     ${api.makeDispatchDefaultReturn(method.functionType)}
                 }
                 @for(var param : method.functionType.parameters.stream().skip(1).toList())
@@ -197,7 +197,7 @@ vim: filetype=jtecpp
         @endfor
 
         void *${className}_do_internal_clone(${className} *self, void *data) {
-            return self->internal_clone(data);
+            return self->internal_clone_(data);
         }
 
         void ${className}_do_internal_free(${className} *self) {
@@ -205,7 +205,7 @@ vim: filetype=jtecpp
             // called from the library. The data is already being freed on that side if
             // necessary (it could have been copied on the stack, meaning that calling
             // the free function could lead to an invalid free)
-            self->release();
+            self->release_();
             delete self;
         }
         }
@@ -222,7 +222,7 @@ vim: filetype=jtecpp
         @endfor
         }
 
-            void *data() { return &this->_data; }
+            void *data_() { return &this->_data; }
 
             struct table_data {
                 void *(*clone_shadow_dispatch)(${className} *_self, void *_data);
@@ -268,10 +268,10 @@ vim: filetype=jtecpp
         _data = nullptr;
     }
 
-    ${className} *${className}::internal_clone(void *) {
+    ${className} *${className}::internal_clone_(void *) {
         assert(
             "Attempting to clone a derivation of ${className}:"
-            " ${className}::internal_clone should be overriden"
+            " ${className}::internal_clone_ should be overriden"
             && false
         );
     }
@@ -286,11 +286,11 @@ vim: filetype=jtecpp
         }
     @endif
 
-    void *${className}::data() const {
+    void *${className}::data_() const {
         return this->_data;
     }
 
-    void *${className}::release() {
+    void *${className}::release_() {
         void *tmp = this->_data;
         this->_data = nullptr;
         return tmp;

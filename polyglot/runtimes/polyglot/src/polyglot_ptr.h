@@ -161,7 +161,7 @@ public:
                 // Shadow objects are able to free this C++ value from the
                 // binded library through a callback provided in the vtable, so
                 // do not free the C++ value in that case.
-                _object_data->release();
+                _object_data->release_();
                 delete _object_data;
             }
             delete _shared_counter;

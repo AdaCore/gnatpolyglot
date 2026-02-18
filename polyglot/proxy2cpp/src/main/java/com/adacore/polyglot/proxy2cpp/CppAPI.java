@@ -318,7 +318,7 @@ public class CppAPI {
         if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof NameTypeExpr name) {
             if (context.getTypeDecl(name.name) instanceof NativeTypeDecl nat)
                 return switch (nat.nativeType) {
-                    case STRING -> lower + ".data()";
+                    case STRING -> lower + ".data_()";
                     default -> "&" + lower;
                 };
             if (context.getTypeDecl(name.name) instanceof EnumerationDecl) return "&" + lower;
@@ -329,7 +329,7 @@ public class CppAPI {
         if ((p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof ArrayTypeExpr)
                 || p.type instanceof ArrayTypeExpr
                 || context.getTypeDecl(p.type.getName()) instanceof ClassDecl)
-            return lower + ".data()";
+            return lower + ".data_()";
         return lower;
     }
 
@@ -340,7 +340,7 @@ public class CppAPI {
         else if (p.type instanceof PointerTypeExpr ptr) ptrType = ptr;
         if (ptrType != null) {
             String name = toLower(p.name);
-            return "%s.get() == nullptr ? %s : %s->data()"
+            return "%s.get() == nullptr ? %s : %s->data_()"
                     .formatted(name, nullValue(ptrType), name);
         }
         return getParamForCall(p);
@@ -601,13 +601,13 @@ public class CppAPI {
     }
 
     /**
-     * Create a call to ``.release()`` on objects returned by the dispatchers when the value
+     * Create a call to ``.release_()`` on objects returned by the dispatchers when the value
      * returned is an object in order to prevent the destructor from freeing the memory returned.
      */
     public String makeReturnFromDispatch(FunctionTypeExpr functionType, String returnedValue) {
         StringBuilder builder = new StringBuilder();
         if (isStringOrArray(functionType.returnType)) {
-            builder.append("return ").append(returnedValue).append(".release();");
+            builder.append("return ").append(returnedValue).append(".release_();");
         } else if (functionType.returnType instanceof NameTypeExpr name) {
             builder.append("return ");
             TypeDecl typeDecl = context.getTypeDecl(name.name);
@@ -618,7 +618,7 @@ public class CppAPI {
                         .append(returnedValue)
                         .append(");");
             } else {
-                builder.append(returnedValue).append(".release();");
+                builder.append(returnedValue).append(".release_();");
             }
         } else if (functionType.returnType instanceof PointerTypeExpr) {
             builder.append("if (")
@@ -627,7 +627,7 @@ public class CppAPI {
                     .append(makeDispatchDefaultReturn(functionType))
                     .append("} else { return ")
                     .append(returnedValue)
-                    .append(".get()->data() ;}");
+                    .append(".get()->data_() ;}");
         } else {
             throw new UnsupportedOperationException("Unsupported returned dispatch type");
         }
@@ -717,7 +717,7 @@ public class CppAPI {
                     .append(nullValue(ptrType))
                     .append(" : ")
                     .append(name)
-                    .append(".get()->data();");
+                    .append(".get()->data_();");
             // When the type is a reference, create a copy of the internal data to compare it after
             // the call as it may have been modified.
             if (param.type instanceof ReferenceTypeExpr ref && !ref.isConst) {
@@ -773,7 +773,7 @@ public class CppAPI {
                     .append(dataName)
                     .append(".get() == nullptr ? ")
                     .append(nullValue(ptr));
-            builder.append(" : ").append(dataName).append("->data();");
+            builder.append(" : ").append(dataName).append("->data_();");
         }
         return builder.toString();
     }

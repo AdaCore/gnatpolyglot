@@ -31,11 +31,11 @@ public:
         return this->get_end() - this->get_begin() + 1;
     }
 
-    string_data data() const { return this->_data; }
-    string_data release() const {
+    string_data data_() const { return this->_data; }
+    string_data release_() const {
         return this->_data;
     }
-    string_data release() {
+    string_data release_() {
         string_data data = this->_data;
         this->_data.begin = 0;
         this->_data.end = 0;
