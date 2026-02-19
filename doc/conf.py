@@ -12,15 +12,12 @@ from pathlib import Path
 extensions = [
     "sphinx.ext.viewcode",
     "sphinx_rtd_theme",
-    "myst_parser",
 ]
 
 templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = {".rst" : "restructuredtext",
-                 ".md" : "markdown",
-                 }
+source_suffix = {".rst" : "restructuredtext",}
 
 # The master toctree document.
 master_doc = "index"
@@ -48,7 +45,6 @@ def get_copyright():
 copyright = get_copyright()
 
 author = "AdaCore"
-
 
 exclude_patterns = ["_build"]
 

@@ -1,5 +1,6 @@
+*********
 Proxy2Cpp
-=========
+*********
 
 Modules
 -------
@@ -7,35 +8,44 @@ Modules
 Modules in the JSON Proxy are translated to namespaces and are each in a
 separate file. Nested modules become nested namespaces.
 
-.. code:: ada
+.. list-table::
+   :header-rows: 1
 
-   -- example.ads
-   package Example is
-      procedure Foo;
-   end Example;
+   * - Ada declarations
+     - Generated C++ headers
+   * - .. code:: ada
 
-   -- example-child.ads
-   package Example.Child is
-      procedure Bar;
-   end Example.Child;
+          -- example.ads
+          package Example is
+             procedure Foo;
+          end Example;
 
-.. code:: cpp
+     - .. code:: cpp
 
-   // example.h
-   namespace example {
+          // example.h
+          namespace example {
 
-   void Foo();
+          void Foo();
 
-   } // namespace example
+          } // namespace example
 
-   // example.h
-   namespace example {
-   namespace child {
+   * - .. code:: ada
 
-   void Bar();
+          -- example-child.ads
+          package Example.Child is
+             procedure Bar;
+          end Example.Child;
 
-   } // namespace child
-   } // namespace example
+     - .. code:: cpp
+
+          // example-child.h
+          namespace example {
+          namespace child {
+
+          void Bar();
+
+          } // namespace child
+          } // namespace example
 
 Functions
 ---------
@@ -46,40 +56,40 @@ Function placement
 By default, functions will be placed in their parent namespace.
 Functions with roles become member functions to the type of the role.
 
-.. code:: json
+.. list-table::
+   :header-rows: 1
 
-   {
-     "kind": "function",
-     "name": {"names": ["n1", "f"]},
-     ...
-   },
-   {
-     "kind": "class",
-     "name": {"names": ["n1", "c"]},
-     ...
-   },
-   {
-     "kind": "function",
-     "name": {"names": ["n1", "fm"]},
-     "role": {
-       "kind": "method",
-       "type": {"kind": "typename", "name": {names": ["n1", "c"]}},
-       ...
-     }
-     ...
-   }
+   * - proxy.json
+     - (proxy2cpp →) C++ header
+   * - .. code:: json
 
-.. code:: cpp
+          {
+            "kind": "function",
+            "name": {"names": ["n1", "f"]}
+          },
+          {
+            "kind": "class",
+            "name": {"names": ["n1", "c"]}
+          },
+          {
+            "kind": "function",
+            "name": {"names": ["n1", "fm"]},
+            "role": {
+              "kind": "method",
+              "type": {"kind": "typename", "name": {"names": ["n1", "c"]}}
+            }
+          }
+     - .. code:: cpp
 
-   namespace n1 {
+          namespace n1 {
 
-   void f();
+          void f();
 
-   class C {
-     void fm();
-   };
+          class C {
+            void fm();
+          };
 
-   } // namespace n1
+          } // namespace n1
 
 Operators
 ~~~~~~~~~
@@ -87,21 +97,27 @@ Operators
 Functions from a proxy that have a name matching a placeholder name will
 be translated to an operator overload.
 
-.. code:: ada
+.. list-table::
+   :header-rows: 1
 
-   function "+"(I: Long_Integer; D: Long_Float) return Integer;
+   * - Ada declaration
+     - (ada2proxy →) proxy.json
+     - (proxy2cpp →) C++ header
 
-.. code:: json
+   * - .. code:: ada
 
-   {
-     "kind": "function",
-     "name": {"names": ["operator_plus"]},
-     ...
-   }
+          function "+"(I: Long_Integer; D: Long_Float) return Integer;
 
-.. code:: cpp
+     - .. code:: json
 
-   int operator+(long i, double d);
+          {
+            "kind": "function",
+            "name": {"names": ["operator_plus"]}
+          }
+
+     - .. code:: cpp
+
+          int operator+(long i, double d);
 
 Class types
 -----------
@@ -128,7 +144,7 @@ Inheritance
 
 Types with a shadow constructor can be inherited. It is mandatory to use
 the shadow constructor in order to enable overriding non static function
-members from binded types.
+members from bound types.
 
 The shadow constructor can be distinguished by its last argument: when
 constructing the shadow object of a type ``T``, its constructor will
@@ -145,7 +161,7 @@ expect a ``T*``. This argument expects the ``this`` value.
        Bar() : example::Foo() {}
    }
 
-..
+.. note::
 
    This is necessary due to C++ initializing the vtable for a given type
    only at the time that is it being constructed. When executing
@@ -156,41 +172,47 @@ expect a ``T*``. This argument expects the ``this`` value.
 Overriding virtual functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Virtual functions from Binded types can be overriden. This allows inside
-the binded libraries to dynamically dispatch back to overrides.
+Virtual functions from bound types can be overriden. This allows inside
+the bound libraries to dynamically dispatch back to overrides.
 
-.. code:: ada
+.. list-table::
+   :header-rows: 1
 
-   package Example is
-      type Foo is tagged private;
+   * - Ada declaration
+     - C++ code using and overriding the generated bindings
 
-      procedure Hello (F : Foo) is
-      begin
-         Put_Line ("Hello from Ada");
-      end Hello;
+   * - .. code:: ada
 
-      procedure Call_Hello (F : Foo'Class) is
-      begin
-         F.Hello; -- Dispatching call
-      end Call_Hello;
-   end Example;
+          package Example is
+             type Foo is tagged private;
 
-.. code:: cpp
+             procedure Hello (F : Foo) is
+             begin
+                Put_Line ("Hello from Ada");
+             end Hello;
 
-   class Bar : example::Foo {
-       Bar() : example::Foo(this) {}
+             procedure Call_Hello (F : Foo'Class) is
+             begin
+                F.Hello; -- Dispatching call
+             end Call_Hello;
+          end Example;
 
-       void hello() const override {
-           std::cout << "Hello from C++\n";
-       }
-   };
+     - .. code:: cpp
 
-   int main() {
-       example::Foo foo;
-       Bar bar;
-       example::call_hello(foo); // Hello from Ada;
-       example::call_hello(bar); // Hello from C++;
-   }
+          class Bar : example::Foo {
+              Bar() : example::Foo(this) {}
+
+              void hello() const override {
+                  std::cout << "Hello from C++\n";
+              }
+          };
+
+          int main() {
+              example::Foo foo;
+              Bar bar;
+              example::call_hello(foo); // Hello from Ada;
+              example::call_hello(bar); // Hello from C++;
+          }
 
 Uncopyable classes (copy elision (C++17))
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -207,8 +229,9 @@ Polyglot pointers
 -----------------
 
 Pointer types are represented using a ref-counted smart pointer
-(``polyglot_ptr``) in order to avoid manual memory management. It holds
-information on the ownership of the underlying pointer.
+(``polyglot_ptr``) in order to avoid manual memory management. 
+The smart pointer holds information on the ownership of the underlying
+pointer.
 
 Creating a pointer from an existing object sets the owner to ``STATIC``.
 It implies that the memory should not be freed when the pointer goes out
@@ -245,23 +268,29 @@ Exceptions are bound as classes that inherit the ``std::exception``
 type. Polyglot guarantees the consistency of C++ exception types at run
 time.
 
-.. code:: ada
+.. list-table::
+   :header-rows: 1
 
-   package Example is
+   * - Ada declaration
+     - C++ code using the generated bindings
 
-      Exc : exception;
+   * - .. code:: ada
 
-      procedure Raise_Exc is
-      begin
-         raise Exc with "message";
-      end Raise_Exc;
+          package Example is
 
-   end Example;
+             Exc : exception;
 
-.. code:: cpp
+             procedure Raise_Exc is
+             begin
+                raise Exc with "message";
+             end Raise_Exc;
 
-   try {
-       example::raise_exc();
-   } catch (const example::Exc& ex) {
-       std::cout << ex.what() << '\n';
-   }
+          end Example;
+
+     - .. code:: cpp
+
+          try {
+              example::raise_exc();
+          } catch (const example::Exc& ex) {
+              std::cout << ex.what() << '\n';
+          }

@@ -1,5 +1,6 @@
+***********
 Limitations
-===========
+***********
 
 This document introduces all limitations encountered when trying to bind
 specific language constructs or types.
@@ -15,7 +16,7 @@ destroyed. At the start of any destructor execution, it is no longer
 possible to downcast the object to its original type, meaning that
 calling any virtual function would not call the deepest override either.
 
-In Ada -> C++ bindings, when an Ada class wide copy of a controlled type
+In Ada → C++ bindings, when an Ada class wide copy of a controlled type
 occurs, the C++ object is also cloned, and owned by the copy. Upon scope
 exit, the C++ ``finalize`` override may be called on the object, then it
 will be destroyed by the ``Shadow_Data.Finalize`` function.
@@ -23,7 +24,7 @@ will be destroyed by the ``Shadow_Data.Finalize`` function.
 However, when a C++ object is destroyed, it will call the destructor of
 the child type first, until it reaches the Ada ``Free`` function, that
 will call ``finalize``. Since all the previous destructors were called,
-it will not be able to call the original type’s ``finalize`` function.
+it will not be able to call the original type's ``finalize`` function.
 In order to avoid this inconsistency, overriding the subprograms of
 controlled types was disabled.
 
@@ -111,11 +112,11 @@ Proxy2Cpp
 C++ object construction
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-The parent constructor is called first. It will initialize its own
+The constructor of the parent type is called first. It will initialize its own
 vtable *only*.
 
 It is not possible to know at this point if the ctor was called by a
-child or not, since the child’s vtable is not initialized yet, making it
+child or not, since the child's vtable is not initialized yet, making it
 not possible to use RTTI to select between the ``alloc`` and
 ``shadow_alloc`` ctor automatically.
 
@@ -152,14 +153,14 @@ object to perform dynamic dispatch back to C++.
        Foo(int a);
    }
 
-In order for the binded library to make use of the overridden functions
-of, it becomes necessary to call the constructor with the extra
+In order for the bound library to make use of the overriding function
+of the inheriting type, it becomes necessary to call the constructor with the extra
 parameter:
 
 .. code:: cpp
 
    class Bar : public Foo {
-       // Correct: will construct a shadow type.
+       // Correct: will construct an object of shadow type.
        Bar(int a) : Foo(a, this) { }
 
        // Incorrect: will construct a simple `Foo` object in the library.
@@ -169,11 +170,11 @@ parameter:
 Polymorphic copies
 ~~~~~~~~~~~~~~~~~~
 
-Some binded languages may be able to perform polymorphic copies (e.g
+Some bound languages may be able to perform polymorphic copies (e.g
 Ada). When they occur on Shadow types, it is necessary to also make a
 clone of the C++ object to which they have a reference. C++ does not
 provide a way to perform polymorphic copies out of the box, so when
-inheriting a binded types, it is necessary to manually provide a way to
+inheriting a bound type, it is necessary to manually provide a way to
 perform such copies through the overridable ``internal_clone`` function
 member:
 
