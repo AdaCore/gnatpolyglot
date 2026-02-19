@@ -21,4 +21,10 @@ package Test is
 
    procedure Foo (O: Not_Heritable; P: Unbindable) is null;
 
+   type Not_Heritable_2 is abstract tagged null record;
+
+   subtype Root_Class is Root'Class;
+
+   procedure Foo (O1: Not_Heritable; R: Root_Class) is null;
+
 end Test;

@@ -445,7 +445,11 @@ public class Record extends AdaDeclaration {
                             || spec.pReturnType(spec).equals(origin)
                             || Stream.of(spec.pParamTypes(spec))
                                     .skip(1)
-                                    .anyMatch(t -> t.equals(origin) || t.pIsClasswide());
+                                    .anyMatch(
+                                            t ->
+                                                    t.equals(origin)
+                                                            || t.pBaseSubtype(origin)
+                                                                    .pIsClasswide());
                 };
         return isTaggedType()
                 && Stream.of(origin.pGetPrimitives(false, false)).noneMatch(predicate);
