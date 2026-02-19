@@ -139,7 +139,8 @@ public class BindableDeclChecker {
             throw new UnbindableDeclException(decl, "Ghost code declarations are not bindable");
         }
 
-        if (decl instanceof Libadalang.GenericDecl gen) {
+        if (decl instanceof Libadalang.GenericDecl
+                || decl instanceof Libadalang.GenericRenamingDecl) {
             throw new UnbindableDeclException(decl, "Generic declarations are not bindable");
         }
 

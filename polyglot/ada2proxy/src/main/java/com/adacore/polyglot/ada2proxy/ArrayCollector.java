@@ -96,6 +96,7 @@ public class ArrayCollector {
     public static List<Libadalang.BaseTypeDecl> getAllComponentTypes(AdaProxy proxy) {
         return ArrayCollector.getArrays(proxy).stream()
                 .map(Array::getComponentType)
+                .map(t -> t.pBaseSubtype(t))
                 .distinct()
                 .toList();
     }
