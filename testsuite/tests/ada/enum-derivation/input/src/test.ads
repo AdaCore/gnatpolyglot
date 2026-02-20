@@ -4,6 +4,10 @@ package Test is
 
    function F_Enum (V: Enum_1) return Enum_1;
 
+   type R is tagged null record;
+
+   function Get_Enum (V: R) return Enum_1 is (A);
+
    type Enum_2 is new Enum_1 range B .. D;
 
    subtype Sub is Enum_1 range C .. E;

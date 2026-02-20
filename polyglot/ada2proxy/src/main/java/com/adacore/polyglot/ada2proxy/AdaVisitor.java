@@ -349,12 +349,17 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 && !type.pIsEnumType(Libadalang.AdaNode.NONE)
                 && !type.pIsArrayType(Libadalang.AdaNode.NONE)
                 && !type.pIsAccessType(Libadalang.AdaNode.NONE)
+                // The subprogram must be declared in the same package as the type.
+                && type.pParentBasicDecl().equals(spec.pParentBasicDecl().pParentBasicDecl())
                 // The first argument of the subprogram must be compatible with the primitive type.
                 && spec.pParams().length != 0
                 && (spec.pParamTypes(spec)[0].pMatchingType(type, spec));
     }
 
     public void processSubprogram(Libadalang.BasicDecl node) {
+        if (mappedDecls.containsKey(node)) {
+            return;
+        }
         Libadalang.BaseSubpSpec spec = node.pSubpSpecOrNull(true);
 
         // Get the C symbol of the function.
@@ -434,6 +439,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             processSubprogram(node.pCorrespondingNeqSubprogram());
         }
         declarations.add(subProg);
+        mappedDecls.put(node, subProg);
     }
 
     @Override
@@ -636,8 +642,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             EnumType enumType = createEnumType(parentDecl);
             declarations.add(enumType);
             mappedDecls.put(parentDecl, enumType);
-            for (var prim : parentDecl.pGetPrimitives(true, false)) {
-                if (!(prim instanceof Libadalang.EnumLiteralDecl)) processSubprogram(prim);
+            for (var prim : parentDecl.pGetPrimitives(false, false)) {
+                if (!(prim instanceof Libadalang.EnumLiteralDecl)) visitDecl(prim);
             }
         } else if (!parentDecl.pIsScalarType(Libadalang.AdaNode.NONE))
             throw new IllegalArgumentException("Unsupported derivation of types " + node);

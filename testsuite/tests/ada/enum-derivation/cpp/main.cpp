@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include "test.h"
+#include "test_child.h"
 
 std::string nameof(test::Enum1 val) {
     switch (val) {
@@ -49,4 +50,10 @@ int main() {
     for (auto v : test::enum_1_values) {
         is_in(v, test::enum_4_values, "Enum4");
     }
+    std::cout << "\n";
+
+    test::R r;
+    r.get_enum();
+    test::child::E ce = test::child::get_enum(r);
+    std:: cout << nameof(static_cast<test::Enum1>(ce)) << "\n";
 }
