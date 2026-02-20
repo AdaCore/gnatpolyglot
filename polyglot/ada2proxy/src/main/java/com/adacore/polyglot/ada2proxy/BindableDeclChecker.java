@@ -20,6 +20,19 @@ public class BindableDeclChecker {
 
     private Set<Libadalang.BasicDecl> visitedDecls = new HashSet<>();
 
+    private void checkIsImplemented(Libadalang.BasicDecl decl) {
+        if (decl instanceof Libadalang.PackageDecl) {
+            if (decl.pHasAspect(Libadalang.Symbol.create("Unimplemented_Unit"), false, false))
+                throw new UnbindableDeclException(decl, "Package is not implemented");
+        } else {
+            try {
+                checkIsImplemented(decl.pParentBasicDecl());
+            } catch (UnbindableDeclException e) {
+                throw new UnbindableDeclException(decl, "Parent package is not implemented", e);
+            }
+        }
+    }
+
     private CheckStatus checkType(Libadalang.BaseTypeDecl decl) {
 
         if (decl.pDiscriminantsList(Libadalang.BaseTypeDecl.NONE, Libadalang.AdaNode.NONE).length
@@ -118,6 +131,8 @@ public class BindableDeclChecker {
         if (bindableDecls.contains(decl) || unbindableDecls.contains(decl)) return CheckStatus.OK;
 
         visitedDecls.add(decl);
+
+        checkIsImplemented(decl);
 
         for (var d : decl.pDefiningNames()) {
             if (d.isNone()) continue;
