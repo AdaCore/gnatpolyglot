@@ -663,6 +663,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             declarations.add(array);
             mappedDecls.put(parentDecl, array);
             enqueueDecl(componentType);
+            enqueueDecl(parentDecl.pIndexType(0, node));
         }
         return null;
     }

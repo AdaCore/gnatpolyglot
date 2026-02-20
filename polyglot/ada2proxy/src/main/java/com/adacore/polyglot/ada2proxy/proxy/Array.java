@@ -249,6 +249,10 @@ public class Array extends AdaDeclaration {
         return arrayType.pCompType(false, arrayType);
     }
 
+    public Libadalang.BaseTypeDecl getIndexType() {
+        return arrayType.pIndexType(0, arrayType);
+    }
+
     @Override
     public <T> T accept(AdaProxyVisitor<T> visitor) {
         return visitor.visit(this);
