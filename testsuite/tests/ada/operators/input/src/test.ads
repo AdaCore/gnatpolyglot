@@ -31,4 +31,8 @@ package Test is
    function "*" (I : Integer; C : Character) return String
    is (To_String (I * C));
 
+   type My_S is new String;
+
+   function "+" (S : My_S) return String is (String (S));
+
 end Test;

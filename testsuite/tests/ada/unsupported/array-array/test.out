@@ -1,0 +1,9 @@
+Running scanner test.
+Running the scanner...
+test.ads:5:4: warning: Could not bind Test.Arr1: Arrays of array or access to arrays are not yet supported
+test.ads:7:4: warning: Could not bind Test.Acc: Used type `Test.Arr1` is not bindable
+test.ads:9:4: warning: Could not bind Test.Arr2: Used type `Test.Acc` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

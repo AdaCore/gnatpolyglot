@@ -32,4 +32,9 @@ int main() {
     std::cout
        << polyglot::ada::strings::to_string(test::operator_mult(4, 'c'))
        << "\n";
+
+    std::cout
+       << polyglot::ada::strings::to_string(+"foo")
+       << "\n";
+
 }

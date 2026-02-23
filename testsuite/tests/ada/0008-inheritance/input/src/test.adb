@@ -13,12 +13,6 @@ package body Test is
       return (I => 42);
    end F;
 
-   -- function F2 (R : Root) return Root'Class is
-   --    Tmp : Root'Class := R;
-   -- begin
-   --    return Tmp;
-   -- end F2;
-
    function F_Arr (R : Root; A: Arr; I : in out Integer) return Arr is
       Res : Arr := A;
    begin
@@ -44,7 +38,7 @@ package body Test is
          & ")");
    end P1;
 
-   procedure P2 (C : Child; R : Root'Class; I : Integer) is
+   procedure P2 (C : Child; R : Rec; I : Integer) is
    begin
       Put_Line ("P2 Ada");
    end P2;
@@ -54,7 +48,7 @@ package body Test is
       R.P1;
    end P_Root;
 
-   procedure P2_Child (C : Child'Class; R : Root'Class; I: Integer) is
+   procedure P2_Child (C : Child'Class; R : Rec; I: Integer) is
    begin
       C.P2 (R, I);
    end P2_Child;
@@ -63,11 +57,6 @@ package body Test is
    begin
       return R.F;
    end F_Rec;
-
-   -- function F2_Root (R: Root'Class) return Root'Class is
-   -- begin
-   --    return R.F2;
-   -- end F2_Root;
 
    function F_Arr_Disp (R: Root'Class; A: Arr; I : in out Integer) return Arr is
       Res : Arr := R.F_Arr(A, I);

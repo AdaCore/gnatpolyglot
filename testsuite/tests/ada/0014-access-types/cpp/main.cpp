@@ -15,7 +15,7 @@ public:
         return false;
     }
 
-    void release() {}
+    void release_() {}
 };
 
 class DummyChild : public Dummy {

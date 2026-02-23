@@ -9,11 +9,6 @@ public:
         std::cout << "i = " << i << "\n";
     }
 
-    void p2(test::Root &r2) override {
-        r2.p1();
-        std::cout << "i = " << i << "\n";
-    }
-
     int i;
 };
 
@@ -21,14 +16,8 @@ int main() {
     test::Root root;
     root.p1();
     std::cout << "\n";
-    root.p2(root);
-    std::cout << "\n";
 
     Child c(3);
     c.p1();
     std::cout << "\n";
-    c.p2(root);
-    std::cout << "\n";
-
-    root.p2(c);
 }

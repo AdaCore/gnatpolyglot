@@ -37,7 +37,7 @@ char polyglot_string::operator [](std::int32_t index) const {
 }
 
 std::string to_string(const polyglot_string &arr) {
-  char *ptr = polyglot__ada__strings_to_c_chars_ptr(arr.data());
+  char *ptr = polyglot__ada__strings_to_c_chars_ptr(arr.data_());
   std::string res = ptr;
   polyglot__ada__strings_free_c_chars_ptr(ptr);
   return res;

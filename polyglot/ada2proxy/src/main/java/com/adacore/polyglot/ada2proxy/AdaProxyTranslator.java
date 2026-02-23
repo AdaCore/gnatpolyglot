@@ -50,8 +50,8 @@ public class AdaProxyTranslator {
         }
 
         private Inheritability getInheritability(Record rec) {
-            if (!rec.isInheritable(api)) return Inheritability.FINAL;
             if (rec.isAbstract()) return Inheritability.VIRTUAL;
+            if (!rec.isInheritable(api)) return Inheritability.FINAL;
             return Inheritability.INHERITABLE;
         }
 
@@ -144,9 +144,19 @@ public class AdaProxyTranslator {
             return new EnumItem(enumLiteral.name, enumLiteral.value, enumLiteral.getDoc());
         }
 
+        /**
+         * Return the vtable for the given class declaration.
+         *
+         * <p>Any type that is inheritable or virtual should have a vtable, and if a type is final,
+         * then the `null` list is returned. If a type is not inheritable and not final, it will
+         * still have a vtable, although empty. Minimal vtables always have some function pointers
+         * for freeing and cloning shadow objects.
+         */
         private List<VTableEntry> makeVtable(Record classDecl) {
             // Only tagged types can have a vtable.
-            if (!classDecl.isInheritable(api)) return null;
+            if (getInheritability(classDecl) == Inheritability.FINAL) return null;
+            if (getInheritability(classDecl) == Inheritability.VIRTUAL
+                    && !classDecl.isInheritable(api)) return List.of();
             List<VTableEntry> entries = new ArrayList<>();
             for (var m : classDecl.getAllMethods()) {
                 Name name = m.name;

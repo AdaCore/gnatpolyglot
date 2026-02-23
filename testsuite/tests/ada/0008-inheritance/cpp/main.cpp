@@ -17,10 +17,6 @@ public:
        return test::Rec(21);
     }
 
-    // test::Root f2() const override {
-    //    return test::Root(7, 8);
-    // }
-
     polyglot::ada::arrays::polyglot_array<int32_t>
     f_arr(const polyglot::ada::arrays::polyglot_array<int32_t> &a, int &i) const override {
         polyglot::ada::arrays::polyglot_array<int32_t> res(a.get_begin(), a.get_end());
@@ -51,9 +47,8 @@ public:
         std::cout << "\n";
     }
 
-    void p2(const test::Root &rec, int32_t i) const override {
-        std::cout << "P2 from C++ " << i << ": ";
-        rec.p1();
+    void p2(const test::Rec &rec, int32_t i) const override {
+        std::cout << "P2 from C++ " << i << ": " << rec.get_i() << "\n";
     }
 
     test::Rec f() const override {
@@ -109,11 +104,8 @@ int main() {
     test::Rec r3 = test::f_rec(grand);
     std::cout << "r3 = " << r3.get_i() << "\n";
 
-    test::p2_child(child, root, 1);
-    test::p2_child(gref, root, 1);
-
-    // test::f2_root(root).p1();
-    // test::f2_root(other).p1();
+    test::p2_child(child, r1, 1);
+    test::p2_child(gref, r2, 1);
 
     polyglot::ada::arrays::polyglot_array<int32_t> arr(1, 5);
     for (int i = arr.get_begin(); i <= arr.get_end(); i++) {

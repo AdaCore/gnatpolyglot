@@ -14,7 +14,7 @@ AdaException::AdaException(const strings::polyglot_string &what)
     : polyglot::exceptions::polyglot_exception(
           polyglot__ada__exceptions__create_exception_occurence_message(
               static_cast<int>(standard_exception_kind::CONSTRAINT_ERROR_KIND),
-              what.data()),
+              what.data_()),
           strings::to_string(what)) {}
 AdaException::AdaException(void *data)
     : polyglot::exceptions::polyglot_exception(data) {}
@@ -35,7 +35,7 @@ ConstraintError::ConstraintError(const strings::polyglot_string &what)
     : AdaException(
           polyglot__ada__exceptions__create_exception_occurence_message(
               static_cast<int>(standard_exception_kind::CONSTRAINT_ERROR_KIND),
-              what.data()),
+              what.data_()),
           what) {}
 ConstraintError::ConstraintError(void *data)
     : AdaException(data) {}
@@ -50,7 +50,7 @@ ProgramError::ProgramError(const strings::polyglot_string &what)
     : AdaException(
           polyglot__ada__exceptions__create_exception_occurence_message(
               static_cast<int>(standard_exception_kind::PROGRAM_ERROR_KIND),
-              what.data()),
+              what.data_()),
           what) {}
 ProgramError::ProgramError(void *data)
     : AdaException(data) {}
@@ -65,7 +65,7 @@ StorageError::StorageError(const strings::polyglot_string &what)
     : AdaException(
           polyglot__ada__exceptions__create_exception_occurence_message(
               static_cast<int>(standard_exception_kind::STORAGE_ERROR_KIND),
-              what.data()),
+              what.data_()),
           what) {}
 StorageError::StorageError(void *data)
     : AdaException(data) {}
@@ -80,7 +80,7 @@ TaskingError::TaskingError(const strings::polyglot_string &what)
     : AdaException(
           polyglot__ada__exceptions__create_exception_occurence_message(
               static_cast<int>(standard_exception_kind::TASKING_ERROR_KIND),
-              what.data()),
+              what.data_()),
           what) {}
 TaskingError::TaskingError(void *data)
     : AdaException(data) {}

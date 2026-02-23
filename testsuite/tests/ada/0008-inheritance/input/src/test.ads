@@ -14,8 +14,6 @@ package Test is
 
    function F (R : Root) return Rec;
 
-   -- function F2 (R : Root) return Root'Class;
-
    function F_Arr (R : Root; A: Arr; I : in out Integer) return Arr;
 
    type Child is new Root with record
@@ -24,16 +22,14 @@ package Test is
 
    overriding procedure P1 (C : Child);
 
-   procedure P2 (C : Child; R : Root'Class; I : Integer);
+   procedure P2 (C : Child; R : Rec; I : Integer);
 
    procedure P_Root (R: Root'Class);
 
-   procedure P2_Child (C : Child'Class; R : Root'Class; I: Integer);
+   procedure P2_Child (C : Child'Class; R : Rec; I: Integer);
 
    function F_Rec (R: Root'Class) return Rec;
 
    function F_Arr_Disp (R: Root'Class; A: Arr; I : in out Integer) return Arr;
-
-   -- function F2_Root (R: Root'Class) return Root'Class;
 
 end Test;

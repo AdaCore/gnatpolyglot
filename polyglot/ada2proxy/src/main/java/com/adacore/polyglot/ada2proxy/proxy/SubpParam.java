@@ -67,4 +67,8 @@ public class SubpParam implements AdaProxyObject {
         }
         return Mode.IN;
     }
+
+    public boolean isAliased() {
+        return origin instanceof Libadalang.ParamSpec param && param.fHasAliased().pAsBool();
+    }
 }

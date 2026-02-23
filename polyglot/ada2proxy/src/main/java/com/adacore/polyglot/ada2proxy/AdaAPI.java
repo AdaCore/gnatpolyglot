@@ -266,7 +266,7 @@ public class AdaAPI extends LanguageAPI {
         Libadalang.BasePackageDecl pack = (Libadalang.BasePackageDecl) type.pParentBasicDecl();
         if (Package.isAdaRuntimePackage(pack))
             return Package.getProxyUnitName(pack).concat(".").concat(asAccess(type));
-        return pack.pFullyQualifiedName().concat(".Proxy.").concat(asAccess(type));
+        return pack.pFullyQualifiedName().concat(".Proxy_Package.").concat(asAccess(type));
     }
 
     /** Return the typename of the parameter */
@@ -360,13 +360,18 @@ public class AdaAPI extends LanguageAPI {
      * Create an entity that is the conversion of a subprogram parameter, named `${name}_Arg` in the
      * C API, to the `type` Ada type.
      */
-    public String makeParamConversion(Name name, Libadalang.BaseTypeDecl type, boolean isOutMode) {
+    public String makeParamConversion(
+            Name name, Libadalang.BaseTypeDecl type, boolean isOutMode, boolean isAliased) {
         String valueVarTypename = type.pFullyQualifiedName();
 
         StringBuilder builder = new StringBuilder();
         String argName = argName(name);
         String tempVarValue = null;
         String converter = null;
+        // Most entities are already binded as an access which implies the entity being aliased.
+        // However, in some cases (e.g. in out aliased scalar), we need to add the aliased keyword
+        // in the value variable declaration. This is done in a case-by-case basis.
+        String aliased = "";
         // Class wide types need a pointer conversion function.
         if (AdaTypeMatcher.isBindedAsClass(type)) {
             String accessType = makeTemp(name, "Access_Type");
@@ -472,9 +477,11 @@ public class AdaAPI extends LanguageAPI {
                     .append(" is new Ada.Unchecked_Conversion (System.Address, ")
                     .append(valueVarTypename)
                     .append(");\n");
+        } else if (isAliased && type.pIsScalarType(type)) {
+            aliased = "aliased ";
         }
         // Begin the declaration of the value.
-        builder.append(valueName(name)).append(" : ").append(valueVarTypename);
+        builder.append(valueName(name)).append(" : ").append(aliased).append(valueVarTypename);
         if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
             // If the type is an array, generate the following:
             // .. code::
@@ -547,7 +554,7 @@ public class AdaAPI extends LanguageAPI {
      * new value of the setter for ``component`` into the actual Ada type.
      */
     public String makeParamConversion(Component component) {
-        return makeParamConversion(component.name, component.getType(), false);
+        return makeParamConversion(component.name, component.getType(), false, false);
     }
 
     /**
@@ -555,7 +562,8 @@ public class AdaAPI extends LanguageAPI {
      * type.
      */
     public String makeParamConversion(SubpParam param) {
-        return makeParamConversion(param.name, param.getType(), param.isOutMode());
+        return makeParamConversion(
+                param.name, param.getType(), param.isOutMode(), param.isAliased());
     }
 
     /** Create a string to call a function from the proxy. */
@@ -587,7 +595,8 @@ public class AdaAPI extends LanguageAPI {
         Name name = param.name;
         BaseTypeDecl type = param.getType();
         if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            return "%s (%s)".formatted(type.pFullyQualifiedName(), valueName(name));
+            return "%s (%s)'Unrestricted_Access.all"
+                    .formatted(type.pFullyQualifiedName(), valueName(name));
         }
         return valueName(name);
     }
@@ -750,7 +759,7 @@ public class AdaAPI extends LanguageAPI {
                     .append(componentAccess)
                     .append(".all'Address))");
         } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
-            builder.append("Access_Converter (").append(componentAccess).append(")");
+            builder.append("Return_Type_Converter (").append(componentAccess).append(")");
         } else {
             // Otherwise, just get the address.
             builder.append(componentAccess).append("'Address");

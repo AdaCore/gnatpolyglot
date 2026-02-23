@@ -4,7 +4,7 @@
 
 class Inherited : public test::Root {
 protected:
-    Inherited *internal_clone(void *data) override {
+    Inherited *internal_clone_(void *data) override {
         return new Inherited(*this, data);
     }
 

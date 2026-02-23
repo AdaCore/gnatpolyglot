@@ -134,6 +134,7 @@ Template file to generate bindings for record types.
                     --%>
                   ${rec.extensionAggregate(false)}
                   @for(var p : allocFunc.type.parameters)
+                     ${p.name.toPascalWithUnderscore()} =>
                      ${api.getParamForCall(rec.getComponent(p.name))},
                   @endfor
                   others => <>
@@ -201,7 +202,7 @@ Template file to generate bindings for record types.
             Self_Value : ${recordName} renames Self_Access.all;
          @if(componentType.pIsAccessType(Libadalang.AdaNode.NONE)
                && !AdaTypeMatcher.isArrayAccess(componentType))
-            function Access_Converter is new Ada.Unchecked_Conversion
+            function Return_Type_Converter is new Ada.Unchecked_Conversion
               (${componentType.pFullyQualifiedName()}, System.Address);
          @endif
          begin

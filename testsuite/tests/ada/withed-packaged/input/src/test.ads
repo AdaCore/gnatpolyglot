@@ -4,6 +4,7 @@ with Rec2; use Rec2;
 with Arr; use Arr;
 with Rec4; use Rec4;
 with Tagged_Type;
+with Int;
 
 package Test is
 
@@ -22,5 +23,7 @@ package Test is
    procedure P4(V: A4);
 
    procedure P5(V: Tagged_Type.T) is null;
+
+   type Index is array (Int.I range <>) of T;
 
 end Test;

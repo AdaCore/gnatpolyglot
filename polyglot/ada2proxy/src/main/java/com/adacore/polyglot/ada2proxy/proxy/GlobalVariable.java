@@ -54,6 +54,13 @@ public class GlobalVariable extends AdaDeclaration {
 
     public FunctionDecl getGetter() {
         if (getter == null) {
+            TypeExpr type = AdaAPI.makeTypeExpr(origin.fTypeExpr());
+            // If the object is an access, it should not be possible to free it.
+            Owner owner = Owner.LIBRARY;
+            if (!getType().pIsAccessType(origin)) {
+                type = type.makeReference(origin.pIsConstantObject());
+                owner = Owner.STATIC;
+            }
             getter =
                     new FunctionDecl(
                             AdaAPI.makeProxyFullyQualifiedName(definingName)
@@ -61,11 +68,7 @@ public class GlobalVariable extends AdaDeclaration {
                             "Return a reference to " + getFullyQualifiedName(),
                             null,
                             buildMemberSymbol("_Getter"),
-                            new FunctionTypeExpr(
-                                    List.of(),
-                                    AdaAPI.makeTypeExpr(origin.fTypeExpr())
-                                            .makeReference(origin.pIsConstantObject()),
-                                    Owner.STATIC),
+                            new FunctionTypeExpr(List.of(), type, owner),
                             FunctionDecl.Visibility.PUBLIC,
                             FunctionDecl.Overridability.FINAL,
                             FunctionDecl.Staticness.NON_STATIC);

@@ -349,12 +349,17 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 && !type.pIsEnumType(Libadalang.AdaNode.NONE)
                 && !type.pIsArrayType(Libadalang.AdaNode.NONE)
                 && !type.pIsAccessType(Libadalang.AdaNode.NONE)
+                // The subprogram must be declared in the same package as the type.
+                && type.pParentBasicDecl().equals(spec.pParentBasicDecl().pParentBasicDecl())
                 // The first argument of the subprogram must be compatible with the primitive type.
                 && spec.pParams().length != 0
                 && (spec.pParamTypes(spec)[0].pMatchingType(type, spec));
     }
 
     public void processSubprogram(Libadalang.BasicDecl node) {
+        if (mappedDecls.containsKey(node)) {
+            return;
+        }
         Libadalang.BaseSubpSpec spec = node.pSubpSpecOrNull(true);
 
         // Get the C symbol of the function.
@@ -371,6 +376,14 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         // the current derived type.
         Role role = null;
         Libadalang.BaseTypeDecl primitiveType = spec.pPrimitiveSubpFirstType(false);
+        // We may be visiting a primitive from the private part. This implies that the primitive
+        // type could also be the part of the type definition that is located in the private part.
+        // In order to avoid using different declarations to the same type, we always use the one in
+        // the public part of the package.
+        if (!primitiveType.isNone()) {
+            Libadalang.BaseTypeDecl previousPart = primitiveType.pPreviousPart(false);
+            if (!previousPart.isNone()) primitiveType = previousPart;
+        }
         if (isDotCallable(spec, primitiveType))
             role = new Role(RoleKind.METHOD, AdaAPI.makeTypeExpr(primitiveType), null);
 
@@ -426,6 +439,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             processSubprogram(node.pCorrespondingNeqSubprogram());
         }
         declarations.add(subProg);
+        mappedDecls.put(node, subProg);
     }
 
     @Override
@@ -513,6 +527,63 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         return null;
     }
 
+    /**
+     * Visit the overriding primitives of a type that may be located in the private part of the
+     * package, or inherited from specialized parent in the private definition of the type.
+     */
+    private void visitPrivateOverrides(
+            Libadalang.BaseTypeDecl publicPart, Libadalang.BaseTypeDecl privatePart) {
+        var publicSubpRoots =
+                Stream.of(publicPart.pGetPrimitives(true, false))
+                        .filter(p -> p.pIsVisible(publicPart))
+                        .flatMap(p -> Stream.of(p.pRootSubpDeclarations(publicPart, false)))
+                        .toList();
+        var privatePrimitives = Stream.of(privatePart.pGetPrimitives(false, false)).toList();
+
+        for (var prim : privatePrimitives) {
+            var roots = Stream.of(prim.pRootSubpDeclarations(Libadalang.AdaNode.NONE, false));
+            // If the primitive is not visible from the public part, and shares a root with one of
+            // the public part's primitive, then it is inherited from a specialized parent and must
+            // be bound.
+            //
+            // :: code:
+            //
+            //    type A is abstract tagged null record;
+            //    procedure Foo(V: A) is abstract;
+            //
+            //    type B is new A with private;
+            //
+            //    type C is new A with null record;
+            //    procedure Bar(X: C) is null;
+            //
+            //    package Pkg is
+            //       type D is new A with null record;
+            //       procedure Foo(X: D) is null
+            //    end Pkg;
+            //
+            //    type E is new A with null record;
+            //
+            // private
+            //
+            //    overriding procedure Foo(V: C) is null;
+            //    -- The override is hidden in the private part but should still be bound.
+            //
+            //    type B is new C with null record;
+            //    -- C is the parent of the private part: this should not appear in the proxy
+            //    -- However, C overrides Foo: B should share the override, but not Bar
+            //
+            //    procedure Baz (X: B) is null;
+            //    -- Baz is only defined in the private part and is not a primitive of A nor C:
+            //
+            //    type E is new Pkg.D with null record;
+            //    -- PKg.Foo is visible from the E public part, but only inherited by the private
+            //    -- part.
+            if (roots.anyMatch(publicSubpRoots::contains)) {
+                visitDecl(prim);
+            }
+        }
+    }
+
     @Override
     public Void visit(Libadalang.DerivedTypeDef node) {
         Libadalang.TypeDecl parentDecl = (Libadalang.TypeDecl) node.pParentBasicDecl();
@@ -535,7 +606,17 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 else throw new RuntimeException("Could not process parent type");
                 enqueueDecl(parentType);
             }
+
             declarations.add(rec);
+
+            Libadalang.BaseTypeDecl privatePart = parentDecl.pNextPart();
+            if (!privatePart.isNone() && !privatePart.pBaseType(privatePart).equals(privatePart))
+                // Some primitives are possibly overriden by the type inherited in the private part
+                visitPrivateOverrides(parentDecl, privatePart);
+            else {
+                // Some primitive overrides could be hidden in the private part.
+                visitPrivateOverrides(parentDecl, parentDecl);
+            }
         } else if (parentDecl.pIsRecordType(Libadalang.AdaNode.NONE)
                 || AdaTypeMatcher.isPrivate(parentDecl)) {
             // If the parent is a non-tagged record, simply copy the fields of the root type.
@@ -561,8 +642,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             EnumType enumType = createEnumType(parentDecl);
             declarations.add(enumType);
             mappedDecls.put(parentDecl, enumType);
-            for (var prim : parentDecl.pGetPrimitives(true, false)) {
-                if (!(prim instanceof Libadalang.EnumLiteralDecl)) processSubprogram(prim);
+            for (var prim : parentDecl.pGetPrimitives(false, false)) {
+                if (!(prim instanceof Libadalang.EnumLiteralDecl)) visitDecl(prim);
             }
         } else if (!parentDecl.pIsScalarType(Libadalang.AdaNode.NONE))
             throw new IllegalArgumentException("Unsupported derivation of types " + node);
@@ -582,6 +663,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             declarations.add(array);
             mappedDecls.put(parentDecl, array);
             enqueueDecl(componentType);
+            enqueueDecl(parentDecl.pIndexType(0, node));
         }
         return null;
     }

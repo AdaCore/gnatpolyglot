@@ -87,6 +87,8 @@ public class WithCollector {
 
         @Override
         public Void visit(Array array) {
+            checkDecl(array.getComponentType());
+            checkDecl(array.getIndexType());
             return null;
         }
 

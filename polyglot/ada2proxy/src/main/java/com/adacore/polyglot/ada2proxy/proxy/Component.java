@@ -57,6 +57,10 @@ public class Component implements AdaProxyObject {
         return this.origin.pFormalType(origin);
     }
 
+    public boolean isLimited() {
+        return getType().pIsLimitedType();
+    }
+
     @Override
     public <T> T accept(AdaProxyVisitor<T> visitor) {
         return visitor.visit(this);
