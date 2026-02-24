@@ -230,6 +230,23 @@ the bound libraries to dynamically dispatch back to overrides.
 
      - .. code:: cpp
 
+          // example.h
+
+          namespace example {
+
+          class Foo {
+          public:
+              Foo();
+
+              virtual void hello() const;
+          };
+
+          void call_hello(const Foo&);
+
+          } // namespace example
+
+          // main.cpp
+
           class Bar : example::Foo {
               Bar() : example::Foo(this) {}
 
@@ -320,8 +337,28 @@ time.
 
      - .. code:: cpp
 
-          try {
-              example::raise_exc();
-          } catch (const example::Exc& ex) {
-              std::cout << ex.what() << '\n';
+          // example.h
+
+          namespace example {
+
+          class Exc : public polyglot::ada::exceptions::AdaException {
+          public:
+              Exc();
+              Exc(const polyglot::ada::strings::polyglot_string &);
+          };
+
+          void raise_exc();
+
+          } // namespace example
+
+          // main.cpp
+
+          #include "example.h"
+
+          int main() {
+              try {
+                  example::raise_exc();
+              } catch (const example::Exc& ex) {
+                  std::cout << ex.what() << '\n';
+              }
           }

@@ -324,7 +324,7 @@ Operator    Proxy name
 ``"or"``    ``operator_bit_or``
 ``"xor"``   ``operator_bit_xor``
 ``"not"``   ``operator_bit_not``
-========= ====================
+=========== ====================
 
 Global variables and constants
 ------------------------------
