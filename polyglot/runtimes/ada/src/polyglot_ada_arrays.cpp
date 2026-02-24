@@ -1,3 +1,8 @@
+//
+//  Copyright (C) 2025-2026, AdaCore
+//  SPDX-License-Identifier: Apache-2.0
+//
+
 #include "polyglot_ada_arrays.h"
 #include <cstdint>
 
