@@ -1,3 +1,8 @@
+--
+--  Copyright (C) 2025-2026, AdaCore
+--  SPDX-License-Identifier: GPL-3.0-or-later
+--
+
 with Ada.Command_Line;        use Ada.Command_Line;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Directories;

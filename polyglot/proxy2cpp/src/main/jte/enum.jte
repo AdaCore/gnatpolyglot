@@ -1,4 +1,6 @@
 <%--
+Copyright (C) 2025-2026, AdaCore
+SPDX-License-Identifier: GPL-3.0-or-later
 vim: filetype=jtecpp
 --%>
 @import com.adacore.polyglot.proxy.EnumerationDecl

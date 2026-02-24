@@ -1,4 +1,6 @@
 <%--
+Copyright (C) 2025-2026, AdaCore
+SPDX-License-Identifier: GPL-3.0-or-later
 vim: filetype=jteada
 Template file to generate array related types of the Ada bindings.
 --%>
