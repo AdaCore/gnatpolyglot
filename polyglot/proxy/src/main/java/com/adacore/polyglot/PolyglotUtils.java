@@ -5,6 +5,10 @@
 
 package com.adacore.polyglot;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
 public class PolyglotUtils {
     public enum VerboseLevel {
         /** Suppress warnings and infos */
@@ -71,5 +75,15 @@ public class PolyglotUtils {
         if (verbose.equals(VerboseLevel.VERBOSE)) {
             exc.printStackTrace(System.err);
         }
+    }
+
+    private static List<String> headerContent = List.of();
+
+    public static void setHeaderFile(String file) throws java.io.IOException {
+        headerContent = Files.readAllLines(Path.of(file));
+    }
+
+    public static List<String> getHeaderContent() {
+        return headerContent;
     }
 }

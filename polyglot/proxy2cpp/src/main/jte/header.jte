@@ -14,6 +14,8 @@ vim: filetype=jtecpp
 
 !{String headerGuardMacro = api.headerGuard(module);}
 
+@template.text_header()
+
 #ifndef ${headerGuardMacro}
 #define ${headerGuardMacro}
 

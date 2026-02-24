@@ -21,6 +21,8 @@ Template file to generate package bodies.
    String parentPackage = pack.getFullyQualifiedName();
 }
 
+@template.text_header()
+
 with Ada.Exceptions;
 with Ada.Finalization;
 with Ada.Unchecked_Conversion;

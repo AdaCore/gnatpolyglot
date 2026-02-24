@@ -11,6 +11,8 @@ vim: filetype=jtecpp
 @param CppAPI api
 @param Module module
 
+@template.text_header()
+
 @for (var include : api.getIncludes(module))
 #include "${include}"
 @endfor
