@@ -33,12 +33,18 @@ file
 
 2 GPR projects files are generated:
 
-*  proxy : Contains all the code that uses the C ABI
+* Proxy: Contains all the code that uses the C ABI
 
-* proxy aggregate: Aggregate of the bound library,
-  polyglot runtime and bindings. Can be compiled as an ESAL to avoid
-  future dependencies with Ada runtime, etc. Danger: read limitations of
-  ESAL (gpr doc).
+* Proxy aggregate: Aggregate of the bound library, polyglot runtime and
+  bindings. This project can be compiled as an Encapsulated Standalone
+  Aggregate Library (ESAL) to avoid future dependencies with the Ada
+  runtime, and other transitive dependencies from the bound project.
+
+  .. danger::
+
+     When building using an ESAL, the resulting library should be the
+     only ada project. Learn more `here
+     <https://docs.adacore.com/live/wave/gprbuild/html/gprbuild_ug/gprbuild_ug/gnat_project_manager.html#encapsulated-stand-alone-library-projects>`__.
 
 .. code:: sh
 
@@ -50,6 +56,13 @@ file
    2proxy/test-proxy.gpr
    2proxy/src
    2proxy/src/*.ad[sb]
+
+.. warning::
+
+   It is necessary to use ``gprbuild2`` to build the generated projects.
+   Refer to the `GPR documenation
+   <https://docs.adacore.com/live/wave/gprbuild/html/gprbuild_ug/gprbuild_ug/building_with_gprbuild.html#how-to-use-our-new-builder>`__
+   to use the new builder.
 
 Generating Language specific interfaces
 ---------------------------------------
@@ -93,7 +106,7 @@ Example: Generating Ada to C++ bindings
    ./cpp/main.cpp
    $> polyglot ada2proxy -P input/test.gpr -o 2proxy
    $> polyglot proxy2cpp 2proxy/proxy.json -o 2cpp
-   $> gprbuild 2proxy/test-proxy-agg.gpr -f -ggdb
+   $> gprbuild 2proxy/test-proxy-agg.gpr -f -ggdb --gpr=2
    $> g++ main.cpp \
           2cpp/*.cpp \
           -o main \
