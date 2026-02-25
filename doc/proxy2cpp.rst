@@ -137,7 +137,9 @@ be translated to an operator overload.
 
    * - .. code:: ada
 
-          function "+"(I: Long_Integer; D: Long_Float) return Integer;
+          type T is private
+
+          function "+"(I: Long_Integer; V: T) return Integer;
 
      - .. code:: json
 
@@ -148,7 +150,7 @@ be translated to an operator overload.
 
      - .. code:: cpp
 
-          int operator+(long i, double d);
+          int operator+(long i, T v);
 
 Class types
 -----------
@@ -181,14 +183,35 @@ The shadow constructor can be distinguished by its last argument: when
 constructing the shadow object of a type ``T``, its constructor will
 expect a ``T*``. This argument expects the ``this`` value.
 
+
+.. code:: ada
+
+   package Example is
+
+      type Foo is tagged null record;
+
+   end Example;
+
 .. code:: cpp
+
+   // example.h
+
+   class Foo {
+      // Normal constructor: creates an `Example.Foo` ada object.
+      Foo();
+
+      // Shadow constructor
+      Foo(Foo *);
+   };
+
+   // main.cpp
 
    class Bar : public example::Foo {
        // valid: creates a shadow object
        Bar() : example::Foo(this) {}
 
-       // Invalid: the input library will not create a shadow object, dispatching
-       // will not work
+       // Invalid: the input library will not create a shadow object,
+       // dispatching will not work
        Bar() : example::Foo() {}
    }
 
@@ -290,7 +313,64 @@ level of ownership. This is to make sure that after calling a function
 that may escape the pointer, the latter should not be freed
 inadvertently which could leave a dangling pointer.
 
-TODO: example of pointer escaping
+.. code:: ada
+
+   package body Example is
+
+      type Rec is record
+         I: Integer;
+      end record;
+
+      type Rec_A is access all Rec;
+
+      Acc : Rec_A := null;
+
+      procedure Set (New_Acc: Rec_A) is
+      begin
+         Acc := New_Acc;
+      end Add;
+
+      procedure Increment is
+      begin
+         Acc.all := Acc.all + 1;
+      end Add;
+
+   end Example;
+
+.. code:: cpp
+
+   // example.h
+
+   namespace example {
+
+      class Rec {
+         Rec(int);
+
+         int &get_i();
+         void set_i(int i);
+      };
+
+      void set(polyglot::polyglot_ptr<Rec> new_acc);
+      void inc();
+
+   } // namespace example
+
+   // main.cpp
+
+   int main() {
+       {
+           polyglot::polyglot_ptr<example::Rec> ptr(new Rec(4));
+           // `Example.Set` only accepts the default minimum ownership: LIBRARY
+           ptr.set_owner(polyglot::memory_owner::LIBRARY);
+           example::set(ptr);
+           example::inc();
+           // The managed C++ object of `ptr` is freed, but its underlying Ada
+           // data is not because it is owned by the library.
+       }
+       // We can keep calling `Example.Inc`
+       example::inc();
+       example::inc();
+   }
 
 References and view types
 -------------------------
@@ -307,7 +387,47 @@ freed.
 
 References to Scalar type are still translated to usual C++ references.
 
-TODO: example
+.. code:: ada
+
+   package Example
+
+      type P is private;
+
+      type Rec is record
+          Comp: P;
+      end record;
+
+      procedure Foo (Val: in out P);
+
+   end Example;
+
+.. code:: cpp
+
+   // example.h
+
+   namespace example {
+      class P {};
+
+      class Rec {
+          P::view get_comp();
+          void set_comp(const P&);
+      };
+
+      void foo(P &);
+   } // namespace example
+
+   // main.cpp
+
+   int main() {
+       Rec r;
+       P::view ref = r.get_comp();
+       example::foo(ref); // View types can automatically convert to their reference counterpart
+       example::foo(r.get_comp());
+
+       P &ref_invalid = r.get_comp(); // Invalid: the reference outlives the view object.
+       example::foo(ref_invalid);
+       // Undefined behaviour: the view object is no longer valid. The value of the reference is unknown.
+   }
 
 Exceptions
 ----------
