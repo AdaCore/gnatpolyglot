@@ -28,10 +28,11 @@ Generating Ada Proxy layer
 The ``ada2proxy`` command takes a project file as an input to fetch the
 list of sources to bind.
 
-Generates Ada code that interfaces with the C ABI, and a ``proxy.json``
-file
+The subcommand processes Ada specification files according to input
+parameters, and generates Ada code that interfaces with the C ABI, and a ``proxy.json``
+file.
 
-2 GPR projects files are generated:
+In order to bind these library, 2 GPR projects files are generated:
 
 * Proxy: Contains all the code that uses the C ABI
 
@@ -48,7 +49,7 @@ file
 
 .. code:: sh
 
-   $> polyglot -Ptest.gpr -o./2proxy
+   $> polyglot ada2proxy -Ptest.gpr -o./2proxy
    $> find ./2proxy
    2proxy/
    2proxy/proxy.json
@@ -75,9 +76,10 @@ Generating C++ interfaces
    $> polyglot proxy2cpp <proxy.json file> -o<output_path>
    $> find <output_path>
 
-Generates all .cpp files that call the functions described in the json
-proxy IR. Include files are located in the ``<output_path>/include``
-directory.
+Generates all source files that call the functions described in the json
+proxy IR, and all the headers that contain functions and type
+declarations from the bound library. Header files are located in the
+``<output_path>/include`` directory.
 
 .. code:: sh
 
@@ -93,6 +95,30 @@ Use build system of choice to build these.
 Example: Generating Ada to C++ bindings
 ---------------------------------------
 
+.. code:: ada
+
+   -- input/src/test.ads
+   package Test is
+
+      procedure Hello;
+
+      function Do_Double (I: Integer) return Integer is (I * 2);
+
+   begin
+
+.. code:: cpp
+
+   // cpp/main.cpp
+   #include <iostream>
+
+   #include "test.h"
+
+   int main() {
+       test::hello();
+       std::cout << test::double(10) << "\n";
+   }
+
+
 .. code:: sh
 
    $> find .
@@ -106,6 +132,21 @@ Example: Generating Ada to C++ bindings
    ./cpp/main.cpp
    $> polyglot ada2proxy -P input/test.gpr -o 2proxy
    $> polyglot proxy2cpp 2proxy/proxy.json -o 2cpp
+
+.. code:: cpp
+
+   // 2cpp/include/test.h
+
+   namespace test {
+
+   void hello();
+
+   int do_double(int i);
+
+   } // namespace test
+
+.. code:: sh
+
    $> gprbuild 2proxy/test-proxy-agg.gpr -f -ggdb --gpr=2
    $> g++ main.cpp \
           2cpp/*.cpp \
@@ -115,4 +156,5 @@ Example: Generating Ada to C++ bindings
           -L2proxy/lib_agg/static/dev/ -lfoo_proxy_agg \
           -ldl -lpthread # May be necessary on Linux systems
    $> ./main
-   ...
+   Hello!
+   20
