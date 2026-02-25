@@ -245,9 +245,11 @@ information is kept (First & Last), so care for constraint errors.
 Constrained arrays, or pragma'd
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TODO: Not yet supported, will be bound as regular records since their
-internal representation may differ from unconstrained arrays, with
-regular getter and setter for nth component.
+Constrained arrays and arrays with pragmas are not yet supported (see
+:ref:`Limitations <limitations-arrays-aspects-constrained>`). In the
+future, they will be bound as regular records since their internal
+representation may differ from unconstrained arrays, with regular getter
+and setter for nth component.
 
 Strings
 ~~~~~~~
@@ -264,7 +266,7 @@ Access types
 Only one level of indirection is implemented; Polyglot does not support
 access to access types and getters that may return an access component
 do not return references. However, passing access values by reference
-(``out`` parameter) are supported.
+(``out`` parameter) is supported.
 
 Subprograms
 -----------
