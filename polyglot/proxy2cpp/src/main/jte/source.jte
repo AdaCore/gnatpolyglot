@@ -12,6 +12,8 @@ vim: filetype=jtecpp
 @param CppAPI api
 @param Module module
 
+@template.text_header()
+
 #include <cassert>
 
 #include <polyglot_ada_strings.h>

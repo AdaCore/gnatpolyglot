@@ -18,6 +18,8 @@ vim: filetype=jtecpp
     String projectName = proxy.name.toLower();
 }
 
+@template.text_header()
+
 @if(!isSource)
 #ifndef POLYGLOT_EXCEPTIONS_${projectName.toUpperCase()}_H
 #define POLYGLOT_EXCEPTIONS_${projectName.toUpperCase()}_H

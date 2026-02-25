@@ -23,6 +23,8 @@ Template file to generate array related functions of the Ada bindings.
          .toList();
 }
 
+@template.text_header()
+
 with Interfaces.C;
 with System;
 with Polyglot.Ada.Arrays; use Polyglot.Ada.Arrays;

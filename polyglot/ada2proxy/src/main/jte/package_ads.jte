@@ -23,6 +23,8 @@ Template file to generate package specs.
    String parentPackage = pack.getFullyQualifiedName();
 }
 
+@template.text_header()
+
 with Interfaces.C;
 with System;
 

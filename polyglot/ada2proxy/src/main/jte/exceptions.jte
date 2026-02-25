@@ -20,6 +20,8 @@ Template file to generate the exception handling ada files.
    List<AdaException> exceptions = ExceptionCollector.getExceptions(proxy);
 }
 
+@template.text_header()
+
 @if (!isSource)
 
 with Interfaces.C;
