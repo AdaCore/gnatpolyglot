@@ -69,7 +69,7 @@ class PolyglotTestsuite(Testsuite):
 
         self.env.rewrite_baselines = args.rewrite
 
-        # Make sure the runtime is built before running the tests
+        # Make sure the runtime is available before running the tests
         try:
             runtime_dir = os.environ["POLYGLOT_RUNTIME"]
         except KeyError:
@@ -77,17 +77,6 @@ class PolyglotTestsuite(Testsuite):
                 os.path.dirname(__file__), "..", "polyglot", "runtimes"
             )
             os.environ["POLYGLOT_RUNTIME"] = runtime_dir
-
-        for gpr_file in [
-            os.path.join(runtime_dir, "polyglot", "polyglot.gpr"),
-            os.path.join(runtime_dir, "ada", "polyglot-ada.gpr"),
-        ]:
-            process.Run(["gprbuild", "-P", gpr_file, "-p", "-f"])
-        for gpr_path in [
-            os.path.join(runtime_dir, "polyglot"),
-            os.path.join(runtime_dir, "ada"),
-        ]:
-            add_path(os.environ, "GPR_PROJECT_PATH", gpr_path)
 
         # Check if the internal testsuite is present
         self.env.control_condition_env = {
