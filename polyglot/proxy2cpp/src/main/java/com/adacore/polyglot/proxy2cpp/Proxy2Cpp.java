@@ -5,6 +5,7 @@
 
 package com.adacore.polyglot.proxy2cpp;
 
+import com.adacore.polyglot.proxy.PolyglotSetup;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,6 +34,12 @@ public class Proxy2Cpp implements Callable<Integer> {
             description = "display sub-command usage and exit")
     boolean helpRequested;
 
+    @Option(
+            names = {"--with-runtime"},
+            description =
+                    "location of the polyglot runtime to use. Defaults to <outputPath>/runtimes")
+    Path withRuntime;
+
     @Override
     public Integer call() throws Exception {
         CppPrinter printer = new CppPrinter(proxyFile);
@@ -44,7 +51,12 @@ public class Proxy2Cpp implements Callable<Integer> {
             return 1;
         }
 
-        printer.generate(outputPath);
+        if (withRuntime == null) {
+            withRuntime = outputPath.resolve("runtimes");
+            new PolyglotSetup(withRuntime, Files.isDirectory(withRuntime)).call();
+        }
+
+        printer.generate(outputPath, withRuntime);
         return 0;
     }
 }

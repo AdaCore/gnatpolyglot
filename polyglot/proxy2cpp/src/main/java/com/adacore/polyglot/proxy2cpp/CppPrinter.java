@@ -32,7 +32,7 @@ public class CppPrinter extends Printer {
     }
 
     @Override
-    public void generate(Path outputPath) throws IOException {
+    public void generate(Path outputPath, Path runtimeLocation) throws IOException {
         CppAPI api = new CppAPI(context, outputPath, proxy.name);
 
         for (var module : proxy.modules) {
@@ -90,7 +90,15 @@ public class CppPrinter extends Printer {
         Path gprFilename = outputPath.resolve(proxy.name.toLower() + "_2cpp.gpr");
         try (FileOutput packageSpec = new FileOutput(gprFilename)) {
             templateEngine.render(
-                    "gpr_project.jte", Map.of("api", api, "proxy", proxy), packageSpec);
+                    "gpr_project.jte",
+                    Map.of(
+                            "api",
+                            api,
+                            "proxy",
+                            proxy,
+                            "runtimeLocation",
+                            outputPath.relativize(runtimeLocation).toString()),
+                    packageSpec);
         }
     }
 }

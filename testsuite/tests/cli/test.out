@@ -100,7 +100,7 @@ Running `polyglot proxy2cpp --help`
 ================================================================================
 
 Usage: polyglot proxy2cpp [-hqv] [--header-file=<headerFile>] -o=<outputPath>
-                          proxy_file
+                          [--with-runtime=<withRuntime>] proxy_file
 Create the C++ interface of a proxy representation
       proxy_file   input proxy json file
   -h, --help       display sub-command usage and exit
@@ -113,5 +113,8 @@ Create the C++ interface of a proxy representation
                      do not exist yet.
   -q               be quiet
   -v               verbose output
+      --with-runtime=<withRuntime>
+                   location of the polyglot runtime to use. Defaults to
+                     <outputPath>/runtimes
 
 

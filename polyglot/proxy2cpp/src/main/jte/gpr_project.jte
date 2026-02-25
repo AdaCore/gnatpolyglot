@@ -8,6 +8,9 @@ Template file to generate a gprbuild specification of the C++ bindings.
 @import com.adacore.polyglot.proxy.Proxy
 @param CppAPI api
 @param Proxy proxy
+@param String runtimeLocation
+
+with "${runtimeLocation}/ada/polyglot_ada2cpp.gpr";
 
 library project ${proxy.name.toPascalWithUnderscore()}_2Cpp is
 
