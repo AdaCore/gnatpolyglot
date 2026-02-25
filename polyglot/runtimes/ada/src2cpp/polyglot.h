@@ -6,6 +6,8 @@
 #ifndef POLYGLOT_H
 #define POLYGLOT_H
 
+extern "C" {
+
 struct kernel;
 
 struct exception_information {
@@ -20,5 +22,7 @@ struct kernel {
 };
 
 struct kernel *polyglot_get_kernel();
+
+}
 
 #endif /* ! POLYGLOT_H */

@@ -10,7 +10,7 @@ library project Polyglot.Ada is
    Library_Kind : Library_Kind_Type := external
      ("POLYGLOT_ADA_LIBRARY_KIND", external ("LIBRARY_KIND", "static"));
 
-   for Languages use ("Ada", "C++");
+   for Languages use ("Ada");
 
    for Source_Dirs use ("src");
    for Object_Dir use "obj" & "/" & Build_Mode;
@@ -22,16 +22,9 @@ library project Polyglot.Ada is
       case Build_Mode is
          when "dev" =>
             for Switches ("Ada") use ("-g", "-O0");
-            for Switches ("C++") use ("-g", "-O0");
          when "prod" =>
             for Switches ("Ada") use ("-Ofast");
-            for Switches ("C++") use ("-Ofast");
       end case;
    end Compiler;
-
-   package Naming is
-      for Spec_Suffix ("C++") use ".h";
-      for Body_Suffix ("C++") use ".cpp";
-   end Naming;
 
 end Polyglot.Ada;

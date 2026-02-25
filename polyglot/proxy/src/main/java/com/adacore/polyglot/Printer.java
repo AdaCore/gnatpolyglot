@@ -25,5 +25,5 @@ public abstract class Printer {
         this.context = ProxyValidator.validateAndGetContext(proxy);
     }
 
-    public abstract void generate(Path path) throws IOException;
+    public abstract void generate(Path path, Path runtimeLocation) throws IOException;
 }

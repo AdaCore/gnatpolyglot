@@ -155,6 +155,9 @@ def compile_main(
     """
     if output_lang == "c++":
         proxy_c_files = glob.glob(os.path.join(output_proxy, "*.cpp"))
+        proxy_c_files += glob.glob(
+            os.path.join(output_proxy, "runtimes", "ada", "src2cpp", "*.cpp")
+        )
         # We may want to use cflags that are incompatible with the ones we use
         # by default (eg. `--std=c++17 when using C++17 constructs...): specifying
         # cflags will overwrite.
@@ -171,6 +174,7 @@ def compile_main(
         argv = [
             "g++",
             f"-I{os.path.join(output_proxy, 'include')}",
+            f"-I{os.path.join(output_proxy, 'runtimes', 'ada', 'src2cpp')}",
             "-o",
             "main",
             test_file,
