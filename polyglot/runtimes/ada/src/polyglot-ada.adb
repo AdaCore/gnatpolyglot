@@ -1,3 +1,8 @@
+--
+--  Copyright (C) 2025-2026, AdaCore
+--  SPDX-License-Identifier: Apache-2.0
+--
+
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Polyglot.Ada is

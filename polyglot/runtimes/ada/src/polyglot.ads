@@ -1,3 +1,8 @@
+--
+--  Copyright (C) 2025-2026, AdaCore
+--  SPDX-License-Identifier: Apache-2.0
+--
+
 pragma Interrupt_State (SIGSEGV, System);
 with GNAT.Threads;
 -- On GNU/Linux, the GNAT runtime installs a SIGSEGV signal handler, so turn
