@@ -372,6 +372,11 @@ inadvertently which could leave a dangling pointer.
        example::inc();
    }
 
+.. note::
+
+   For a concrete example of using pointers, checkout the "ex2"
+   example
+
 References and view types
 -------------------------
 
