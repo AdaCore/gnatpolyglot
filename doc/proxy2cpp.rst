@@ -487,3 +487,8 @@ time.
                   std::cout << ex.what() << '\n';
               }
           }
+
+.. note::
+
+   For a concrete example of using bound exceptions, checkout the "ex3"
+   example
