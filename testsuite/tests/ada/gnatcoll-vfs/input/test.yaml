@@ -20,3 +20,7 @@ local_project_path:
   - gnatcoll/minimal
   - gpr/
   - xmlada/
+
+env:
+  windows:
+    GNATCOLL_OS: windows

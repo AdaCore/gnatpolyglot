@@ -41,7 +41,7 @@ print(
     + " source files:"
 )
 for s in all_sources:
-    print(f"  - {s}:")
+    print(f"  - {s.as_posix()}:")
     with open(s, "r") as f:
         lines = f.read().splitlines()
         content = [l for l in lines if l]

@@ -56,9 +56,11 @@ void test_f(const VirtualFile &dir) {
     f.set_readable(false);
     /// A.Assert (Is_Regular_File (F), "is regular file when unreadable");
     assert(f.is_regular_file());
+#if !defined(_WIN32)
     /// A.Assert (not Is_Readable (F) or else OS = Windows or else Root,
     ///           "is readable");
     assert(!f.is_readable());
+#endif
 
     // Try and read the file
 
@@ -117,7 +119,10 @@ void test_f(const VirtualFile &dir) {
     assert(success);
     files = dir.read_dir_recursive(".txt", ::ReadDirFilter::ALL_FILES);
     // Delete the file
+    // A.Assert (Success or else OS = Windows, "could delete");
+#if !defined(_WIN32)
     f.delete_(success);
+#endif
     assert(success);
     f.delete_(success);
     assert(!success);
@@ -133,9 +138,7 @@ struct std::hash<VirtualFile> {
 
 int main() {
     VirtualFile cur_dir = get_current_dir(get_local_host());
-    std::string cur_dir_ad =
-        std::string(std::filesystem::current_path())
-            + std::filesystem::path::preferred_separator;
+    std::string cur_dir_ad = (std::filesystem::current_path() / "").string();
 
     assert(to_string(+cur_dir.dir_name()) == cur_dir_ad);
     assert(to_string(+cur_dir.base_name("", false)) == "");
@@ -185,8 +188,6 @@ int main() {
 
         assert(
             to_string(f3)
-                == cur_dir_ad + "obj"
-                              + std::filesystem::path::preferred_separator
-                              + "main.o");
+                == (std::filesystem::current_path() / "obj" / "main.o").string());
     }
 }

@@ -11,3 +11,7 @@ control:
 main_cflags: ["-Wall", "-Wextra", "-Werror", "-std=c++17"]
 
 valgrind: never
+
+env:
+  windows:
+    GNATCOLL_OS: windows
