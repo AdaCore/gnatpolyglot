@@ -2,18 +2,18 @@
 Polyglot
 ********
 
-Polyglot is a high-level bindings generator.
+Polyglot is a multi-language, high-level bindings generator.
 
-The generation of bindings is done in a two step process:
+The generation of bindings for a given library is done in a two step process:
 
-1.  Generation of the Proxy IR, and glue code to expose an interface
-    for bound constructs that relies on the C ABI.
+1.  Generation of the *Proxy* intermediate representation which describes the content of the library in a language-agnostic way, together with glue code wrapping the original library and adhering to a standard interface over the C ABI.
 
-2.  Generation of a high level
-    interface in a given target language
+2.  Generation of a high level interface in a given target language, relying exclusively
+    on the *Proxy* intermediate representation and glue code.
 
-This lets us avoid having dependencies on the compiler from the input
-language.
+The key takeaway is that the second step can be done independently of the first one. In fact, it doesn't even need to be aware of the input language of the original library, and does not require a compiler for the input language.
+
+Moreoever, unlike writing a dedicated tool for each input-output pair of languages, this decoupling through an intermediate representation implies that when a language frontend is added to Polyglot, it immediately allows generating bindings from that language to all supported output languages. Similarly, once a new language backend is added, it immediately allows creating bindings for that language from all the input languages supported by Polyglot.
 
 Generating Proxy IR
 -------------------
@@ -25,12 +25,11 @@ Generating Ada Proxy layer
 
    $> polyglot ada2proxy -P<project> -o<output_path>
 
-The ``ada2proxy`` command takes a project file as an input to fetch the
-list of sources to bind.
+The ``ada2proxy`` subcommand takes a GPR project file as an input to fetch the
+list of sources to bind, and generates Ada code that interfaces with the C ABI,
+as well as a ``proxy.json`` file that describes the content of the library.
 
-The subcommand processes Ada specification files according to input
-parameters, and generates Ada code that interfaces with the C ABI, and a ``proxy.json``
-file.
+See the dedicated :ref:`ada2proxy` chapter for more information on the subcommand's usage.
 
 In order to bind these library, 2 GPR projects files are generated:
 
@@ -76,10 +75,12 @@ Generating C++ interfaces
    $> polyglot proxy2cpp <proxy.json file> -o<output_path>
    $> find <output_path>
 
-Generates all source files that call the functions described in the json
-proxy IR, and all the headers that contain functions and type
+The ``proxy2cpp`` subcommand generates all source files that call the functions
+described in the json proxy IR, and all the headers that contain functions and type
 declarations from the bound library. Header files are located in the
 ``<output_path>/include`` directory.
+
+See the dedicated :ref:`proxy2cpp` chapter for more information on the subcommand's usage.
 
 .. code:: sh
 
