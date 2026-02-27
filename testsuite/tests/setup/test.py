@@ -4,8 +4,6 @@ from utils import run_setup
 from e3.fs import rm
 
 
-os.environ["NO_COLOR"] = "TRUE"
-
 run_setup()
 run_setup(check_only=True)
 rm(os.path.join("runtimes", "ada", "polyglot-ada.gpr"))

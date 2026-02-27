@@ -56,6 +56,7 @@ class PythonDriver(DiffTestDriver):
     def run(self) -> None:
         env = dict(os.environ)
         self.add_path(env, "PYTHONPATH", self.support_dir)
+        env["NO_COLOR"] = "TRUE"
 
         argv = self.script_and_args
         if self.env.options.native:
