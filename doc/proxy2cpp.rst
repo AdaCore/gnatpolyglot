@@ -158,10 +158,12 @@ Class types
 Final types
 ~~~~~~~~~~~
 
-TODO: do some stuff to prevent inheritance for these (i.e._private
-constructor in C++98, C++11 use "final" keyword) currently, nothing
-prevents users from inheriting from these types, leading to incorrect
-behaviors in cases.
+Classes marked ``final`` in the proxy should not be inherited. They lack
+the support for dynamic dispatch in the bound library.
+
+Currently, nothing prevents inheriting from such types. However, in the
+future, we will add a mechanism to prevent inheritance, and as such
+incorrect behaviours when that would happen.
 
 Function members
 ~~~~~~~~~~~~~~~~
