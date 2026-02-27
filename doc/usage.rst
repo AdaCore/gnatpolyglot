@@ -115,7 +115,7 @@ Example: Generating Ada to C++ bindings
 
    int main() {
        test::hello();
-       std::cout << test::double(10) << "\n";
+       std::cout << test::do_double(10) << "\n";
    }
 
 
@@ -148,11 +148,13 @@ Example: Generating Ada to C++ bindings
 .. code:: sh
 
    $> gprbuild 2proxy/test-proxy-agg.gpr -f -ggdb --gpr=2
+   $> gprbuild 2cpp/runtimes/ada/polyglot_ada2cpp.gpr -f -ggdb --gpr=2
    $> g++ main.cpp \
           2cpp/*.cpp \
           -o main \
           -I2cpp/include \
           -Wall -Wextra \
+          -L2cpp/runtimes/ada/lib2cpp/static/dev/ -lpolyglotada2cpp \
           -L2proxy/lib_agg/static/dev/ -lfoo_proxy_agg \
           -ldl -lpthread # May be necessary on Linux systems
    $> ./main
