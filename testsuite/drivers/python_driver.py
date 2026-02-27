@@ -58,6 +58,18 @@ class PythonDriver(DiffTestDriver):
         self.add_path(env, "PYTHONPATH", self.support_dir)
         env["NO_COLOR"] = "TRUE"
 
+        env_vars = self.test_env.get("env")
+        if env_vars is not None:
+            if os.name == "nt":
+                for k, v in env_vars.get("windows", {}).items():
+                    env[k] = v
+            else:
+                for k, v in env_vars.get("unix", {}).items():
+                    env[k] = v
+            for k, v in env_vars.get("all", {}).items():
+                env[k] = v
+
+
         argv = self.script_and_args
         if self.env.options.native:
             argv.append("--native")
