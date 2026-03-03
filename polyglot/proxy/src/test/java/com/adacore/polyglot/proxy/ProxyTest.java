@@ -36,6 +36,7 @@ public class ProxyTest {
                 """
         {
             "name": "proxy_name",
+            "input_language": "proxy_name",
             "modules": null
         }
         """;

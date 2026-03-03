@@ -80,14 +80,20 @@ public class Proxy implements ProxyObject {
     @JsonProperty("name")
     public final Name name;
 
+    /** Language of the input library */
+    @JsonProperty("input_language")
+    public final String inputLanguage;
+
     /** List of all the modules of the proxy */
     @JsonProperty("modules")
     public final List<Module> modules;
 
     public Proxy(
             @JsonProperty(value = "name", required = true) Name name,
+            @JsonProperty(value = "input_language", required = true) String inputLanguage,
             @JsonProperty(value = "modules", required = true) List<Module> modules) {
         this.name = name;
+        this.inputLanguage = inputLanguage;
         this.modules = modules;
     }
 
