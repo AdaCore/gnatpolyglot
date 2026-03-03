@@ -3,3 +3,6 @@ warning: consider running `polyglot setup --prefix=runtimes'
 
 warning: runtimes/polyglot/polyglot.gpr was modified
 warning: consider running `polyglot setup --prefix=runtimes'
+
+error: --from-lang must be set if --to-lang is set
+error: No runtime found for targetting Ada from Ada

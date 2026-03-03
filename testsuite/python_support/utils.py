@@ -289,10 +289,25 @@ def list_generated_sources(proxy_dir: Path | str) -> list[str]:
     return sources
 
 
-def run_setup(prefix: str = "runtimes", check_only=False):
+def run_setup(
+    prefix: str = "runtimes",
+    check_only=False,
+    from_lang:str = "",
+    to_lang:str = "",
+    expect_returncode: int = 0,
+):
     argv = [f"--prefix={prefix}"]
+    if from_lang != "":
+        argv.append(f"--from-lang={from_lang}")
+    if to_lang != "":
+        argv.append(f"--to-lang={to_lang}")
     if check_only:
         argv.append("--check-only")
-    out = run_polyglot("setup", argv, pipe=True)
+    out = run_polyglot(
+        "setup",
+        argv,
+        pipe=True,
+        expect_returncode=expect_returncode
+    )
     if check_only and len(out) > 0:
         print(out.replace("\\", "/"), end="")

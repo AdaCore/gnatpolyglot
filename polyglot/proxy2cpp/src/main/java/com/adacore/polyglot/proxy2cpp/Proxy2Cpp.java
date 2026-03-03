@@ -53,7 +53,13 @@ public class Proxy2Cpp implements Callable<Integer> {
 
         if (withRuntime == null) {
             withRuntime = outputPath.resolve("runtimes");
-            new PolyglotSetup(withRuntime, Files.isDirectory(withRuntime)).call();
+            new PolyglotSetup(
+                            withRuntime,
+                            Files.isDirectory(withRuntime),
+                            PolyglotSetup.Lang.valueOf(printer.getProxy().inputLanguage),
+                            PolyglotSetup.Lang.cpp,
+                            true)
+                    .call();
         }
 
         printer.generate(outputPath, withRuntime);
