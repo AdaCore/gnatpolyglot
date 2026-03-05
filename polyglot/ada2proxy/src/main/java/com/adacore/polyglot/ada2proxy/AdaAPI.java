@@ -10,6 +10,7 @@ import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import com.adacore.polyglot.LanguageAPI;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.codegen.ParamConverter;
+import com.adacore.polyglot.ada2proxy.codegen.ReturnConverter;
 import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration;
 import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
@@ -38,6 +39,8 @@ public class AdaAPI extends LanguageAPI {
     private final BindableDeclChecker declChecker = new BindableDeclChecker();
 
     private ParamConverter paramConverter = new ParamConverter(this);
+
+    private ReturnConverter returnConverter = new ReturnConverter(this);
 
     public AdaAPI(Name projectName) {
         this.projectName = projectName;
@@ -408,28 +411,7 @@ public class AdaAPI extends LanguageAPI {
 
     /** Create the necessary declarations for the return statement. */
     public String makeReturnDeclarations(Libadalang.BaseTypeDecl returnedType) {
-        StringBuilder builder = new StringBuilder();
-        String typename = returnedType.pFullyQualifiedName();
-        if (AdaTypeMatcher.isBindedAsClass(returnedType)) {
-            // When returning records, we need to convert an access to `System.Address`: declare a
-            // converter.
-            builder.append("function Return_Type_Converter is new")
-                    .append(" Ada.Unchecked_Conversion (")
-                    .append(getProxyAccessFullyQualifiedName(returnedType))
-                    .append(", System.Address")
-                    .append(");");
-        } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            builder.append("Returned_Array : ")
-                    .append(getProxyAccessFullyQualifiedName(returnedType))
-                    .append(";");
-        } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)
-                && !AdaTypeMatcher.isArrayAccess(returnedType)) {
-            builder.append("function Return_Type_Converter is new")
-                    .append(" Ada.Unchecked_Conversion (")
-                    .append(typename)
-                    .append(", System.Address);");
-        }
-        return builder.toString();
+        return returnConverter.prepareReturn(returnedType);
     }
 
     /**
@@ -437,92 +419,7 @@ public class AdaAPI extends LanguageAPI {
      * interface type.
      */
     public String makeReturnConversion(Libadalang.BaseTypeDecl returnedType, String returnedValue) {
-        StringBuilder builder = new StringBuilder();
-
-        String typeName = returnedType.pFullyQualifiedName();
-        if (returnedType.equals(returnedType.pBoolType())) {
-            builder.append("return (if ").append(returnedValue).append(" then 1 else 0)");
-        } else if (AdaTypeMatcher.isEnum(returnedType)) {
-            builder.append("return ")
-                    .append(typeName)
-                    .append("'Enum_Rep (")
-                    .append(returnedValue)
-                    .append(")");
-        } else if (AdaTypeMatcher.isCharacter(returnedType)) {
-            builder.append("return Interfaces.C.To_C (Character (")
-                    .append(returnedValue)
-                    .append("))");
-        } else if (returnedType.pIsScalarType(Libadalang.AdaNode.NONE)) {
-            // If the value is a scalar, simply cast to the C interface type.
-            builder.append("return ")
-                    .append(cInterfaceTypename(returnedType))
-                    .append(" (")
-                    .append(typeName)
-                    .append("'(")
-                    .append(returnedValue)
-                    .append("))");
-        } else if (AdaTypeMatcher.isBindedAsClass(returnedType)) {
-            // If the type returned is an address (i.e. not a scalar), convert the returned value to
-            // ``System.Address`` using the entity created by ``makeReturnTypeConverter``.
-            //
-            // TODO: For the moment, it considers that only value types are returned, and creates a
-            // dynamically allocated copy of the value. When access types are supported, do not copy
-            // the value to the heap.
-            builder.append("return Return_Type_Converter (new ")
-                    .append(typeName)
-                    .append("'(")
-                    .append(returnedValue)
-                    .append("))");
-        } else if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            // If the return type is an array, generate the following:
-            // :: code:
-            //    declare
-            //       type ${accessType} is access all ${typeName}
-            //          with Size => Standard'Address_Size;
-            //       Returned_Array : ${accessType} :=
-            //          new ${typeName}'(${returnedValue});
-            //    begin
-            //    return (First => Returned_Array'First,
-            //            Last  => Returned_Array'Last,
-            //            Data  => Returned_Array.all'Address);
-            //    end
-            builder.append("Returned_Array := new ")
-                    .append(typeName)
-                    .append("'(")
-                    .append(returnedValue)
-                    .append(");\n")
-                    .append("return (First => Interfaces.C.Int (Returned_Array.all'First),")
-                    .append("Last => Interfaces.C.Int (Returned_Array.all'Last), ")
-                    .append("Data => Returned_Array.all'Address)");
-        } else if (AdaTypeMatcher.isArrayAccess(returnedType)) {
-            Libadalang.BaseTypeDecl indexType =
-                    returnedType.pAccessedType(returnedType).pIndexType(0, returnedType);
-            builder.append("if ")
-                    .append(returnedType.pParentBasicDecl().pFullyQualifiedName())
-                    .append(".\"=\" (")
-                    .append(returnedValue)
-                    .append(", null) then\n")
-                    .append("return (First => Interfaces.C.int (")
-                    .append(indexType.pFullyQualifiedName())
-                    .append("'First + 1), Last => Interfaces.C.int (")
-                    .append(indexType.pFullyQualifiedName())
-                    .append("'First), Data => System.Null_Address);\n")
-                    .append("else\n")
-                    .append("return (First => Interfaces.C.Int (")
-                    .append(returnedValue)
-                    .append(".all'First),")
-                    .append("Last => Interfaces.C.Int (")
-                    .append(returnedValue)
-                    .append(".all'Last), ")
-                    .append("Data => ")
-                    .append(returnedValue)
-                    .append(".all'Address);\n")
-                    .append("end if");
-
-        } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
-            builder.append("return Return_Type_Converter (").append(returnedValue).append(")");
-        }
-        return builder.toString();
+        return returnConverter.buildReturn(returnedType, returnedValue);
     }
 
     /** Return the type that must be used when returning from a getter. */

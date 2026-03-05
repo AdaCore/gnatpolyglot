@@ -80,4 +80,25 @@ public class AdaGenerator {
     public static StringBuilder makeImport(String entityName) {
         return new StringBuilder("pragma Import(Ada,").append(entityName).append(")");
     }
+
+    /** Create an Ada `new` expression that copies value to the heap */
+    public static StringBuilder makeHeapCopy(Libadalang.BaseTypeDecl type, String value) {
+        return new StringBuilder("new ")
+                .append(type.pFullyQualifiedName())
+                .append("'(")
+                .append(value)
+                .append(")");
+    }
+
+    /** Create a Polyglot_Array aggregate from an Ada array. */
+    public static StringBuilder makePolyglotArray(String array, boolean isAccess) {
+        if (isAccess) array = array.concat(".all");
+        return new StringBuilder("(First => ")
+                .append(makeCall("Interfaces.C.int", List.of(array.concat("'First"))))
+                .append(", Last => ")
+                .append(makeCall("Interfaces.C.int", List.of(array.concat("'Last"))))
+                .append(", Data => ")
+                .append(array)
+                .append("'Address)");
+    }
 }
