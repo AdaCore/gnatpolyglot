@@ -85,7 +85,7 @@ public class AdaProxyTranslator {
                                                     Array.memberFunctions(c).stream()
                                                             .map(f -> (Declaration) f))
                                     .toList()));
-            return new Proxy(proxy.name, modules);
+            return new Proxy(proxy.name, "ada", modules);
         }
 
         @Override

@@ -177,7 +177,8 @@ public class Ada2Proxy implements Callable<Integer> {
 
         if (withRuntime == null) {
             withRuntime = outputPath.resolve("runtimes");
-            new PolyglotSetup(withRuntime, Files.isDirectory(withRuntime)).call();
+            new PolyglotSetup(withRuntime, Files.isDirectory(withRuntime), PolyglotSetup.Lang.ada)
+                    .call();
         }
         scanner.generate(outputPath, withRuntime);
         return 0;

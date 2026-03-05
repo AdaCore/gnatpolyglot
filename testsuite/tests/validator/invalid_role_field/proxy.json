@@ -1,5 +1,6 @@
 {
   "name": "proxy",
+  "input_language": "",
   "modules": [
     {
       "name": { "names": ["module_1"] },
