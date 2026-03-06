@@ -9,6 +9,7 @@ import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import com.adacore.polyglot.LanguageAPI;
 import com.adacore.polyglot.NativeType;
+import com.adacore.polyglot.ada2proxy.codegen.AdaGenerator;
 import com.adacore.polyglot.ada2proxy.codegen.ParamConverter;
 import com.adacore.polyglot.ada2proxy.codegen.ReturnConverter;
 import com.adacore.polyglot.ada2proxy.codegen.ShadowParamConverter;
@@ -382,37 +383,30 @@ public class AdaAPI extends LanguageAPI {
 
     /** Create a string to call a function from the proxy. */
     public String call(Subprogram subp) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(subp.getOriginFullyQualifiedName());
-
-        if (!subp.parameters.isEmpty()) {
-            builder.append(" (")
-                    .append(
-                            subp.parameters.stream()
-                                    .map(p -> getParamForCall(p))
-                                    .collect(Collectors.joining(", ")))
-                    .append(")");
-        }
-        return builder.toString();
+        return AdaGenerator.makeCall(
+                        subp.getOriginFullyQualifiedName(),
+                        subp.parameters.stream().map(p -> getParamForCall(p)).toList())
+                .toString();
     }
 
     public String getParamForCall(Component component) {
-        Name name = component.name;
         BaseTypeDecl type = component.getType();
+        String valueName = valueName(component.name);
         if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            return "%s (%s)".formatted(type.pFullyQualifiedName(), valueName(name));
+            return AdaGenerator.makeCast(type, valueName).toString();
         }
-        return valueName(name);
+        return valueName;
     }
 
     private String getParamForCall(SubpParam param) {
-        Name name = param.name;
         BaseTypeDecl type = param.getType();
+        String valueName = valueName(param.name);
         if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            return "%s (%s)'Unrestricted_Access.all"
-                    .formatted(type.pFullyQualifiedName(), valueName(name));
+            return AdaGenerator.makeCast(type, valueName)
+                    .append("'Unrestricted_Access.all")
+                    .toString();
         }
-        return valueName(name);
+        return valueName;
     }
 
     /** Create the necessary declarations for the return statement. */
