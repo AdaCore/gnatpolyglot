@@ -12,6 +12,7 @@ import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.codegen.AdaGenerator;
 import com.adacore.polyglot.ada2proxy.codegen.GetterReturnConverter;
 import com.adacore.polyglot.ada2proxy.codegen.ParamConverter;
+import com.adacore.polyglot.ada2proxy.codegen.ParamUpdater;
 import com.adacore.polyglot.ada2proxy.codegen.ReturnConverter;
 import com.adacore.polyglot.ada2proxy.codegen.ShadowParamConverter;
 import com.adacore.polyglot.ada2proxy.codegen.ShadowReturnConverter;
@@ -51,6 +52,8 @@ public class AdaAPI extends LanguageAPI {
     private ShadowParamConverter shadowParamConverter = new ShadowParamConverter(this);
 
     private ShadowReturnConverter shadowReturnConverter = new ShadowReturnConverter(this);
+
+    private ParamUpdater paramUpdater = new ParamUpdater(this);
 
     public AdaAPI(Name projectName) {
         this.projectName = projectName;
@@ -601,97 +604,10 @@ public class AdaAPI extends LanguageAPI {
     }
 
     public String syncParamValue(SubpParam param) {
-        StringBuilder builder = new StringBuilder();
-        if (AdaTypeMatcher.isArrayAccess(param.getType()) && param.isOutMode()) {
-            String polyglotArray = makeTemp(param.name, "Polyglot_Array");
-            String valueArg = valueName(param.name);
-            String eqFunction =
-                    param.getType().pParentBasicDecl().pFullyQualifiedName() + ".\"=\"(";
-            builder.append("declare\n")
-                    .append(polyglotArray)
-                    .append(" : ")
-                    .append(cInterfaceTypename(param.getType().pAccessedType(param.getType())))
-                    .append(" with Address => ")
-                    .append(argName(param.name))
-                    .append("; pragma Import(Ada, ")
-                    .append(polyglotArray)
-                    .append(");\n")
-                    .append("begin\n")
-                    .append(polyglotArray)
-                    .append(".First := Interfaces.C.int (if ")
-                    .append(eqFunction)
-                    .append(valueArg)
-                    .append(", null) then 0 else ")
-                    .append(valueArg)
-                    .append(".all'First);\n")
-                    .append(polyglotArray)
-                    .append(".Last := Interfaces.C.int (if ")
-                    .append(eqFunction)
-                    .append(valueArg)
-                    .append(", null) then -1 else ")
-                    .append(valueArg)
-                    .append(".all'Last);\n")
-                    .append(polyglotArray)
-                    .append(".Data := (if ")
-                    .append(eqFunction)
-                    .append(valueArg)
-                    .append(", null) then System.Null_Address else ")
-                    .append(valueArg)
-                    .append(".all'Address);\n")
-                    .append("end;");
-        }
-        return builder.toString();
+        return paramUpdater.build(param);
     }
 
     public String syncDispatchParamValue(SubpParam param) {
-        StringBuilder builder = new StringBuilder();
-        String valueName = valueName(param.name);
-        String argName = argName(param.name);
-        BaseTypeDecl type = param.getType();
-        if (AdaTypeMatcher.isArrayAccess(type) && param.isOutMode()) {
-            String fatPtr = makeTemp(param.name, "Fat_Pointer");
-            String tmpAccess = makeTemp(param.name, "Tmp_Access");
-            builder.append("declare\n")
-                    .append(tmpAccess)
-                    .append(" : ")
-                    .append(type.pFullyQualifiedName())
-                    .append(";\n")
-                    .append(fatPtr)
-                    .append(" : Polyglot.Ada.Arrays.Fat_Pointer := (")
-                    .append(valueName)
-                    .append(".Data, System.Storage_Elements.\"-\"(")
-                    .append(valueName)
-                    .append(".Data, ")
-                    .append(type.pAccessedType(type).pFullyQualifiedName())
-                    .append("'Descriptor_Size / 8));\n")
-                    .append("for ")
-                    .append(fatPtr)
-                    .append("'Address use ")
-                    .append(tmpAccess)
-                    .append("'Address;\n")
-                    .append("begin\n")
-                    .append(argName)
-                    .append(" := ")
-                    .append(tmpAccess)
-                    .append(";\n")
-                    .append("end;");
-        } else if (type.pIsAccessType(Libadalang.AdaNode.NONE) && param.isOutMode()) {
-            String converter = makeTemp(param.name, "Converter");
-            builder.append("declare\n")
-                    .append("function ")
-                    .append(converter)
-                    .append(" is new Ada.Unchecked_Conversion (System.Address, ")
-                    .append(type.pFullyQualifiedName())
-                    .append(");\n")
-                    .append("begin\n")
-                    .append(argName)
-                    .append(" := ")
-                    .append(converter)
-                    .append(" (")
-                    .append(valueName)
-                    .append(");\n")
-                    .append("end;");
-        }
-        return builder.toString();
+        return paramUpdater.buildDispatch(param);
     }
 }
