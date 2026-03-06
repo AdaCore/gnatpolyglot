@@ -51,6 +51,16 @@ public class AdaGenerator {
                 .append(")");
     }
 
+    /** Create an Ada.Unchecked_Deallocation procedure that frees a value of objectName type. */
+    public static StringBuilder uncheckedDeallocation(
+            String name, CharSequence objectName, CharSequence accessName) {
+        return new StringBuilder("procedure Free is new Ada.Unchecked_Deallocation (")
+                .append(objectName)
+                .append(", ")
+                .append(accessName)
+                .append(")");
+    }
+
     /**
      * Create an array bound (lower or upper) from a Polyglot_(Array|String). If the array is empty,
      * the bound the lower bound will be `type'First`, and the upper bound will be `type'First + 1`

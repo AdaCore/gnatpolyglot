@@ -11,6 +11,8 @@ import com.adacore.polyglot.LanguageAPI;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.codegen.ParamConverter;
 import com.adacore.polyglot.ada2proxy.codegen.ReturnConverter;
+import com.adacore.polyglot.ada2proxy.codegen.ShadowParamConverter;
+import com.adacore.polyglot.ada2proxy.codegen.ShadowReturnConverter;
 import com.adacore.polyglot.ada2proxy.proxy.AdaDeclaration;
 import com.adacore.polyglot.ada2proxy.proxy.Array;
 import com.adacore.polyglot.ada2proxy.proxy.Component;
@@ -41,6 +43,10 @@ public class AdaAPI extends LanguageAPI {
     private ParamConverter paramConverter = new ParamConverter(this);
 
     private ReturnConverter returnConverter = new ReturnConverter(this);
+
+    private ShadowParamConverter shadowParamConverter = new ShadowParamConverter(this);
+
+    private ShadowReturnConverter shadowReturnConverter = new ShadowReturnConverter(this);
 
     public AdaAPI(Name projectName) {
         this.projectName = projectName;
@@ -281,7 +287,7 @@ public class AdaAPI extends LanguageAPI {
     }
 
     /** Return the typename of the parameter */
-    private String cInterfaceParamTypename(SubpParam p) {
+    public String cInterfaceParamTypename(SubpParam p) {
         // If the parameter has a Out mode, it is a reference and will be passed as an address.
         if (p.isOutMode() && !p.getType().pIsArrayType(Libadalang.AdaNode.NONE))
             return "System.Address";
@@ -584,166 +590,19 @@ public class AdaAPI extends LanguageAPI {
     }
 
     public String makeShadowReturnDecl(Libadalang.BaseTypeDecl returnedType) {
-        StringBuilder builder = new StringBuilder();
-        String typename = returnedType.pFullyQualifiedName();
-        String accessType = asAccess(returnedType);
-        if (AdaTypeMatcher.isBindedAsClass(returnedType)
-                || returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            // When returning records, we need to convert an Address to an access`: declare a
-            // converter.
-            builder.append("type ")
-                    .append(accessType)
-                    .append(" is access all ")
-                    .append(typename)
-                    .append(" with Size => Standard'Address_Size")
-                    .append(";\n");
-            builder.append("function Converter is new Ada.Unchecked_Conversion (System.Address, ")
-                    .append(accessType)
-                    .append(");\n")
-                    // The returned value will be located on the heap and will be deallocated at
-                    // some point.
-                    .append("procedure Free is new Ada.Unchecked_Deallocation (")
-                    .append(typename)
-                    .append(", ")
-                    .append(accessType)
-                    .append(");\n");
-            // The value will be received as an address or a Polyglot_Array. In order to be able to
-            // free it, it needs to be stored in an access variable.
-            builder.append("Returned_Access : ")
-                    .append(accessType)
-                    .append(" := ")
-                    .append("Converter (Returned_Value");
-            // Get the data of the Polyglot_Array or String when the return type is an array.
-            if (returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) builder.append(".Data");
-            builder.append(");");
-        } else if (AdaTypeMatcher.isArrayAccess(returnedType)) {
-            builder.append("type ")
-                    .append(accessType)
-                    .append(" is access all ")
-                    .append(returnedType.pAccessedType(returnedType).pFullyQualifiedName())
-                    .append(" with Size => Standard'Address_Size")
-                    .append(";\n");
-            builder.append("function Converter is new Ada.Unchecked_Conversion (System.Address, ")
-                    .append(accessType)
-                    .append(");\n")
-                    .append("Returned_Access : ")
-                    .append(accessType)
-                    .append(" := ")
-                    .append("Converter (Returned_Value.Data);\n");
-
-        } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
-            builder.append("function Converter is new Ada.Unchecked_Conversion (System.Address, ")
-                    .append(typename)
-                    .append(");\n");
-        }
-
-        return builder.toString();
+        return shadowReturnConverter.prepareReturn(returnedType);
     }
 
     /** Return the return statement of shadow dispatching functions. */
     public String makeShadowReturn(Subprogram subp) {
-        StringBuilder builder = new StringBuilder();
-        Libadalang.BaseTypeDecl returnedType = subp.getReturnType();
-        String typename = returnedType.pFullyQualifiedName();
-        builder.append("return Result : ").append(typename).append(" := ");
-        if (AdaTypeMatcher.isBindedAsClass(returnedType)
-                || returnedType.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            // Values are returned on the heap from the target language. However, the parent of the
-            // shadow function does not expect an acess or an address, but a value type instead. We
-            // need to copy the returned value to the stack and free its heap counterpart.
-            builder.append("Returned_Access.all")
-                    .append(" do\n")
-                    .append("Free (Returned_Access);\n")
-                    .append("end return");
-        } else if (AdaTypeMatcher.isArrayAccess(returnedType)) {
-            builder.append("Returned_Access.all'Unchecked_Access");
-        } else if (returnedType.pIsAccessType(Libadalang.AdaNode.NONE)) {
-            builder.append("Converter (Returned_Value)");
-        } else if (AdaTypeMatcher.isCharacter(returnedType)) {
-            builder.append(typename).append(" (Interfaces.C.To_Ada (Returned_Value))");
-        } else if (returnedType.pIsEnumType(Libadalang.AdaNode.NONE)) {
-            builder.append(returnedType.pFullyQualifiedName()).append("'Enum_Val (Returned_Value)");
-        } else {
-            builder.append(returnedType.pFullyQualifiedName()).append(" (Returned_Value)");
-        }
-
-        return builder.toString();
+        return shadowReturnConverter.buildReturn(subp);
     }
 
     /**
      * Return a string of the argument for param when calling an extern subprogram from a vtable.
      */
     public String makeShadowParamConversion(SubpParam param) {
-        StringBuilder builder = new StringBuilder();
-
-        BaseTypeDecl type = param.getType();
-        NativeType nativeType = checkNativeType(type);
-        builder.append(valueName(param.name)).append(" : ");
-        String argName = argName(param.name);
-        if (AdaTypeMatcher.isBindedAsClass(type)
-                || (type.pIsScalarType(Libadalang.AdaNode.NONE) && param.isOutMode())) {
-            builder.append(cInterfaceParamTypename(param))
-                    .append(" := ")
-                    .append(argName)
-                    .append("'Address");
-        } else if (AdaTypeMatcher.isCharacter(type)) {
-            builder.append(cInterfaceParamTypename(param))
-                    .append(" := Interfaces.C.To_C (Character (")
-                    .append(argName)
-                    .append("))");
-        } else if (type.pIsEnumType(Libadalang.AdaNode.NONE)) {
-            builder.append(cInterfaceParamTypename(param))
-                    .append(" := ")
-                    .append(type.pFullyQualifiedName())
-                    .append("'Enum_Rep (")
-                    .append(argName)
-                    .append(")");
-        } else if (type.pIsScalarType(Libadalang.AdaNode.NONE)) {
-            builder.append(cInterfaceParamTypename(param))
-                    .append(" := ")
-                    .append(cInterfaceNativeTypename(nativeType))
-                    .append(" (")
-                    .append(argName)
-                    .append(")");
-        } else if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            builder.append(cInterfaceParamTypename(param))
-                    .append(" := ")
-                    .append("(First => Interfaces.C.int (")
-                    .append(argName)
-                    .append("'First),")
-                    .append(" Last => Interfaces.C.int (")
-                    .append(argName)
-                    .append("'Last),")
-                    .append(" Data => ")
-                    .append(argName)
-                    .append("'Address)");
-        } else if (AdaTypeMatcher.isArrayAccess(type)) {
-            builder.append(cInterfaceTypename(type))
-                    .append(" := ")
-                    .append("(if ")
-                    .append(type.pParentBasicDecl().pFullyQualifiedName())
-                    .append(".\"=\" (")
-                    .append(argName)
-                    .append(", null) then (1, 0, System.Null_Address) else ")
-                    .append("(First => Interfaces.C.int (")
-                    .append(argName)
-                    .append(".all'First),")
-                    .append(" Last => Interfaces.C.int (")
-                    .append(argName)
-                    .append(".all'Last),")
-                    .append(" Data => ")
-                    .append(argName)
-                    .append(".all'Address))");
-        } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
-            builder.append(cInterfaceParamTypename(param))
-                    .append(" := ")
-                    .append(argName)
-                    .append(".all'Address");
-        } else {
-            throw new RuntimeException("Unsupported dispatch " + type);
-        }
-
-        return builder.toString();
+        return shadowParamConverter.build(param);
     }
 
     public String makeDispatchedArgument(SubpParam param) {
