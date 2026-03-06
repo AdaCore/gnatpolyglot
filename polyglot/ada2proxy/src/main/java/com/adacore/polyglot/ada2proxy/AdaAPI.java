@@ -10,6 +10,7 @@ import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import com.adacore.polyglot.LanguageAPI;
 import com.adacore.polyglot.NativeType;
 import com.adacore.polyglot.ada2proxy.codegen.AdaGenerator;
+import com.adacore.polyglot.ada2proxy.codegen.GetterReturnConverter;
 import com.adacore.polyglot.ada2proxy.codegen.ParamConverter;
 import com.adacore.polyglot.ada2proxy.codegen.ReturnConverter;
 import com.adacore.polyglot.ada2proxy.codegen.ShadowParamConverter;
@@ -44,6 +45,8 @@ public class AdaAPI extends LanguageAPI {
     private ParamConverter paramConverter = new ParamConverter(this);
 
     private ReturnConverter returnConverter = new ReturnConverter(this);
+
+    private GetterReturnConverter getterReturnConverter = new GetterReturnConverter(this);
 
     private ShadowParamConverter shadowParamConverter = new ShadowParamConverter(this);
 
@@ -432,41 +435,7 @@ public class AdaAPI extends LanguageAPI {
 
     /** Create a string of the return statement for value returned by component getter functions. */
     public String makeGetterReturnConversion(String componentAccess, Libadalang.BaseTypeDecl type) {
-        StringBuilder builder = new StringBuilder("return ");
-        if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
-            // When returning references to arrays, returning a Polyglot_Array is
-            // still necesssary.
-            builder.append("(First => Interfaces.C.Int (")
-                    .append(componentAccess)
-                    .append("'First),")
-                    .append("Last => Interfaces.C.Int (")
-                    .append(componentAccess)
-                    .append("'Last), ")
-                    .append("Data => ")
-                    .append(componentAccess)
-                    .append("'Address)");
-        } else if (AdaTypeMatcher.isArrayAccess(type)) {
-            builder.append("(if ")
-                    .append(type.pParentBasicDecl().pFullyQualifiedName())
-                    .append(".\"=\" (")
-                    .append(componentAccess)
-                    .append(", null) then (1, 0, System.Null_Address) else ")
-                    .append("(First => Interfaces.C.int (")
-                    .append(componentAccess)
-                    .append(".all'First),")
-                    .append(" Last => Interfaces.C.int (")
-                    .append(componentAccess)
-                    .append(".all'Last),")
-                    .append(" Data => ")
-                    .append(componentAccess)
-                    .append(".all'Address))");
-        } else if (type.pIsAccessType(Libadalang.AdaNode.NONE)) {
-            builder.append("Return_Type_Converter (").append(componentAccess).append(")");
-        } else {
-            // Otherwise, just get the address.
-            builder.append(componentAccess).append("'Address");
-        }
-        return builder.toString();
+        return getterReturnConverter.build(type, componentAccess);
     }
 
     /** Return the file name of a module with a given extension. */
