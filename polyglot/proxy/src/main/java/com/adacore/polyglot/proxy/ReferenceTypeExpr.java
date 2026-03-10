@@ -52,4 +52,14 @@ public class ReferenceTypeExpr extends TypeExpr {
         }
         return false;
     }
+
+    @Override
+    public TypeExpr referencedType() {
+        return typeExpr;
+    }
+
+    @Override
+    public boolean isReference() {
+        return true;
+    }
 }

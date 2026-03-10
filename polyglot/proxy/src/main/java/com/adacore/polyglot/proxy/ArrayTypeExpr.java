@@ -44,4 +44,14 @@ public class ArrayTypeExpr extends TypeExpr {
         }
         return false;
     }
+
+    @Override
+    public TypeExpr elementType() {
+        return typeExpr;
+    }
+
+    @Override
+    public boolean isArray() {
+        return true;
+    }
 }
