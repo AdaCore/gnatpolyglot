@@ -27,6 +27,7 @@ import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.polyglot.proxy.TypeDecl;
 import com.adacore.polyglot.proxy.TypeExpr;
 import com.adacore.polyglot.proxy.VTableEntry;
+import com.adacore.polyglot.proxy2cpp.codegen.ParameterGenerator;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -47,6 +48,8 @@ public class CppAPI {
     /** Name of the project . */
     private Name projectName;
 
+    private ParameterGenerator parameterConverter = new ParameterGenerator(this);
+
     public CppAPI(ProxyContext context, Path outputPath, Name projectName) {
         this.headerDir = outputPath.resolve("include");
         this.outputPath = outputPath;
@@ -56,6 +59,10 @@ public class CppAPI {
 
     public Name getProjectName() {
         return projectName;
+    }
+
+    public ProxyContext getContext() {
+        return context;
     }
 
     public String formatDoc(String doc, int indent) {
@@ -314,28 +321,7 @@ public class CppAPI {
 
     /** Return a string that gets the value of a parameter for the call to the Ada subprogram */
     public String getParamForCall(Parameter p) {
-        String lower = toLower(p.name);
-        if (p.type instanceof NameTypeExpr name
-                && context.getTypeDecl(name.name) instanceof EnumerationDecl)
-            return "static_cast<int>(" + lower + ")";
-        // When the parameter is a reference to a scalar, get
-        // the correspondign address.
-        if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof NameTypeExpr name) {
-            if (context.getTypeDecl(name.name) instanceof NativeTypeDecl nat)
-                return switch (nat.nativeType) {
-                    case STRING -> lower + ".data_()";
-                    default -> "&" + lower;
-                };
-            if (context.getTypeDecl(name.name) instanceof EnumerationDecl) return "&" + lower;
-        }
-        if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr)
-            return (ref.isConst ? "" : "&") + "_" + lower + "_data";
-        if (p.type instanceof PointerTypeExpr) return "_" + lower + "_data";
-        if ((p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof ArrayTypeExpr)
-                || p.type instanceof ArrayTypeExpr
-                || context.getTypeDecl(p.type.getName()) instanceof ClassDecl)
-            return lower + ".data_()";
-        return lower;
+        return parameterConverter.buildConversion(p);
     }
 
     public String getParamForConstructor(Parameter p) {
@@ -439,7 +425,7 @@ public class CppAPI {
         return builder.toString();
     }
 
-    private String cppOwner(Owner owner) {
+    public String cppOwner(Owner owner) {
         return "polyglot::memory_owner::" + owner.toString();
     }
 
@@ -682,88 +668,15 @@ public class CppAPI {
     }
 
     public String verifyOwnership(Parameter param) {
-        StringBuilder builder = new StringBuilder();
-        if ((param.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr
-                        || param.type instanceof PointerTypeExpr)
-                && param.transfer.required_owner != RequiredOwner.ANY) {
-            String lower = toLower(param.name);
-            builder.append("if (")
-                    .append(lower)
-                    .append(".get_owner() < polyglot::memory_owner::")
-                    .append(param.transfer.required_owner.toString())
-                    .append(") throw std::invalid_argument(")
-                    .append("std::string(__FUNCTION__) + \": ")
-                    .append(lower)
-                    .append(": owner should be ")
-                    .append(param.transfer.required_owner)
-                    .append("\");");
-        }
-        return builder.toString();
+        return parameterConverter.buildPointerOwnershipCheck(param);
     }
 
     public String createPointerBuffer(Parameter param) {
-        StringBuilder builder = new StringBuilder();
-        PointerTypeExpr ptrType = null;
-        if (param.type instanceof PointerTypeExpr ptr) ptrType = ptr;
-        else if (param.type instanceof ReferenceTypeExpr ref
-                && ref.typeExpr instanceof PointerTypeExpr ptr) ptrType = ptr;
-
-        if (ptrType != null) {
-            String name = toLower(param.name);
-            boolean isArray = ptrType.typeExpr instanceof ArrayTypeExpr;
-            String dataType = cTypename(ptrType);
-
-            builder.append(dataType)
-                    .append(" _")
-                    .append(name)
-                    .append("_data = ")
-                    .append(name)
-                    .append(".get() == nullptr ? ")
-                    .append(nullValue(ptrType))
-                    .append(" : ")
-                    .append(name)
-                    .append(".get()->data_();");
-            // When the type is a reference, create a copy of the internal data to compare it after
-            // the call as it may have been modified.
-            if (param.type instanceof ReferenceTypeExpr ref && !ref.isConst) {
-                builder.append(dataType)
-                        .append(" __")
-                        .append(name)
-                        .append("_data = _")
-                        .append(name)
-                        .append("_data;");
-            }
-        }
-        return builder.toString();
+        return parameterConverter.buildPointerBuffer(param);
     }
 
     public String checkPointerValue(Parameter param) {
-        StringBuilder builder = new StringBuilder();
-        if (param.type instanceof ReferenceTypeExpr ref
-                && !ref.isConst
-                && ref.typeExpr instanceof PointerTypeExpr ptr) {
-            String name = toLower(param.name);
-            String dataName = "_" + name + "_data";
-            String addressAccessor = isStringOrArray(ptr.typeExpr) ? ".data" : "";
-            String copyName = "__" + name + "_data";
-            builder.append("if (")
-                    .append(dataName)
-                    .append(addressAccessor)
-                    .append(" != ")
-                    .append(copyName)
-                    .append(addressAccessor)
-                    .append(") ")
-                    .append(name)
-                    .append(".reset(")
-                    .append(dataName)
-                    .append(addressAccessor)
-                    .append("== nullptr ? nullptr : new ")
-                    .append(cppTypename(ptr.typeExpr))
-                    .append("(")
-                    .append(dataName)
-                    .append("), polyglot::memory_owner::LIBRARY);");
-        }
-        return builder.toString();
+        return parameterConverter.buildPointerValueUpdate(param);
     }
 
     public String checkDispatchPointerValue(Parameter param) {
