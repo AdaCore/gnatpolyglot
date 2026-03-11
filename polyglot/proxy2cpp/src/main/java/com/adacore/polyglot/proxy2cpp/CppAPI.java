@@ -26,6 +26,8 @@ import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeDecl;
 import com.adacore.polyglot.proxy.TypeExpr;
 import com.adacore.polyglot.proxy.VTableEntry;
+import com.adacore.polyglot.proxy2cpp.codegen.DispatchParameterConverter;
+import com.adacore.polyglot.proxy2cpp.codegen.DispatchReturnConverter;
 import com.adacore.polyglot.proxy2cpp.codegen.ParameterGenerator;
 import com.adacore.polyglot.proxy2cpp.codegen.ReturnConverter;
 import java.nio.file.Path;
@@ -51,6 +53,11 @@ public class CppAPI {
     private ParameterGenerator parameterConverter = new ParameterGenerator(this);
 
     private ReturnConverter returnConverter = new ReturnConverter(this);
+
+    private DispatchReturnConverter dispatchReturnConverter = new DispatchReturnConverter(this);
+
+    private DispatchParameterConverter dispatchParameterConverter =
+            new DispatchParameterConverter(this);
 
     public CppAPI(ProxyContext context, Path outputPath, Name projectName) {
         this.headerDir = outputPath.resolve("include");
@@ -479,55 +486,7 @@ public class CppAPI {
 
     /** Return a string that is the C++ converted parameter from its raw data given by argument. */
     public String convertForDispatch(Parameter param) {
-        StringBuilder builder = new StringBuilder();
-        TypeExpr type = param.type;
-        String lower = toLower(param.name);
-        String data = lower;
-        // We need value types in cases where there are references, so use the
-        // c++ return type in order to build view types when necessary.
-        // Returning references to pointers is not possible, so manually enforce building simple
-        // pointers.
-        if (type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr ptr) {
-            builder.append(cTypename(ptr.typeExpr))
-                    .append(isStringOrArray(ptr.typeExpr) ? "*" : "")
-                    .append(" __")
-                    .append(lower)
-                    .append(" = ");
-            if (isStringOrArray(ptr.typeExpr)) {
-                builder.append("(").append(cTypename(ptr.typeExpr)).append("*)");
-                data = "*__" + lower;
-            } else {
-                builder.append("*");
-                data = "__" + lower;
-            }
-            builder.append(lower).append(";\n");
-            type = ptr;
-        }
-        builder.append(cppReturnTypename(type)).append(" _").append(lower).append(" = ");
-
-        if (type instanceof ReferenceTypeExpr ref
-                && ref.typeExpr instanceof NameTypeExpr name
-                && context.isNativeScalar(name)) {
-            // When making a reference to a native type, dereference the pointer to make a reference
-            builder.append("*");
-        } else {
-            // Otherwise, create a new object that wraps the returned pointer.
-            if (type instanceof ReferenceTypeExpr ref)
-                builder.append(cppReturnTypename(ref.typeExpr.makeReference(false)))
-                        .append("::create");
-            else builder.append(cppReturnTypename(type));
-        }
-        builder.append("(");
-        if (type instanceof PointerTypeExpr ptr) {
-            builder.append("new ").append(cppTypename(ptr.typeExpr)).append("(");
-        }
-        builder.append(data);
-        if (type instanceof PointerTypeExpr) {
-            builder.append(")");
-        }
-        builder.append(")");
-
-        return builder.toString();
+        return dispatchParameterConverter.buildConversion(param);
     }
 
     /** Create a dispatching call to the member function set in the vtable's extra data. */
@@ -550,33 +509,7 @@ public class CppAPI {
      * returned is an object in order to prevent the destructor from freeing the memory returned.
      */
     public String makeReturnFromDispatch(FunctionTypeExpr functionType, String returnedValue) {
-        StringBuilder builder = new StringBuilder();
-        if (isStringOrArray(functionType.returnType)) {
-            builder.append("return ").append(returnedValue).append(".release_();");
-        } else if (functionType.returnType instanceof NameTypeExpr name) {
-            builder.append("return ");
-            TypeDecl typeDecl = context.getTypeDecl(name.name);
-            if (typeDecl instanceof NativeTypeDecl || typeDecl instanceof EnumerationDecl) {
-                builder.append("static_cast<")
-                        .append(cTypename(functionType.returnType))
-                        .append(">(")
-                        .append(returnedValue)
-                        .append(");");
-            } else {
-                builder.append(returnedValue).append(".release_();");
-            }
-        } else if (functionType.returnType instanceof PointerTypeExpr) {
-            builder.append("if (")
-                    .append(returnedValue)
-                    .append(".get() == nullptr) {")
-                    .append(makeDispatchDefaultReturn(functionType))
-                    .append("} else { return ")
-                    .append(returnedValue)
-                    .append(".get()->data_() ;}");
-        } else {
-            throw new UnsupportedOperationException("Unsupported returned dispatch type");
-        }
-        return builder.toString();
+        return dispatchReturnConverter.buildReturn(functionType, returnedValue);
     }
 
     public boolean returnsVoid(FunctionTypeExpr functionType) {
@@ -602,23 +535,7 @@ public class CppAPI {
      * not be used by the library.
      */
     public String makeDispatchDefaultReturn(FunctionTypeExpr function) {
-        if (function.returnType instanceof ArrayTypeExpr)
-            return "return polyglot::ada::arrays::array_data{1, 0, nullptr};";
-        if (function.returnType instanceof NameTypeExpr name) {
-            TypeDecl returnType = context.getTypeDecl(name.name);
-            if (returnType instanceof NativeTypeDecl nat) {
-                return switch (nat.nativeType) {
-                    case VOID -> "";
-                    case BOOL -> "return false;";
-                    case STRING -> "return polyglot::ada::strings::string_data{1, 0, nullptr};";
-                    default -> "return 0;";
-                };
-            } else if (returnType instanceof EnumerationDecl) {
-                return "return 0;";
-            }
-            return "return nullptr;";
-        }
-        return "return %s;".formatted(nullValue((PointerTypeExpr) function.returnType));
+        return dispatchReturnConverter.buildDefaultReturn(function);
     }
 
     public String verifyOwnership(Parameter param) {
@@ -634,20 +551,7 @@ public class CppAPI {
     }
 
     public String checkDispatchPointerValue(Parameter param) {
-        StringBuilder builder = new StringBuilder();
-        if (param.type instanceof ReferenceTypeExpr ref
-                && ref.typeExpr instanceof PointerTypeExpr ptr) {
-            String dataName = "_" + toLower(param.name);
-            builder.append("*");
-            if (isStringOrArray(ptr.typeExpr)) builder.append("__");
-            builder.append(toLower(param.name))
-                    .append(" = ")
-                    .append(dataName)
-                    .append(".get() == nullptr ? ")
-                    .append(nullValue(ptr));
-            builder.append(" : ").append(dataName).append("->data_();");
-        }
-        return builder.toString();
+        return dispatchParameterConverter.buildPointerValueUpdate(param);
     }
 
     public boolean isCopyable(ClassDecl classDecl) {
