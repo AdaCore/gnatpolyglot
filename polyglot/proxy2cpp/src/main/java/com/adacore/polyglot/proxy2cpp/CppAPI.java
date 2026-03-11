@@ -23,11 +23,11 @@ import com.adacore.polyglot.proxy.PointerTypeExpr;
 import com.adacore.polyglot.proxy.ProxyContext;
 import com.adacore.polyglot.proxy.ReferenceTypeExpr;
 import com.adacore.polyglot.proxy.Role.RoleKind;
-import com.adacore.polyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.polyglot.proxy.TypeDecl;
 import com.adacore.polyglot.proxy.TypeExpr;
 import com.adacore.polyglot.proxy.VTableEntry;
 import com.adacore.polyglot.proxy2cpp.codegen.ParameterGenerator;
+import com.adacore.polyglot.proxy2cpp.codegen.ReturnConverter;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +49,8 @@ public class CppAPI {
     private Name projectName;
 
     private ParameterGenerator parameterConverter = new ParameterGenerator(this);
+
+    private ReturnConverter returnConverter = new ReturnConverter(this);
 
     public CppAPI(ProxyContext context, Path outputPath, Name projectName) {
         this.headerDir = outputPath.resolve("include");
@@ -374,55 +376,7 @@ public class CppAPI {
 
     /** Create a string of the return statement. */
     public String makeReturnStatement(FunctionDecl functionDecl, String returnedValue) {
-        StringBuilder builder = new StringBuilder("return ");
-        if (functionDecl.type.returnType instanceof ReferenceTypeExpr ref) {
-            if (context.isNativeScalar(ref.typeExpr)) {
-                // When returning a reference to a native type, get the address returned by the
-                // `extern "C"` function and dereference it to create a reference.
-                // Note that unlike class types that require a wrapping proxy objects, native types
-                // can be directely addressed, thus we can return real C++ references.
-                builder.append("*");
-                if (ref.typeExpr instanceof NameTypeExpr name
-                        && context.getTypeDecl(name.name) instanceof EnumerationDecl) {
-                    // Scoped enums cannot be instantiated with a list initializer until C++17. Use
-                    // a static_cast instead.
-                    builder.append("static_cast<")
-                            .append(ref.isConst ? "const " : "")
-                            .append(cppTypename(name))
-                            .append("*>");
-                }
-            } else {
-                // When the returned pointer to an opaque data is `const void *`, we must return a
-                // const view.
-                // The view constructor cannot accept const pointers, since the concept of "const
-                // constructor" does not exist. Instead, use a `create` function that has an
-                // overload for returning const views with `const void *` data pointers.
-                ReferenceTypeExpr nonConstRef = ref.typeExpr.makeReference(false);
-                builder.append(cppReturnTypename(nonConstRef)).append("::create");
-            }
-        } else if (functionDecl.type.returnType instanceof NameTypeExpr name
-                && context.getTypeDecl(name.name) instanceof EnumerationDecl) {
-            // Scoped enums cannot be instantiated with a list initializer until C++17. Use a
-            // static_cast instead.
-            builder.append("static_cast<")
-                    .append(cppReturnTypename(functionDecl.type.returnType))
-                    .append(">");
-        } else if (functionDecl.type.returnType instanceof PointerTypeExpr ptr) {
-            builder.append(cppReturnTypename(functionDecl.type.returnType));
-            returnedValue =
-                    "%s%s == nullptr ? nullptr : new %s(%s), %s"
-                            .formatted(
-                                    returnedValue,
-                                    isStringOrArray(ptr.typeExpr) ? ".data" : "",
-                                    cppTypename(ptr.typeExpr),
-                                    returnedValue,
-                                    cppOwner(functionDecl.type.returnOwner));
-        } else if (!context.isNativeScalar(functionDecl.type.returnType)) {
-            // Otherwise, create a new object that wraps the returned pointer.
-            builder.append(cppReturnTypename(functionDecl.type.returnType));
-        }
-        builder.append("(").append(returnedValue).append(")");
-        return builder.toString();
+        return returnConverter.build(functionDecl, returnedValue);
     }
 
     public String cppOwner(Owner owner) {
