@@ -25,12 +25,14 @@ import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeDecl;
 import com.adacore.polyglot.proxy.TypeExpr;
 import com.adacore.polyglot.proxy.VTableEntry;
+import com.adacore.polyglot.proxy2cpp.codegen.CppGenerator;
 import com.adacore.polyglot.proxy2cpp.codegen.DispatchParameterConverter;
 import com.adacore.polyglot.proxy2cpp.codegen.DispatchReturnConverter;
 import com.adacore.polyglot.proxy2cpp.codegen.ParameterGenerator;
 import com.adacore.polyglot.proxy2cpp.codegen.ReturnConverter;
 import com.adacore.polyglot.proxy2cpp.codegen.TypenameGenerator;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -268,51 +270,46 @@ public class CppAPI {
     }
 
     public String getParamForConstructor(Parameter p) {
-        PointerTypeExpr ptrType = null;
-        if (p.type instanceof ReferenceTypeExpr ref && ref.typeExpr instanceof PointerTypeExpr ptr)
-            ptrType = ptr;
-        else if (p.type instanceof PointerTypeExpr ptr) ptrType = ptr;
-        if (ptrType != null) {
+        TypeExpr type = p.type.referencedType();
+        if (type.isPointer()) {
             String name = toLower(p.name);
-            return "%s.get() == nullptr ? %s : %s->data_()"
-                    .formatted(name, nullValue(ptrType), name);
+            return CppGenerator.makeTernary(
+                            name.concat(".get() == nullptr"),
+                            nullValue((PointerTypeExpr) type),
+                            name.concat("->data_()"))
+                    .toString();
         }
         return getParamForCall(p);
     }
 
     /** Create a call to the C symbol of the funtion. */
     public String callCSymbol(FunctionDecl functionDecl) {
-        StringBuilder builder = new StringBuilder();
+        ArrayList<String> parameters = new ArrayList<>();
         boolean funcIsMethod = isMethod(functionDecl);
-        builder.append(functionDecl.symbol).append("(");
         // If the function is attached to a type, use ``this->data`` as the first argument.
         if (funcIsMethod) {
-            if (functionDecl.role.type instanceof ArrayTypeExpr
-                    && functionDecl.type.parameters.get(0).type instanceof ReferenceTypeExpr ref
-                    && ref.typeExpr instanceof PointerTypeExpr) builder.append("&");
-            builder.append("this->_data");
-            if (functionDecl.type.parameters.size() > 1) builder.append(", ");
+            TypeExpr type = functionDecl.type.parameters.get(0).type;
+            if (functionDecl.role.type.isArray()
+                    && type.isReference()
+                    && type.referencedType().isPointer()) parameters.add("&this->_data");
+            else parameters.add("this->_data");
         }
 
         RoleKind roleKind = functionDecl.role != null ? functionDecl.role.kind : null;
 
-        builder.append(
-                functionDecl.type.parameters.stream()
-                        .skip(funcIsMethod ? 1 : 0)
-                        .map(
-                                roleKind == RoleKind.ALLOC || roleKind == RoleKind.SHADOW_ALLOC
-                                        ? p -> getParamForConstructor(p)
-                                        : p -> getParamForCall(p))
-                        .collect(Collectors.joining(", ")));
+        functionDecl.type.parameters.stream()
+                .skip(funcIsMethod ? 1 : 0)
+                .map(
+                        roleKind == RoleKind.ALLOC || roleKind == RoleKind.SHADOW_ALLOC
+                                ? p -> getParamForConstructor(p)
+                                : p -> getParamForCall(p))
+                .collect(() -> parameters, ArrayList::add, ArrayList::addAll);
         if (roleKind == RoleKind.SHADOW_ALLOC) {
             String className = functionDecl.role.type.getName().getLastName().toPascal();
-            builder.append(functionDecl.type.parameters.isEmpty() ? "" : ", ")
-                    .append("_self, &")
-                    .append(className)
-                    .append("_vtable");
+            parameters.add("_self");
+            parameters.add("&%s_vtable".formatted(className));
         }
-        builder.append(")");
-        return builder.toString();
+        return CppGenerator.makeCall(functionDecl.symbol, parameters).toString();
     }
 
     /** Create a string of the return statement. */
@@ -425,17 +422,14 @@ public class CppAPI {
 
     /** Create a dispatching call to the member function set in the vtable's extra data. */
     public String callDispatch(VTableEntry function) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("__self->")
-                .append(function.name.toLower())
-                .append("(")
-                .append(
+        return CppGenerator.makeCall(
+                        "__self->".concat(function.name.toLower()),
                         function.functionType.parameters.stream()
                                 .skip(1)
-                                .map(p -> "_" + toLower(p.name))
-                                .collect(Collectors.joining(", ")))
-                .append(")");
-        return builder.toString();
+                                .map(p -> toLower(p.name))
+                                .map(DispatchParameterConverter::getConverterValue)
+                                .toList())
+                .toString();
     }
 
     /**
