@@ -121,4 +121,17 @@ package body Polyglot.Exceptions is
       Exc_Free (Occurence);
    end Free_Exception_Occurence;
 
+   ----------------------
+   -- Get_Cstr_Message --
+   ----------------------
+
+   function Get_Cstr_Message
+     (Addr : System.Address) return Interfaces.C.Strings.chars_ptr
+   is
+      Occurence : Exception_Occurrence_Access := Addr_To_Exc (Addr);
+   begin
+      return
+        Interfaces.C.Strings.New_String (Exception_Message (Occurence.all));
+   end Get_Cstr_Message;
+
 end Polyglot.Exceptions;
