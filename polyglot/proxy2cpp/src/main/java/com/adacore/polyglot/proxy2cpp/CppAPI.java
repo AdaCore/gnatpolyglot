@@ -6,7 +6,6 @@
 package com.adacore.polyglot.proxy2cpp;
 
 import com.adacore.polyglot.NativeType;
-import com.adacore.polyglot.NativeType.NativeTypeDecl;
 import com.adacore.polyglot.proxy.ArrayTypeExpr;
 import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.EnumerationDecl;
@@ -30,6 +29,7 @@ import com.adacore.polyglot.proxy2cpp.codegen.DispatchParameterConverter;
 import com.adacore.polyglot.proxy2cpp.codegen.DispatchReturnConverter;
 import com.adacore.polyglot.proxy2cpp.codegen.ParameterGenerator;
 import com.adacore.polyglot.proxy2cpp.codegen.ReturnConverter;
+import com.adacore.polyglot.proxy2cpp.codegen.TypenameGenerator;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -58,6 +58,8 @@ public class CppAPI {
 
     private DispatchParameterConverter dispatchParameterConverter =
             new DispatchParameterConverter(this);
+
+    private TypenameGenerator typenameGenerator = new TypenameGenerator(this);
 
     public CppAPI(ProxyContext context, Path outputPath, Name projectName) {
         this.headerDir = outputPath.resolve("include");
@@ -143,30 +145,7 @@ public class CppAPI {
 
     /** Return the refered C++ type's name. */
     public String cppTypename(TypeExpr typeExpr, boolean addLeadingColons) {
-        String prefix = addLeadingColons ? "::" : "";
-        if (typeExpr instanceof NameTypeExpr name) {
-            TypeDecl typeDecl = context.getTypeDecl(name.name);
-            if (typeDecl instanceof NativeTypeDecl nativeType)
-                return nativeTypeName(nativeType.nativeType);
-            if (typeDecl instanceof ClassDecl || typeDecl instanceof EnumerationDecl)
-                return name.name.join(fqn -> lastNameToCppName(fqn), prefix, "::", "");
-        } else if (typeExpr instanceof ArrayTypeExpr array) {
-            return prefix
-                    + "polyglot::ada::arrays::polyglot_array<"
-                    + cppTypename(array.typeExpr)
-                    + ">";
-        } else if (typeExpr instanceof ReferenceTypeExpr ref) {
-            StringBuilder builder = new StringBuilder();
-            if (ref.isConst) builder.append("const ");
-            builder.append(cppTypename(ref.typeExpr)).append(" &");
-            return builder.toString();
-        } else if (typeExpr instanceof PointerTypeExpr pointer) {
-            StringBuilder builder = new StringBuilder(prefix).append("polyglot::polyglot_ptr<");
-            if (pointer.isConst) builder.append("const ");
-            builder.append(cppTypename(pointer.typeExpr)).append(">");
-            return builder.toString();
-        }
-        throw new UnsupportedOperationException("Unsupported Cpp type");
+        return typenameGenerator.cppTypename(typeExpr, addLeadingColons);
     }
 
     public String cppTypename(TypeExpr typeExpr) {
@@ -177,19 +156,12 @@ public class CppAPI {
      * Create a string that represents the C++ typename when returning a value of type `typeExpr`
      */
     public String cppReturnTypename(TypeExpr typeExpr) {
-        // When returning a reference to a non-native type, we cannot allocate a new proxy object
-        // and return a real C++ reference to it. Instead, return a `view` to the returned pointer
-        // that acts as a reference and that won't free the underlying pointer when destroyed.
-        if (typeExpr instanceof ReferenceTypeExpr ref && !context.isNativeScalar(ref.typeExpr)) {
-            String constness = ref.isConst ? "const " : "";
-            return constness.concat(cppTypename(ref.typeExpr)).concat("::view");
-        }
-        return cppTypename(typeExpr);
+        return typenameGenerator.cppReturnTypename(typeExpr);
     }
 
     private static Set<Name> reservedGlobalEntities = Set.of(Name.fromLower("system"));
 
-    private String lastNameToCppName(FullyQualifiedName fqn) {
+    public String lastNameToCppName(FullyQualifiedName fqn) {
         Name lastName = fqn.getLastName();
         if (context.getTypeDecl(fqn) != null) return lastName.toPascal();
         String res = toLower(lastName);
@@ -200,45 +172,7 @@ public class CppAPI {
 
     /** Return the refered C type's name. */
     public String cTypename(TypeExpr typeExpr) {
-        if (typeExpr instanceof NameTypeExpr name) {
-            TypeDecl typeDecl = context.getTypeDecl(name.name);
-            if (typeDecl instanceof NativeTypeDecl nativeType)
-                return switch (nativeType.nativeType) {
-                    case STRING -> "polyglot::ada::strings::string_data";
-                    default -> nativeTypeName(nativeType.nativeType);
-                };
-            // Classes are mapped as pointers in C.
-            if (typeDecl instanceof ClassDecl) return "void *";
-            if (typeDecl instanceof EnumerationDecl) return nativeTypeName(NativeType.SINT32);
-        } else if (typeExpr instanceof ArrayTypeExpr) {
-            return "polyglot::ada::arrays::array_data";
-        } else if (typeExpr instanceof ReferenceTypeExpr ref) {
-            // References are mapped as pointers in C.
-            if (ref.typeExpr instanceof ArrayTypeExpr) return cTypename(ref.typeExpr);
-            String constness = ref.isConst ? "const " : "";
-            if (ref.typeExpr instanceof NameTypeExpr name
-                    && context.getTypeDecl(name.name) instanceof NativeTypeDecl nativeType) {
-                return constness
-                        + switch (nativeType.nativeType) {
-                            case STRING -> cTypename(name);
-                            default -> nativeTypeName(nativeType.nativeType) + "*";
-                        };
-            }
-            if (!ref.isConst && ref.typeExpr instanceof PointerTypeExpr ptr) {
-                if (context.isClassType(ptr.typeExpr)) return constness + "void **";
-            }
-            if (ref.isConst
-                    && ref.typeExpr instanceof PointerTypeExpr ptr
-                    && ptr.typeExpr instanceof ArrayTypeExpr) {
-                return cTypename(ptr.typeExpr);
-            }
-            return constness + "void *";
-        } else if (typeExpr instanceof PointerTypeExpr ptr) {
-            String constness = ptr.isConst ? "const " : "";
-            if (isStringOrArray(ptr.typeExpr)) return constness + cTypename(ptr.typeExpr);
-            return constness + "void *";
-        }
-        throw new UnsupportedOperationException("Unsupported C type");
+        return typenameGenerator.cTypename(typeExpr);
     }
 
     /** Create the string of the C++ namespace of the corresponding module. */
