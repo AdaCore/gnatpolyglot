@@ -40,8 +40,25 @@ public:
     }
 };
 
+class MissingClone : public test::Root {
+public:
+    MissingClone() : test::Root(1, 2, this) {}
+};
+
 int main() {
     Inherited in{};
     in.p();
     test::p_make_copy(in);
+    try {
+        MissingClone m;
+        test::p_make_copy(m);
+    } catch (const polyglot::ada::exceptions::ProgramError &e) {
+        std::cout << "Caught:"
+                  << std::char_traits<char>::find(
+                         e.what(),
+                         std::char_traits<char>::length(e.what()),
+                         ' '
+                     )
+                  << "\n";
+    }
 }

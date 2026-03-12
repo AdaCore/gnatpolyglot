@@ -8,7 +8,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <type_traits>
 #include <polyglot_ptr.h>
 

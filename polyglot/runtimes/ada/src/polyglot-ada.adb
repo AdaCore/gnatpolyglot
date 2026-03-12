@@ -4,6 +4,8 @@
 --
 
 with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Exceptions; use Ada.Exceptions;
+with Polyglot.Exceptions;
 
 package body Polyglot.Ada is
 
@@ -11,6 +13,8 @@ package body Polyglot.Ada is
       Vtable : Minimal_Vtable
       with Address => Shadow.Vtable;
       pragma Import (Ada, Vtable);
+      Exc_Occ_A : Standard.Ada.Exceptions.Exception_Occurrence_Access;
+      Exc_Occ : Standard.Ada.Exceptions.Exception_Occurrence;
    begin
       Shadow.Self :=
         Vtable.Clone_Dispatch
@@ -21,6 +25,15 @@ package body Polyglot.Ada is
       -- The cloned object is owned by the shadow object: As it could be never
       -- returned to the user, it must be freed on destruction of the shadow
       -- object.
+      Exc_Occ_A :=
+        Polyglot.Exceptions.Addr_To_Exc
+          (Polyglot.Get_Kernel.Exc_Info.Current_Exception);
+      if Exc_Occ_A /= null then
+         Polyglot.Get_Kernel.Exc_Info.Current_Exception := System.Null_Address;
+         Standard.Ada.Exceptions.Save_Occurrence (Exc_Occ, Exc_Occ_A.all);
+         Polyglot.Exceptions.Exc_Free (Exc_Occ_A);
+         Standard.Ada.Exceptions.Reraise_Occurrence (Exc_Occ);
+      end if;
    end Adjust;
 
    procedure Finalize (Shadow : in out Shadow_Data) is

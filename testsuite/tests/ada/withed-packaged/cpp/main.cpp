@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "polyglot_ptr.h"
 #include "test.h"
 #include "renamed.h"

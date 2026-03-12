@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "polyglot_ada_arrays.h"
 #include "polyglot_ada_strings.h"
 #include "test.h"

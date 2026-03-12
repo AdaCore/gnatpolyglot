@@ -207,8 +207,10 @@ vim: filetype=jtecpp
             // called from the library. The data is already being freed on that side if
             // necessary (it could have been copied on the stack, meaning that calling
             // the free function could lead to an invalid free)
-            self->release_();
-            delete self;
+            if (self != nullptr) {
+                self->release_();
+                delete self;
+            }
         }
         }
 
@@ -271,11 +273,12 @@ vim: filetype=jtecpp
     }
 
     ${className} *${className}::internal_clone_(void *) {
-        assert(
-            "Attempting to clone a derivation of ${className}:"
-            " ${className}::internal_clone_ should be overriden"
-            && false
+        polyglot::ada::exceptions::ProgramError error(
+           "Attempting to clone a derivation of ${className}:"
+           " ${className}::internal_clone_ should be overriden"
         );
+        polyglot_get_kernel()->exc_info.exception_data = error.release_();
+        return nullptr;
     }
 
     @if(members.copyFunction != null)
