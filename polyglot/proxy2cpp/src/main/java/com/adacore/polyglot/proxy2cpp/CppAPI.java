@@ -6,7 +6,6 @@
 package com.adacore.polyglot.proxy2cpp;
 
 import com.adacore.polyglot.NativeType;
-import com.adacore.polyglot.proxy.ArrayTypeExpr;
 import com.adacore.polyglot.proxy.ClassDecl;
 import com.adacore.polyglot.proxy.EnumerationDecl;
 import com.adacore.polyglot.proxy.ExceptionDecl;
@@ -15,12 +14,10 @@ import com.adacore.polyglot.proxy.FunctionDecl;
 import com.adacore.polyglot.proxy.FunctionTypeExpr;
 import com.adacore.polyglot.proxy.Module;
 import com.adacore.polyglot.proxy.Name;
-import com.adacore.polyglot.proxy.NameTypeExpr;
 import com.adacore.polyglot.proxy.Owner;
 import com.adacore.polyglot.proxy.Parameter;
 import com.adacore.polyglot.proxy.PointerTypeExpr;
 import com.adacore.polyglot.proxy.ProxyContext;
-import com.adacore.polyglot.proxy.ReferenceTypeExpr;
 import com.adacore.polyglot.proxy.Role.RoleKind;
 import com.adacore.polyglot.proxy.TypeDecl;
 import com.adacore.polyglot.proxy.TypeExpr;
@@ -229,7 +226,7 @@ public class CppAPI {
     }
 
     public boolean isStringOrArray(TypeExpr typeExpr) {
-        return typeExpr instanceof ArrayTypeExpr || context.isStringType(typeExpr);
+        return typeExpr.isArray() || context.isStringType(typeExpr);
     }
 
     public boolean isMethod(FunctionDecl functionDecl) {
@@ -329,16 +326,15 @@ public class CppAPI {
         Predicate<Parameter> predicate = null;
         predicate =
                 (p) -> {
-                    TypeExpr typeExpr = p.type;
-                    if (typeExpr instanceof ReferenceTypeExpr ref) typeExpr = ref.typeExpr;
-                    if (typeExpr instanceof NameTypeExpr name) {
-                        TypeDecl typeDecl = context.getTypeDecl(name.name);
+                    TypeExpr typeExpr = p.type.referencedType();
+                    if (typeExpr.isName()) {
+                        TypeDecl typeDecl = context.getTypeDecl(typeExpr.getName());
                         return typeDecl instanceof EnumerationDecl
                                 || typeDecl instanceof ClassDecl
                                 || context.isStringType(typeExpr);
                     }
                     // Arrays and pointers are binded as classes, so it works
-                    return typeExpr instanceof ArrayTypeExpr || typeExpr instanceof PointerTypeExpr;
+                    return typeExpr.isArray() || typeExpr.isPointer();
                 };
         if (functionDecl.type.parameters.stream().anyMatch(predicate)) {
             if (lastName.equals(Name.operatorPlus)) return "operator+";
@@ -441,8 +437,9 @@ public class CppAPI {
     }
 
     public boolean returnsVoid(FunctionTypeExpr functionType) {
-        return functionType.returnType instanceof NameTypeExpr name
-                && context.getTypeDecl(name.name).equals(NativeType.VOID.declaration);
+        return functionType.returnType.isName()
+                && context.getTypeDecl(functionType.returnType.getName())
+                        .equals(NativeType.VOID.declaration);
     }
 
     public String exceptionFullyQualifiedName(ExceptionDecl exc) {
@@ -497,9 +494,9 @@ public class CppAPI {
     }
 
     public String nullValue(PointerTypeExpr typeExpr) {
-        if (typeExpr.typeExpr instanceof ArrayTypeExpr)
+        if (typeExpr.pointedType().isArray())
             return "polyglot::ada::arrays::array_data{1, 0, nullptr}";
-        if (context.isStringType(typeExpr.typeExpr))
+        if (context.isStringType(typeExpr.pointedType()))
             return "polyglot::ada::strings::string_data{1, 0, nullptr}";
         return "nullptr";
     }
