@@ -1,4 +1,4 @@
-Welcome to Polyglot's documentation!
+Welcome to GNATpolyglot's documentation!
 ====================================
 
 .. toctree::

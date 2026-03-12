@@ -5,7 +5,7 @@ Limitations
 This document introduces all limitations encountered when trying to bind
 specific language constructs or types.
 
-Polyglot ignores any constructs that may not be supported, cascading to
+GNATpolyglot ignores any constructs that may not be supported, cascading to
 any other declarations that may use or refer to the unsupported feature.
 
 Ada2Proxy
