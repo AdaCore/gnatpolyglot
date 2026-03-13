@@ -1,5 +1,5 @@
 """
-Test basic commands of the Polyglot's CLI.
+Test basic commands of the GNATpolyglot's CLI.
 """
 
 import os
@@ -8,7 +8,7 @@ from utils import run_polyglot
 
 
 def print_cmd(subcommand: str, args: list[str], discard_first_lines: int = 0):
-    print(f"Running `polyglot {subcommand} {" ".join(args)}`")
+    print(f"Running `gnatpolyglot {subcommand} {" ".join(args)}`")
     print("=" * 80)
     print()
     res = run_polyglot(subcommand, args, pipe=True)

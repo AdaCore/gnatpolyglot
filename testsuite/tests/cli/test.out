@@ -1,4 +1,4 @@
-Running `polyglot  --version`
+Running `gnatpolyglot  --version`
 ================================================================================
 
 Copyright (C) 2025-2026, AdaCore.
@@ -6,7 +6,7 @@ Tools are licensed under GPL-3.0-or-later.
 Runtime libraries are licensed under Apache-2.0.
 
 
-Running `polyglot  --help`
+Running `gnatpolyglot  --help`
 ================================================================================
 
 Usage: gnatpolyglot [-hqv] [--version] [--header-file=<headerFile>] [COMMAND]
@@ -26,7 +26,7 @@ Commands:
   setup      Set up the GNATpolyglot runtime.
 
 
-Running `polyglot setup --help`
+Running `gnatpolyglot setup --help`
 ================================================================================
 
 Usage: gnatpolyglot setup [-hqv] [--check-only] [--target-only]
@@ -57,7 +57,7 @@ Note that --to-lang cannot be used without --from-lang.
   -v                       verbose output
 
 
-Running `polyglot validator --help`
+Running `gnatpolyglot validator --help`
 ================================================================================
 
 Usage: gnatpolyglot validator [-hqv] [--header-file=<headerFile>] json_proxy
@@ -71,7 +71,7 @@ Validate a json proxy
   -v               verbose output
 
 
-Running `polyglot ada2proxy --help`
+Running `gnatpolyglot ada2proxy --help`
 ================================================================================
 
 Usage: gnatpolyglot ada2proxy [OPTIONS]
@@ -109,7 +109,7 @@ were not part of the original files.
   -v                        verbose output
 
 
-Running `polyglot proxy2cpp --help`
+Running `gnatpolyglot proxy2cpp --help`
 ================================================================================
 
 Usage: gnatpolyglot proxy2cpp [-hqv] [--header-file=<headerFile>]

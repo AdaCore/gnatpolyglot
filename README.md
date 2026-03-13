@@ -1,49 +1,49 @@
-# Polyglot
+# GNATpolyglot
 
 Multi-language binding interface generator.
 
 ## Build and usage
 
-Polyglot depends on [Libadalang](https://github.com/AdaCore/libadalang). You must first follow its instructions and install the java bindings.
+GNATpolyglot depends on [Libadalang](https://github.com/AdaCore/libadalang). You must first follow its instructions and install the java bindings.
 
-In order to build Polyglot, you must then run:
+In order to build GNATpolyglot, you must then run:
 
 ```sh
-$[polyglot]> mvn package -f polyglot/pom.xml
+$[gnatpolyglot]> mvn package -f gnatpolyglot/pom.xml
 ```
 
-You can then run Polyglot using the uber jar:
+You can then run GNATpolyglot using the uber jar:
 
 ```
-$[polyglot]> java \
-        -cp polyglot/cli/target/cli.jar \
+$[gnatpolyglot]> java \
+        -cp gnatpolyglot/cli/target/cli.jar \
         --add-exports org.graalvm.truffle/com.oracle.truffle.api.strings=ALL-UNNAMED \
-        com.adacore.polylot.cli.PolyglotMain
+        com.adacore.polylot.cli.GNATpolyglotMain
 ```
 
 To enable the native-image build, use the `native` profile:
 ```sh
-$[polyglot]> mvn package -f polyglot/pom.xml -Pnative
+$[gnatpolyglot]> mvn package -f gnatpolyglot/pom.xml -Pnative
 ```
 
 You can then run the native application using:
 
 ```
-$[polyglot]> ./polyglot/bin/polyglot
+$[gnatpolyglot]> ./gnatpolyglot/bin/gnatpolyglot
 ```
 
 ## License
 This work is licensed under `GPL-3.0-or-later AND Apache-2.0`.
 
 The tools located in
-- `polyglot/ada2proxy`
-- `polyglot/cli`
-- `polyglot/proxy`
-- `polyglot/proxy2cpp`
+- `gnatpolyglot/ada2proxy`
+- `gnatpolyglot/cli`
+- `gnatpolyglot/proxy`
+- `gnatpolyglot/proxy2cpp`
 
 directories are licensed under `GPL-3.0-or-later`,
 
-The libraries in the `polyglot/runtimes` directory are licensed under
+The libraries in the `gnatpolyglot/runtimes` directory are licensed under
 `Apache-2.0`.
 
 `SPDX-License-Identifier: GPL-3.0-or-later AND Apache-2.0`
