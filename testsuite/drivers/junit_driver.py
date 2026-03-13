@@ -12,10 +12,10 @@ class JunitDriver(ClassicTestDriver):
     results_dir: str
     """Path where JUnit reports will be produced."""
 
-    polyglot_java_root_dir: str = os.path.join(
-        os.path.dirname(__file__), "..", "..", "polyglot"
+    gnatpolyglot_java_root_dir: str = os.path.join(
+        os.path.dirname(__file__), "..", "..", "gnatpolyglot"
     )
-    """Path where the Polyglot Java root ``pom.xml`` file is located."""
+    """Path where the GNATpolyglot Java root ``pom.xml`` file is located."""
 
     final_report: str
     """Path to the final xml report"""
@@ -40,7 +40,7 @@ class JunitDriver(ClassicTestDriver):
             "test",
             "-q",
             "-f",
-            self.polyglot_java_root_dir,
+            self.gnatpolyglot_java_root_dir,
             # Do not print the summary.
             f"-DprintSummary=false",
             # Custom argument to change Surefire's report directory.
