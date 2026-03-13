@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# Polyglot binary distribution installation script
+# GNATpolyglot binary distribution installation script
 # Copyright (c) 2025-2026, AdaCore
 #
 
@@ -55,7 +55,7 @@ check_env () {
 ###################################
 
 set_qualifier () {
-    qualifier="Polyglot"
+    qualifier="GNATpolyglot"
     long_qualifier="$qualifier"
 }
 
@@ -77,7 +77,7 @@ EOF
 }
 
 ###################################
-# Install Polyglot into $prefix #
+# Install GNATpolyglot into $prefix #
 ###################################
 
 standard_installation () {
@@ -160,11 +160,11 @@ if [ $# -eq 1 ]; then
         cat <<EOF
 Usage: $0 [install-dir]
 
-When no argument is specified, run the Polyglot installer interactively.
+When no argument is specified, run the GNATpolyglot installer interactively.
 Otherwise, install in batch mode under the "install-dir" prefix.
 EOF
     else
-        echo "Installing Polyglot under $1"
+        echo "Installing GNATpolyglot under $1"
         prefix="$1"
         standard_installation
     fi
