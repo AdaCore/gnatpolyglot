@@ -1,10 +1,10 @@
-#include "polyglot_ada_arrays.h"
+#include "gnatpolyglot_ada_arrays.h"
 #include "test.h"
 #include <cassert>
 #include <iostream>
 
-using namespace polyglot;
-using namespace polyglot::ada::arrays;
+using namespace gnatpolyglot;
+using namespace gnatpolyglot::ada::arrays;
 
 template <typename T>
 void print(T arr, int size) {

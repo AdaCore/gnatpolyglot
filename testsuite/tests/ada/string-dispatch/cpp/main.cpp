@@ -2,18 +2,18 @@
 #include <ios>
 #include <iostream>
 
-#include "polyglot_ada_strings.h"
+#include "gnatpolyglot_ada_strings.h"
 #include "test.h"
 
-using namespace polyglot::ada::strings;
+using namespace gnatpolyglot::ada::strings;
 
 class Child : public test::T {
 public:
   Child() : test::T(this) {}
 
-  ::polyglot::ada::strings::polyglot_string
-  concat(const polyglot::ada::strings::polyglot_string &a,
-         const polyglot::ada::strings::polyglot_string &b) const override {
+  ::gnatpolyglot::ada::strings::polyglot_string
+  concat(const gnatpolyglot::ada::strings::polyglot_string &a,
+         const gnatpolyglot::ada::strings::polyglot_string &b) const override {
     return from_string(to_string(a) + to_string(b) + to_string(a));
   }
 };

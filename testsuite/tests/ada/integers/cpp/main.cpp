@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "ints.h"
-#include "polyglot_ada_exceptions.h"
+#include "gnatpolyglot_ada_exceptions.h"
 
 template <typename S, typename T>
 void minimum_size(T) {
@@ -35,7 +35,7 @@ int main() {
     try {
         ints::p(100);
         assert(false);
-    } catch (const polyglot::ada::exceptions::ConstraintError &e) {
+    } catch (const gnatpolyglot::ada::exceptions::ConstraintError &e) {
         // Avoid printing the exception message: it would contain a sloc from
         // generated glue code which could change at any moment.
     }

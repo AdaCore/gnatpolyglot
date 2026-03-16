@@ -19,7 +19,7 @@ int main() {
 
     try {
         test::get_exception(3);
-    } catch (const polyglot::exceptions::polyglot_exception &e) {
+    } catch (const gnatpolyglot::exceptions::polyglot_exception &e) {
         std::cout << "caught" << e.what() << "\n";
     }
 

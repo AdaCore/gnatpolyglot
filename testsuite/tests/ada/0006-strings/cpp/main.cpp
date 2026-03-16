@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include <polyglot_ada_strings.h>
+#include <gnatpolyglot_ada_strings.h>
 #include "test.h"
 
-using namespace polyglot::ada::strings;
+using namespace gnatpolyglot::ada::strings;
 
 int main() {
     polyglot_string ada_arr = test::string_func();

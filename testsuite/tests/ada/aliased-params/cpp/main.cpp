@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <polyglot_ada_arrays.h>
+#include <gnatpolyglot_ada_arrays.h>
 
 #include "test.h"
 
@@ -16,7 +16,7 @@ int main() {
     rec.p_rec_out();
     rec.p_rec();
 
-    polyglot::ada::arrays::polyglot_array<int> arr(1, 5);
+    gnatpolyglot::ada::arrays::polyglot_array<int> arr(1, 5);
     for (auto &i : arr) {
        i = 1;
     }

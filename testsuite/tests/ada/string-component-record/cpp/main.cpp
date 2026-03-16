@@ -1,10 +1,10 @@
-#include "polyglot_ada_strings.h"
-#include "polyglot_ptr.h"
+#include "gnatpolyglot_ada_strings.h"
+#include "gnatpolyglot_ptr.h"
 #include "test.h"
 #include <iostream>
 
-using namespace polyglot;
-using namespace polyglot::ada::strings;
+using namespace gnatpolyglot;
+using namespace gnatpolyglot::ada::strings;
 
 int main() {
     test::T t("aaaaaaaaaa");

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "polyglot_ada_arrays.h"
+#include "gnatpolyglot_ada_arrays.h"
 #include "test.h"
 
 class InheritsControlled : public test::Cont { };
@@ -31,7 +31,7 @@ int main() {
     }
     std::cout << std::endl;
     {
-       polyglot::ada::arrays::polyglot_array<test::Cont> arr = test::get_arr();
+       gnatpolyglot::ada::arrays::polyglot_array<test::Cont> arr = test::get_arr();
        test::foo(arr);
        test::foo(arr);
        test::foo(arr);

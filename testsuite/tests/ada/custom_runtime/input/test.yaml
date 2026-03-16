@@ -18,7 +18,7 @@ scanner_extra_args:
 # Using a custom Ada runtime implies that we need to recompile the GNATpolyglot
 # runtime too.
 sync_tree:
-  - ../../../../../polyglot/runtimes
+  - ../../../../../gnatpolyglot/runtimes
   - ../../../internal/sources
 
 local_project_path:

@@ -1,15 +1,15 @@
-#include "polyglot_ada_arrays.h"
-#include "polyglot_ada_strings.h"
-#include "polyglot_ptr.h"
+#include "gnatpolyglot_ada_arrays.h"
+#include "gnatpolyglot_ada_strings.h"
+#include "gnatpolyglot_ptr.h"
 #include <cassert>
 #include <filesystem>
 #include <functional>
 #include <gnatcoll_vfs.h>
 #include <unordered_map>
 
-using namespace polyglot;
-using namespace polyglot::ada::strings;
-using namespace polyglot::ada::arrays;
+using namespace gnatpolyglot;
+using namespace gnatpolyglot::ada::strings;
+using namespace gnatpolyglot::ada::arrays;
 using namespace gnatcoll::vfs;
 
 void test_f(const VirtualFile &dir) {
@@ -67,7 +67,7 @@ void test_f(const VirtualFile &dir) {
     polyglot_ptr<polyglot_string> str = f.read_file();
     /// A.Assert (Str = null or Root, "can read unreadable file?");
     assert(str.get() == nullptr);
-    str.set_owner(polyglot::memory_owner::USER);
+    str.set_owner(gnatpolyglot::memory_owner::USER);
     str.reset();
 
     // Make it readable again, and read again
@@ -78,7 +78,7 @@ void test_f(const VirtualFile &dir) {
     assert(to_string(*str) == "first word second word");
     /// A.Assert (Integer (Size (F)), Str.all'Length, "file size");
     assert(f.size() == str->size());
-    str.set_owner(polyglot::memory_owner::USER);
+    str.set_owner(gnatpolyglot::memory_owner::USER);
     str.reset();
 
     // Make the file read-only
@@ -126,7 +126,7 @@ void test_f(const VirtualFile &dir) {
     assert(success);
     f.delete_(success);
     assert(!success);
-    files.set_owner(polyglot::memory_owner::USER);
+    files.set_owner(gnatpolyglot::memory_owner::USER);
 }
 
 template<>

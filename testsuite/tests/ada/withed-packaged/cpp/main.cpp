@@ -1,10 +1,10 @@
 #include <iostream>
 
-#include "polyglot_ptr.h"
+#include "gnatpolyglot_ptr.h"
 #include "test.h"
 #include "renamed.h"
 
-using namespace polyglot::ada::arrays;
+using namespace gnatpolyglot::ada::arrays;
 
 int main() {
     test::T value{rec1::R1()};
@@ -17,5 +17,5 @@ int main() {
     test::p3(renamed::T());
 
     rec4::R4 r4;
-    test::p4(polyglot::polyglot_ptr<rec4::R4>(r4));
+    test::p4(gnatpolyglot::polyglot_ptr<rec4::R4>(r4));
 }
