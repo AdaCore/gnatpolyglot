@@ -33,7 +33,8 @@ public class GNATpolyglotSetup implements Callable<Integer> {
 
     public static enum Lang {
         ada("Ada"),
-        cpp("C++");
+        cpp("C++"),
+        java("Java");
 
         public String name;
 

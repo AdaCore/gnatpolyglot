@@ -5,7 +5,10 @@
 
 package com.adacore.gnatpolyglot.proxy2java;
 
+import com.adacore.gnatpolyglot.proxy.GNATpolyglotSetup;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -38,8 +41,29 @@ public class Proxy2Java implements Callable<Integer> {
                             + " <outputPath>/runtimes")
     Path withRuntime;
 
+    @Option(
+            names = {"--group-id"},
+            description = "groupId of the generated Maven project file.",
+            split = ".")
+    List<String> groupId = List.of("com", "adacore");
+
     @Override
     public Integer call() throws Exception {
+        JavaPrinter printer = new JavaPrinter(proxyFile, groupId);
+
+        if (withRuntime == null) {
+            withRuntime = outputPath.resolve("runtimes");
+            new GNATpolyglotSetup(
+                            withRuntime,
+                            Files.isDirectory(withRuntime),
+                            GNATpolyglotSetup.Lang.valueOf(printer.getProxy().inputLanguage),
+                            GNATpolyglotSetup.Lang.java,
+                            true)
+                    .call();
+        }
+
+        printer.generate(outputPath, withRuntime);
+
         return 0;
     }
 }
