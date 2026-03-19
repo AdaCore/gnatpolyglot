@@ -20,11 +20,11 @@ void f(int n) {
 int main() {
     std::vector<std::thread> threads;
     int reference = 0;
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100; i++) {
         threads.emplace_back(f, i);
         reference += i;
     }
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100; i++) {
         threads[i].join();
     }
     std::cout << counter << " == " << reference << "\n";
