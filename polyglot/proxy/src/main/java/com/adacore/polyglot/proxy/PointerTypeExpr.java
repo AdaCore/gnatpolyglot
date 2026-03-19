@@ -59,4 +59,14 @@ public class PointerTypeExpr extends TypeExpr {
         }
         return false;
     }
+
+    @Override
+    public boolean isPointer() {
+        return true;
+    }
+
+    @Override
+    public TypeExpr pointedType() {
+        return typeExpr;
+    }
 }

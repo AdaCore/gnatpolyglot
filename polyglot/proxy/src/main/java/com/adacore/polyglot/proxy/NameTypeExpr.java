@@ -42,4 +42,9 @@ public class NameTypeExpr extends TypeExpr {
         }
         return false;
     }
+
+    @Override
+    public boolean isName() {
+        return true;
+    }
 }

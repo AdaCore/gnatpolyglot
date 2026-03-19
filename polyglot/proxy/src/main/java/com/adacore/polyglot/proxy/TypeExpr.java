@@ -42,4 +42,32 @@ public abstract class TypeExpr implements ProxyObject {
         return (this instanceof ReferenceTypeExpr ref && ref.isConst)
                 || (this instanceof PointerTypeExpr ptr && ptr.isConst);
     }
+
+    public TypeExpr referencedType() {
+        return this;
+    }
+
+    public boolean isReference() {
+        return false;
+    }
+
+    public TypeExpr pointedType() {
+        throw new UnsupportedOperationException("Not a PointerTypeExpr");
+    }
+
+    public boolean isPointer() {
+        return false;
+    }
+
+    public TypeExpr elementType() {
+        throw new UnsupportedOperationException("Not an ArrayTypeExpr");
+    }
+
+    public boolean isArray() {
+        return false;
+    }
+
+    public boolean isName() {
+        return false;
+    }
 }
