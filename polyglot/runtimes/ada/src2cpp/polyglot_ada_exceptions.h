@@ -24,6 +24,11 @@ public:
     AdaException(void *data);
     AdaException(void *data, const strings::polyglot_string &what);
     ~AdaException();
+
+    const char *what() const noexcept override;
+
+private:
+    char *_what;
 };
 
 class ConstraintError : public AdaException {

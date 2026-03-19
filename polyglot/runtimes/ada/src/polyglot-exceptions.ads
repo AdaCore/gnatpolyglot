@@ -6,6 +6,7 @@
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions; use Ada.Exceptions;
+with Interfaces.C.Strings;
 with System;
 
 with Polyglot; use Polyglot;
@@ -76,5 +77,13 @@ package Polyglot.Exceptions is
        (C,
         Free_Exception_Occurence,
         "polyglot__ada__exceptions__free_exception_occurence");
+
+   function Get_Cstr_Message
+     (Addr : System.Address) return Interfaces.C.Strings.chars_ptr;
+   pragma
+     Export
+       (C,
+        Get_Cstr_Message,
+        "polyglot__ada__exceptions__get_cstr_message");
 
 end Polyglot.Exceptions;

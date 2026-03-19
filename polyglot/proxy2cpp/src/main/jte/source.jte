@@ -14,8 +14,7 @@ vim: filetype=jtecpp
 
 @template.text_header()
 
-#include <cassert>
-
+#include <stdexcept>
 #include <polyglot_ada_strings.h>
 #include "polyglot_exceptions_${api.getProjectName().toLower()}.h"
 #include "polyglot.h"

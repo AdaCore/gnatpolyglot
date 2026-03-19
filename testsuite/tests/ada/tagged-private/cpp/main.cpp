@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "test.h"
 
 class Child : public test::Root {

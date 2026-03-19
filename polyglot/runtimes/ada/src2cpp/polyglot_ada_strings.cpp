@@ -41,6 +41,8 @@ char polyglot_string::operator [](std::int32_t index) const {
     return *static_cast<char *>(polyglot__ada__strings__string_get(this->_data, index));
 }
 
+#if __STDC_HOSTED__ == 1
+
 std::string to_string(const polyglot_string &arr) {
   char *ptr = polyglot__ada__strings_to_c_chars_ptr(arr.data_());
   std::string res = ptr;
@@ -51,5 +53,7 @@ std::string to_string(const polyglot_string &arr) {
 polyglot_string from_string(const std::string &str) {
   return polyglot_string(polyglot__ada__strings_from_c_chars_ptr(str.data()));
 }
+
+#endif
 
 } // namespace polyglot::ada::strings

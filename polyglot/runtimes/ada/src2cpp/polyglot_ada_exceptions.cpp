@@ -13,22 +13,33 @@ polyglot__ada__exceptions__create_exception_occurence(int kind);
 extern "C" void *polyglot__ada__exceptions__create_exception_occurence_message(
     int kind, polyglot::ada::strings::string_data data);
 
+extern "C" char *polyglot__ada__exceptions__get_cstr_message(void *data);
+extern "C" char *
+polyglot__ada__strings_to_c_chars_ptr(polyglot::ada::strings::string_data data);
+extern "C" void polyglot__ada__strings_free_c_chars_ptr(char *);
+
 namespace polyglot::ada::exceptions {
 
 AdaException::AdaException(const strings::polyglot_string &what)
     : polyglot::exceptions::polyglot_exception(
           polyglot__ada__exceptions__create_exception_occurence_message(
               static_cast<int>(standard_exception_kind::CONSTRAINT_ERROR_KIND),
-              what.data_()),
-          strings::to_string(what)) {}
+              what.data_()))
+    , _what(polyglot__ada__strings_to_c_chars_ptr(what.data_())) {}
 AdaException::AdaException(void *data)
-    : polyglot::exceptions::polyglot_exception(data) {}
+    : polyglot::exceptions::polyglot_exception(data)
+    , _what(polyglot__ada__exceptions__get_cstr_message(data)) {}
 AdaException::AdaException(void *data, const strings::polyglot_string &what)
-    : polyglot::exceptions::polyglot_exception(
-          data, strings::to_string(what)) {}
+    : polyglot::exceptions::polyglot_exception(data)
+    , _what(polyglot__ada__strings_to_c_chars_ptr(what.data_())) {}
 extern "C" void polyglot__ada__exceptions__free_exception_occurence(void *);
 AdaException::~AdaException() {
     polyglot__ada__exceptions__free_exception_occurence(this->_data);
+    polyglot__ada__strings_free_c_chars_ptr(_what);
+}
+
+const char *AdaException::what() const noexcept {
+    return _what;
 }
 
 ConstraintError::ConstraintError()

@@ -8,7 +8,9 @@
 
 #include "polyglot_ada_arrays.h"
 
-#include <string>
+#if __STDC_HOSTED__ == 1
+   #include <string>
+#endif
 
 namespace polyglot::ada::strings {
 
@@ -98,11 +100,15 @@ private:
     char _data[sizeof(polyglot_string)];
 };
 
+#if __STDC_HOSTED__ == 1
+
 /** Return a new string whose characters are the conversion of each element from arr. */
 polyglot_string from_string(const std::string &str);
 
 /** Return a new string whose characters are the conversion of each element from arr. */
 std::string to_string(const polyglot_string &arr);
+
+#endif
 
 } // namespace polyglot::ada::strings
 
