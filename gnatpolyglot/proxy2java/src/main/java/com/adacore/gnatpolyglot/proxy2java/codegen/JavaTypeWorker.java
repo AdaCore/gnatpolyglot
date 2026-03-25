@@ -6,11 +6,6 @@ import com.adacore.gnatpolyglot.proxy.TypeWorker;
 public interface JavaTypeWorker<T> extends TypeWorker<T> {
 
     @Override
-    default T numberType(TypeExpr type) {
-        throw new UnsupportedOperationException("Unimplemented method 'numberType'");
-    }
-
-    @Override
     default T charType(TypeExpr type) {
         throw new UnsupportedOperationException("Unimplemented method 'charType'");
     }

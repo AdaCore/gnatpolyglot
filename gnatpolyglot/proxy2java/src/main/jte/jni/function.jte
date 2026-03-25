@@ -14,5 +14,11 @@ extern ${api.cTypename(function.type.returnType)} ${function.symbol}();
 
 JNIEXPORT ${api.jniTypename(function.type.returnType)}
 ${api.jniName(function)} (JNIEnv *env, jobject obj) {
+@if (api.returnsVoid(function.type))
     ${api.callCSymbol(function)};
+@else
+    ${api.cTypename(function.type.returnType)} value_returned =
+        ${api.callCSymbol(function)};
+    ${api.makeCReturnStatement(function, "value_returned")}
+@endif
 }

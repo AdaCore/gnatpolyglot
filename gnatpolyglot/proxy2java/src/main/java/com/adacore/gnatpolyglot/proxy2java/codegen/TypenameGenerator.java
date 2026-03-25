@@ -1,6 +1,8 @@
 package com.adacore.gnatpolyglot.proxy2java.codegen;
 
+import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
+import com.adacore.gnatpolyglot.proxy.TypeDecl;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
 
@@ -12,6 +14,16 @@ public class TypenameGenerator {
         @Override
         public ProxyContext getContext() {
             return api.getContext();
+        }
+
+        private String getNativeTypename(TypeExpr typeExpr) {
+            TypeDecl decl = getContext().getTypeDecl(typeExpr.getName());
+            return api.javaPrimitiveTypename(NativeTypeDecl.class.cast(decl).nativeType);
+        }
+
+        @Override
+        public String numberType(TypeExpr type) {
+            return getNativeTypename(type);
         }
 
         @Override
@@ -28,6 +40,16 @@ public class TypenameGenerator {
             return api.getContext();
         }
 
+        private String getNativeTypename(TypeExpr typeExpr) {
+            TypeDecl decl = getContext().getTypeDecl(typeExpr.getName());
+            return api.javaPrimitiveTypename(NativeTypeDecl.class.cast(decl).nativeType);
+        }
+
+        @Override
+        public String numberType(TypeExpr type) {
+            return getNativeTypename(type);
+        }
+
         @Override
         public String voidType(TypeExpr type) {
             return "void";
@@ -40,6 +62,16 @@ public class TypenameGenerator {
         @Override
         public ProxyContext getContext() {
             return api.getContext();
+        }
+
+        private String getNativeTypename(TypeExpr typeExpr) {
+            TypeDecl decl = getContext().getTypeDecl(typeExpr.getName());
+            return api.jniPrimitiveTypename(NativeTypeDecl.class.cast(decl).nativeType);
+        }
+
+        @Override
+        public String numberType(TypeExpr type) {
+            return getNativeTypename(type);
         }
 
         @Override
@@ -57,6 +89,16 @@ public class TypenameGenerator {
         @Override
         public ProxyContext getContext() {
             return api.getContext();
+        }
+
+        private String getNativeTypename(TypeExpr typeExpr) {
+            TypeDecl decl = getContext().getTypeDecl(typeExpr.getName());
+            return api.cPrimitiveTypename(NativeTypeDecl.class.cast(decl).nativeType);
+        }
+
+        @Override
+        public String numberType(TypeExpr type) {
+            return getNativeTypename(type);
         }
 
         @Override

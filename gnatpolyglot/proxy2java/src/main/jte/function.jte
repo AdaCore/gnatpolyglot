@@ -20,5 +20,11 @@ Template file to generate a function.
     public static
     ${api.javaTypename(function.type.returnType)}
     ${functionName}() {
+    @if (api.returnsVoid(function.type))
         ${api.callJavaNative(function, nativeFunc)};
+    @else
+        ${api.javaNativeTypename(function.type.returnType)} valueReturned =
+            ${api.callJavaNative(function, nativeFunc)};
+        ${api.makeJavaReturnStatement(function, "valueReturned")}
+    @endif
     }

@@ -12,4 +12,8 @@ public class CGenerator {
                 .append(args.stream().collect(Collectors.joining(", ")))
                 .append(")");
     }
+
+    public static StringBuilder makeCast(CharSequence type, CharSequence expr) {
+        return new StringBuilder("((").append(type).append(") ").append(expr).append(")");
+    }
 }
