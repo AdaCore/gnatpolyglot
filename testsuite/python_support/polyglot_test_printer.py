@@ -14,6 +14,8 @@ input_lib = os.path.realpath("input_proxy")
 scfg = ScannerConfig(input_lib)
 scfg.set_env()
 
+pcfg = PrinterConfig(".")
+
 print("Running printer test.")
 
 input_proxy_location = os.path.join(input_lib, "proxy")
@@ -23,13 +25,11 @@ print("Running the scanner...")
 run_scanner(scfg.input_lang, scfg.project_file, input_proxy_location, scfg.extra_args)
 print("Compiling the library...")
 compile_lib(scfg.input_lang, scfg.project_file, scfg.input_lib_flags)
-compile_lib(
+proxy_lib = compile_lib(
     scfg.input_lang,
     get_proxy_lib_file(scfg.input_lang, input_proxy_location),
-    scfg.output_lib_flags
+    pcfg.output_lib_flags or scfg.output_lib_flags
 )
-
-pcfg = PrinterConfig(".")
 
 output_proxy_location = os.path.join("output_proxy")
 mkdir(output_proxy_location)
@@ -41,8 +41,15 @@ run_printer(
     output_proxy_location
 )
 
+print("Compiling the library")
+out_lib = compile_lib(
+    pcfg.output_lang,
+    output_proxy_location,
+    deps = proxy_lib,
+)
+
 print("Compiling test main program...")
-res = compile_main(
+main = compile_main(
     pcfg.output_lang,
     pcfg.test_file,
     output_proxy_location,
@@ -50,16 +57,17 @@ res = compile_main(
     scfg.input_lib_name,
     pcfg.cflags,
     pcfg.ldflags,
+    [*proxy_lib, *out_lib]
 )
 
 print("Running test main program...")
 print()
 
-add_path(env, "LD_LIBRARY_PATH", f"{os.path.join(input_proxy_location, 'lib', 'relocatable')}")
-add_path(env, "LD_LIBRARY_PATH", f"{os.path.join(output_proxy_location)}")
-main_argv = [res]
+main_argv = main.exec_cmd
 if "--enable-valgrind" in sys.argv:
-    main_argv = valgrind_cmd(main_argv)
+    main_argv = valgrind_cmd(pcfg.output_lang, main_argv)
+for k, v in main.exec_env.items():
+    add_path(env, k, v)
 run(main_argv, env)
 
 print()

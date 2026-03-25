@@ -4,14 +4,14 @@ import os
 from os.path import isdir
 import sys
 
-from e3.os import process
+import tempfile
 from e3.testsuite import Testsuite
 
 from drivers import (
     junit_driver, proxy2print_driver, proxy_validator_driver, python_driver,
     scan2proxy_driver
 )
-from python_support.utils import add_path
+from python_support.utils import add_path, run_setup, run
 
 
 class GNATpolyglotTestsuite(Testsuite):
@@ -77,6 +77,27 @@ class GNATpolyglotTestsuite(Testsuite):
                 os.path.dirname(__file__), "..", "gnatpolyglot", "runtimes"
             )
             os.environ["POLYGLOT_RUNTIME"] = runtime_dir
+
+        # Build and install the Java Runtime libraries
+        mvn_args = []
+        if args.maven_local_repo is not None:
+            mvn_args.append(f"-Dmaven.repo.local={self.env.options.maven_local_repo}")
+        with tempfile.TemporaryDirectory() as d:
+            run_setup(d)
+            for r in ["proxy2java"]:
+                run([
+                    "mvn",
+                    "install",
+                    f"-f{os.path.join(d, r)}",
+                    "-q",
+                    *mvn_args
+                    ],
+                    pipe=True,
+                    env={
+                        "MAVEN_OPTS": "--enable-native-access=ALL-UNNAMED",
+                        **dict(os.environ)
+                    }
+                )
 
         # Check if the internal testsuite is present
         self.env.control_condition_env = {

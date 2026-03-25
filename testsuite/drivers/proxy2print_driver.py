@@ -39,3 +39,12 @@ class Proxy2Print(PythonDriver):
                     self.working_dir("input_proxy"),
                     delete=False,
                 )
+
+    def run_env(self) -> dict[str, str]:
+        env = super().run_env()
+        if self.test_env.get("output_lang") == "java":
+            maven_opts = ""
+            if self.env.options.maven_local_repo is not None:
+                maven_opts = f"-Dmaven.repo.local={self.env.options.maven_local_repo}"
+            env["MAVEN_ARGS"] = maven_opts
+        return env
