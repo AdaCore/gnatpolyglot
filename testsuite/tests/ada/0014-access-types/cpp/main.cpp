@@ -65,7 +65,7 @@ void simple_rec() {
     try {
         other.set_owner(polyglot::memory_owner::USER);
         test::rec_p(other);
-    } catch (const std::invalid_argument &e) {
+    } catch (const polyglot::ada::exceptions::ConstraintError &e) {
         std::cout << e.what() << "\n";
     }
 

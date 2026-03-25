@@ -4,7 +4,6 @@
 --
 
 pragma Unreserve_All_Interrupts;
-with GNAT.Threads;
 -- On GNU/Linux, the GNAT runtime installs a SIGSEGV signal handler, so turn
 -- memory issues into `Storage_Error` exceptions. This may be incompatible with
 -- the runtime of other languages, such as C++'s.

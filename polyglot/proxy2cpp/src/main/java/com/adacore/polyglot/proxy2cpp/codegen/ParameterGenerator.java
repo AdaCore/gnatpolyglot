@@ -228,7 +228,7 @@ public class ParameterGenerator {
                         .append(lower)
                         .append(".get_owner() < polyglot::memory_owner::")
                         .append(param.transfer.required_owner.toString())
-                        .append(") throw std::invalid_argument(\"")
+                        .append(") throw polyglot::ada::exceptions::ConstraintError(\"")
                         .append(lower)
                         .append(": owner should be ")
                         .append(param.transfer.required_owner)

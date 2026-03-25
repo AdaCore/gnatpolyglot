@@ -4,8 +4,8 @@
 //
 
 #include "polyglot_ada_strings.h"
+#include "polyglot_ada_exceptions.h"
 #include <cstdint>
-#include <stdexcept>
 
 using namespace polyglot::ada::arrays;
 
@@ -27,7 +27,8 @@ polyglot_string::~polyglot_string() {
 extern "C" void *polyglot__ada__strings__string_get(string_data, std::int32_t i);
 char &polyglot_string::at(std::int32_t index) {
     if (index < this->_data.begin || index > this->_data.end)
-        throw std::out_of_range{"polyglot::ada::strings::string::at"};
+        throw polyglot::ada::exceptions::ConstraintError("polyglot::ada::strings::string::at");
+
     return polyglot_string::operator[](index);
 }
 void polyglot_string::set(std::int32_t index, char new_val) {
@@ -41,7 +42,7 @@ char polyglot_string::operator [](std::int32_t index) const {
     return *static_cast<char *>(polyglot__ada__strings__string_get(this->_data, index));
 }
 
-#if __STDC_HOSTED__ == 1
+#if __has_include(<string>)
 
 std::string to_string(const polyglot_string &arr) {
   char *ptr = polyglot__ada__strings_to_c_chars_ptr(arr.data_());

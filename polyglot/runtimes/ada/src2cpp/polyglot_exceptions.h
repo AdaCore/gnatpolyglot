@@ -9,7 +9,10 @@
 #ifdef __cplusplus
 
 #include <exception>
-#include <string>
+
+#if __has_include(<string>)
+   #include <string>
+#endif
 
 namespace polyglot::exceptions {
 
