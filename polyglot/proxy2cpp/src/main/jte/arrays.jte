@@ -13,8 +13,6 @@ vim: filetype=jtecpp
 
 @template.text_header()
 
-#include <stdexcept>
-
 @for (var include : api.getIncludes(module))
 #include "${include}"
 @endfor
