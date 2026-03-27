@@ -10,10 +10,14 @@ Template file to generate a function.
 @param JavaAPI api
 @param FunctionDecl function
 
-extern ${api.cTypename(function.type.returnType)} ${function.symbol}();
+extern ${api.cTypename(function.type.returnType)}
+${function.symbol}(${api.cParameters(function)});
 
 JNIEXPORT ${api.jniTypename(function.type.returnType)}
-${api.jniName(function)} (JNIEnv *env, jobject obj) {
+${api.jniName(function)} (${api.jniParameters(function)}) {
+@for (var param : function.type.parameters)
+    ${api.makeJNIParamConversion(param)};
+@endfor
 @if (api.returnsVoid(function.type))
     ${api.callCSymbol(function)};
 @else

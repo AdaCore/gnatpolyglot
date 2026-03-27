@@ -7,14 +7,17 @@ import com.adacore.gnatpolyglot.proxy.FunctionDecl;
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.Module;
 import com.adacore.gnatpolyglot.proxy.Name;
+import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2java.codegen.CGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.JavaGenerator;
+import com.adacore.gnatpolyglot.proxy2java.codegen.ParameterConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.ReturnConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.TypenameGenerator;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class JavaAPI extends LanguageAPI {
 
@@ -27,6 +30,8 @@ public class JavaAPI extends LanguageAPI {
     private TypenameGenerator typenameGenerator = new TypenameGenerator(this);
 
     private ReturnConverter returnConverter = new ReturnConverter(this);
+
+    private ParameterConverter parameterConverter = new ParameterConverter(this);
 
     public JavaAPI(ProxyContext context, List<String> groupId, Name projectName) {
         this.context = context;
@@ -58,6 +63,26 @@ public class JavaAPI extends LanguageAPI {
             p = p.resolve(n.toLower());
         }
         return p.resolve(module.name.getLastName().toPascal().concat("Package.java"));
+    }
+
+    /** Return the name of a java argument. */
+    public String javaArgName(Name name) {
+        return name.toCamel();
+    }
+
+    /** Return the expected name of a converted java argument. */
+    public String javaValueName(Name name) {
+        return "val$".concat(name.toCamel());
+    }
+
+    /** Return the name of the argument in the JNI layer. */
+    public String jniArgName(Name name) {
+        return name.concat(Name.fromLower("arg")).toLower();
+    }
+
+    /** Return the expected name of a converted JNI argument. */
+    public String jniValueName(Name name) {
+        return name.concat(Name.fromLower("value")).toLower();
     }
 
     /** Return the name of the primitive type in Java. */
@@ -162,12 +187,22 @@ public class JavaAPI extends LanguageAPI {
 
     /** Create a call to the C symbol in the JNI layer. */
     public String callCSymbol(FunctionDecl functionDecl) {
-        return CGenerator.makeCall(functionDecl.symbol, List.of()).toString();
+        return CGenerator.makeCall(
+                        functionDecl.symbol,
+                        functionDecl.type.parameters.stream()
+                                .map(p -> jniValueName(p.name))
+                                .toList())
+                .toString();
     }
 
     /** Create a call to the Java native function. */
     public String callJavaNative(FunctionDecl functionDecl, String nativeName) {
-        return JavaGenerator.makeCall(nativeName, List.of()).toString();
+        return JavaGenerator.makeCall(
+                        nativeName,
+                        functionDecl.type.parameters.stream()
+                                .map(p -> javaValueName(p.name))
+                                .toList())
+                .toString();
     }
 
     /** Return whether a function returns void. */
@@ -185,5 +220,54 @@ public class JavaAPI extends LanguageAPI {
     /** Create the return statement for the function in its Java layer implementation */
     public String makeJavaReturnStatement(FunctionDecl functionDecl, String returnedValue) {
         return returnConverter.javaReturnStatement(functionDecl, returnedValue);
+    }
+
+    /** Return the string to declare arguments in the Java function. */
+    public String javaParameters(FunctionDecl functionDecl) {
+        return functionDecl.type.parameters.stream()
+                .map(p -> "%s %s".formatted(javaTypename(p.type), javaArgName(p.name)))
+                .collect(Collectors.joining(", "));
+    }
+
+    /** Return the string to declare arguments in the native Java function. */
+    public String javaNativeParameters(FunctionDecl functionDecl) {
+        return functionDecl.type.parameters.stream()
+                .map(p -> "%s %s".formatted(javaNativeTypename(p.type), javaArgName(p.name)))
+                .collect(Collectors.joining(", "));
+    }
+
+    /** Return the string to declare arguments in the JNI function. */
+    public String jniParameters(FunctionDecl functionDecl) {
+        StringBuilder builder = new StringBuilder("JNIEnv *env, jobject obj");
+        if (!functionDecl.type.parameters.isEmpty()) {
+            builder.append(", ")
+                    .append(
+                            functionDecl.type.parameters.stream()
+                                    .map(
+                                            p ->
+                                                    "%s %s"
+                                                            .formatted(
+                                                                    jniTypename(p.type),
+                                                                    jniArgName(p.name)))
+                                    .collect(Collectors.joining(", ")));
+        }
+        return builder.toString();
+    }
+
+    /** Return the string to declare arguments in the C function. */
+    public String cParameters(FunctionDecl functionDecl) {
+        return functionDecl.type.parameters.stream()
+                .map(p -> "%s %s".formatted(cTypename(p.type), p.name.toCamel()))
+                .collect(Collectors.joining(", "));
+    }
+
+    /** Create the string to convert the java parameter for calling the native handle. */
+    public String makeJavaParamConversion(Parameter param) {
+        return parameterConverter.javaParam(param);
+    }
+
+    /** Create the string to convert the JNI parameter for calling the C symbol. */
+    public String makeJNIParamConversion(Parameter param) {
+        return parameterConverter.jniParam(param);
     }
 }

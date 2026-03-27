@@ -15,11 +15,14 @@ Template file to generate a function.
     String nativeFunc = "$%s".formatted(functionName);
 }
     private static native
-    ${api.javaNativeTypename(function.type.returnType)} ${nativeFunc}();
+    ${api.javaNativeTypename(function.type.returnType)} ${nativeFunc}(${api.javaNativeParameters(function)});
 
     public static
     ${api.javaTypename(function.type.returnType)}
-    ${functionName}() {
+    ${functionName}(${api.javaParameters(function)}) {
+    @for (var param : function.type.parameters)
+        ${api.makeJavaParamConversion(param)};
+    @endfor
     @if (api.returnsVoid(function.type))
         ${api.callJavaNative(function, nativeFunc)};
     @else
