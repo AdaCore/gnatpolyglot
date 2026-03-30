@@ -4,6 +4,7 @@ import com.adacore.gnatpolyglot.proxy.FunctionDecl;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
+import java.util.List;
 
 public class ReturnConverter {
 
@@ -36,6 +37,20 @@ public class ReturnConverter {
         }
 
         @Override
+        public String classType(TypeExpr type) {
+            return new StringBuilder("return ")
+                    .append(
+                            JavaGenerator.makeNew(
+                                    javaReturnType,
+                                    List.of(
+                                            JavaGenerator.makeNew(
+                                                    "com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer",
+                                                    List.of(returnedValue)))))
+                    .append(";")
+                    .toString();
+        }
+
+        @Override
         public String voidType(TypeExpr type) {
             return "return;";
         }
@@ -62,6 +77,14 @@ public class ReturnConverter {
 
         @Override
         public String numberType(TypeExpr type) {
+            return new StringBuilder("return ")
+                    .append(CGenerator.makeCast(jniReturnType, returnedValue))
+                    .append(";")
+                    .toString();
+        }
+
+        @Override
+        public String classType(TypeExpr type) {
             return new StringBuilder("return ")
                     .append(CGenerator.makeCast(jniReturnType, returnedValue))
                     .append(";")

@@ -6,6 +6,7 @@
 package com.adacore.gnatpolyglot.proxy2java;
 
 import com.adacore.gnatpolyglot.Printer;
+import com.adacore.gnatpolyglot.proxy.ClassDecl;
 import com.adacore.gnatpolyglot.proxy.ProxyException;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
@@ -65,6 +66,16 @@ public class JavaPrinter extends Printer {
             try (FileOutput packageSpec = new FileOutput(jniFile)) {
                 templateEngine.render(
                         "jni_c.jte", Map.of("api", api, "module", module), packageSpec);
+            }
+
+            for (var classDecl :
+                    module.declarations.stream().filter(ClassDecl.class::isInstance).toList()) {
+                // Generate the class.
+                Path clazz = srcDir.resolve(api.filepath((ClassDecl) classDecl));
+                try (FileOutput packageSpec = new FileOutput(clazz)) {
+                    templateEngine.render(
+                            "class.jte", Map.of("api", api, "classDecl", classDecl), packageSpec);
+                }
             }
         }
 

@@ -1,6 +1,8 @@
 package com.adacore.gnatpolyglot.proxy2java.codegen;
 
+import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
+import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeDecl;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
@@ -27,8 +29,35 @@ public class TypenameGenerator {
         }
 
         @Override
+        public String classType(TypeExpr type) {
+            FullyQualifiedName name = type.getName();
+            return new StringBuilder(api.basePackage())
+                    .append(
+                            name.getParentFullyQualifiedName()
+                                    .join(n -> n.getLastName().toLower(), ".", ".", "."))
+                    .append(name.getLastName().toPascal())
+                    .toString();
+        }
+
+        @Override
         public String voidType(TypeExpr type) {
             return "void";
+        }
+
+        @Override
+        public String refType(TypeExpr type) {
+            return new JavaTypeWorker.JavaSubreferenceTypeWorker<String>() {
+
+                @Override
+                public ProxyContext getContext() {
+                    return api.getContext();
+                }
+
+                @Override
+                public String classType(TypeExpr type) {
+                    return javaTypename(type);
+                }
+            }.apply(type.referencedType());
         }
     }
 
@@ -51,8 +80,34 @@ public class TypenameGenerator {
         }
 
         @Override
+        public String classType(TypeExpr type) {
+            return api.javaPrimitiveTypename(NativeType.UINT64);
+        }
+
+        @Override
+        public String pointerType(TypeExpr type) {
+            return api.javaPrimitiveTypename(NativeType.UINT64);
+        }
+
+        @Override
         public String voidType(TypeExpr type) {
             return "void";
+        }
+
+        @Override
+        public String refType(TypeExpr type) {
+            return new JavaTypeWorker.JavaSubreferenceTypeWorker<String>() {
+
+                @Override
+                public ProxyContext getContext() {
+                    return api.getContext();
+                }
+
+                @Override
+                public String classType(TypeExpr type) {
+                    return api.javaPrimitiveTypename(NativeType.UINT64);
+                }
+            }.apply(type.referencedType());
         }
     }
 
@@ -75,8 +130,34 @@ public class TypenameGenerator {
         }
 
         @Override
+        public String classType(TypeExpr type) {
+            return "jlong";
+        }
+
+        @Override
+        public String pointerType(TypeExpr type) {
+            return "jlong";
+        }
+
+        @Override
         public String voidType(TypeExpr type) {
             return "void";
+        }
+
+        @Override
+        public String refType(TypeExpr type) {
+            return new JavaTypeWorker.JavaSubreferenceTypeWorker<String>() {
+
+                @Override
+                public ProxyContext getContext() {
+                    return api.getContext();
+                }
+
+                @Override
+                public String classType(TypeExpr type) {
+                    return "jlong";
+                }
+            }.apply(type.referencedType());
         }
     }
 
@@ -102,8 +183,34 @@ public class TypenameGenerator {
         }
 
         @Override
+        public String classType(TypeExpr type) {
+            return "void *";
+        }
+
+        @Override
+        public String pointerType(TypeExpr type) {
+            return "void *";
+        }
+
+        @Override
         public String voidType(TypeExpr type) {
             return "void";
+        }
+
+        @Override
+        public String refType(TypeExpr type) {
+            return new JavaTypeWorker.JavaSubreferenceTypeWorker<String>() {
+
+                @Override
+                public ProxyContext getContext() {
+                    return api.getContext();
+                }
+
+                @Override
+                public String classType(TypeExpr type) {
+                    return "void *";
+                }
+            }.apply(type.referencedType());
         }
     }
 

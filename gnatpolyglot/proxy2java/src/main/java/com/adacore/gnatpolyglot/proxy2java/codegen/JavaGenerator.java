@@ -8,4 +8,8 @@ public class JavaGenerator {
     public static StringBuilder makeCall(String name, List<? extends CharSequence> args) {
         return CGenerator.makeCall(name, args);
     }
+
+    public static StringBuilder makeNew(String typename, List<? extends CharSequence> args) {
+        return new StringBuilder("new ").append(CGenerator.makeCall(typename, args));
+    }
 }

@@ -1,0 +1,17 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+3
+7
+( 3 , 4 )
+( 1 , 2 )
+( 7 , 7 )
+( 3 , 4 )
+( 1 , 2 )
+
+Done.

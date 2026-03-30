@@ -13,15 +13,18 @@ Template file to generate a function.
 !{
     String functionName = function.name.getLastName().toCamel();
     String nativeFunc = "$%s".formatted(functionName);
+    boolean isMethod = api.isMethod(function);
+    boolean firstMethodParam = isMethod;
 }
     private static native
     ${api.javaNativeTypename(function.type.returnType)} ${nativeFunc}(${api.javaNativeParameters(function)});
 
-    public static
+    public ${isMethod ? "" : "static"}
     ${api.javaTypename(function.type.returnType)}
     ${functionName}(${api.javaParameters(function)}) {
     @for (var param : function.type.parameters)
-        ${api.makeJavaParamConversion(param)};
+        ${api.makeJavaParamConversion(param, firstMethodParam)};
+        !{firstMethodParam = false;}
     @endfor
     @if (api.returnsVoid(function.type))
         ${api.callJavaNative(function, nativeFunc)};

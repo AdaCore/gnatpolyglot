@@ -15,9 +15,9 @@ public class ParameterConverter {
         private String valueName;
         private String valueTypename;
 
-        public JavaParamWorker(Parameter param) {
+        public JavaParamWorker(Parameter param, boolean isFirstMethodParam) {
             this.param = param;
-            this.argName = api.javaArgName(param.name);
+            this.argName = isFirstMethodParam ? "this" : api.javaArgName(param.name);
             this.valueName = api.javaValueName(param.name);
             this.valueTypename = api.javaNativeTypename(param.type);
         }
@@ -38,8 +38,35 @@ public class ParameterConverter {
         }
 
         @Override
+        public String classType(TypeExpr type) {
+            return new StringBuilder(valueTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(argName)
+                    .append(".getData().getAddress()")
+                    .toString();
+        }
+
+        @Override
         public String voidType(TypeExpr type) {
             throw new UnsupportedOperationException("Unreachable");
+        }
+
+        @Override
+        public String refType(TypeExpr type) {
+            return new JavaTypeWorker.JavaSubreferenceTypeWorker<String>() {
+
+                @Override
+                public ProxyContext getContext() {
+                    return api.getContext();
+                }
+
+                @Override
+                public String classType(TypeExpr type) {
+                    return JavaParamWorker.this.classType(type);
+                }
+            }.apply(type.referencedType());
         }
     }
 
@@ -78,8 +105,49 @@ public class ParameterConverter {
         }
 
         @Override
+        public String classType(TypeExpr type) {
+            return new StringBuilder(valueTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(CGenerator.makeCast(valueTypename, argName))
+                    .toString();
+        }
+
+        @Override
+        public String pointerType(TypeExpr type) {
+            return new StringBuilder(valueTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(CGenerator.makeCast(valueTypename, argName))
+                    .toString();
+        }
+
+        @Override
         public String voidType(TypeExpr type) {
             throw new UnsupportedOperationException("Unreachable");
+        }
+
+        @Override
+        public String refType(TypeExpr type) {
+            return new JavaTypeWorker.JavaSubreferenceTypeWorker<String>() {
+
+                @Override
+                public ProxyContext getContext() {
+                    return api.getContext();
+                }
+
+                @Override
+                public String classType(TypeExpr type) {
+                    return new StringBuilder(valueTypename)
+                            .append(" ")
+                            .append(valueName)
+                            .append(" = ")
+                            .append(CGenerator.makeCast(valueTypename, argName))
+                            .toString();
+                }
+            }.apply(type.referencedType());
         }
     }
 
@@ -90,8 +158,8 @@ public class ParameterConverter {
     }
 
     /** Create the conversion of a Java parameter to call the Java native function. */
-    public String javaParam(Parameter param) {
-        return new JavaParamWorker(param).apply(param.type);
+    public String javaParam(Parameter param, boolean isFirstMethodParam) {
+        return new JavaParamWorker(param, isFirstMethodParam).apply(param.type);
     }
 
     /** Create the conversion of a JNI parameter in the C layer. */

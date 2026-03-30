@@ -2,6 +2,7 @@ package com.adacore.gnatpolyglot.proxy2java;
 
 import com.adacore.gnatpolyglot.LanguageAPI;
 import com.adacore.gnatpolyglot.NativeType;
+import com.adacore.gnatpolyglot.proxy.ClassDecl;
 import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
 import com.adacore.gnatpolyglot.proxy.FunctionDecl;
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
@@ -9,6 +10,8 @@ import com.adacore.gnatpolyglot.proxy.Module;
 import com.adacore.gnatpolyglot.proxy.Name;
 import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
+import com.adacore.gnatpolyglot.proxy.Role.RoleKind;
+import com.adacore.gnatpolyglot.proxy.TypeDecl;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2java.codegen.CGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.JavaGenerator;
@@ -56,6 +59,13 @@ public class JavaAPI extends LanguageAPI {
                 .join((n) -> n.getLastName().toLower(), "", ".", "");
     }
 
+    /** Return the string of the package for the given class. */
+    public String packagePath(ClassDecl classDecl) {
+        return groupId.append(Name.fromLower("lib".concat(projectName.toLower())))
+                .append(classDecl.name.getParentFullyQualifiedName())
+                .join((n) -> n.getLastName().toLower(), "", ".", "");
+    }
+
     /** Return the path of the file to generate for a module. */
     public Path filepath(Module module) {
         Path p = Path.of(".");
@@ -63,6 +73,15 @@ public class JavaAPI extends LanguageAPI {
             p = p.resolve(n.toLower());
         }
         return p.resolve(module.name.getLastName().toPascal().concat("Package.java"));
+    }
+
+    /** Return the path of the file to generate for a class. */
+    public Path filepath(ClassDecl classDecl) {
+        Path p = Path.of(".");
+        for (var n : classDecl.name.getParentFullyQualifiedName().names) {
+            p = p.resolve(n.toLower());
+        }
+        return p.resolve(classDecl.name.getLastName().toPascal().concat(".java"));
     }
 
     /** Return the name of a java argument. */
@@ -178,6 +197,8 @@ public class JavaAPI extends LanguageAPI {
                                     "",
                                     "_",
                                     "_".concat(parent.getLastName().toPascal().concat("Package"))));
+        } else if (context.isClassType(function.role.type)) {
+            builder.append(javaTypename(function.role.type).replace(".", "_"));
         } else {
             throw new UnsupportedOperationException("unsupported");
         }
@@ -225,6 +246,7 @@ public class JavaAPI extends LanguageAPI {
     /** Return the string to declare arguments in the Java function. */
     public String javaParameters(FunctionDecl functionDecl) {
         return functionDecl.type.parameters.stream()
+                .skip(isMethod(functionDecl) ? 1 : 0)
                 .map(p -> "%s %s".formatted(javaTypename(p.type), javaArgName(p.name)))
                 .collect(Collectors.joining(", "));
     }
@@ -262,12 +284,39 @@ public class JavaAPI extends LanguageAPI {
     }
 
     /** Create the string to convert the java parameter for calling the native handle. */
-    public String makeJavaParamConversion(Parameter param) {
-        return parameterConverter.javaParam(param);
+    public String makeJavaParamConversion(Parameter param, boolean isFirstMethodParam) {
+        return parameterConverter.javaParam(param, isFirstMethodParam);
     }
 
     /** Create the string to convert the JNI parameter for calling the C symbol. */
     public String makeJNIParamConversion(Parameter param) {
         return parameterConverter.jniParam(param);
+    }
+
+    /** Return whether a function is a class method. */
+    public boolean isMethod(FunctionDecl functionDecl) {
+        return functionDecl.role != null
+                && functionDecl.role.kind.compareTo(RoleKind.DESTRUCT) <= 0;
+    }
+
+    /** Return the typename of the parent of a class. */
+    public String parentClass(ClassDecl classDecl) {
+        return classDecl.parent == null
+                ? "com.adacore.gnatpolyglot.runtime.PolyglotObject"
+                : javaTypename(classDecl.parent.asTypeExpr());
+    }
+
+    /** Return the class modifier for its inheritability. */
+    public String getOverridability(ClassDecl classDecl) {
+        return switch (classDecl.inheritability) {
+            case FINAL -> "final";
+            case INHERITABLE -> "";
+            case VIRTUAL -> "abstract";
+        };
+    }
+
+    /** Return the member functions of a type. */
+    public ProxyContext.FunctionMembersEntry getMembers(TypeDecl decl) {
+        return context.getMembers(decl.name.asTypeExpr());
     }
 }
