@@ -207,6 +207,11 @@ public class TypenameGenerator {
                 }
 
                 @Override
+                public String numberType(TypeExpr type) {
+                    return javaTypename(type).concat("*");
+                }
+
+                @Override
                 public String classType(TypeExpr type) {
                     return "void *";
                 }

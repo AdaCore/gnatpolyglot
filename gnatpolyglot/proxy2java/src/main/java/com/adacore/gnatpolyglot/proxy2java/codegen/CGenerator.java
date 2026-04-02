@@ -16,4 +16,8 @@ public class CGenerator {
     public static StringBuilder makeCast(CharSequence type, CharSequence expr) {
         return new StringBuilder("((").append(type).append(") ").append(expr).append(")");
     }
+
+    public static StringBuilder deref(CharSequence returnedValue) {
+        return new StringBuilder("(*").append(returnedValue).append(")");
+    }
 }

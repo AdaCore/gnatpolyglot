@@ -17,10 +17,11 @@ Template file to generate a function.
     boolean firstMethodParam = isMethod;
 }
     private static native
-    ${api.javaNativeTypename(function.type.returnType)} ${nativeFunc}(${api.javaNativeParameters(function)});
+    ${api.javaNativeReturnTypename(function.type.returnType)}
+    ${nativeFunc}(${api.javaNativeParameters(function)});
 
     public ${isMethod ? "" : "static"}
-    ${api.javaTypename(function.type.returnType)}
+    ${api.javaReturnTypename(function.type.returnType)}
     ${functionName}(${api.javaParameters(function)}) {
     @for (var param : function.type.parameters)
         ${api.makeJavaParamConversion(param, firstMethodParam)};
@@ -29,7 +30,7 @@ Template file to generate a function.
     @if (api.returnsVoid(function.type))
         ${api.callJavaNative(function, nativeFunc)};
     @else
-        ${api.javaNativeTypename(function.type.returnType)} valueReturned =
+        ${api.javaNativeReturnTypename(function.type.returnType)} valueReturned =
             ${api.callJavaNative(function, nativeFunc)};
         ${api.makeJavaReturnStatement(function, "valueReturned")}
     @endif
