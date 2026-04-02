@@ -6,14 +6,14 @@ import yaml
 from pathlib import Path
 
 POLYGLOT_HOME = os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "polyglot")
+    os.path.join(os.path.dirname(__file__), "..", "..", "gnatpolyglot")
 )
 RUNTIME_DIR = os.path.join(POLYGLOT_HOME, "runtimes")
 
 NATIVE_RUN = "--native" in sys.argv
-POLYGLOT_EXEC = "polyglot.py"
+POLYGLOT_EXEC = "gnatpolyglot.py"
 if NATIVE_RUN:
-    POLYGLOT_EXEC = "polyglot"
+    POLYGLOT_EXEC = "gnatpolyglot"
 
 def run(
     argv: list[str],

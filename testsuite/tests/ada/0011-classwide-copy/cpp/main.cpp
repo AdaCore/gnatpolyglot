@@ -52,7 +52,7 @@ int main() {
     try {
         MissingClone m;
         test::p_make_copy(m);
-    } catch (const polyglot::ada::exceptions::ProgramError &e) {
+    } catch (const gnatpolyglot::ada::exceptions::ProgramError &e) {
         std::cout << "Caught:"
                   << std::char_traits<char>::find(
                          e.what(),

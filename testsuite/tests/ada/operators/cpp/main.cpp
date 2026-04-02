@@ -30,11 +30,11 @@ int main() {
     print(~Pair(~3, ~4));
 
     std::cout
-       << polyglot::ada::strings::to_string(test::operator_mult(4, 'c'))
+       << gnatpolyglot::ada::strings::to_string(test::operator_mult(4, 'c'))
        << "\n";
 
     std::cout
-       << polyglot::ada::strings::to_string(+"foo")
+       << gnatpolyglot::ada::strings::to_string(+"foo")
        << "\n";
 
 }

@@ -1,4 +1,4 @@
-#include "polyglot_ada_arrays.h"
+#include "gnatpolyglot_ada_arrays.h"
 #include "test.h"
 
 #include <iostream>
@@ -17,9 +17,9 @@ public:
        return test::Rec(21);
     }
 
-    polyglot::ada::arrays::polyglot_array<int32_t>
-    f_arr(const polyglot::ada::arrays::polyglot_array<int32_t> &a, int &i) const override {
-        polyglot::ada::arrays::polyglot_array<int32_t> res(a.get_begin(), a.get_end());
+    gnatpolyglot::ada::arrays::polyglot_array<int32_t>
+    f_arr(const gnatpolyglot::ada::arrays::polyglot_array<int32_t> &a, int &i) const override {
+        gnatpolyglot::ada::arrays::polyglot_array<int32_t> res(a.get_begin(), a.get_end());
         for (int i = res.get_begin(); i <= res.get_end(); i++) {
             res.set(i, a.get(i) + 2);
         }
@@ -59,9 +59,9 @@ private:
     std::vector<int> _vec;
 };
 
-void test_array(test::Root &r, polyglot::ada::arrays::polyglot_array<int32_t> input) {
+void test_array(test::Root &r, gnatpolyglot::ada::arrays::polyglot_array<int32_t> input) {
     int i = 0;
-    polyglot::ada::arrays::polyglot_array<int32_t> res = test::f_arr_disp(r, input, i);
+    gnatpolyglot::ada::arrays::polyglot_array<int32_t> res = test::f_arr_disp(r, input, i);
     std::cout << "Got in C++: ";
     for (int i = res.get_begin(); i <= res.get_end(); i++) {
         std::cout << res.get(i) << ", ";
@@ -107,7 +107,7 @@ int main() {
     test::p2_child(child, r1, 1);
     test::p2_child(gref, r2, 1);
 
-    polyglot::ada::arrays::polyglot_array<int32_t> arr(1, 5);
+    gnatpolyglot::ada::arrays::polyglot_array<int32_t> arr(1, 5);
     for (int i = arr.get_begin(); i <= arr.get_end(); i++) {
         arr.set(i, i);
     }

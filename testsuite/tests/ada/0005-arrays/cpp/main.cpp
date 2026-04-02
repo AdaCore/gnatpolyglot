@@ -7,7 +7,7 @@ void test_native_arrays() {
 
     std::cout << "Starting test_native_arrays\n";
 
-    polyglot::ada::arrays::polyglot_array<int32_t> arr = test::f_u_1();
+    gnatpolyglot::ada::arrays::polyglot_array<int32_t> arr = test::f_u_1();
 
     std::cout << "bounds:" << arr.get_begin() << " " << arr.get_end() << "\n";
     std::cout << "content : [" << arr.get(1) << " " << arr.get(2) << " "
@@ -42,7 +42,7 @@ void test_native_arrays() {
 
 void test_struct_arrays() {
     std::cout << "Starting test_struct_arrays\n";
-    polyglot::ada::arrays::polyglot_array<test::MyInt> arr = test::my_int_arr_func();
+    gnatpolyglot::ada::arrays::polyglot_array<test::MyInt> arr = test::my_int_arr_func();
     std::cout << "bounds:" << arr.get_begin() << " " << arr.get_end() << "\n";
     std::cout << "==================\narr: ";
     for (int i = arr.get_begin(); i <= arr.get_end(); i++) {
@@ -66,7 +66,7 @@ void test_struct_arrays() {
 
 void foreach_loop() {
     {
-        polyglot::ada::arrays::polyglot_array<int> arr(1, 10);
+        gnatpolyglot::ada::arrays::polyglot_array<int> arr(1, 10);
         int i = 0;
         for (auto &el : arr) {
             el = i += 2;
@@ -77,7 +77,7 @@ void foreach_loop() {
         std::cout << "\n";
     }
     {
-        polyglot::ada::arrays::polyglot_array<test::MyInt> arr(1, 10);
+        gnatpolyglot::ada::arrays::polyglot_array<test::MyInt> arr(1, 10);
         int i = 0;
         for (auto &el : arr) {
             el = test::MyInt(i += 2);

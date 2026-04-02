@@ -25,7 +25,7 @@ master_doc = "index"
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "polyglot"
+project = "GNATpolyglot"
 
 def get_version():
     version_file = Path(__file__).parents[1] / "VERSION"
@@ -66,22 +66,22 @@ html_logo = "adacore-logo-white.png"
 # pixels large.
 html_favicon = "favicon.ico"
 
-htmlhelp_basename = "polyglotdoc"
+htmlhelp_basename = "gnatpolyglotdoc"
 
 # -- Options for LaTeX output -------------------------------------------------
 
 latex_documents = [
-    ("index", "polyglot.tex", "polyglot Documentation", "AdaCore", "manual"),
+    ("index", "gnatpolyglot.tex", "GNATpolyglot Documentation", "AdaCore", "manual"),
 ]
 
 # -- Options for manual page output -------------------------------------------
 
-man_pages = [("index", "polyglot", "polyglot Documentation", ["AdaCore"], 1)]
+man_pages = [("index", "gnatpolyglot", "GNATpolyglot Documentation", ["AdaCore"], 1)]
 
 # -- Options for Epub output --------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = "polyglot"
+epub_title = "GNATpolyglot"
 epub_author = "AdaCore"
 epub_publisher = "AdaCore"
 epub_copyright = get_copyright()

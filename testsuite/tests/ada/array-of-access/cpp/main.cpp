@@ -1,10 +1,10 @@
-#include "polyglot_ada_arrays.h"
-#include "polyglot_ptr.h"
+#include "gnatpolyglot_ada_arrays.h"
+#include "gnatpolyglot_ptr.h"
 #include "test.h"
 #include <iostream>
 
-using namespace polyglot;
-using namespace polyglot::ada::arrays;
+using namespace gnatpolyglot;
+using namespace gnatpolyglot::ada::arrays;
 
 int main() {
     test::Rec r1(0);

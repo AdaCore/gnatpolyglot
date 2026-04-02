@@ -1,25 +1,25 @@
 Checking presence of the user-given header in the following generated source files:
+  - proxy/src/gnatpolyglot-ada-arrays-non_native.ads:
+    -- LICENSE
+    -- 2026
+  - proxy/src/gnatpolyglot-exceptions-lib.adb:
+    -- LICENSE
+    -- 2026
+  - proxy/src/gnatpolyglot-exceptions-lib.ads:
+    -- LICENSE
+    -- 2026
   - proxy/src/lib-proxy_package.ads:
     -- LICENSE
     -- 2026
-  - proxy/src/polyglot-ada-arrays-non_native.ads:
-    -- LICENSE
-    -- 2026
-  - proxy/src/polyglot-exceptions-lib.adb:
-    -- LICENSE
-    -- 2026
-  - proxy/src/polyglot-exceptions-lib.ads:
-    -- LICENSE
-    -- 2026
+  - cpp/gnatpolyglot_ada_arrays.cpp:
+    // LICENSE
+    // 2026
+  - cpp/gnatpolyglot_exceptions_lib.cpp:
+    // LICENSE
+    // 2026
+  - cpp/gnatpolyglot_exceptions_lib.h:
+    // LICENSE
+    // 2026
   - cpp/lib.cpp:
-    // LICENSE
-    // 2026
-  - cpp/polyglot_ada_arrays.cpp:
-    // LICENSE
-    // 2026
-  - cpp/polyglot_exceptions_lib.cpp:
-    // LICENSE
-    // 2026
-  - cpp/polyglot_exceptions_lib.h:
     // LICENSE
     // 2026

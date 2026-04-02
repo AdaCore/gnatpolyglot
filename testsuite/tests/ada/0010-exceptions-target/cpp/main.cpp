@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "test.h"
-#include "polyglot_ada_exceptions.h"
+#include "gnatpolyglot_ada_exceptions.h"
 
 class Deriv : public test::Tag {
 public:
@@ -14,9 +14,9 @@ public:
             case 2:
                 throw test::Exc2("Bar");
             case 3:
-                throw polyglot::ada::exceptions::ConstraintError("Baz");
+                throw gnatpolyglot::ada::exceptions::ConstraintError("Baz");
             case 4:
-                throw polyglot::ada::exceptions::ProgramError("FooBar");
+                throw gnatpolyglot::ada::exceptions::ProgramError("FooBar");
         }
     }
 };
@@ -37,13 +37,13 @@ int main() {
     try {
         d.set_i(3);
         test::get_exception(d);
-    } catch (const polyglot::ada::exceptions::ConstraintError &e) {
+    } catch (const gnatpolyglot::ada::exceptions::ConstraintError &e) {
         std::cout << "C++ caught Constraint_Error: " << e.what() << "\n";
     }
     try {
         d.set_i(4);
         test::get_exception(d);
-    } catch (const polyglot::ada::exceptions::ProgramError &e) {
+    } catch (const gnatpolyglot::ada::exceptions::ProgramError &e) {
         std::cout << "C++ caught Program_Error: " << e.what() << "\n";
     }
 }

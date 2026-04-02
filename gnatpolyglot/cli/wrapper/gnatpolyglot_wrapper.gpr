@@ -1,0 +1,11 @@
+project GNATpolyglot_Wrapper is
+
+   for Object_Dir use "obj/";
+   for Exec_Dir use "bin/";
+   for Main use ("gnatpolyglot_wrapper.adb");
+
+   package Builder is
+      for Executable ("gnatpolyglot_wrapper.adb") use "gnatpolyglot";
+   end Builder;
+
+end GNATpolyglot_Wrapper;

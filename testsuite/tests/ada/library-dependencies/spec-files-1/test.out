@@ -1,1 +1,1 @@
-['lib_2-proxy_package.adb', 'lib_2-proxy_package.ads', 'polyglot-ada-arrays-non_native.ads', 'polyglot-exceptions-lib_2.adb', 'polyglot-exceptions-lib_2.ads']
+['gnatpolyglot-ada-arrays-non_native.ads', 'gnatpolyglot-exceptions-lib_2.adb', 'gnatpolyglot-exceptions-lib_2.ads', 'lib_2-proxy_package.adb', 'lib_2-proxy_package.ads']

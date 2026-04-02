@@ -1,12 +1,12 @@
 #include <iostream>
 
 #include "2cpp/include/animals.h"
-#include "polyglot_ada_arrays.h"
-#include "polyglot_ada_strings.h"
-#include "polyglot_ptr.h"
+#include "gnatpolyglot_ada_arrays.h"
+#include "gnatpolyglot_ada_strings.h"
+#include "gnatpolyglot_ptr.h"
 
-using namespace polyglot;
-using namespace polyglot::ada::arrays;
+using namespace gnatpolyglot;
+using namespace gnatpolyglot::ada::arrays;
 
 class Dog : public animals::Animal {
 public:
@@ -22,11 +22,11 @@ int main() {
     animals::Parrot p(animals::Color::BLUE);
     // `Shout` and `Repeat` are bound as as member functions
     p.shout();
-    p.repeat(polyglot::ada::strings::from_string("Ada"));
+    p.repeat(gnatpolyglot::ada::strings::from_string("Ada"));
     p.repeat("C++"); // the implicit constructor also exists.
 
     std::cout << "p is " 
-              << polyglot::ada::strings::to_string(animals::image(p.get_c()))
+              << gnatpolyglot::ada::strings::to_string(animals::image(p.get_c()))
               << "\n";
 
     Dog d;
@@ -38,11 +38,11 @@ int main() {
     polyglot_ptr<animals::Parrot> p_ptr(p);
     polyglot_ptr<animals::Parrot> other_parrot
         (new animals::Parrot(animals::Color::GREEN),
-         polyglot::memory_owner::LIBRARY);
+         gnatpolyglot::memory_owner::LIBRARY);
     flock.set(1, p_ptr);
     flock.set(2, other_parrot);
     animals::shout(flock);
 
     // Claim ownership in order to free memory
-    other_parrot.set_owner(polyglot::memory_owner::USER);
+    other_parrot.set_owner(gnatpolyglot::memory_owner::USER);
 }

@@ -1,6 +1,6 @@
 [
- "{'names': ['polyglot', 'ada', 'arrays']}",
- "{'names': ['polyglot', 'ada']}",
- "{'names': ['polyglot']}",
+ "{'names': ['gnatpolyglot', 'ada', 'arrays']}",
+ "{'names': ['gnatpolyglot', 'ada']}",
+ "{'names': ['gnatpolyglot']}",
  "{'names': ['test']}"
 ]

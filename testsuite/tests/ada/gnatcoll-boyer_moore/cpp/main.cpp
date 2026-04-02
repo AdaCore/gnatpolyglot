@@ -1,8 +1,8 @@
 #include "gnatcoll_boyer_moore.h"
-#include "polyglot_ada_strings.h"
+#include "gnatpolyglot_ada_strings.h"
 #include <iostream>
 
-using namespace polyglot::ada::strings;
+using namespace gnatpolyglot::ada::strings;
 using namespace gnatcoll::boyer_moore;
 
 int main() {

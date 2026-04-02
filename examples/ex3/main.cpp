@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "exceptions.h"
-#include "polyglot_ada_exceptions.h"
+#include "gnatpolyglot_ada_exceptions.h"
 
 class Deriv : public exceptions::Tag {
 public:
@@ -21,7 +21,7 @@ int main() {
     }
     try {
         exceptions::raise_exc(true);
-    } catch (const polyglot::ada::exceptions::ProgramError &e) {
+    } catch (const gnatpolyglot::ada::exceptions::ProgramError &e) {
         std::cout << "C++ caught Program_Error: " << e.what() << "\n";
     }
     try {
@@ -31,7 +31,7 @@ int main() {
     }
     try {
         exceptions::raise_constraint();
-    } catch (const polyglot::ada::exceptions::ConstraintError &e) {
+    } catch (const gnatpolyglot::ada::exceptions::ConstraintError &e) {
         std::cout << "C++ caught ConstraintError: " << e.what() << "\n";
     }
 }

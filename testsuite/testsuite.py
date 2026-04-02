@@ -14,7 +14,7 @@ from drivers import (
 from python_support.utils import add_path
 
 
-class PolyglotTestsuite(Testsuite):
+class GNATpolyglotTestsuite(Testsuite):
     tests_subdir = "tests"
     test_driver_map = {
         "junit": junit_driver.JunitDriver,
@@ -41,7 +41,7 @@ class PolyglotTestsuite(Testsuite):
         parser.add_argument(
             "--native",
             action="store_true",
-            help="Run polyglot using the native-image build.",
+            help="Run gnatpolyglot using the native-image build.",
         )
 
         parser.add_argument(
@@ -74,7 +74,7 @@ class PolyglotTestsuite(Testsuite):
             runtime_dir = os.environ["POLYGLOT_RUNTIME"]
         except KeyError:
             runtime_dir = os.path.join(
-                os.path.dirname(__file__), "..", "polyglot", "runtimes"
+                os.path.dirname(__file__), "..", "gnatpolyglot", "runtimes"
             )
             os.environ["POLYGLOT_RUNTIME"] = runtime_dir
 
@@ -85,4 +85,4 @@ class PolyglotTestsuite(Testsuite):
             ))
         }
 
-sys.exit(PolyglotTestsuite().testsuite_main())
+sys.exit(GNATpolyglotTestsuite().testsuite_main())
