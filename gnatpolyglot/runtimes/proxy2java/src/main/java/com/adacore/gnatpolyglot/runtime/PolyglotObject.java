@@ -3,6 +3,7 @@ package com.adacore.gnatpolyglot.runtime;
 import java.lang.ref.Cleaner;
 import java.util.function.Consumer;
 import com.adacore.gnatpolyglot.runtime.PolyglotData;
+import com.adacore.gnatpolyglot.runtime.PolyglotData.Owner;
 
 /**
  * Base class of all GNATpolyglot objects.
@@ -40,7 +41,7 @@ public abstract class PolyglotObject implements AutoCloseable {
 
         @Override
         final public void run() {
-            if (this.data != null) {
+            if (this.data != null && this.data.getOwner() == Owner.USER) {
                 free.accept(this.data);
                 this.data = null;
             }
@@ -69,9 +70,18 @@ public abstract class PolyglotObject implements AutoCloseable {
             this.cleanable = CLEANER.register(this, new CleaningAction(data, getFree()));
     }
 
+    public final Owner getOwner() {
+        return data.getOwner();
+    }
+
+    public final void setOwner(Owner owner) {
+        data.setOwner(owner);
+    }
+
     @Override
     public final void close() {
         cleanable.clean();
+        data = null;
     }
 
     /** Return the function to free the heap memory. */
