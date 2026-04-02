@@ -51,11 +51,26 @@ public abstract class PolyglotObject implements AutoCloseable {
     /** The native object. */
     protected PolyglotData data;
 
+    /**
+     * The root native object owning the memory.
+     *
+     * <p>This should be equal to `this` by default. Getters to a field set this value to the
+     * parent object whose getter was called in order to avoid the root object from being
+     * collected while some of its component are still accessible.
+     */
+    protected final PolyglotObject parent;
+
     /** Handle to clean up the allocated native object */
     private Cleaner.Cleanable cleanable;
 
     protected PolyglotObject(PolyglotData data) {
         setData(data);
+        this.parent = this;
+    }
+
+    protected PolyglotObject(PolyglotData data, PolyglotObject parent) {
+        setData(data);
+        this.parent = parent;
     }
 
     /** Return the native object. */
