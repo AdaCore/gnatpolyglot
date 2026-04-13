@@ -1,0 +1,20 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Calling inProc
+Ada in: A = -1, B.V =  1
+Calling outProc
+Calling inProc
+Ada in: A =  123, B.V =  456
+Calling inOutProc
+Ada in out before: A =  123, B.V =  456
+Ada in out after: A =  111, B.V =  222
+Calling inProc
+Ada in: A =  111, B.V =  222
+
+Done.

@@ -10,6 +10,20 @@ import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
 
 public class TypenameGenerator {
 
+    public static String nativeReferenceTypename(NativeType nativeType) {
+        return switch (nativeType) {
+            case BOOL -> "BooleanRef";
+            case CHAR -> "CharacterRef";
+            case FLOAT32 -> "FloatRef";
+            case FLOAT64 -> "DoubleRef";
+            case UINT8, SINT8 -> "ByteRef";
+            case UINT16, SINT16 -> "ShortRef";
+            case UINT32, SINT32 -> "IntegerRef";
+            case UINT64, SINT64 -> "LongRef";
+            default -> throw new UnsupportedOperationException("Unreachable");
+        };
+    }
+
     /** Type worker that creates the Java typename, generally exposed to the user. */
     private class JavaTypenameWorker implements JavaTypeWorker<String> {
 
@@ -51,6 +65,27 @@ public class TypenameGenerator {
                 @Override
                 public ProxyContext getContext() {
                     return api.getContext();
+                }
+
+                private String getNativeRefTypename(TypeExpr typeExpr) {
+                    TypeDecl decl = getContext().getTypeDecl(typeExpr.getName());
+                    return "com.adacore.gnatpolyglot.runtime."
+                            + nativeReferenceTypename(NativeTypeDecl.class.cast(decl).nativeType);
+                }
+
+                @Override
+                public String numberType(TypeExpr type) {
+                    return getNativeRefTypename(type);
+                }
+
+                @Override
+                public String charType(TypeExpr type) {
+                    return getNativeRefTypename(type);
+                }
+
+                @Override
+                public String boolType(TypeExpr type) {
+                    return getNativeRefTypename(type);
                 }
 
                 @Override
@@ -95,7 +130,7 @@ public class TypenameGenerator {
         }
 
         @Override
-        public String refType(TypeExpr type) {
+        public String refType(TypeExpr refType) {
             return new JavaTypeWorker.JavaSubreferenceTypeWorker<String>() {
 
                 @Override
@@ -104,10 +139,15 @@ public class TypenameGenerator {
                 }
 
                 @Override
+                public String numberType(TypeExpr type) {
+                    return "java.nio.ByteBuffer";
+                }
+
+                @Override
                 public String classType(TypeExpr type) {
                     return api.javaPrimitiveTypename(NativeType.UINT64);
                 }
-            }.apply(type.referencedType());
+            }.apply(refType.referencedType());
         }
     }
 
@@ -151,6 +191,11 @@ public class TypenameGenerator {
                 @Override
                 public ProxyContext getContext() {
                     return api.getContext();
+                }
+
+                @Override
+                public String numberType(TypeExpr type) {
+                    return "jobject";
                 }
 
                 @Override

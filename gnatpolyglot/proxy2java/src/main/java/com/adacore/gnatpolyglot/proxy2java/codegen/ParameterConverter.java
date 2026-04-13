@@ -4,6 +4,7 @@ import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
+import java.util.List;
 
 public class ParameterConverter {
 
@@ -60,6 +61,17 @@ public class ParameterConverter {
                 @Override
                 public ProxyContext getContext() {
                     return api.getContext();
+                }
+
+                @Override
+                public String numberType(TypeExpr type) {
+                    return new StringBuilder(valueTypename)
+                            .append(" ")
+                            .append(valueName)
+                            .append(" = ")
+                            .append(argName)
+                            .append(".getBuffer()")
+                            .toString();
                 }
 
                 @Override
@@ -130,12 +142,31 @@ public class ParameterConverter {
         }
 
         @Override
-        public String refType(TypeExpr type) {
+        public String refType(TypeExpr refType) {
             return new JavaTypeWorker.JavaSubreferenceTypeWorker<String>() {
 
                 @Override
                 public ProxyContext getContext() {
                     return api.getContext();
+                }
+
+                private String makeScalarRefParam(TypeExpr type) {
+                    String ptrTypename = api.cTypename(refType);
+                    return new StringBuilder(ptrTypename)
+                            .append(" ")
+                            .append(valueName)
+                            .append(" = ")
+                            .append(
+                                    CGenerator.makeCast(
+                                            ptrTypename,
+                                            CGenerator.makeJNICall(
+                                                    "GetDirectBufferAddress", List.of(argName))))
+                            .toString();
+                }
+
+                @Override
+                public String numberType(TypeExpr type) {
+                    return makeScalarRefParam(type);
                 }
 
                 @Override
@@ -147,7 +178,7 @@ public class ParameterConverter {
                             .append(CGenerator.makeCast(valueTypename, argName))
                             .toString();
                 }
-            }.apply(type.referencedType());
+            }.apply(refType.referencedType());
         }
     }
 
