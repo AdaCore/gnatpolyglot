@@ -78,7 +78,23 @@ public class ParameterConverter {
                 public String classType(TypeExpr type) {
                     return JavaParamWorker.this.classType(type);
                 }
+
+                @Override
+                public String arrayType(TypeExpr type) {
+                    return JavaParamWorker.this.arrayType(type);
+                }
             }.apply(type.referencedType());
+        }
+
+        @Override
+        public String arrayType(TypeExpr type) {
+            return new StringBuilder(valueTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(argName)
+                    .append(".getData()")
+                    .toString();
         }
     }
 
@@ -178,7 +194,24 @@ public class ParameterConverter {
                             .append(CGenerator.makeCast(valueTypename, argName))
                             .toString();
                 }
+
+                @Override
+                public String arrayType(TypeExpr type) {
+                    return JNIParamWorker.this.arrayType(type);
+                }
             }.apply(refType.referencedType());
+        }
+
+        @Override
+        public String arrayType(TypeExpr type) {
+            return new StringBuilder("struct array_data ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(
+                            CGenerator.makeCall(
+                                    "gnatpolyglot_proxy2java_to_array_data",
+                                    List.of("env", argName)))
+                    .toString();
         }
     }
 

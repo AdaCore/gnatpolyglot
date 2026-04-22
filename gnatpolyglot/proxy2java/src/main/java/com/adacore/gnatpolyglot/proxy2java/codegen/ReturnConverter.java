@@ -77,6 +77,23 @@ public class ReturnConverter {
         public String refType(TypeExpr type) {
             return apply(type.referencedType());
         }
+
+        @Override
+        public String arrayType(TypeExpr type) {
+            // The JNI layer does not set the owner of the data in order to offload as much of the
+            // work to the Java world, so we must set it here.
+            return new StringBuilder(returnedValue)
+                    .append(".")
+                    .append(
+                            JavaGenerator.makeCall(
+                                    "setOwner",
+                                    List.of(api.javaOwner(functionDecl.type.returnOwner))))
+                    .append(";\n")
+                    .append("return ")
+                    .append(JavaGenerator.makeNew(api.javaTypename(type), List.of(returnedValue)))
+                    .append(";")
+                    .toString();
+        }
     }
 
     /** Type worker that creates the conversion of return values from bound functions to the JVM. */
@@ -142,7 +159,20 @@ public class ReturnConverter {
                 public String classType(TypeExpr type) {
                     return CReturnWorker.this.classType(type);
                 }
+
+                @Override
+                public String arrayType(TypeExpr type) {
+                    return CReturnWorker.this.arrayType(type);
+                }
             }.apply(type.referencedType());
+        }
+
+        @Override
+        public String arrayType(TypeExpr type) {
+            return CGenerator.makeCall(
+                            "gnatpolyglot_proxy2java_to_ArrayData", List.of("env", returnedValue))
+                    .append(";")
+                    .toString();
         }
     }
 

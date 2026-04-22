@@ -26,11 +26,6 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
     }
 
     @Override
-    default T arrayType(TypeExpr type) {
-        throw new UnsupportedOperationException("Unimplemented method 'arrayType'");
-    }
-
-    @Override
     default T pointerType(TypeExpr type) {
         throw new UnsupportedOperationException("Unimplemented method 'pointerType'");
     }
@@ -60,11 +55,6 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
         @Override
         default T enumType(TypeExpr type) {
             throw new UnsupportedOperationException("Unimplemented method 'enumType'");
-        }
-
-        @Override
-        default T arrayType(TypeExpr type) {
-            throw new UnsupportedOperationException("Unimplemented method 'arrayType'");
         }
 
         @Override
