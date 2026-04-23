@@ -74,7 +74,7 @@ public abstract class PolyglotObject implements AutoCloseable {
     }
 
     /** Return the native object. */
-    public final PolyglotData getData() {
+    public PolyglotData getData() {
         return data;
     }
 
