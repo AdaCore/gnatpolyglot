@@ -52,9 +52,11 @@ class PythonDriver(DiffTestDriver):
         for path in self.test_env.get("sync_tree", []):
             sync_tree(self.test_dir(path), self.working_dir(), delete=False)
 
+    def run_env(self) -> dict[str, str]:
+        return dict(os.environ)
 
     def run(self) -> None:
-        env = dict(os.environ)
+        env = self.run_env()
         self.add_path(env, "PYTHONPATH", self.support_dir)
         env["NO_COLOR"] = "TRUE"
 

@@ -6,4 +6,8 @@ library project Test is
    for Library_Name use "test";
    for Library_Dir use "lib";
 
+   type Library_Kind_Type is ("static", "relocatable", "static-pic");
+   Library_Kind : Library_Kind_Type := external ("LIBRARY_KIND", "static");
+   for Library_Kind use Library_Kind;
+
 end Test;

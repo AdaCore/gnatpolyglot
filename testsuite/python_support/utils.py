@@ -3,7 +3,9 @@ import os
 import glob
 import subprocess
 import yaml
+import json
 from pathlib import Path
+from dataclasses import dataclass
 
 POLYGLOT_HOME = os.path.realpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "gnatpolyglot")
@@ -140,6 +142,15 @@ def run_scanner(
         raise Exception(f"Unknown language: {input_lang}")
 
 
+@dataclass
+class CompilationResult:
+    lang: str
+    exec_cmd : list[str] | None = None
+    exec_env : dict[str, str] | None = None
+    library_path : str | None = None
+    library_name : str | None = None
+
+
 def compile_main(
     output_lang: str,
     test_file: str,
@@ -148,7 +159,8 @@ def compile_main(
     input_lib: str,
     cflags: list[str] | None = None,
     ldflags: list[str] | None = None,
-) -> str:
+    deps: list[CompilationResult] = []
+) -> CompilationResult:
     """
     Compile the main test file and return a path to its corresponding
     executable.
@@ -183,7 +195,42 @@ def compile_main(
             *C_FLAGS,
         ]
         run(argv)
-        return os.path.realpath("main")
+        return CompilationResult(
+            lang="ada",
+            exec_cmd=[os.path.realpath("main")],
+            exec_env={}
+        )
+    if output_lang == "java":
+        class_path = os.pathsep.join([
+            str(list(Path(os.path.join(output_proxy, "target")).glob("*.jar"))[0]),
+            *[
+                str(p)
+                for p in list(
+                    Path(os.path.join(output_proxy, "target", "lib")).glob("*.jar")
+                )
+            ],
+        ])
+
+        argv = [
+            "javac",
+            f"--class-path={class_path}",
+            test_file
+        ]
+        run(argv)
+        exec_env = {}
+        for dep in deps:
+            if dep.lang != "java":
+                add_path(exec_env, "LD_LIBRARY_PATH", dep.library_path)
+        return CompilationResult(
+            lang="java",
+            exec_cmd=[
+                "java",
+                "--enable-native-access=ALL-UNNAMED",
+                f"--class-path={class_path}:.",
+                test_file.replace(".java", "")
+            ],
+            exec_env=exec_env
+        )
     else:
         raise Exception(f"Unknown language: {output_lang}")
 
@@ -191,25 +238,91 @@ def compile_main(
 def compile_lib(
     input_lang: str,
     lib_location: str,
-    extra_args: list[str] | None = None
-) -> None:
+    extra_args: list[str] | None = None,
+    deps : list[CompilationResult] = []
+) -> list[CompilationResult]:
     """
     Compile the generated library at the given path.
     """
     if extra_args is None:
         extra_args = []
     if input_lang == "ada":
+        if os.path.isdir(lib_location):
+            lib_location = str(list(Path(lib_location).glob("*.gpr"))[0])
         run([
             "gprbuild",
             lib_location,
             "-q",
-            "-XLIBRARY_TYPE=static",
+            "-ggdb",
             "-gnatwI",
             "--gpr=2",
             *extra_args,
         ])
-    elif input_lang == "c++":
-        run(["make", "--silent", "-B", "-C", lib_location])
+        inspect = json.loads(run(
+            [
+                "gprinspect",
+                lib_location,
+                "--display=json-compact",
+                *[arg for arg in extra_args if not arg.startswith("-gnat")],
+            ],
+            pipe=True
+        ))
+        return [
+            CompilationResult(
+                lang="ada",
+                library_name=inspect.get("projects")[0].get("project").get("library-name"),
+                library_path=inspect.get("projects")[0].get("project").get("library-directory")
+            )
+        ]
+    elif input_lang == "java":
+        # Compile the Java bindings
+        env = dict(os.environ)
+        env["MAVEN_OPTS"] = "--enable-native-access=ALL-UNNAMED"
+        run(["mvn", "package", "-f", lib_location, "-q"], env=env, pipe=True)
+
+        # Compile the JNI layer
+        gpr_file = str(list(Path(lib_location).glob("*.gpr"))[0])
+        jni_args = ["-XOS=windows" if os.name == "nt" else "-XOS=unix"]
+        for dep in deps:
+            jni_args.extend([
+                f"-XPROXY_LIB_LOCATION={dep.library_path}",
+                f"-XPROXY_LIB={dep.library_name}",
+            ])
+        return [
+            *compile_lib("c", gpr_file, jni_args),
+            CompilationResult(
+                lang="java",
+                library_path=os.path.join(lib_location, "target", "classes")
+            )
+        ]
+    elif input_lang in ("c", "c++"):
+        if os.path.isdir(lib_location):
+            lib_location = str(list(Path(lib_location).glob("*.gpr"))[0])
+        run([
+            "gprbuild",
+            lib_location,
+            "-q",
+            "-ggdb",
+            "-gnatwI",
+            "--gpr=2",
+            *extra_args,
+        ])
+        inspect = json.loads(run(
+            [
+                "gprinspect",
+                lib_location,
+                "--display=json-compact",
+                *extra_args,
+            ],
+            pipe=True
+        ))
+        return [
+            CompilationResult(
+                lang="ada",
+                library_name=inspect.get("projects")[0].get("project").get("library-name"),
+                library_path=inspect.get("projects")[0].get("project").get("library-directory")
+            )
+        ]
     else:
         raise Exception(f"Unknown language: {input_lang}")
 
@@ -242,6 +355,10 @@ class PrinterConfig():
             else:
                 return ld_flags.get("linux")
 
+    @property
+    def output_lib_flags(self) -> list[str]:
+        return self._cfg.get("output_lib_flags", [])
+
 
 def run_printer(output_lang: str, proxy_file: str, output_path: str) -> None:
     """
@@ -250,6 +367,8 @@ def run_printer(output_lang: str, proxy_file: str, output_path: str) -> None:
     """
     if output_lang == "c++":
         run_polyglot("proxy2cpp", [proxy_file, "-o", output_path])
+    elif output_lang == "java":
+        run_polyglot("proxy2java", [proxy_file, "-o", output_path])
     else:
         raise Exception(f"Unknown language: {output_lang}")
 
@@ -261,20 +380,22 @@ def add_path(env: dict[str, str], env_var: str, path: str):
     env[env_var] = "{}{}{}".format(path, os.path.pathsep, env.get(env_var, ""))
 
 
-def valgrind_cmd(argv: list[str]):
+def valgrind_cmd(output_lang: str, argv: list[str]):
     suppression_file = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "package_elab.supp"
     )
-    return [
-        "valgrind",
-        "-q",
-        "--leak-check=full",
-        "--show-leak-kinds=all",
-        "--track-origins=yes",
-        "--error-exitcode=2",
-        f"--suppressions={suppression_file}",
-        *argv
-    ]
+    if output_lang in ["c++"]:
+        return [
+            "valgrind",
+            "-q",
+            "--leak-check=full",
+            "--show-leak-kinds=all",
+            "--track-origins=yes",
+            "--error-exitcode=2",
+            f"--suppressions={suppression_file}",
+            *argv
+        ]
+    return argv
 
 
 def get_proxy_lib_file(input_lang: str, proxy_location: str) -> str:

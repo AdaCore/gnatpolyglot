@@ -67,6 +67,7 @@ public class FullyQualifiedName implements ProxyObject {
             String prefix,
             String separator,
             String suffix) {
+        if (names.size() == 0) return "";
         StringBuilder builder = new StringBuilder(prefix);
         FullyQualifiedName current = new FullyQualifiedName(names.subList(0, 1));
         builder.append(converter.apply(current));

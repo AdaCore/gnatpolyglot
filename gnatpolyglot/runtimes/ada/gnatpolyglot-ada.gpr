@@ -17,6 +17,7 @@ library project GNATpolyglot.Ada is
 
    for Library_Name use "gnatpolyglotada";
    for Library_Dir use "lib/" & Library_Kind & "/" & Build_Mode;
+   for Library_Kind use Library_Kind;
 
    package Compiler is
       case Build_Mode is
