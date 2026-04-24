@@ -1,5 +1,6 @@
 import os
 
+from e3.testsuite.driver.classic import TestSkip
 import yaml
 
 from drivers.python_driver import PythonDriver
@@ -24,6 +25,9 @@ class Proxy2Print(PythonDriver):
     def set_up(self) -> None:
         super().set_up()
 
+        if self.test_env.get("output_lang") == "java" and not self.env.java_supported:
+            raise TestSkip("Java is not supported on this platform")
+
         input_proxy_path = self.test_dir(self.test_env["input_proxy"])
         sync_tree(
             input_proxy_path,
@@ -43,8 +47,9 @@ class Proxy2Print(PythonDriver):
     def run_env(self) -> dict[str, str]:
         env = super().run_env()
         if self.test_env.get("output_lang") == "java":
-            maven_opts = ""
+            maven_args = ""
             if self.env.options.maven_local_repo is not None:
-                maven_opts = f"-Dmaven.repo.local={self.env.options.maven_local_repo}"
-            env["MAVEN_ARGS"] = maven_opts
+                maven_args = f"-Dmaven.repo.local={self.env.options.maven_local_repo}"
+            env["MAVEN_ARGS"] = maven_args
+            env["MAVEN_EXEC"] = self.env.options.maven_executable or "mvn"
         return env
