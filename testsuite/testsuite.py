@@ -78,26 +78,33 @@ class GNATpolyglotTestsuite(Testsuite):
             )
             os.environ["POLYGLOT_RUNTIME"] = runtime_dir
 
-        # Build and install the Java Runtime libraries
-        mvn_args = []
-        if args.maven_local_repo is not None:
-            mvn_args.append(f"-Dmaven.repo.local={self.env.options.maven_local_repo}")
-        with tempfile.TemporaryDirectory() as d:
-            run_setup(d)
-            for r in ["proxy2java"]:
-                run([
-                    "mvn",
-                    "install",
-                    f"-f{os.path.join(d, r)}",
-                    "-q",
-                    *mvn_args
-                    ],
-                    pipe=True,
-                    env={
-                        "MAVEN_OPTS": "--enable-native-access=ALL-UNNAMED",
-                        **dict(os.environ)
-                    }
-                )
+        if self.env.build.platform in (
+            "x86_64-linux", "x86_64-windows64"
+        ):
+            self.env.java_supported = True
+            # Build and install the Java Runtime libraries
+            mvn_args = []
+            if args.maven_local_repo is not None:
+                mvn_args.append(f"-Dmaven.repo.local={self.env.options.maven_local_repo}")
+            with tempfile.TemporaryDirectory() as d:
+                run_setup(d)
+                for r in ["proxy2java"]:
+                    run([
+                        args.maven_executable or "mvn",
+                        "install",
+                        f"-f{os.path.join(d, r)}",
+                        "-q",
+                        *mvn_args
+                        ],
+                        pipe=True,
+                        env={
+                            "MAVEN_OPTS": "--enable-native-access=ALL-UNNAMED",
+                            **dict(os.environ)
+                        }
+                    )
+        else:
+            self.env.java_supported = False
+
 
         # Check if the internal testsuite is present
         self.env.control_condition_env = {

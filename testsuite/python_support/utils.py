@@ -218,13 +218,14 @@ def compile_main(
         ]
         run(argv)
         exec_env = {}
+        lib_path_var = "LD_LIBRARY_PATH" if os.name != "nt" else "PATH"
         for dep in deps:
             if dep.lang != "java":
-                add_path(exec_env, "LD_LIBRARY_PATH", dep.library_path)
+                add_path(exec_env, lib_path_var, dep.library_path)
         return CompilationResult(
             lang="java",
             exec_cmd=[
-                "java",
+                "java" if os.name != "nt" else "java.exe",
                 "--enable-native-access=ALL-UNNAMED",
                 f"--class-path={class_path}:.",
                 test_file.replace(".java", "")
@@ -278,7 +279,7 @@ def compile_lib(
         # Compile the Java bindings
         env = dict(os.environ)
         env["MAVEN_OPTS"] = "--enable-native-access=ALL-UNNAMED"
-        run(["mvn", "package", "-f", lib_location, "-q"], env=env, pipe=True)
+        run([env["MAVEN_EXEC"], "package", "-f", lib_location, "-q"], env=env, pipe=True)
 
         # Compile the JNI layer
         gpr_file = str(list(Path(lib_location).glob("*.gpr"))[0])
