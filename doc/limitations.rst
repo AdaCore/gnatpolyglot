@@ -432,3 +432,11 @@ member:
 
        Child(const Child &other, void *data) : Root(data) { }
    }
+
+Proxy2Java
+---------
+
+Supported platforms
+~~~~~~~~~~~~~~~~~~~
+
+Currently, only 64bit Linux and Windows platforms are supported by Proxy2Java.
