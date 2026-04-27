@@ -112,9 +112,7 @@ public class Array extends AdaDeclaration {
                                     List.of(
                                             new Parameter(
                                                     Name.fromLower("self"),
-                                                    arrayTypeExpr
-                                                            .makePointer(false, false)
-                                                            .makeReference(false),
+                                                    arrayTypeExpr.makePointer(false, false),
                                                     new Transfer(RequiredOwner.ANY))),
                                     NativeType.VOID.typeExpr,
                                     Owner.UNKNOWN),

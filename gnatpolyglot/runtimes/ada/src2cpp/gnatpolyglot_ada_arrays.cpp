@@ -15,9 +15,9 @@
             begin, end)) {}                                                    \
                                                                                \
   extern "C" void gnatpolyglot__ada__arrays__native__##ADATYPE##_array_free(   \
-      void *);                                                                 \
+      array_data);                                                             \
   template <> polyglot_array<CTYPE>::~polyglot_array() {                       \
-    gnatpolyglot__ada__arrays__native__##ADATYPE##_array_free(this);           \
+    gnatpolyglot__ada__arrays__native__##ADATYPE##_array_free(this->_data);    \
   }                                                                            \
                                                                                \
   extern "C" void gnatpolyglot__ada__arrays__native__##ADATYPE##_array_copy(   \

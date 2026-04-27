@@ -26,7 +26,7 @@ namespace ${api.namespacePath(module)} {
             (${api.cParameters(functionDecl)});
         template<>
         ${api.cppTypename(functionDecl.role.type)}::~polyglot_array() {
-            ${functionDecl.symbol}(&this->_data);
+            ${functionDecl.symbol}(this->_data);
         }
 
     @elseif(functionDecl.role.kind == RoleKind.ALLOC)

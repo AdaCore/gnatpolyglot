@@ -19,10 +19,10 @@ extern "C" void gnatpolyglot__ada__strings_free_c_chars_ptr(char *);
 polyglot_string::polyglot_string(const char *str)
     : _data(gnatpolyglot__ada__strings_from_c_chars_ptr(str)) {}
 
-extern "C" void gnatpolyglot__ada__strings__string_free(void *);
+extern "C" void gnatpolyglot__ada__strings__string_free(string_data data);
 
 polyglot_string::~polyglot_string() {
-  gnatpolyglot__ada__strings__string_free(&this->_data);
+  gnatpolyglot__ada__strings__string_free(this->_data);
 }
 
 extern "C" void *gnatpolyglot__ada__strings__string_get(string_data,
