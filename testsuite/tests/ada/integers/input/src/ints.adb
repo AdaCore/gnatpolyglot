@@ -1,5 +1,5 @@
 package body Ints is
-   function F_Char return Character is ('P');
+   function F_Char return Short_Short_Integer is (80);
    function F_Short return Short_Integer is (Short_Integer'Last);
    function F_Int return Integer is (Integer'Last);
    function F_Long_Int return Long_Integer is (Long_Integer'Last);
