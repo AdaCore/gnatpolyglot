@@ -43,7 +43,61 @@ public class Main {
         System.out.println("Done.");
     }
 
+    public static void testStructArrays() {
+        System.out.println("Starting testStructArrays");
+
+        MyInt.Array arr = TestPackage.myIntArrFunc();
+        System.out.format("bounds:%d %d\n", arr.getBegin(), arr.getEnd());
+        System.out.println("==================");
+        System.out.print("arr: ");
+        for (int i = 0; i < arr.size(); i++) {
+            System.out.format("%d, ", arr.get(i).getI());
+        }
+        System.out.println();
+
+        System.out.println("Calling out array param procedure...");
+        TestPackage.myIntArrProc(arr);
+        System.out.print("arr: ");
+        for (int i = 0; i < arr.size(); i++) {
+            System.out.format("%d, ", arr.get(i).getI());
+        }
+        System.out.println();
+
+        TestPackage.printImage(arr);
+
+        System.out.println("Done.");
+    }
+
+    public static void foreachLoop() {
+        {
+            IntegerArray arr = new IntegerArray(1, 10);
+            int n = 0;
+            for (int i = 0; i < arr.size(); i++) {
+                arr.set(i, n += 2);
+            }
+            for (var i : arr) {
+                System.out.format("%d, ", i);
+            }
+            System.out.println();
+        }
+        {
+            MyInt.Array arr = new MyInt.Array(1, 10);
+            int n = 0;
+            for (int i = 0; i < arr.size(); i++) {
+                arr.set(i, new MyInt(n += 2));
+            }
+            for (var i : arr) {
+                System.out.format("%d, ", i.getI());
+            }
+            System.out.println();
+        }
+    }
+
     public static void main(String[] args) throws Throwable {
         testNativeArrays();
+        System.out.println("============================================");
+        testStructArrays();
+        System.out.println("============================================");
+        foreachLoop();
     }
 }

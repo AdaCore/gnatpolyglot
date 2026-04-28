@@ -122,7 +122,7 @@ public class TypenameGenerator {
                 return "com.adacore.gnatpolyglot.runtime.ada2java."
                         + nativeArrayTypename(NativeTypeDecl.class.cast(decl).nativeType);
             }
-            throw new UnsupportedOperationException("Unsupported");
+            return javaTypename(elementType).concat(".Array");
         }
     }
 

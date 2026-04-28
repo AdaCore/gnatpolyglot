@@ -15,6 +15,7 @@ Template file to generate a class.
 !{
     FunctionMembersEntry members = api.getMembers(classDecl);
     String className = classDecl.name.getLastName().toPascal();
+    FunctionMembersEntry arrayFunctions = api.getArrayFunctions(classDecl);
 }
 
 package ${api.packagePath(classDecl)};
@@ -85,6 +86,10 @@ class ${className} extends ${api.parentClass(classDecl)}{
     protected Consumer<com.adacore.gnatpolyglot.runtime.PolyglotData> getFree() {
         return (addr) -> ${freeNativeFunc}(addr.getAddress());
     }
+
+@if (arrayFunctions != null)
+    @template.array_class(api, classDecl, arrayFunctions)
+@endif
 
     static {
         ${api.basePackage()}.Library.loadLibrary();
