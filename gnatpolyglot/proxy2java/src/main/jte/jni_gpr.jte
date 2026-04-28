@@ -11,6 +11,8 @@ Template file to generate a Maven project Java bindings.
 @param Proxy proxy
 @param String runtimeLocation
 
+with "${runtimeLocation}/ada/gnatpolyglot_ada2java.gpr";
+
 library project ${proxy.name.toPascal()}_JNI is
 
    for Languages use ("C");

@@ -75,6 +75,12 @@ Template file to generate a Maven project Java bindings.
             <artifactId>proxy2java</artifactId>
             <version>0.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.adacore.gnatpolyglot.runtime</groupId>
+            <artifactId>ada2java</artifactId>
+            <version>0.1</version>
+        </dependency>
     </dependencies>
 
 </project>
