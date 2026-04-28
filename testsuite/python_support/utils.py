@@ -38,6 +38,7 @@ def run(
     if p.returncode != expect_returncode:
         raise RuntimeError(
             f"Expected return code {expect_returncode} but got {p.returncode}"
+            + f": {out}" if pipe else ""
         )
     return out
 
