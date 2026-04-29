@@ -24,6 +24,7 @@ Commands:
   ada2proxy   Create a proxy for the given Ada project.
   proxy2cpp   Create the C++ interface of a proxy representation
   proxy2java  Create the Java interface of a proxy representation
+  proxy2rust  Create the Rust interface of a proxy representation
   setup       Set up the GNATpolyglot runtime.
 
 

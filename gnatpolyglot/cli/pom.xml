@@ -35,6 +35,12 @@
       <artifactId>proxy2java</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.adacore.gnatpolyglot</groupId>
+      <artifactId>proxy2rust</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

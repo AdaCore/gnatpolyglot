@@ -6,16 +6,19 @@ Compiling the library
 Compiling test main program...
 Running test main program...
 
-( 3 , 4 )
-p.v_1.v = 3
-v.v = -1
-p.v_1.v = 3
-( 5 , 6 )
-( 7 , 8 )
-( 4 , 2 )
-( 4 , 2 )
-( 2 , 4 )
-vv.v = 10
-vv.v = 20
+Got A = 0
+Got B = 1
+Rust value:1
+Got E = 15
+Got F = 30
+Rust value:30
+Got F = 30
+Rust value:15
+Rust big:5000000000
+Got H = 1
+4
+0
+1
+2
 
 Done.

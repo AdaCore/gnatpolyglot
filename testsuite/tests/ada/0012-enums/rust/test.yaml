@@ -1,0 +1,5 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: rust
+test_file: main.rs

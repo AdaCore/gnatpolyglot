@@ -39,4 +39,11 @@ int main() {
 
   test::HalfDefault h1(test::Value(2), 3);
   test::HalfDefault h2(3);
+
+  // A getter for a scalar field returns a real reference into the object, not a copy:
+  // writing through it mutates the field in place.
+  test::Value vv(10);
+  std::cout << "vv.v = " << vv.get_v() << "\n";
+  vv.get_v() = 20;
+  std::cout << "vv.v = " << vv.get_v() << "\n";
 }
