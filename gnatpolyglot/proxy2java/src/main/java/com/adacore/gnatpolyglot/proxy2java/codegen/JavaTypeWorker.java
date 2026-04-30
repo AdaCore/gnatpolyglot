@@ -22,7 +22,7 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
 
     @Override
     default T stringType(TypeExpr type) {
-        throw new UnsupportedOperationException("Unimplemented method 'stringType'");
+        return arrayType(type);
     }
 
     @Override
@@ -59,7 +59,7 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
 
         @Override
         default T stringType(TypeExpr type) {
-            throw new UnsupportedOperationException("Unimplemented method 'stringType'");
+            return arrayType(type);
         }
 
         @Override
