@@ -7,6 +7,7 @@ package com.adacore.gnatpolyglot.proxy;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 
 /** Contain information about memory ownership for function parameters. */
 public class Transfer implements ProxyObject {
@@ -35,5 +36,14 @@ public class Transfer implements ProxyObject {
 
     public <T> T visit(ProxyVisitor<T> v) {
         return v.visit(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj instanceof Transfer other) {
+            return Objects.deepEquals(required_owner, other.required_owner);
+        }
+        return false;
     }
 }

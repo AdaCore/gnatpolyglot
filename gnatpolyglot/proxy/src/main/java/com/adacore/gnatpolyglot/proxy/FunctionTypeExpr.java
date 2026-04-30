@@ -8,6 +8,7 @@ package com.adacore.gnatpolyglot.proxy;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Objects;
 
 public class FunctionTypeExpr extends TypeExpr {
 
@@ -41,5 +42,21 @@ public class FunctionTypeExpr extends TypeExpr {
     @Override
     public FullyQualifiedName getName() {
         return null;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(parameters, returnType, returnOwner);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj instanceof FunctionTypeExpr other) {
+            return Objects.deepEquals(parameters, other.parameters)
+                    && Objects.deepEquals(returnType, other.returnType)
+                    && Objects.deepEquals(returnOwner, other.returnOwner);
+        }
+        return false;
     }
 }
