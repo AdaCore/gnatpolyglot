@@ -57,6 +57,7 @@ Template file to generate shadow types for tagged records.
    type ${recordName}_Vtable is record
       Clone_Shadow_Dispatch : GNATpolyglot.Ada.Clone_Shadow_Type;
       Free_Shadow_Dispatch  : GNATpolyglot.Ada.Free_Shadow_Type;
+      Free_Data             : GNATpolyglot.Ada.Free_Shadow_Type;
       @for(var subp: methods)
          ${vtableNames.get(subp)} :
             ${vtableNames.get(subp)}_${recordName}_Type;
@@ -122,6 +123,7 @@ Template file to generate shadow types for tagged records.
                @endif
             @endfor
             Self_Value : System.Address := Self_Arg;
+            Self_Data_Value : System.Address := Self_Data_Arg;
             Vtable_Value : System.Address := Vtable_Arg;
             package Converter is new
               System.Address_To_Access_Conversions (${instantiableRecordName});
@@ -136,6 +138,7 @@ Template file to generate shadow types for tagged records.
                Shadow =>
                   (Ada.Finalization.Controlled with
                    Self => Self_Value,
+                   Self_Data => Self_Data_Value,
                    Vtable => Vtable_Value,
                    Self_Owner => GNATpolyglot.Ada.User,
                    Back_Ref_Converter => ${shadowTypename}_Back_Ref_Converter'Access),
@@ -171,6 +174,7 @@ Template file to generate shadow types for tagged records.
       @if(method.isProcedure())
       begin
          Table.${vtableNames.get(method)} (
+            ${firstParam}.Shadow.Self_Data,
             ${firstParam}.Shadow.Self
             @for(var p : method.parameters.stream().skip(1).toList())
                ,
@@ -190,6 +194,7 @@ Template file to generate shadow types for tagged records.
       @else
          Returned_Value : ${api.cInterfaceTypename(method.getReturnType())} :=
             Table.${vtableNames.get(method)} (
+               ${firstParam}.Shadow.Self_Data,
                ${firstParam}.Shadow.Self
                @for(var p : method.parameters.stream().skip(1).toList())
                   ,

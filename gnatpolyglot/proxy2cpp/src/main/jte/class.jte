@@ -198,11 +198,11 @@ vim: filetype=jtecpp
             }
         @endfor
 
-        void *${className}_do_internal_clone(${className} *self, gnatpolyglot::data *data) {
+        void *${className}_do_internal_clone(void *, ${className} *self, gnatpolyglot::data *data) {
             return self->internal_clone_(data);
         }
 
-        void ${className}_do_internal_free(${className} *self) {
+        void ${className}_do_internal_free(void *, ${className} *self) {
             // If this is called, thats means the destruction of the shadow data was
             // called from the library. The data is already being freed on that side if
             // necessary (it could have been copied on the stack, meaning that calling
@@ -219,6 +219,7 @@ vim: filetype=jtecpp
         ${className}_vtable() {
             this->_data.clone_shadow_dispatch = &${className}_do_internal_clone;
             this->_data.free_shadow_dispatch = &${className}_do_internal_free;
+            this->_data.free_data = nullptr;
         @for(var method : classDecl.vtable)
             !{String lastName = method.name.toLower();}
              this->_data.${dispatchNames.get(method)} =
@@ -229,8 +230,9 @@ vim: filetype=jtecpp
             void *data_() { return &this->_data; }
 
             struct table_data {
-                void *(*clone_shadow_dispatch)(${className} *_self, gnatpolyglot::data *_data);
-                void (*free_shadow_dispatch)(${className} *_self);
+                void *(*clone_shadow_dispatch)(void *, ${className} *_self, gnatpolyglot::data *_data);
+                void (*free_shadow_dispatch)(void *, ${className} *_self);
+                void (*free_data)(void *_self);
             <%---
               -- Generate all the dispatch function pointers. They are
               -- functions with C linkage and they must overlay on the vtable

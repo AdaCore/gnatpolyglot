@@ -349,7 +349,9 @@ public class AdaAPI extends LanguageAPI {
                         .collect(Collectors.joining("; ")));
         if (function.role.kind == RoleKind.SHADOW_ALLOC) {
             res.append(!res.isEmpty() ? ";" : "")
-                    .append("Self_Arg : System.Address; Vtable_Arg : System.Address");
+                    .append(
+                            "Self_Data_Arg: System.Address; Self_Arg : System.Address; Vtable_Arg :"
+                                    + " System.Address");
         }
         return res.toString();
     }
@@ -513,7 +515,7 @@ public class AdaAPI extends LanguageAPI {
                 // There will always be at least two arguments here: the first argument will always
                 // be the vtable, and the second argument the dispatching object (i.e the first
                 // value of subp.parameters).
-                .append("(")
+                .append("(Self_Data: System.Address; ")
                 .append(cInterfaceParameters(subp))
                 .append(")");
         if (!subp.isProcedure())
