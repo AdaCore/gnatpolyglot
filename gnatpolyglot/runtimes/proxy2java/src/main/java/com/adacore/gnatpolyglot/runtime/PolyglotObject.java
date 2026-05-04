@@ -3,6 +3,7 @@ package com.adacore.gnatpolyglot.runtime;
 import java.lang.ref.Cleaner;
 import java.util.function.Consumer;
 import com.adacore.gnatpolyglot.runtime.PolyglotData;
+import com.adacore.gnatpolyglot.runtime.PolyglotData.Owner;
 
 /**
  * Base class of all GNATpolyglot objects.
@@ -40,7 +41,7 @@ public abstract class PolyglotObject implements AutoCloseable {
 
         @Override
         final public void run() {
-            if (this.data != null) {
+            if (this.data != null && this.data.getOwner() == Owner.USER) {
                 free.accept(this.data);
                 this.data = null;
             }
@@ -50,11 +51,26 @@ public abstract class PolyglotObject implements AutoCloseable {
     /** The native object. */
     protected PolyglotData data;
 
+    /**
+     * The root native object owning the memory.
+     *
+     * <p>This should be equal to `this` by default. Getters to a field set this value to the
+     * parent object whose getter was called in order to avoid the root object from being
+     * collected while some of its component are still accessible.
+     */
+    protected final PolyglotObject parent;
+
     /** Handle to clean up the allocated native object */
     private Cleaner.Cleanable cleanable;
 
     protected PolyglotObject(PolyglotData data) {
         setData(data);
+        this.parent = this;
+    }
+
+    protected PolyglotObject(PolyglotData data, PolyglotObject parent) {
+        setData(data);
+        this.parent = parent;
     }
 
     /** Return the native object. */
@@ -69,9 +85,18 @@ public abstract class PolyglotObject implements AutoCloseable {
             this.cleanable = CLEANER.register(this, new CleaningAction(data, getFree()));
     }
 
+    public final Owner getOwner() {
+        return data.getOwner();
+    }
+
+    public final void setOwner(Owner owner) {
+        data.setOwner(owner);
+    }
+
     @Override
     public final void close() {
         cleanable.clean();
+        data = null;
     }
 
     /** Return the function to free the heap memory. */

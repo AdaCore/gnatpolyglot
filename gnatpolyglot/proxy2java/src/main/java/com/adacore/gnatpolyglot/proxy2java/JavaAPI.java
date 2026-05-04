@@ -8,6 +8,7 @@ import com.adacore.gnatpolyglot.proxy.FunctionDecl;
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.Module;
 import com.adacore.gnatpolyglot.proxy.Name;
+import com.adacore.gnatpolyglot.proxy.Owner;
 import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.Role.RoleKind;
@@ -167,14 +168,29 @@ public class JavaAPI extends LanguageAPI {
         return typenameGenerator.javaTypename(type);
     }
 
+    /** Return the Java name of a type when it's used as a return type. */
+    public String javaReturnTypename(TypeExpr type) {
+        return typenameGenerator.javaTypename(type.referencedType());
+    }
+
     /** Return the native Java name of a type. */
     public String javaNativeTypename(TypeExpr type) {
         return typenameGenerator.javaNativeTypename(type);
     }
 
+    /** Return the native Java name of a type when it's used as a return type. */
+    public String javaNativeReturnTypename(TypeExpr type) {
+        return typenameGenerator.javaNativeTypename(type.referencedType());
+    }
+
     /** Return the JNI name of a type. */
     public String jniTypename(TypeExpr type) {
         return typenameGenerator.jniTypename(type);
+    }
+
+    /** Return the JNI name of a type. */
+    public String jniReturnTypename(TypeExpr type) {
+        return typenameGenerator.jniTypename(type.referencedType());
     }
 
     /** Return the C name of a type. */
@@ -318,5 +334,11 @@ public class JavaAPI extends LanguageAPI {
     /** Return the member functions of a type. */
     public ProxyContext.FunctionMembersEntry getMembers(TypeDecl decl) {
         return context.getMembers(decl.name.asTypeExpr());
+    }
+
+    /** Return the name of the data owner. */
+    public String javaOwner(Owner returnOwner) {
+        return "com.adacore.gnatpolyglot.runtime.PolyglotData.Owner."
+                .concat(returnOwner.toString());
     }
 }

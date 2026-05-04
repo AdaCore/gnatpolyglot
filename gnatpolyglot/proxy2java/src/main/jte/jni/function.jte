@@ -13,7 +13,7 @@ Template file to generate a function.
 extern ${api.cTypename(function.type.returnType)}
 ${function.symbol}(${api.cParameters(function)});
 
-JNIEXPORT ${api.jniTypename(function.type.returnType)}
+JNIEXPORT ${api.jniReturnTypename(function.type.returnType)}
 ${api.jniName(function)} (${api.jniParameters(function)}) {
 @for (var param : function.type.parameters)
     ${api.makeJNIParamConversion(param)};

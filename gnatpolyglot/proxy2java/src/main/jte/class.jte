@@ -32,6 +32,17 @@ class ${className} extends ${api.parentClass(classDecl)}{
         super((com.adacore.gnatpolyglot.runtime.PolyglotData) data);
     }
 
+    /** Internal use only.
+     *
+     * <p> Create a ${className} from an existing proxy data.
+     */
+    public ${className} (
+        com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer data,
+        com.adacore.gnatpolyglot.runtime.PolyglotObject parent
+    ) {
+        super((com.adacore.gnatpolyglot.runtime.PolyglotData) data, parent);
+    }
+
 @for (var alloc : members.allocFunctions)
     !{
         String nativeFunc = "$%s".formatted(alloc.name.getLastName().toCamel());
@@ -49,7 +60,8 @@ class ${className} extends ${api.parentClass(classDecl)}{
     @endfor
         setData(
             new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(
-                ${api.callJavaNative(alloc, nativeFunc)}
+                ${api.callJavaNative(alloc, nativeFunc)},
+                com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER
             )
         );
     }
