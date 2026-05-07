@@ -1,0 +1,21 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Got 'A' = 65
+Got 'B' = 66
+Java value: B
+Got 'e' = 101
+Got 'f' = 102
+Java value: f
+Got 'f' = 102
+Java value: e
+j
+e
+f
+
+Done.

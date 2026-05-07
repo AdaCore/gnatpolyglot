@@ -76,8 +76,10 @@ public class DispatchReturnConverter {
 
         @Override
         public String numberType(TypeExpr type) {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'numberType'");
+            return new StringBuilder("return ")
+                    .append(CGenerator.makeCast(cReturnType, returnedValue))
+                    .append(";")
+                    .toString();
         }
 
         @Override

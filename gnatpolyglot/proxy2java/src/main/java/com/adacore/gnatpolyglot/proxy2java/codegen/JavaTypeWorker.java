@@ -7,7 +7,7 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
 
     @Override
     default T charType(TypeExpr type) {
-        throw new UnsupportedOperationException("Unimplemented method 'charType'");
+        return numberType(type);
     }
 
     @Override
@@ -34,7 +34,7 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
 
         @Override
         default T charType(TypeExpr type) {
-            throw new UnsupportedOperationException("Unimplemented method 'charType'");
+            return numberType(type);
         }
 
         @Override
