@@ -93,6 +93,16 @@ public abstract class PolyglotObject implements AutoCloseable {
         data.setOwner(owner);
     }
 
+    public PolyglotData release() {
+        PolyglotData res = data;
+        // Prevent the data from being freed: there is no way to cancel a corresponding Cleanable
+        // from running once an object has been registered
+        res.setOwner(Owner.STATIC);
+        // The object should not be usable anymore.
+        setData(null);
+        return res;
+    }
+
     @Override
     public final void close() {
         cleanable.clean();

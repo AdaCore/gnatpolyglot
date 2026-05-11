@@ -80,6 +80,11 @@ public class PolyglotString extends PolyglotObject implements CharSequence {
         return (ArrayData) data;
     }
 
+    @Override
+    public ArrayData release() {
+        return (ArrayData) super.release();
+    }
+
     private static native void stringFree(ArrayData data);
 
     @Override
