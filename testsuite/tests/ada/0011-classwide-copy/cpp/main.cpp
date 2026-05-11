@@ -4,11 +4,11 @@
 
 class Inherited : public test::Root {
 protected:
-    Inherited *internal_clone_(void *data) override {
+    Inherited *internal_clone_(gnatpolyglot::data *data) override {
         return new Inherited(*this, data);
     }
 
-    Inherited(const Inherited& other, void *data)
+    Inherited(const Inherited& other, gnatpolyglot::data *data)
         // Call the parent ctor: nothing to copy there, only use the new data.
         : test::Root(data) 
     {

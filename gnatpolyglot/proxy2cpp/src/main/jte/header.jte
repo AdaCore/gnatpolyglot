@@ -23,6 +23,7 @@ vim: filetype=jtecpp
 #include <gnatpolyglot_ada_exceptions.h>
 #include <gnatpolyglot_ada_strings.h>
 #include <gnatpolyglot_ptr.h>
+#include <gnatpolyglot.h>
 
 #if __cplusplus >= 201103L
 #include <array>

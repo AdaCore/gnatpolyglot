@@ -404,7 +404,7 @@ public class CppAPI {
     /** Return a string of the parameters of the dispatching function. */
     public String dispatchParameters(FunctionTypeExpr function) {
         StringBuilder builder = new StringBuilder();
-        builder.append("void *_self");
+        builder.append("gnatpolyglot::data *_self");
         for (var param : function.parameters.stream().skip(1).toList()) {
             builder.append(", ").append(toCParam(param));
         }
