@@ -1,0 +1,31 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+(A => 1, B => 2)
+(A => 3, B => 4, C => 5)
+Java inherited
+3 4 5 
+(A => 1, B => 2)
+(A => 3, B => 4, C => 5)
+Java inherited
+3 4 5 
+r1 = 42
+r2 = 21
+r3 = 100
+P2 Ada
+P2 from Java 1: 21
+Returning from ada: 2, 3, 4, 5, 6,
+Got in ada: 2, 3, 4, 5, 6,
+Got in Java: 2, 3, 4, 5, 6, 
+i = 1
+Returning from Java: 3, 4, 5, 6, 7, 
+Got in ada: 3, 4, 5, 6, 7,
+Got in Java: 3, 4, 5, 6, 7, 
+i = 2
+
+Done.

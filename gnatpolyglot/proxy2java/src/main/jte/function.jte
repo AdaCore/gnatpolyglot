@@ -5,6 +5,7 @@ vim: filetype=java
 Template file to generate a function.
 --%>
 @import com.adacore.gnatpolyglot.proxy.FunctionDecl
+@import com.adacore.gnatpolyglot.proxy.FunctionDecl.Overridability
 @import com.adacore.gnatpolyglot.proxy2java.JavaAPI
 
 @param JavaAPI api
@@ -16,6 +17,12 @@ Template file to generate a function.
     boolean isMethod = api.isMethod(function);
     boolean firstMethodParam = isMethod;
 }
+
+@if (function.overridability == Overridability.ABSTRACT)
+    public abstract
+    ${api.javaReturnTypename(function.type.returnType)}
+    ${functionName}(${api.javaParameters(function)});
+@else
     private static native
     ${api.javaNativeReturnTypename(function.type.returnType)}
     ${nativeFunc}(${api.javaNativeParameters(function)});
@@ -35,3 +42,4 @@ Template file to generate a function.
         ${api.makeJavaReturnStatement(function, "valueReturned")}
     @endif
     }
+@endif
