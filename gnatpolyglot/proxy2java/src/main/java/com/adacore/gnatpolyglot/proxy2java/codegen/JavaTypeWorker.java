@@ -11,11 +11,6 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
     }
 
     @Override
-    default T boolType(TypeExpr type) {
-        throw new UnsupportedOperationException("Unimplemented method 'boolType'");
-    }
-
-    @Override
     default T enumType(TypeExpr type) {
         throw new UnsupportedOperationException("Unimplemented method 'enumType'");
     }
@@ -35,11 +30,6 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
         @Override
         default T charType(TypeExpr type) {
             return numberType(type);
-        }
-
-        @Override
-        default T boolType(TypeExpr type) {
-            throw new UnsupportedOperationException("Unimplemented method 'boolType'");
         }
 
         @Override

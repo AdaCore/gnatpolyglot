@@ -40,6 +40,11 @@ public class DispatchParameterConverter {
         }
 
         @Override
+        public String boolType(TypeExpr type) {
+            return numberType(type);
+        }
+
+        @Override
         public String arrayType(TypeExpr type) {
             // Create a new object with the STATIC ownership: the address received might
             // point to the stack.
@@ -108,6 +113,11 @@ public class DispatchParameterConverter {
                 }
 
                 @Override
+                public String boolType(TypeExpr type) {
+                    return numberType(type);
+                }
+
+                @Override
                 public String arrayType(TypeExpr type) {
                     return JavaParamWorker.this.arrayType(type);
                 }
@@ -148,6 +158,11 @@ public class DispatchParameterConverter {
                     .append(CGenerator.makeCast(valueTypename, argName))
                     .append(";")
                     .toString();
+        }
+
+        @Override
+        public String boolType(TypeExpr type) {
+            return numberType(type);
         }
 
         @Override
@@ -205,6 +220,11 @@ public class DispatchParameterConverter {
                                                             List.of(CGenerator.deref(argName))))))
                             .append(";")
                             .toString();
+                }
+
+                @Override
+                public String boolType(TypeExpr type) {
+                    return numberType(type);
                 }
 
                 @Override

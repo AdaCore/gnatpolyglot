@@ -57,6 +57,11 @@ public class TypenameGenerator {
         }
 
         @Override
+        public String boolType(TypeExpr type) {
+            return getNativeTypename(type);
+        }
+
+        @Override
         public String classType(TypeExpr type) {
             FullyQualifiedName name = type.getName();
             return new StringBuilder(api.basePackage())
@@ -155,6 +160,11 @@ public class TypenameGenerator {
         }
 
         @Override
+        public String boolType(TypeExpr type) {
+            return getNativeTypename(type);
+        }
+
+        @Override
         public String classType(TypeExpr type) {
             return api.javaPrimitiveTypename(NativeType.UINT64);
         }
@@ -180,6 +190,11 @@ public class TypenameGenerator {
 
                 @Override
                 public String numberType(TypeExpr type) {
+                    return "java.nio.ByteBuffer";
+                }
+
+                @Override
+                public String boolType(TypeExpr type) {
                     return "java.nio.ByteBuffer";
                 }
 
@@ -230,6 +245,11 @@ public class TypenameGenerator {
         }
 
         @Override
+        public String boolType(TypeExpr type) {
+            return getNativeTypename(type);
+        }
+
+        @Override
         public String classType(TypeExpr type) {
             return "jlong";
         }
@@ -255,6 +275,11 @@ public class TypenameGenerator {
 
                 @Override
                 public String numberType(TypeExpr type) {
+                    return "jobject";
+                }
+
+                @Override
+                public String boolType(TypeExpr type) {
                     return "jobject";
                 }
 
@@ -310,6 +335,11 @@ public class TypenameGenerator {
         }
 
         @Override
+        public String boolType(TypeExpr type) {
+            return getNativeTypename(type);
+        }
+
+        @Override
         public String classType(TypeExpr type) {
             return "void *";
         }
@@ -335,7 +365,12 @@ public class TypenameGenerator {
 
                 @Override
                 public String numberType(TypeExpr type) {
-                    return javaTypename(type).concat("*");
+                    return cTypename(type).concat("*");
+                }
+
+                @Override
+                public String boolType(TypeExpr type) {
+                    return cTypename(type).concat("*");
                 }
 
                 @Override
