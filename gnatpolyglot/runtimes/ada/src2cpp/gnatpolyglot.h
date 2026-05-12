@@ -6,6 +6,12 @@
 #ifndef GNATPOLYGLOT_H
 #define GNATPOLYGLOT_H
 
+namespace gnatpolyglot {
+
+struct data {};
+
+} // namespace gnatpolyglot
+
 extern "C" {
 
 struct kernel;

@@ -51,7 +51,7 @@ vim: filetype=jtecpp
     @endfor
 
     public:
-        explicit ${className}(void *data);
+        explicit ${className}(gnatpolyglot::data *data);
     @for(var alloc : members.allocFunctions)
         @if(alloc.visibility == Visibility.PUBLIC)
             ${className}(${api.cppParameters(alloc)});
@@ -73,14 +73,14 @@ vim: filetype=jtecpp
          * For internal use.
          * Returns the address of the bound object.
          */
-        void *data_() const;
+        gnatpolyglot::data *data_() const;
 
         /**
          * For internal use.
          * Returns the address of the bound object and releases the ownership
          * of the bound object.
          */
-        void *release_();
+        gnatpolyglot::data *release_();
 
         /**
          * For internal use.
@@ -92,7 +92,7 @@ vim: filetype=jtecpp
          * constructor that should be called using the `::new` operator. This
          * function must return the resulting created object.
          */
-        virtual ${className} *internal_clone_(void *data);
+        virtual ${className} *internal_clone_(gnatpolyglot::data *data);
 
         template <typename U>
         friend class gnatpolyglot::polyglot_ptr;
@@ -113,22 +113,22 @@ vim: filetype=jtecpp
 
     @if(classDecl.parent == null)
     protected:
-        void *_data;
+        gnatpolyglot::data *_data;
     @endif
     };
 
     @if(classDecl.inheritability != Inheritability.VIRTUAL)
     struct ${className}::view {
-        view(void *data) {
+        view(gnatpolyglot::data *data) {
             new (&this->_data) ${className}(data);
         }
     public:
-        static inline view create(void *data) {
+        static inline view create(gnatpolyglot::data *data) {
             return view(data);
         }
 
-        static inline const view create(const void *data) {
-            return view(const_cast<void *>(data));
+        static inline const view create(const gnatpolyglot::data *data) {
+            return view(const_cast<gnatpolyglot::data*>(data));
         }
 
         ${className} *operator->() {
@@ -198,7 +198,7 @@ vim: filetype=jtecpp
             }
         @endfor
 
-        void *${className}_do_internal_clone(${className} *self, void *data) {
+        void *${className}_do_internal_clone(${className} *self, gnatpolyglot::data *data) {
             return self->internal_clone_(data);
         }
 
@@ -229,7 +229,7 @@ vim: filetype=jtecpp
             void *data_() { return &this->_data; }
 
             struct table_data {
-                void *(*clone_shadow_dispatch)(${className} *_self, void *_data);
+                void *(*clone_shadow_dispatch)(${className} *_self, gnatpolyglot::data *_data);
                 void (*free_shadow_dispatch)(${className} *_self);
             <%---
               -- Generate all the dispatch function pointers. They are
@@ -246,7 +246,7 @@ vim: filetype=jtecpp
     @endif
 
     @for(var alloc : members.allocFunctions)
-        extern "C" void *${alloc.symbol}
+        extern "C" gnatpolyglot::data *${alloc.symbol}
             (${api.cParameters(alloc)});
         ${className}::${className}(${api.cppParameters(alloc)})
         @if(classDecl.parent == null)
@@ -257,7 +257,7 @@ vim: filetype=jtecpp
         {}
     @endfor
 
-    ${className}::${className}(void *data)
+    ${className}::${className}(gnatpolyglot::data *data)
     @if(classDecl.parent == null)
         : _data(data)
     @else
@@ -272,7 +272,7 @@ vim: filetype=jtecpp
         _data = nullptr;
     }
 
-    ${className} *${className}::internal_clone_(void *) {
+    ${className} *${className}::internal_clone_(gnatpolyglot::data*) {
         gnatpolyglot::ada::exceptions::ProgramError error(
            "Attempting to clone a derivation of ${className}:"
            " ${className}::internal_clone_ should be overriden"
@@ -291,12 +291,12 @@ vim: filetype=jtecpp
         }
     @endif
 
-    void *${className}::data_() const {
+    gnatpolyglot::data *${className}::data_() const {
         return this->_data;
     }
 
-    void *${className}::release_() {
-        void *tmp = this->_data;
+    gnatpolyglot::data *${className}::release_() {
+        gnatpolyglot::data *tmp = this->_data;
         this->_data = nullptr;
         return tmp;
     }
