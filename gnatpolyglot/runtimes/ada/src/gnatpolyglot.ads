@@ -3,7 +3,7 @@
 --  SPDX-License-Identifier: Apache-2.0
 --
 
-pragma Unreserve_All_Interrupts;
+pragma Interrupts_System_By_Default;
 -- On GNU/Linux, the GNAT runtime installs a SIGSEGV signal handler, so turn
 -- memory issues into `Storage_Error` exceptions. This may be incompatible with
 -- the runtime of other languages, such as C++'s.
