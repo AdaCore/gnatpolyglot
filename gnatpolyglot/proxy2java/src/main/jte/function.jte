@@ -36,9 +36,11 @@ Template file to generate a function.
     @endfor
     @if (api.returnsVoid(function.type))
         ${api.callJavaNative(function, nativeFunc)};
+        ${api.basePackage()}.Library.raiseIfException();
     @else
         ${api.javaNativeReturnTypename(function.type.returnType)} valueReturned =
             ${api.callJavaNative(function, nativeFunc)};
+        ${api.basePackage()}.Library.raiseIfException();
         ${api.makeJavaReturnStatement(function, "valueReturned")}
     @endif
     }

@@ -120,4 +120,9 @@ public class ProxyContext {
     public boolean isClassType(TypeExpr typeExpr) {
         return typeExpr instanceof NameTypeExpr name && getTypeDecl(name.name) instanceof ClassDecl;
     }
+
+    public boolean isException(TypeExpr typeExpr) {
+        return typeExpr instanceof NameTypeExpr name
+                && getTypeDecl(name.name) instanceof ExceptionDecl;
+    }
 }

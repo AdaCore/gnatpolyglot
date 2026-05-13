@@ -21,7 +21,7 @@ Template file to generate a class.
     FunctionMembersEntry arrayFunctions = api.getArrayFunctions(classDecl);
 }
 
-package ${api.packagePath(classDecl)};
+package ${api.packagePath(classDecl.name)};
 
 import java.util.function.Consumer;
 
