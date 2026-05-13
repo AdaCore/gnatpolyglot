@@ -1,7 +1,7 @@
 package Ints is
 
-   function F_Char return Character;
    function F_Short return Short_Integer;
+   function F_Char return Short_Short_Integer;
    function F_Int return Integer;
    function F_Long_Int return Long_Integer;
 

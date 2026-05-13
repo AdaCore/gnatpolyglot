@@ -73,8 +73,10 @@ public class BindableDeclChecker {
                 throw new UnbindableDeclException(decl, "Fixed-point types are not supported");
             try {
                 NativeType nativeType = AdaAPI.checkNativeType(decl);
-                if (nativeType.equals(NativeType.UINT128) || nativeType.equals(NativeType.SINT128))
-                    throw new UnbindableDeclException(decl, "Unsupported integer size (128)");
+                if (nativeType.equals(NativeType.UINT128)
+                        || nativeType.equals(NativeType.SINT128)
+                        || nativeType.equals(NativeType.FLOAT128))
+                    throw new UnbindableDeclException(decl, "Unsupported scalar size (128)");
             } catch (Libadalang.LangkitException e) {
                 throw new UnbindableDeclException(decl, e);
             }

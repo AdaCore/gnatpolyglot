@@ -17,11 +17,6 @@ package body Floats is
       return 0.125;
    end F_Long_Float;
 
-   function F_Long_Long_Float return Long_Long_Float is
-   begin
-      return 2.5;
-   end F_Long_Long_Float;
-
    function F_My_Float return My_Float is
    begin
       return 10.025;

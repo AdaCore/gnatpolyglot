@@ -46,7 +46,16 @@ public class JavaPrinter extends Printer {
         // Generate the gprbuild file for the JNI C layer
         Path gprFilename = outputPath.resolve(proxy.name.toLower().concat("_jni.gpr"));
         try (FileOutput packageSpec = new FileOutput(gprFilename)) {
-            templateEngine.render("jni_gpr.jte", Map.of("api", api, "proxy", proxy), packageSpec);
+            templateEngine.render(
+                    "jni_gpr.jte",
+                    Map.of(
+                            "api",
+                            api,
+                            "proxy",
+                            proxy,
+                            "runtimeLocation",
+                            outputPath.relativize(runtimeLocation).toString()),
+                    packageSpec);
         }
 
         Path srcDir = outputPath.resolve("src", "main", "java");

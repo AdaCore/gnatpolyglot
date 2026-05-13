@@ -3,7 +3,6 @@ package Floats is
    function F_Short return Short_Float;
    function F_Float return Float;
    function F_Long_Float return Long_Float;
-   function F_Long_Long_Float return Long_Long_Float;
 
    type My_Float is digits 6 range -(2.0**20) .. (2.0**20);
    type My_New_Short is new Short_Float;

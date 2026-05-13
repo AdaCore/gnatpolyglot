@@ -2,6 +2,7 @@ package com.adacore.gnatpolyglot.proxy2java;
 
 import com.adacore.gnatpolyglot.LanguageAPI;
 import com.adacore.gnatpolyglot.NativeType;
+import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
 import com.adacore.gnatpolyglot.proxy.ClassDecl;
 import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
 import com.adacore.gnatpolyglot.proxy.FunctionDecl;
@@ -103,6 +104,11 @@ public class JavaAPI extends LanguageAPI {
     /** Return the expected name of a converted JNI argument. */
     public String jniValueName(Name name) {
         return name.concat(Name.fromLower("value")).toLower();
+    }
+
+    /** Create a unique temporary name, in the form of `{prefix}{unique_number}${name}`. */
+    public String makeTemp(Name name, String prefix) {
+        return makeTempName(Name.fromCamel(prefix)).toCamel().concat("$").concat(name.toCamel());
     }
 
     /** Return the name of the primitive type in Java. */
@@ -340,5 +346,54 @@ public class JavaAPI extends LanguageAPI {
     public String javaOwner(Owner returnOwner) {
         return "com.adacore.gnatpolyglot.runtime.PolyglotData.Owner."
                 .concat(returnOwner.toString());
+    }
+
+    /** Return the name of the function to call to get the scalar reference jclass value. */
+    public String runtimeReferenceTypeGetClass(NativeType nativeType) {
+        return "gnatpolyglot_proxy2java_%s_class"
+                .formatted(TypenameGenerator.nativeReferenceTypename(nativeType));
+    }
+
+    /**
+     * Return the name of the function to call to get the jmethodID of the getter for the
+     * corresponding scalar reference class.
+     */
+    public String runtimeReferenceTypeGetGetter(NativeType nativeType) {
+        return "gnatpolyglot_proxy2java_%s_getValue"
+                .formatted(TypenameGenerator.nativeReferenceTypename(nativeType));
+    }
+
+    /**
+     * Return the name of the function to call to get the jmethodID of the setter for the
+     * corresponding scalar reference class.
+     */
+    public String runtimeReferenceTypeGetSetter(NativeType nativeType) {
+        return "gnatpolyglot_proxy2java_%s_setValue"
+                .formatted(TypenameGenerator.nativeReferenceTypename(nativeType));
+    }
+
+    /**
+     * Return the name of the function to call in the JEnv to call a Java method that returns the
+     * corresponding type.
+     */
+    public String callTypeMethodJNIName(TypeExpr returnedType) {
+        if (context.isNativeScalar(returnedType)) {
+            return switch (NativeTypeDecl.class.cast(context.getTypeDecl(returnedType.getName()))
+                    .nativeType) {
+                case BOOL -> "CallBooleanMethod";
+                case CHAR -> "CallCharMethod";
+                case FLOAT32 -> "CallFloatMethod";
+                case FLOAT64 -> "CallDoubleMethod";
+                case UINT8, SINT8 -> "CallByteMethod";
+                case UINT16, SINT16 -> "CallShortMethod";
+                case UINT32, SINT32 -> "CallIntMethod";
+                case UINT64, SINT64 -> "CallLongMethod";
+                case VOID -> "CallVoidMethod";
+                default -> throw new UnsupportedOperationException("Unsupported native type");
+            };
+        } else if (context.isClassType(returnedType) || returnedType.isArray()) {
+            return "CallObjectMethod";
+        }
+        throw new UnsupportedOperationException("Unsupported type");
     }
 }

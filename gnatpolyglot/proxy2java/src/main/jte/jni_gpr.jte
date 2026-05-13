@@ -9,6 +9,7 @@ Template file to generate a Maven project Java bindings.
 
 @param JavaAPI api
 @param Proxy proxy
+@param String runtimeLocation
 
 library project ${proxy.name.toPascal()}_JNI is
 

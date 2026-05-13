@@ -29,9 +29,6 @@ int main() {
     minimum_size<double>(floats::f_long_float());
     p(floats::f_long_float());
 
-    minimum_size<long double>(floats::f_long_long_float());
-    p(floats::f_long_long_float());
-
     minimum_size<float>(floats::f_my_float());
     p(floats::f_my_float());
 

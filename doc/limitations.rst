@@ -11,6 +11,12 @@ any other declarations that may use or refer to the unsupported feature.
 Ada2Proxy
 ---------
 
+Long Scalar types
+~~~~~~~~~~~~~~~~~
+
+Scalar (integers and floating points) types for sizes strictly greater
+than 64bit are not supported.
+
 Access types
 ~~~~~~~~~~~~
 
