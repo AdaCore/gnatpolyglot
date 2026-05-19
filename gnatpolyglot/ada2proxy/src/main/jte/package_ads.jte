@@ -34,7 +34,7 @@ with GNATpolyglot.Ada.Strings;
    with ${necessaryWith};
 @endfor
 
-with ${parentPackage};
+with ${pack.getWithPackage()};
 @if(packageName.contains(".System.") || packageName.endsWith(".System"))
    pragma Warnings (Off, ${parentPackage});
 @endif
