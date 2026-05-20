@@ -61,8 +61,10 @@ aggregate library project ${projectName.toPascalWithUnderscore()}.Proxy.Agg is
             "gnatpolyglot-ada-strings.ads",
             "gnatpolyglot-ada-strings.adb",
             "gnatpolyglot-ada-arrays-non_native.ads",
-            "gnatpolyglot-exceptions.ads",
-            ${api.getProxyInterfaces(proxy.packages)}
+            "gnatpolyglot-exceptions.ads"
+            @if(!proxy.packages.isEmpty())
+            , ${api.getProxyInterfaces(proxy.packages)}
+            @endif
          );
       when "no" =>
          null;
