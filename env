@@ -1,2 +1,2 @@
 export PATH=${PWD}/gnatpolyglot/bin:${PWD}/gnatpolyglot/cli:${PATH}
-export POLYGLOT_RUNTIME=${PWD}/gnatpolyglot/runtimes
+export GNATPOLYGLOT_RUNTIME=${PWD}/gnatpolyglot/runtimes
