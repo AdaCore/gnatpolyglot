@@ -51,4 +51,4 @@ library project ${proxy.name.toPascal()}_JNI is
       for Linker_Options use ("-L" & ${proxy.name.toPascal()}_Lib_Location);
    end Linker;
 
-end Test_JNI;
+end ${proxy.name.toPascal()}_JNI;
