@@ -93,9 +93,11 @@ public class GNATpolyglotSetup implements Callable<Integer> {
         this.targetOnly = targetOnly;
     }
 
-    /** Return the location of the runtime found in the "POLYGLOT_RUNTIME" environment variable. */
+    /**
+     * Return the location of the runtime found in the "GNATPOLYGLOT_RUNTIME" environment variable.
+     */
     public static String getInstallRuntimeLocation() {
-        return System.getenv("POLYGLOT_RUNTIME");
+        return System.getenv("GNATPOLYGLOT_RUNTIME");
     }
 
     private List<Path> getSourcesFromList(Path pathToList) throws IOException {

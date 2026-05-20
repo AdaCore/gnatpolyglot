@@ -71,12 +71,12 @@ class GNATpolyglotTestsuite(Testsuite):
 
         # Make sure the runtime is available before running the tests
         try:
-            runtime_dir = os.environ["POLYGLOT_RUNTIME"]
+            runtime_dir = os.environ["GNATPOLYGLOT_RUNTIME"]
         except KeyError:
             runtime_dir = os.path.join(
                 os.path.dirname(__file__), "..", "gnatpolyglot", "runtimes"
             )
-            os.environ["POLYGLOT_RUNTIME"] = runtime_dir
+            os.environ["GNATPOLYGLOT_RUNTIME"] = runtime_dir
 
         if self.env.build.platform in (
             "x86_64-linux", "x86_64-windows64"
