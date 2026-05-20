@@ -73,7 +73,7 @@ In order to bind these library, 2 GPR projects files are generated:
 .. warning::
 
    It is necessary to use ``gprbuild2`` to build the generated projects.
-   Refer to the `GPR documenation
+   Refer to the `GPR documentation
    <https://docs.adacore.com/live/wave/gprbuild/html/gprbuild_ug/gprbuild_ug/building_with_gprbuild.html#how-to-use-our-new-builder>`__
    to use the new builder.
 
@@ -104,7 +104,7 @@ See the dedicated :ref:`proxy2cpp` chapter for more information on the subcomman
    2cpp/include
    2cpp/include/*.h
 
-Use build system of choice to build these.
+Use your preferred build system to build these.
 
 Example: Generating Ada to C++ bindings
 ---------------------------------------
