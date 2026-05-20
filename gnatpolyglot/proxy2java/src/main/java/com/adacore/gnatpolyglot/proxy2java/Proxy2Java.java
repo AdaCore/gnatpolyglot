@@ -23,7 +23,7 @@ public class Proxy2Java implements Callable<Integer> {
     @Option(
             names = {"-o", "--output"},
             description =
-                    "path to the directory in which the C++ interface should be generated."
+                    "path to the directory in which the Java interface should be generated."
                             + " Directories along the path are created if they do not exist yet.",
             required = true)
     Path outputPath;
