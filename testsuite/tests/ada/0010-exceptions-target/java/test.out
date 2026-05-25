@@ -1,0 +1,20 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Ada caught Exc1: Foo
+Java caught Exc1: Foo
+Ada caught Exc2: Bar
+Java caught Exc2: Bar
+anonymous: Baz
+Java caught AdaException: Baz
+Ada caught Program_Error: FooBar
+Java caught Program_Error: FooBar
+anonymous: Uncaught host language exception
+Java caught AdaException: Uncaught host language exception
+
+Done.

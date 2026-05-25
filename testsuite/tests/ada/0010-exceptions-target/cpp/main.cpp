@@ -17,6 +17,8 @@ public:
                 throw gnatpolyglot::ada::exceptions::AdaException("Baz");
             case 4:
                 throw gnatpolyglot::ada::exceptions::ProgramError("FooBar");
+            case 5:
+                throw std::invalid_argument("host exception");
         }
     }
 };

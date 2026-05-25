@@ -366,6 +366,11 @@ public class JavaAPI extends LanguageAPI {
         return dispatchReturnConverter.javaReturnStatement(method, returnedValue);
     }
 
+    /** Create the default return statement for the function in its Java layer implementation */
+    public String makeJavaDispatchDefaultReturnStatement(FunctionTypeExpr functionType) {
+        return dispatchReturnConverter.javaDefaultReturnStatement(functionType);
+    }
+
     /** Return the string to declare arguments in the Java function. */
     public String javaParameters(FunctionDecl functionDecl) {
         return functionDecl.type.parameters.stream()

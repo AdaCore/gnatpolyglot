@@ -1,5 +1,6 @@
 package com.adacore.gnatpolyglot.proxy2java.codegen;
 
+import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy.VTableEntry;
@@ -50,6 +51,45 @@ public class DispatchReturnConverter {
                     .append(".getAddress()")
                     .append(";")
                     .toString();
+        }
+
+        @Override
+        public String voidType(TypeExpr type) {
+            return "";
+        }
+
+        @Override
+        public String refType(TypeExpr type) {
+            throw new UnsupportedOperationException(
+                    "Unreachable: returning references in dispatch is not permitted");
+        }
+    }
+
+    private class JavaDefaultReturnWorker implements JavaTypeWorker<String> {
+
+        @Override
+        public ProxyContext getContext() {
+            return api.getContext();
+        }
+
+        @Override
+        public String numberType(TypeExpr type) {
+            return "return 0;";
+        }
+
+        @Override
+        public String boolType(TypeExpr type) {
+            return "return false;";
+        }
+
+        @Override
+        public String arrayType(TypeExpr type) {
+            return "return null;";
+        }
+
+        @Override
+        public String classType(TypeExpr type) {
+            return "return 0;";
         }
 
         @Override
@@ -136,6 +176,14 @@ public class DispatchReturnConverter {
     /** Create the return statement to return the value from the native function to the user. */
     public String javaReturnStatement(VTableEntry method, String returnedValue) {
         return new JavaReturnWorker(method, returnedValue).apply(method.functionType.returnType);
+    }
+
+    /**
+     * Create the return statement to return a default "null" value from the native function to the
+     * user.
+     */
+    public String javaDefaultReturnStatement(FunctionTypeExpr functionType) {
+        return new JavaDefaultReturnWorker().apply(functionType.returnType);
     }
 
     /** Create the return statement to return the value from the bound function to the JVM. */
