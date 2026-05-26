@@ -43,8 +43,10 @@ library project ${projectName.toPascalWithUnderscore()}.Proxy is
    for Library_Standalone use Library_Standalone;
    for Library_Auto_Init use "true";
    for Interfaces use (
-      "gnatpolyglot-ada-arrays-non_native.ads",
-      ${api.getProxyInterfaces(proxy.packages)}
+      "gnatpolyglot-ada-arrays-non_native.ads"
+      @if(!proxy.packages.isEmpty())
+      , ${api.getProxyInterfaces(proxy.packages)}
+      @endif
    );
 
    package Compiler is
