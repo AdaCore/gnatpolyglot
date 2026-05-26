@@ -70,6 +70,7 @@ public class GlobalVariable extends AdaDeclaration {
             getter =
                     new FunctionDecl(
                             AdaAPI.makeProxyFullyQualifiedName(definingName)
+                                    .getParentFullyQualifiedName()
                                     .append(Name.fromLower("get").concat(name)),
                             "Return a reference to " + getFullyQualifiedName(),
                             null,
@@ -92,6 +93,7 @@ public class GlobalVariable extends AdaDeclaration {
             setter =
                     new FunctionDecl(
                             AdaAPI.makeProxyFullyQualifiedName(definingName)
+                                    .getParentFullyQualifiedName()
                                     .append(Name.fromLower("set").concat(name)),
                             "Set the value of " + getFullyQualifiedName(),
                             null,

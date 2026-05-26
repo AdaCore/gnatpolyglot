@@ -5,6 +5,3 @@ output_lang: java
 test_file: Main.java
 
 output_lib_flags: [ "-XLIBRARY_KIND=relocatable", "-XLIBRARY_STANDALONE=standard"]
-
-control:
-- [XFAIL, "True", "Not implemented yet"]
