@@ -40,7 +40,7 @@ with GNATpolyglot.Exceptions;
 with GNATpolyglot.Exceptions.${api.getProjectName().toPascalWithUnderscore()};
 with GNATpolyglot.Ada.Strings;
 
-with ${parentPackage}; use ${parentPackage};
+with ${pack.getWithPackage()}; use ${parentPackage};
 
 @for(var necessaryWith : WithCollector.getIncludes(pack, api))
    with ${necessaryWith}; use ${necessaryWith};

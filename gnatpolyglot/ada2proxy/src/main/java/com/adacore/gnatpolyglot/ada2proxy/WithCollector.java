@@ -60,7 +60,7 @@ public class WithCollector {
                 includeDecl(pack.pRenamedPackage());
             else if (decl instanceof Libadalang.BasePackageDecl pack) {
                 units.add(Package.getProxyUnitName(pack));
-                units.add(pack.pFullyQualifiedName());
+                units.add(Package.getWithPackageName(pack));
             } else includeDecl(decl.pParentBasicDecl());
         }
 

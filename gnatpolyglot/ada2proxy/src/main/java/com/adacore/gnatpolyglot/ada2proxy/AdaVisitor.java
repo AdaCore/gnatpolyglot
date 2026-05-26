@@ -103,6 +103,9 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     /** The current package being analyzed */
     private Libadalang.PackageDecl analyzedPackage;
 
+    /** Nested packages discovered during the current analyzeSpec call */
+    private List<Package> nestedPackages = new ArrayList<>();
+
     /** Map Ada declarations to their AdaProxy objects. */
     private HashMap<Libadalang.BasicDecl, AdaDeclaration> mappedDecls = new HashMap<>();
 
@@ -111,21 +114,25 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     private int exceptionNumber = 1;
 
-    /** Analyse an Ada specification file. */
-    public Package analyzeSpec(Libadalang.AnalysisUnit unit) {
+    /** Analyse an Ada specification file. Returns the root package plus any nested packages. */
+    public List<Package> analyzeSpec(Libadalang.AnalysisUnit unit) {
         // Reset the previous values
         declarations = new ArrayList<>();
         analyzedPackage = Libadalang.PackageDecl.NONE;
+        nestedPackages = new ArrayList<>();
 
         // Visit the AST
         unit.getRoot().accept(this);
 
-        if (analyzedPackage.isNone()) return null;
+        if (analyzedPackage.isNone()) return List.of();
 
-        // Return the module.
+        // Return the root module and all nested packages discovered.
         Package pack = new Package(analyzedPackage, declarations);
         mappedPackages.put(analyzedPackage, pack);
-        return pack;
+        List<Package> result = new ArrayList<>();
+        result.add(pack);
+        result.addAll(nestedPackages);
+        return result;
     }
 
     public static boolean isPrivateUnit(Libadalang.AnalysisUnit unit) {
@@ -177,12 +184,12 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             if (decl instanceof Libadalang.BasePackageDecl p
                     && !p.getUnit().equals(p.pStandardUnit())) {
                 if (mappedPackages.containsKey(p)) continue;
-                packages.add(analyzeSpec(p.getUnit()));
+                packages.addAll(analyzeSpec(p.getUnit()));
             } else if (!decl.getUnit().equals(decl.pStandardUnit())) {
                 enqueueDecl(getOwningPackage(decl));
             }
         }
-        return packages.stream().filter(p -> p != null).toList();
+        return packages;
     }
 
     @Override
@@ -333,13 +340,30 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     @Override
     public Void visit(Libadalang.PackageDecl node) {
+        boolean isNested = !this.analyzedPackage.isNone();
+
+        // Save outer state so we can restore it after visiting a nested package.
+        Libadalang.PackageDecl savedPackage = this.analyzedPackage;
+        List<AdaDeclaration> savedDeclarations = this.declarations;
+
         this.analyzedPackage = node;
+        this.declarations = new ArrayList<>();
 
         for (var n : node.fPublicPart().fDecls()) {
             if (n instanceof Libadalang.BasicDecl decl) visitDecl(decl);
         }
         resolveNameConflicts();
-        enqueueParentPackages(node);
+
+        if (isNested) {
+            // Register the nested package and restore the outer package's state.
+            Package pack = new Package(node, this.declarations);
+            mappedPackages.put(node, pack);
+            nestedPackages.add(pack);
+            this.analyzedPackage = savedPackage;
+            this.declarations = savedDeclarations;
+        } else {
+            enqueueParentPackages(node);
+        }
 
         return null;
     }
