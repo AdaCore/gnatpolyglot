@@ -601,6 +601,29 @@ public class JavaAPI extends LanguageAPI {
         throw new UnsupportedOperationException("Unsupported type");
     }
 
+    /**
+     * Return the clone constructor of a ClassDecl.
+     *
+     * <p>The clone constructor must take a single parameter, and its type must be the class
+     * declaration itself, or a reference to it.
+     */
+    public FunctionDecl getCloneCtor(ClassDecl classDecl, RoleKind roleKind) {
+        if (roleKind != RoleKind.ALLOC && roleKind != RoleKind.SHADOW_ALLOC)
+            throw new IllegalArgumentException("roleKind must be ALLOC or SHADOW_ALLOC");
+        TypeExpr paramType = classDecl.name.asTypeExpr();
+        List<TypeExpr> cpParams =
+                List.of(paramType, paramType.makeReference(false), paramType.makeReference(true));
+        return getMembers(classDecl).allocFunctions.stream()
+                .filter(f -> f.role.kind == roleKind)
+                .filter(f -> f.type.parameters.size() == 1)
+                .filter(
+                        f ->
+                                cpParams.stream()
+                                        .anyMatch(p -> p.equals(f.type.parameters.getFirst().type)))
+                .findFirst()
+                .orElse(null);
+    }
+
     public FunctionDecl getMatchingShadowAlloc(FunctionDecl alloc) {
         if (alloc.role == null || alloc.role.kind != RoleKind.ALLOC) {
             throw new IllegalArgumentException("Function does not have the role ALLOC");

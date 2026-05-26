@@ -48,7 +48,7 @@ static jclass ${prefix}_class(JNIEnv *env) {
   --%>
 struct ${className}_vtable {
     void *(*clone_shadow_dispatch)(void *_self_data, jobject _self, void *_data);
-    void (*free_shadow_dispatch)(jobject _self);
+    void (*free_shadow_dispatch)(void *_self_data, jobject _self);
     void (*free_data)(jobject _self);
 @for(var method : classDecl.vtable)
     ${api.cTypename(method.functionType.returnType)}
@@ -101,9 +101,44 @@ struct ${className}_vtable ${className}_vtable;
 
 @endfor
 
+void *${className}_do_internal_clone(void *self_data, jobject self, void *data) {
+    JavaVM *vm = self_data;
+    JNIEnv *env = NULL;
+    (*vm)->AttachCurrentThread(vm, (void **)&env, NULL);
+    jobject clone = (*env)->NewGlobalRef(
+        env,
+        (*env)->CallObjectMethod(
+            env,
+            self,
+            PolyglotObject_internal_clone_method(env),
+            (jlong) data
+        )
+    );
+    return clone;
+}
+
+void ${className}_do_internal_free(void *self_data, jobject self) {
+    // If this is called, thats means the destruction of the shadow data was
+    // called from the library. The data is already being freed on that side if
+    // necessary (it could have been copied on the stack, meaning that calling
+    // the free function could lead to an invalid free)
+    if (self != NULL) {
+        JavaVM *vm = self_data;
+        JNIEnv *env = NULL;
+        (*vm)->AttachCurrentThread(vm, (void **)&env, NULL);
+        (*env)->CallObjectMethod(
+            env,
+            self,
+            PolyglotObject_internal_release_method(env)
+        );
+        (*env)->DeleteGlobalRef(env, self);
+    }
+}
+
+
 struct ${className}_vtable ${className}_vtable = {
-    .clone_shadow_dispatch = NULL,
-    .free_shadow_dispatch = NULL,
+    .clone_shadow_dispatch = ${className}_do_internal_clone,
+    .free_shadow_dispatch = &${className}_do_internal_free,
     .free_data = NULL,
 @for(var method : classDecl.vtable)
     !{String lastName = method.name.toLower();}

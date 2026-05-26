@@ -22,4 +22,10 @@ struct kernel {
 
 extern struct kernel *gnatpolyglot_get_kernel();
 
+jclass PolyglotObject_class(JNIEnv *env);
+
+jmethodID PolyglotObject_internal_release_method(JNIEnv *env);
+
+jmethodID PolyglotObject_internal_clone_method(JNIEnv *env);
+
 #endif /* ! GNATPOLYGLOT_PROXY2JAVA_H */

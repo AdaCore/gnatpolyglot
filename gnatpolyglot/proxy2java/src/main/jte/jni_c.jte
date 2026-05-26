@@ -13,6 +13,7 @@ Template file to generate the JNI file for a module
 
 #include <jni.h>
 
+#include "gnatpolyglot_proxy2java.h"
 #include "gnatpolyglot_ada2java.h"
 
 @for (var decl : module.declarations)

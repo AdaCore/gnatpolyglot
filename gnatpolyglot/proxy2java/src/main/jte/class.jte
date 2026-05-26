@@ -19,14 +19,22 @@ Template file to generate a class.
     FunctionMembersEntry members = api.getMembers(classDecl);
     String className = classDecl.name.getLastName().toPascal();
     FunctionMembersEntry arrayFunctions = api.getArrayFunctions(classDecl);
+    FunctionDecl cloneFunction = api.getCloneCtor(classDecl, RoleKind.ALLOC);
+    FunctionDecl shadowCloneFunction = api.getCloneCtor(classDecl, RoleKind.SHADOW_ALLOC);
+    String interfaces = "";
+    if (cloneFunction != null) {
+        interfaces = " implements Cloneable ";
+    }
 }
 
 package ${api.packagePath(classDecl.name)};
 
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.BiFunction;
 
 public ${api.getOverridability(classDecl)}
-class ${className} extends ${api.parentClass(classDecl)}{
+class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
     /** Internal use only.
      *
@@ -108,10 +116,10 @@ class ${className} extends ${api.parentClass(classDecl)}{
 
         long addr;
 
-        if (this.getClass().equals(${className}.class)) {
-            addr = ${api.callJavaNative(alloc, nativeFunc)};
-        } else {
+        if (isShadow()) {
             addr = ${api.callJavaNative(shadow, nativeShadow)};
+        } else {
+           addr = ${api.callJavaNative(alloc, nativeFunc)};
         }
 
         setData(
@@ -128,6 +136,36 @@ class ${className} extends ${api.parentClass(classDecl)}{
 @for (var method : members.memberFunctions)
     @template.function(api, method)
 @endfor
+
+@if (cloneFunction != null)
+    !{
+        String nativeFunc = "$%s".formatted(cloneFunction.name.getLastName().toCamel());
+    }
+
+    <%-- The Object.clone function is protected by default. Make it public if possible --%>
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
+    protected Function<com.adacore.gnatpolyglot.runtime.PolyglotData, Long> getClone() {
+        return (addr) -> ${nativeFunc}(addr.getAddress());
+    }
+@endif
+
+@if (shadowCloneFunction != null)
+    !{
+        String nativeFunc = "$%s".formatted(shadowCloneFunction.name.getLastName().toCamel());
+    }
+
+    protected BiFunction<
+                    com.adacore.gnatpolyglot.runtime.PolyglotData,
+                    com.adacore.gnatpolyglot.runtime.PolyglotObject,
+                    Long>
+            getCloneShadow() {
+        return (addr, obj) -> ${nativeFunc}(addr.getAddress(), (${className}) obj);
+    }
+@endif
 
     !{
         FunctionDecl freeFunc = members.freeFunction;
@@ -186,6 +224,11 @@ class ${className} extends ${api.parentClass(classDecl)}{
     }
 @endfor
 @endif
+
+    @Override
+    protected boolean isShadow() {
+         return !this.getClass().equals(${className}.class);
+    }
 
     static {
         ${api.basePackage()}.Library.loadLibrary();
