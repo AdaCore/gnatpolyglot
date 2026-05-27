@@ -43,7 +43,7 @@ package GNATpolyglot.Ada.Arrays is
 
    generic
       type C is private;
-   procedure Free (Self : System.Address);
+   procedure Free (Self : Polyglot_Array);
 
    generic
       type C is private;

@@ -221,6 +221,11 @@ public class JavaAPI extends LanguageAPI {
                                     "_".concat(parent.getLastName().toPascal().concat("Package"))));
         } else if (context.isClassType(function.role.type)) {
             builder.append(javaTypename(function.role.type).replace(".", "_"));
+        } else if (function.role.type.isArray()) {
+            builder.append(
+                    javaTypename(function.role.type.elementType())
+                            .replace(".", "_")
+                            .concat("_00024Array"));
         } else {
             throw new UnsupportedOperationException("unsupported");
         }
@@ -340,6 +345,11 @@ public class JavaAPI extends LanguageAPI {
     /** Return the member functions of a type. */
     public ProxyContext.FunctionMembersEntry getMembers(TypeDecl decl) {
         return context.getMembers(decl.name.asTypeExpr());
+    }
+
+    /** Return the member functions of a type. */
+    public ProxyContext.FunctionMembersEntry getArrayFunctions(TypeDecl decl) {
+        return context.getMembers(decl.name.asTypeExpr().makeArray());
     }
 
     /** Return the name of the data owner. */

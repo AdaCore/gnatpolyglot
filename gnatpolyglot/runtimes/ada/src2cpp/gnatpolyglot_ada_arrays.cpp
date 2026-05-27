@@ -7,18 +7,17 @@
 #include <cstdint>
 
 #define MAKE_ARRAY_FUNCTIONS(CTYPE, ADATYPE)                                   \
-  extern "C" void                                                              \
-  gnatpolyglot__ada__arrays__native__##ADATYPE##_array_construct(void *, int,  \
-                                                                 int);         \
-  template <> polyglot_array<CTYPE>::polyglot_array(int begin, int end) {      \
-    gnatpolyglot__ada__arrays__native__##ADATYPE##_array_construct(            \
-        this, begin, end);                                                     \
-  }                                                                            \
+  extern "C" array_data                                                        \
+  gnatpolyglot__ada__arrays__native__##ADATYPE##_array_alloc(int, int);        \
+  template <>                                                                  \
+  polyglot_array<CTYPE>::polyglot_array(int begin, int end)                    \
+      : _data(gnatpolyglot__ada__arrays__native__##ADATYPE##_array_alloc(      \
+            begin, end)) {}                                                    \
                                                                                \
   extern "C" void gnatpolyglot__ada__arrays__native__##ADATYPE##_array_free(   \
-      void *);                                                                 \
+      array_data);                                                             \
   template <> polyglot_array<CTYPE>::~polyglot_array() {                       \
-    gnatpolyglot__ada__arrays__native__##ADATYPE##_array_free(this);           \
+    gnatpolyglot__ada__arrays__native__##ADATYPE##_array_free(this->_data);    \
   }                                                                            \
                                                                                \
   extern "C" void gnatpolyglot__ada__arrays__native__##ADATYPE##_array_copy(   \

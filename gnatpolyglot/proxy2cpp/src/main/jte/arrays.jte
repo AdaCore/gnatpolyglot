@@ -26,18 +26,17 @@ namespace ${api.namespacePath(module)} {
             (${api.cParameters(functionDecl)});
         template<>
         ${api.cppTypename(functionDecl.role.type)}::~polyglot_array() {
-            ${functionDecl.symbol}(&this->_data);
+            ${functionDecl.symbol}(this->_data);
         }
 
-    @elseif(functionDecl.role.kind == RoleKind.CONSTRUCT)
+    @elseif(functionDecl.role.kind == RoleKind.ALLOC)
         extern "C" ${api.cTypename(functionDecl.type.returnType)} ${functionDecl.symbol}
             (${api.cParameters(functionDecl)});
         template<>
         ${api.cppTypename(functionDecl.role.type)}::polyglot_array
-            (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)} {
-            ${api.callCSymbol(functionDecl)};
-        }
-    @elseif(functionDecl.role.kind != RoleKind.ALLOC)
+            (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)}
+            : _data(${api.callCSymbol(functionDecl)}) { }
+    @else
         extern "C" ${api.cTypename(functionDecl.type.returnType)} ${functionDecl.symbol}
             (${api.cParameters(functionDecl)});
         template <>

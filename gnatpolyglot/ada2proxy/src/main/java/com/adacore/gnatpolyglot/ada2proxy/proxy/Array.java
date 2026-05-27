@@ -101,57 +101,6 @@ public class Array extends AdaDeclaration {
                             FunctionDecl.Overridability.FINAL,
                             FunctionDecl.Staticness.NON_STATIC));
 
-            // Declare the constructor functions
-            functions.add(
-                    new FunctionDecl(
-                            moduleName.append(Name.fromLower("construct")),
-                            "Construct a new array at ``Self``, starting at ``first`` and ending at"
-                                    + " ``last``",
-                            new Role(RoleKind.CONSTRUCT, arrayTypeExpr, null),
-                            buildMemberSymbol(componentTypename, "_Construct"),
-                            new FunctionTypeExpr(
-                                    List.of(
-                                            new Parameter(
-                                                    Name.fromLower("self"),
-                                                    arrayTypeExpr
-                                                            .makePointer(false, true)
-                                                            .makeReference(false),
-                                                    new Transfer(RequiredOwner.ANY)),
-                                            new Parameter(
-                                                    Name.fromLower("first"),
-                                                    NativeType.SINT32.typeExpr,
-                                                    new Transfer(RequiredOwner.ANY)),
-                                            new Parameter(
-                                                    Name.fromLower("last"),
-                                                    NativeType.SINT32.typeExpr,
-                                                    new Transfer(RequiredOwner.ANY))),
-                                    NativeType.VOID.typeExpr,
-                                    Owner.USER),
-                            FunctionDecl.Visibility.PUBLIC,
-                            FunctionDecl.Overridability.FINAL,
-                            FunctionDecl.Staticness.NON_STATIC));
-            functions.add(
-                    new FunctionDecl(
-                            moduleName.append(Name.fromLower("copy")),
-                            "Create a newly allocated copy of ``from`` at ``to``",
-                            new Role(RoleKind.CONSTRUCT, arrayTypeExpr, null),
-                            buildMemberSymbol(componentTypename, "_Copy"),
-                            new FunctionTypeExpr(
-                                    List.of(
-                                            new Parameter(
-                                                    Name.fromLower("to"),
-                                                    arrayTypeExpr.makePointer(false, true),
-                                                    new Transfer(RequiredOwner.ANY)),
-                                            new Parameter(
-                                                    Name.fromLower("from"),
-                                                    arrayTypeExpr.makeReference(true),
-                                                    new Transfer(RequiredOwner.ANY))),
-                                    NativeType.VOID.typeExpr,
-                                    Owner.USER),
-                            FunctionDecl.Visibility.PUBLIC,
-                            FunctionDecl.Overridability.FINAL,
-                            FunctionDecl.Staticness.NON_STATIC));
-
             // Declare the freeing function
             functions.add(
                     new FunctionDecl(
@@ -163,9 +112,7 @@ public class Array extends AdaDeclaration {
                                     List.of(
                                             new Parameter(
                                                     Name.fromLower("self"),
-                                                    arrayTypeExpr
-                                                            .makePointer(false, false)
-                                                            .makeReference(false),
+                                                    arrayTypeExpr.makePointer(false, false),
                                                     new Transfer(RequiredOwner.ANY))),
                                     NativeType.VOID.typeExpr,
                                     Owner.UNKNOWN),

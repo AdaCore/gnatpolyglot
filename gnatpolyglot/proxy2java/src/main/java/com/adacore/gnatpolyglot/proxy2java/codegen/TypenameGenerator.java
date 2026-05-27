@@ -10,6 +10,20 @@ import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
 
 public class TypenameGenerator {
 
+    public static String nativeArrayTypename(NativeType nativeType) {
+        return switch (nativeType) {
+            case BOOL -> "BooleanArray";
+            case CHAR -> "CharacterArray";
+            case FLOAT32 -> "FloatArray";
+            case FLOAT64 -> "DoubleArray";
+            case UINT8, SINT8 -> "ByteArray";
+            case UINT16, SINT16 -> "ShortArray";
+            case UINT32, SINT32 -> "IntegerArray";
+            case UINT64, SINT64 -> "LongArray";
+            default -> throw new UnsupportedOperationException("Unreachable");
+        };
+    }
+
     public static String nativeReferenceTypename(NativeType nativeType) {
         return switch (nativeType) {
             case BOOL -> "BooleanRef";
@@ -92,7 +106,23 @@ public class TypenameGenerator {
                 public String classType(TypeExpr type) {
                     return javaTypename(type);
                 }
+
+                @Override
+                public String arrayType(TypeExpr type) {
+                    return javaTypename(type);
+                }
             }.apply(type.referencedType());
+        }
+
+        @Override
+        public String arrayType(TypeExpr type) {
+            TypeExpr elementType = type.elementType();
+            if (getContext().isNativeScalar(elementType)) {
+                TypeDecl decl = getContext().getTypeDecl(type.getName());
+                return "com.adacore.gnatpolyglot.runtime.ada2java."
+                        + nativeArrayTypename(NativeTypeDecl.class.cast(decl).nativeType);
+            }
+            return javaTypename(elementType).concat(".Array");
         }
     }
 
@@ -147,7 +177,17 @@ public class TypenameGenerator {
                 public String classType(TypeExpr type) {
                     return api.javaPrimitiveTypename(NativeType.UINT64);
                 }
+
+                @Override
+                public String arrayType(TypeExpr type) {
+                    return javaNativeTypename(type);
+                }
             }.apply(refType.referencedType());
+        }
+
+        @Override
+        public String arrayType(TypeExpr type) {
+            return "com.adacore.gnatpolyglot.runtime.ada2java.ArrayData";
         }
     }
 
@@ -202,7 +242,18 @@ public class TypenameGenerator {
                 public String classType(TypeExpr type) {
                     return "jlong";
                 }
+
+                @Override
+                public String arrayType(TypeExpr type) {
+                    return "jobject";
+                }
             }.apply(type.referencedType());
+        }
+
+        @Override
+        public String arrayType(TypeExpr type) {
+            // Arrays are passed using the "ArrayData" jobject.
+            return "jobject";
         }
     }
 
@@ -260,7 +311,17 @@ public class TypenameGenerator {
                 public String classType(TypeExpr type) {
                     return "void *";
                 }
+
+                @Override
+                public String arrayType(TypeExpr type) {
+                    return cTypename(type);
+                }
             }.apply(type.referencedType());
+        }
+
+        @Override
+        public String arrayType(TypeExpr type) {
+            return "struct array_data";
         }
     }
 

@@ -287,4 +287,74 @@ package GNATpolyglot.Ada.Arrays.Native is
    pragma
      Export (C, Unsigned_Long_Set, "gnatpolyglot__ada__arrays__native__unsigned_long_array_set");
 
+   ------------------
+   -- Float arrays --
+   ------------------
+
+   function Float_Alloc is new Alloc (Interfaces.C.C_float);
+   pragma
+     Export (C, Float_Alloc, "gnatpolyglot__ada__arrays__native__float_array_alloc");
+
+   procedure Float_Construct is new Construct (Interfaces.C.C_float);
+   pragma
+     Export
+       (C,
+        Float_Construct,
+        "gnatpolyglot__ada__arrays__native__float_array_construct");
+
+   function Float_Clone is new Clone (Interfaces.C.C_float);
+   pragma
+     Export (C, Float_Clone, "gnatpolyglot__ada__arrays__native__float_array_clone");
+
+   procedure Float_Copy is new Copy (Interfaces.C.C_float);
+   pragma
+     Export (C, Float_Copy, "gnatpolyglot__ada__arrays__native__float_array_copy");
+
+   procedure Float_Free is new Free (Interfaces.C.C_float);
+   pragma
+     Export (C, Float_Free, "gnatpolyglot__ada__arrays__native__float_array_free");
+
+   function Float_Get is new Get (Interfaces.C.C_float);
+   pragma
+     Export (C, Float_Get, "gnatpolyglot__ada__arrays__native__float_array_get");
+
+   procedure Float_Set is new Set (Interfaces.C.C_float);
+   pragma
+     Export (C, Float_Set, "gnatpolyglot__ada__arrays__native__float_array_set");
+
+   ------------------
+   -- Double arrays --
+   ------------------
+
+   function Double_Alloc is new Alloc (Interfaces.C.double);
+   pragma
+     Export (C, Double_Alloc, "gnatpolyglot__ada__arrays__native__double_array_alloc");
+
+   procedure Double_Construct is new Construct (Interfaces.C.double);
+   pragma
+     Export
+       (C,
+        Double_Construct,
+        "gnatpolyglot__ada__arrays__native__double_array_construct");
+
+   function Double_Clone is new Clone (Interfaces.C.double);
+   pragma
+     Export (C, Double_Clone, "gnatpolyglot__ada__arrays__native__double_array_clone");
+
+   procedure Double_Copy is new Copy (Interfaces.C.double);
+   pragma
+     Export (C, Double_Copy, "gnatpolyglot__ada__arrays__native__double_array_copy");
+
+   procedure Double_Free is new Free (Interfaces.C.double);
+   pragma
+     Export (C, Double_Free, "gnatpolyglot__ada__arrays__native__double_array_free");
+
+   function Double_Get is new Get (Interfaces.C.double);
+   pragma
+     Export (C, Double_Get, "gnatpolyglot__ada__arrays__native__double_array_get");
+
+   procedure Double_Set is new Set (Interfaces.C.double);
+   pragma
+     Export (C, Double_Set, "gnatpolyglot__ada__arrays__native__double_array_set");
+
 end GNATpolyglot.Ada.Arrays.Native;

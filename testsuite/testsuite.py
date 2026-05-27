@@ -88,11 +88,11 @@ class GNATpolyglotTestsuite(Testsuite):
                 mvn_args.append(f"-Dmaven.repo.local={self.env.options.maven_local_repo}")
             with tempfile.TemporaryDirectory() as d:
                 run_setup(d)
-                for r in ["proxy2java"]:
+                for r in (["proxy2java"], ["ada", "src2java"]):
                     run([
-                        args.maven_executable or "mvn",
+                        "mvn",
                         "install",
-                        f"-f{os.path.join(d, r)}",
+                        f"-f{os.path.join(d, *r)}",
                         "-q",
                         *mvn_args
                         ],
@@ -104,7 +104,6 @@ class GNATpolyglotTestsuite(Testsuite):
                     )
         else:
             self.env.java_supported = False
-
 
         # Check if the internal testsuite is present
         self.env.control_condition_env = {

@@ -113,7 +113,7 @@ package body GNATpolyglot.Ada.Arrays is
    -- Free --
    ----------
 
-   procedure Free (Self : System.Address) is
+   procedure Free (Self : Polyglot_Array) is
       type Arr_Type is array (Interfaces.C.Int range <>) of C;
       type Arr_Type_Access is access all Arr_Type
       with Size => Standard'Address_Size;
@@ -123,14 +123,9 @@ package body GNATpolyglot.Ada.Arrays is
       procedure Arr_Free is new
         Standard.Ada.Unchecked_Deallocation (Arr_Type, Arr_Type_Access);
 
-      Self_Value : Polyglot_Array
-      with Address => Self;
-      pragma Import (Ada, Self_Value);
-
-      Data_Access : Arr_Type_Access := Address_Converter (Self_Value.Data);
+      Data_Access : Arr_Type_Access := Address_Converter (Self.Data);
    begin
       Arr_Free (Data_Access);
-      Self_Value.Data := System.Null_Address;
    end Free;
 
    ---------

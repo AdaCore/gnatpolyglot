@@ -12,6 +12,8 @@ Template file to generate the JNI file for a module
 
 #include <jni.h>
 
+#include "gnatpolyglot_ada2java.h"
+
 @for (var decl : module.declarations)
     @if (decl instanceof FunctionDecl function)
         @template.jni.function(api, function)
