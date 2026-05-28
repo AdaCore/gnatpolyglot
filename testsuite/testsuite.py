@@ -90,7 +90,7 @@ class GNATpolyglotTestsuite(Testsuite):
                 run_setup(d)
                 for r in (["proxy2java"], ["ada", "src2java"]):
                     run([
-                        "mvn",
+                        args.maven_executable or "mvn",
                         "install",
                         f"-f{os.path.join(d, *r)}",
                         "-q",
