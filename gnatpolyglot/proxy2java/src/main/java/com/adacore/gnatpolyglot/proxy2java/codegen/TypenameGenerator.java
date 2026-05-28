@@ -111,6 +111,11 @@ public class TypenameGenerator {
                 public String arrayType(TypeExpr type) {
                     return javaTypename(type);
                 }
+
+                @Override
+                public String stringType(TypeExpr type) {
+                    return javaTypename(type);
+                }
             }.apply(type.referencedType());
         }
 
@@ -123,6 +128,11 @@ public class TypenameGenerator {
                         + nativeArrayTypename(NativeTypeDecl.class.cast(decl).nativeType);
             }
             return javaTypename(elementType).concat(".Array");
+        }
+
+        @Override
+        public String stringType(TypeExpr type) {
+            return "com.adacore.gnatpolyglot.runtime.ada2java.PolyglotString";
         }
     }
 
@@ -182,12 +192,22 @@ public class TypenameGenerator {
                 public String arrayType(TypeExpr type) {
                     return javaNativeTypename(type);
                 }
+
+                @Override
+                public String stringType(TypeExpr type) {
+                    return javaNativeTypename(type);
+                }
             }.apply(refType.referencedType());
         }
 
         @Override
         public String arrayType(TypeExpr type) {
             return "com.adacore.gnatpolyglot.runtime.ada2java.ArrayData";
+        }
+
+        @Override
+        public String stringType(TypeExpr type) {
+            return arrayType(type);
         }
     }
 
@@ -247,12 +267,23 @@ public class TypenameGenerator {
                 public String arrayType(TypeExpr type) {
                     return "jobject";
                 }
+
+                @Override
+                public String stringType(TypeExpr type) {
+                    return "jobject";
+                }
             }.apply(type.referencedType());
         }
 
         @Override
         public String arrayType(TypeExpr type) {
             // Arrays are passed using the "ArrayData" jobject.
+            return "jobject";
+        }
+
+        @Override
+        public String stringType(TypeExpr type) {
+            // String are passed using the "ArrayData" jobject.
             return "jobject";
         }
     }
@@ -316,11 +347,21 @@ public class TypenameGenerator {
                 public String arrayType(TypeExpr type) {
                     return cTypename(type);
                 }
+
+                @Override
+                public String stringType(TypeExpr type) {
+                    return cTypename(type);
+                }
             }.apply(type.referencedType());
         }
 
         @Override
         public String arrayType(TypeExpr type) {
+            return "struct array_data";
+        }
+
+        @Override
+        public String stringType(TypeExpr type) {
             return "struct array_data";
         }
     }
