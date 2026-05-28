@@ -7,6 +7,7 @@ package com.adacore.gnatpolyglot.proxy2java;
 
 import com.adacore.gnatpolyglot.Printer;
 import com.adacore.gnatpolyglot.proxy.ClassDecl;
+import com.adacore.gnatpolyglot.proxy.EnumerationDecl;
 import com.adacore.gnatpolyglot.proxy.ExceptionDecl;
 import com.adacore.gnatpolyglot.proxy.ProxyException;
 import gg.jte.ContentType;
@@ -108,6 +109,18 @@ public class JavaPrinter extends Printer {
                             "exception.jte",
                             Map.of("api", api, "exceptionDecl", exceptionDecl),
                             packageSpec);
+                }
+            }
+
+            for (var enumDecl :
+                    module.declarations.stream()
+                            .filter(EnumerationDecl.class::isInstance)
+                            .toList()) {
+                // Generate the class.
+                Path clazz = srcDir.resolve(api.filepath(enumDecl.name));
+                try (FileOutput packageSpec = new FileOutput(clazz)) {
+                    templateEngine.render(
+                            "enum.jte", Map.of("api", api, "enumDecl", enumDecl), packageSpec);
                 }
             }
         }

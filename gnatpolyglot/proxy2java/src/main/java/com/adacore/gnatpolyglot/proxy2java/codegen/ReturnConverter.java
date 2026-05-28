@@ -99,6 +99,16 @@ public class ReturnConverter {
                     .append(";")
                     .toString();
         }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            return new StringBuilder("return ")
+                    .append(javaReturnType)
+                    .append(".fromValue.")
+                    .append(JavaGenerator.makeCall("get", List.of(returnedValue)))
+                    .append(";")
+                    .toString();
+        }
     }
 
     /** Type worker that creates the conversion of return values from bound functions to the JVM. */
@@ -174,6 +184,11 @@ public class ReturnConverter {
                 }
 
                 @Override
+                public String enumType(TypeExpr type) {
+                    return numberType(type);
+                }
+
+                @Override
                 public String classType(TypeExpr type) {
                     return CReturnWorker.this.classType(type);
                 }
@@ -189,6 +204,14 @@ public class ReturnConverter {
         public String arrayType(TypeExpr type) {
             return CGenerator.makeCall(
                             "gnatpolyglot_proxy2java_to_ArrayData", List.of("env", returnedValue))
+                    .append(";")
+                    .toString();
+        }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            return new StringBuilder("return ")
+                    .append(CGenerator.makeCast(jniReturnType, returnedValue))
                     .append(";")
                     .toString();
         }

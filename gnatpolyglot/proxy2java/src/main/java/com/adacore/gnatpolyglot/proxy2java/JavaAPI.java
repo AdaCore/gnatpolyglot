@@ -5,6 +5,7 @@ import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
 import com.adacore.gnatpolyglot.proxy.ClassDecl;
 import com.adacore.gnatpolyglot.proxy.ClassDecl.Inheritability;
+import com.adacore.gnatpolyglot.proxy.EnumerationDecl;
 import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
 import com.adacore.gnatpolyglot.proxy.FunctionDecl;
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
@@ -272,8 +273,11 @@ public class JavaAPI extends LanguageAPI {
 
     private String jniTypeSignature(TypeExpr type, boolean isReturn) {
         if (context.isNativeScalar(type)) {
-            NativeTypeDecl decl = (NativeTypeDecl) context.getTypeDecl(type.getName());
-            return switch (decl.nativeType) {
+            TypeDecl decl = context.getTypeDecl(type.getName());
+            if (decl instanceof EnumerationDecl enumDecl)
+                decl = enumDecl.representationType().declaration;
+            NativeTypeDecl nativeDecl = (NativeTypeDecl) decl;
+            return switch (nativeDecl.nativeType) {
                 case VOID -> "V";
                 case BOOL -> "Z";
                 case CHAR -> "C";
@@ -564,8 +568,10 @@ public class JavaAPI extends LanguageAPI {
      */
     public String callTypeMethodJNIName(TypeExpr returnedType) {
         if (context.isNativeScalar(returnedType)) {
-            return switch (NativeTypeDecl.class.cast(context.getTypeDecl(returnedType.getName()))
-                    .nativeType) {
+            TypeDecl decl = context.getTypeDecl(returnedType.getName());
+            if (decl instanceof EnumerationDecl) decl = NativeType.SINT32.declaration;
+            NativeTypeDecl nativeDecl = (NativeTypeDecl) decl;
+            return switch (nativeDecl.nativeType) {
                 case BOOL -> "CallBooleanMethod";
                 case CHAR -> "CallCharMethod";
                 case FLOAT32 -> "CallFloatMethod";
@@ -589,8 +595,10 @@ public class JavaAPI extends LanguageAPI {
      */
     public String callStaticTypeMethodJNIName(TypeExpr returnedType) {
         if (context.isNativeScalar(returnedType)) {
-            return switch (NativeTypeDecl.class.cast(context.getTypeDecl(returnedType.getName()))
-                    .nativeType) {
+            TypeDecl decl = context.getTypeDecl(returnedType.getName());
+            if (decl instanceof EnumerationDecl) decl = NativeType.SINT32.declaration;
+            NativeTypeDecl nativeDecl = (NativeTypeDecl) decl;
+            return switch (nativeDecl.nativeType) {
                 case BOOL -> "CallStaticBooleanMethod";
                 case CHAR -> "CallStaticCharMethod";
                 case FLOAT32 -> "CallStaticFloatMethod";
@@ -643,5 +651,27 @@ public class JavaAPI extends LanguageAPI {
                 .filter(a -> a.role.kind == RoleKind.SHADOW_ALLOC && a.type.equals(alloc.type))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public String enumByteBufferGet(NativeType nativeType) {
+        return switch (nativeType) {
+            case SINT8 -> "get";
+            case SINT16 -> "getShort";
+            case SINT32 -> "getInt";
+            case SINT64 -> "getLong";
+            default -> throw new UnsupportedOperationException(
+                    "enumerations of type %d are not supported".formatted(nativeType));
+        };
+    }
+
+    public String enumByteBufferPut(NativeType nativeType) {
+        return switch (nativeType) {
+            case SINT8 -> "put";
+            case SINT16 -> "putShort";
+            case SINT32 -> "putInt";
+            case SINT64 -> "putLong";
+            default -> throw new UnsupportedOperationException(
+                    "enumerations of type %d are not supported".formatted(nativeType));
+        };
     }
 }

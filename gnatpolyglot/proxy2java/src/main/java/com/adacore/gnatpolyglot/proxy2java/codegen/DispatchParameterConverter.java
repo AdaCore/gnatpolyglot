@@ -118,6 +118,11 @@ public class DispatchParameterConverter {
                 }
 
                 @Override
+                public String enumType(TypeExpr type) {
+                    return numberType(type);
+                }
+
+                @Override
                 public String arrayType(TypeExpr type) {
                     return JavaParamWorker.this.arrayType(type);
                 }
@@ -127,6 +132,19 @@ public class DispatchParameterConverter {
                     return JavaParamWorker.this.classType(type);
                 }
             }.apply(type.referencedType());
+        }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            return new StringBuilder(valueTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(valueTypename)
+                    .append(".fromValue.")
+                    .append(JavaGenerator.makeCall("get", List.of(argName)))
+                    .append(";")
+                    .toString();
         }
     }
 
@@ -228,6 +246,11 @@ public class DispatchParameterConverter {
                 }
 
                 @Override
+                public String enumType(TypeExpr type) {
+                    return numberType(type);
+                }
+
+                @Override
                 public String arrayType(TypeExpr type) {
                     return JNIParamWorker.this.arrayType(type);
                 }
@@ -237,6 +260,11 @@ public class DispatchParameterConverter {
                     return JNIParamWorker.this.classType(type);
                 }
             }.apply(type.referencedType());
+        }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            return numberType(type);
         }
     }
 

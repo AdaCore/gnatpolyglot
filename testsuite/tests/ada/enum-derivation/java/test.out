@@ -1,0 +1,28 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Got A = 0
+Java got: 0
+Got B = 1
+Java got: 1
+A is not in Enum2
+E is not in Enum2
+F is not in Enum2
+
+A is not in Enum3
+B is not in Enum3
+F is not in Enum3
+
+B is not in Enum4
+D is not in Enum4
+E is not in Enum4
+F is not in Enum4
+
+A
+
+Done.

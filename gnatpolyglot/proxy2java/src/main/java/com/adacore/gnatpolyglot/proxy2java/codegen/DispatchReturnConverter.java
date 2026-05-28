@@ -63,6 +63,11 @@ public class DispatchReturnConverter {
             throw new UnsupportedOperationException(
                     "Unreachable: returning references in dispatch is not permitted");
         }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            return new StringBuilder("return ").append(returnedValue).append(".value;").toString();
+        }
     }
 
     private class JavaDefaultReturnWorker implements JavaTypeWorker<String> {
@@ -102,6 +107,11 @@ public class DispatchReturnConverter {
             throw new UnsupportedOperationException(
                     "Unreachable: returning references in dispatch is not permitted");
         }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            return "return 0;";
+        }
     }
 
     private class CReturnWorker implements JavaTypeWorker<String> {
@@ -134,6 +144,11 @@ public class DispatchReturnConverter {
                     .append(" != JNI_FALSE")
                     .append(";")
                     .toString();
+        }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            return numberType(type);
         }
 
         @Override
