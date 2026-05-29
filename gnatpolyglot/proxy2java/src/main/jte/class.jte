@@ -65,7 +65,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 }
 @for (var alloc : allocFunctions)
     !{
-        String nativeFunc = "$%s".formatted(alloc.name.getLastName().toCamel());
+        String nativeFunc = "$%s".formatted(alloc.symbol);
         FunctionDecl shadow = alloc.role.kind == RoleKind.SHADOW_ALLOC
             ? null
             : api.getMatchingShadowAlloc(alloc);
@@ -100,7 +100,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
       --%>
 
     !{
-        String nativeShadow = "$%s".formatted(shadow.name.getLastName().toCamel());
+        String nativeShadow = "$%s".formatted(shadow.symbol);
     }
 
     private static native
@@ -139,7 +139,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
 @if (cloneFunction != null)
     !{
-        String nativeFunc = "$%s".formatted(cloneFunction.name.getLastName().toCamel());
+        String nativeFunc = "$%s".formatted(cloneFunction.symbol);
     }
 
     <%-- The Object.clone function is protected by default. Make it public if possible --%>
@@ -155,7 +155,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
 @if (shadowCloneFunction != null)
     !{
-        String nativeFunc = "$%s".formatted(shadowCloneFunction.name.getLastName().toCamel());
+        String nativeFunc = "$%s".formatted(shadowCloneFunction.symbol);
     }
 
     protected BiFunction<
@@ -169,7 +169,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
     !{
         FunctionDecl freeFunc = members.freeFunction;
-        String freeNativeFunc = "$%s".formatted(freeFunc.name.getLastName().toCamel());
+        String freeNativeFunc = "$%s".formatted(freeFunc.symbol);
     }
 
     private static native

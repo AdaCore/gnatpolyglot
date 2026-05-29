@@ -44,7 +44,7 @@ Template file to generate a class.
 
     @for (var alloc : arrayFunctions.allocFunctions)
         !{
-            String nativeFunc = "$%s".formatted(alloc.name.getLastName().toCamel());
+            String nativeFunc = "$%s".formatted(alloc.symbol);
         }
 
         private static native
@@ -69,7 +69,7 @@ Template file to generate a class.
     @for (var method : arrayFunctions.memberFunctions)
         !{
             String functionName = method.name.getLastName().toCamel();
-            String nativeFunc = "$%s".formatted(functionName);
+            String nativeFunc = "$%s".formatted(method.symbol);
             boolean firstMethodParam = true;
         }
 
@@ -114,7 +114,7 @@ Template file to generate a class.
 
         !{
             FunctionDecl freeFunc = arrayFunctions.freeFunction;
-            String freeNativeFunc = "$%s".formatted(freeFunc.name.getLastName().toCamel());
+            String freeNativeFunc = "$%s".formatted(freeFunc.symbol);
         }
 
         private static native

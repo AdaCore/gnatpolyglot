@@ -27,6 +27,7 @@ import com.adacore.gnatpolyglot.proxy2java.codegen.TypenameGenerator;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class JavaAPI extends LanguageAPI {
@@ -216,31 +217,40 @@ public class JavaAPI extends LanguageAPI {
         return typenameGenerator.cTypename(type);
     }
 
-    /** Return the name of the function to implement in the JNI layer. */
+    /**
+     * Return the name of the function to implement in the JNI layer.
+     *
+     * <p>"_" must be replaced with "_1"
+     *
+     * <p>Non-ascii characters must be replaced with "_0XXXX" with XXXX their unicode value.
+     */
     public String jniName(FunctionDecl function) {
         StringBuilder builder = new StringBuilder("Java_");
+        Function<FullyQualifiedName, String> mangle =
+                (n) -> n.getLastName().toLower().replace("_", "_1");
         if (function.role == null) {
             FullyQualifiedName parent = function.name.getParentFullyQualifiedName();
-            builder.append(groupId.join((n) -> n.getLastName().toLower(), "", "_", "_"))
+            builder.append(groupId.join(mangle, "", "_", "_"))
                     .append(
                             parent.join(
-                                    (n) -> n.getLastName().toLower(),
+                                    mangle,
                                     "",
                                     "_",
                                     "_".concat(parent.getLastName().toPascal().concat("Package"))));
         } else if (context.isClassType(function.role.type)
                 || context.isException(function.role.type)) {
-            builder.append(javaTypename(function.role.type).replace(".", "_"));
+            builder.append(javaTypename(function.role.type).replace("_", "_1").replace(".", "_"));
         } else if (function.role.type.isArray()) {
             builder.append(
                     javaTypename(function.role.type.elementType())
+                            .replace("_", "_1")
                             .replace(".", "_")
                             .concat("_00024Array"));
         } else {
             throw new UnsupportedOperationException("unsupported");
         }
         // All native function handle names start with `$` (Unicode character: 00024)
-        return builder.append("__00024").append(function.name.getLastName().toCamel()).toString();
+        return builder.append("__00024").append(function.symbol.replace("_", "_1")).toString();
     }
 
     public String jniSignature(FunctionTypeExpr type, ClassDecl classDecl) {

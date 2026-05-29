@@ -13,7 +13,7 @@ Template file to generate a function.
 
 !{
     String functionName = function.name.getLastName().toCamel();
-    String nativeFunc = "$%s".formatted(functionName);
+    String nativeFunc = "$%s".formatted(function.symbol);
     boolean isMethod = api.isMethod(function);
     boolean firstMethodParam = isMethod;
 }
