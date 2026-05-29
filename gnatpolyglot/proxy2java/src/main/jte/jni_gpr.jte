@@ -15,7 +15,7 @@ Template file to generate a Maven project Java bindings.
 with "${runtimeLocation}/ada/gnatpolyglot_ada2java.gpr";
 with "${runtimeLocation}/proxy2java/gnatpolyglot_proxy2java.gpr";
 
-library project ${proxy.name.toPascal()}_JNI is
+library project ${proxy.name.toPascalWithUnderscore()}_JNI is
 
    type Build_Mode_Type is ("dev", "prod");
    Build_Mode : Build_Mode_Type := external
@@ -76,4 +76,4 @@ library project ${proxy.name.toPascal()}_JNI is
       for Linker_Options use ("-L" & ${proxy.name.toPascal()}_Lib_Location);
    end Linker;
 
-end ${proxy.name.toPascal()}_JNI;
+end ${proxy.name.toPascalWithUnderscore()}_JNI;
