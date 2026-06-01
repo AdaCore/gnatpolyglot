@@ -171,6 +171,7 @@ public class TypenameGenerator {
 
         @Override
         public String pointerType(TypeExpr type) {
+            if (type.pointedType().isArray()) return arrayType(type.pointedType());
             return api.javaPrimitiveTypename(NativeType.UINT64);
         }
 
@@ -256,6 +257,7 @@ public class TypenameGenerator {
 
         @Override
         public String pointerType(TypeExpr type) {
+            if (type.pointedType().isArray()) return arrayType(type.pointedType());
             return "jlong";
         }
 
@@ -346,6 +348,7 @@ public class TypenameGenerator {
 
         @Override
         public String pointerType(TypeExpr type) {
+            if (type.pointedType().isArray()) return arrayType(type.pointedType());
             return "void *";
         }
 

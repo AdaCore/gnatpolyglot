@@ -159,6 +159,7 @@ public class ParameterConverter {
 
         @Override
         public String pointerType(TypeExpr type) {
+            if (type.pointedType().isArray()) return arrayType(type.pointedType());
             return new StringBuilder(valueTypename)
                     .append(" ")
                     .append(valueName)
