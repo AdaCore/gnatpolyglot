@@ -7,6 +7,7 @@ Template file to generate a class.
 @import com.adacore.gnatpolyglot.proxy.ClassDecl
 @import com.adacore.gnatpolyglot.proxy.ClassDecl.Inheritability
 @import com.adacore.gnatpolyglot.proxy.FunctionDecl
+@import com.adacore.gnatpolyglot.proxy.Name
 @import com.adacore.gnatpolyglot.proxy.ProxyContext.FunctionMembersEntry
 @import com.adacore.gnatpolyglot.proxy.Role.RoleKind
 @import com.adacore.gnatpolyglot.proxy2java.JavaAPI
@@ -136,6 +137,19 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 @for (var method : members.memberFunctions)
     @template.function(api, method)
 @endfor
+
+@if (members.copyFunction != null)
+    !{
+        Name copyFromName = Name.fromCamel("copyFrom");
+        String name = members.memberFunctions.stream()
+            .filter(m -> m.name.getLastName().equals(copyFromName))
+            .filter(m -> m.type.equals(members.copyFunction.type))
+            .findFirst()
+            .map(_ -> members.copyFunction.name.getLastName().toCamel())
+            .orElse(copyFromName.toCamel());
+    }
+    @template.function(api, members.copyFunction, functionName = name)
+@endif
 
 @if (cloneFunction != null)
     !{

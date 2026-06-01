@@ -10,9 +10,12 @@ Template file to generate a function.
 
 @param JavaAPI api
 @param FunctionDecl function
+@param String functionName = null
 
 !{
-    String functionName = function.name.getLastName().toCamel();
+    functionName = functionName != null
+        ? functionName
+        : function.name.getLastName().toCamel();
     String nativeFunc = "$%s".formatted(function.symbol);
     boolean isMethod = api.isMethod(function);
     boolean firstMethodParam = isMethod;
