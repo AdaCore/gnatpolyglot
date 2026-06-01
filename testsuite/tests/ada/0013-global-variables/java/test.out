@@ -1,0 +1,19 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Global_Int = 1
+Global_Int = 2
+Global_Int = 1
+Global_Int = 2
+Global_Arr = {1, 1, 1, }
+Global_Arr = {2, 2, 2, }
+Global_A = 42
+Global_B = 43
+Withed_Type = 1
+
+Done.
