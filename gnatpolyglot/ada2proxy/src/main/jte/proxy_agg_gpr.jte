@@ -54,6 +54,8 @@ aggregate library project ${projectName.toPascalWithUnderscore()}.Proxy.Agg is
    case Library_Standalone is
       when "encapsulated" | "standard" =>
          for Interfaces use (
+            "gnatpolyglot.c",
+            "gnatpolyglot.h",
             "gnatpolyglot.ads",
             "gnatpolyglot-ada.ads",
             "gnatpolyglot-ada-arrays.ads",
