@@ -220,7 +220,8 @@ public class CppAPI {
         //  - The self argument of the class's raw pointer type.
         //  - The vtable argument of the class' vtable raw pointer type.
         if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
-            builder.append(builder.isEmpty() ? "" : ", ").append("void *_self, void *vtable");
+            builder.append(builder.isEmpty() ? "" : ", ")
+                    .append("void *_self, void *_self_data, void *vtable");
         }
         return builder.toString();
     }
@@ -303,6 +304,8 @@ public class CppAPI {
                 .collect(() -> parameters, ArrayList::add, ArrayList::addAll);
         if (roleKind == RoleKind.SHADOW_ALLOC) {
             String className = functionDecl.role.type.getName().getLastName().toPascal();
+            // C++ does not need additional data in the shadow object.
+            parameters.add("nullptr");
             parameters.add("_self");
             parameters.add("&%s_vtable".formatted(className));
         }
@@ -404,6 +407,7 @@ public class CppAPI {
     /** Return a string of the parameters of the dispatching function. */
     public String dispatchParameters(FunctionTypeExpr function) {
         StringBuilder builder = new StringBuilder();
+        builder.append("void *,");
         builder.append("gnatpolyglot::data *_self");
         for (var param : function.parameters.stream().skip(1).toList()) {
             builder.append(", ").append(toCParam(param));

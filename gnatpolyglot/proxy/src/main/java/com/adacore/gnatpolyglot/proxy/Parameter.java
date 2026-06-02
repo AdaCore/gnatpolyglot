@@ -7,6 +7,7 @@ package com.adacore.gnatpolyglot.proxy;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 
 /** Represent a function parameter. */
 public class Parameter implements ProxyObject {
@@ -34,5 +35,16 @@ public class Parameter implements ProxyObject {
 
     public <T> T visit(ProxyVisitor<T> v) {
         return v.visit(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj instanceof Parameter other) {
+            return Objects.deepEquals(name, other.name)
+                    && Objects.deepEquals(type, other.type)
+                    && Objects.deepEquals(transfer, other.transfer);
+        }
+        return false;
     }
 }

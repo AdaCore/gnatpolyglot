@@ -1,0 +1,19 @@
+Running printer test.
+Running the scanner...
+test.ads:20:4: warning: Could not bind Test.Unbindable: Access to subprograms are not yet supported
+test.ads:22:4: warning: Could not bind Test.Foo: Used type `Test.Unbindable` is not bindable
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Root.P1
+Child.P 1
+Root.P1
+Root.P1
+JavaChild.p2() 2
+Root.P1
+JavaChild.p2() 4
+
+Done.

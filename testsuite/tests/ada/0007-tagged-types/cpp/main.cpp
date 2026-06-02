@@ -4,15 +4,17 @@
 
 int main() {
     test::Root root(1, 2);
+    test::Rec recr(1, 2);
 
     root.p1();
 
     test::Child child(3, 4, 5);
+    test::Rec recc(3, 4);
 
     child.p1();
 
-    root.p2(root);
-    child.p2(child);
+    root.p2(recr);
+    child.p2(recc);
 
     test::OtherChild other_child(3, 4, 5);
     other_child.p1();

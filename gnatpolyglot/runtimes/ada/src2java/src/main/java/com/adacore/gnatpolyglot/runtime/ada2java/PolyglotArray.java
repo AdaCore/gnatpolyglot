@@ -62,6 +62,11 @@ public abstract class PolyglotArray<E> extends PolyglotObject implements List<E>
     }
 
     @Override
+    public ArrayData release() {
+        return (ArrayData) super.release();
+    }
+
+    @Override
     public final boolean add(E e) {
         throw new UnsupportedOperationException("List is not mutable");
     }

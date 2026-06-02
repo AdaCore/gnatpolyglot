@@ -4,6 +4,7 @@ import com.adacore.gnatpolyglot.LanguageAPI;
 import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
 import com.adacore.gnatpolyglot.proxy.ClassDecl;
+import com.adacore.gnatpolyglot.proxy.ClassDecl.Inheritability;
 import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
 import com.adacore.gnatpolyglot.proxy.FunctionDecl;
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
@@ -15,12 +16,16 @@ import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.Role.RoleKind;
 import com.adacore.gnatpolyglot.proxy.TypeDecl;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
+import com.adacore.gnatpolyglot.proxy.VTableEntry;
 import com.adacore.gnatpolyglot.proxy2java.codegen.CGenerator;
+import com.adacore.gnatpolyglot.proxy2java.codegen.DispatchParameterConverter;
+import com.adacore.gnatpolyglot.proxy2java.codegen.DispatchReturnConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.JavaGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.ParameterConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.ReturnConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.TypenameGenerator;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,7 +41,12 @@ public class JavaAPI extends LanguageAPI {
 
     private ReturnConverter returnConverter = new ReturnConverter(this);
 
+    private DispatchReturnConverter dispatchReturnConverter = new DispatchReturnConverter(this);
+
     private ParameterConverter parameterConverter = new ParameterConverter(this);
+
+    private DispatchParameterConverter dispatchParameterConverter =
+            new DispatchParameterConverter(this);
 
     public JavaAPI(ProxyContext context, List<String> groupId, Name projectName) {
         this.context = context;
@@ -233,24 +243,100 @@ public class JavaAPI extends LanguageAPI {
         return builder.append("__00024").append(function.name.getLastName().toCamel()).toString();
     }
 
+    public String jniSignature(FunctionTypeExpr type, ClassDecl classDecl) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("(")
+                .append(
+                        "L%s;"
+                                .formatted(
+                                        javaTypename(classDecl.name.asTypeExpr())
+                                                .replace(".", "/")));
+        type.parameters.stream()
+                .skip(1)
+                .map(p -> p.type)
+                .map(t -> jniTypeSignature(t, false))
+                .forEach(builder::append);
+        builder.append(")").append(jniTypeSignature(type.returnType, true));
+        return builder.toString();
+    }
+
+    private String jniTypeSignature(TypeExpr type, boolean isReturn) {
+        if (context.isNativeScalar(type)) {
+            NativeTypeDecl decl = (NativeTypeDecl) context.getTypeDecl(type.getName());
+            return switch (decl.nativeType) {
+                case VOID -> "V";
+                case BOOL -> "Z";
+                case CHAR -> "C";
+                case FLOAT32 -> "F";
+                case FLOAT64 -> "D";
+                case UINT8, SINT8 -> "B";
+                case UINT16, SINT16 -> "S";
+                case UINT32, SINT32 -> "I";
+                case UINT64, SINT64 -> "J";
+                default -> throw new UnsupportedOperationException("Unsupported native type");
+            };
+        }
+        if (context.isClassType(type.referencedType())) {
+            return jniTypeSignature(NativeType.UINT64.typeExpr, isReturn);
+        }
+        String javaNativeType =
+                isReturn ? javaNativeReturnTypename(type) : javaNativeTypename(type);
+        return "L%s;".formatted(javaNativeType.replace(".", "/"));
+    }
+
     /** Create a call to the C symbol in the JNI layer. */
     public String callCSymbol(FunctionDecl functionDecl) {
-        return CGenerator.makeCall(
-                        functionDecl.symbol,
-                        functionDecl.type.parameters.stream()
-                                .map(p -> jniValueName(p.name))
-                                .toList())
-                .toString();
+        List<String> args =
+                functionDecl.type.parameters.stream()
+                        .map(p -> jniValueName(p.name))
+                        .collect(Collectors.toCollection(ArrayList::new));
+        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            String className = functionDecl.role.type.getName().getLastName().toPascal();
+            args.add("_java_vm");
+            args.add(CGenerator.makeJNICall("NewWeakGlobalRef", List.of("_self")).toString());
+            args.add("&%s_vtable".formatted(className));
+        }
+
+        return CGenerator.makeCall(functionDecl.symbol, args).toString();
     }
 
     /** Create a call to the Java native function. */
     public String callJavaNative(FunctionDecl functionDecl, String nativeName) {
-        return JavaGenerator.makeCall(
-                        nativeName,
-                        functionDecl.type.parameters.stream()
-                                .map(p -> javaValueName(p.name))
-                                .toList())
+        List<String> args =
+                functionDecl.type.parameters.stream()
+                        .map(p -> javaValueName(p.name))
+                        .collect(Collectors.toCollection(ArrayList::new));
+        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            args.add("this");
+        }
+        return JavaGenerator.makeCall(nativeName, args).toString();
+    }
+
+    /** Create a call to the method . */
+    public String callJavaDispatch(VTableEntry method) {
+        List<String> args =
+                method.functionType.parameters.stream()
+                        .skip(1)
+                        .map(p -> javaValueName(p.name))
+                        .toList();
+        return new StringBuilder("_self.")
+                .append(JavaGenerator.makeCall(method.name.toCamel(), args))
                 .toString();
+    }
+
+    public String callJNIDispatch(VTableEntry method) {
+        List<String> args = new ArrayList<>(List.of("clazz", "_self"));
+        method.functionType.parameters.stream()
+                .skip(1)
+                .map(p -> jniValueName(p.name))
+                .forEachOrdered(args::add);
+        String envMember;
+        if (context.isClassType(method.functionType.returnType)) {
+            envMember = callStaticTypeMethodJNIName(NativeType.UINT64.typeExpr);
+        } else {
+            envMember = callStaticTypeMethodJNIName(method.functionType.returnType);
+        }
+        return CGenerator.makeJNICall(envMember, "method", args).toString();
     }
 
     /** Return whether a function returns void. */
@@ -265,9 +351,18 @@ public class JavaAPI extends LanguageAPI {
         return returnConverter.cReturnStatement(functionDecl, returnedValue);
     }
 
+    /** Create the return statement for the function in its JNI layer implementation */
+    public String makeCDispatchReturnStatement(VTableEntry method, String returnedValue) {
+        return dispatchReturnConverter.cReturnStatement(method, returnedValue);
+    }
+
     /** Create the return statement for the function in its Java layer implementation */
     public String makeJavaReturnStatement(FunctionDecl functionDecl, String returnedValue) {
         return returnConverter.javaReturnStatement(functionDecl, returnedValue);
+    }
+
+    public String makeJavaDispatchReturnStatement(VTableEntry method, String returnedValue) {
+        return dispatchReturnConverter.javaReturnStatement(method, returnedValue);
     }
 
     /** Return the string to declare arguments in the Java function. */
@@ -278,11 +373,34 @@ public class JavaAPI extends LanguageAPI {
                 .collect(Collectors.joining(", "));
     }
 
+    /** Return the string to declare arguments in the Java function. */
+    public String javaDispatchParameters(FunctionTypeExpr functionType) {
+        return functionType.parameters.stream()
+                .skip(1)
+                .map(p -> ", %s %s".formatted(javaNativeTypename(p.type), javaArgName(p.name)))
+                .collect(Collectors.joining());
+    }
+
     /** Return the string to declare arguments in the native Java function. */
     public String javaNativeParameters(FunctionDecl functionDecl) {
-        return functionDecl.type.parameters.stream()
-                .map(p -> "%s %s".formatted(javaNativeTypename(p.type), javaArgName(p.name)))
-                .collect(Collectors.joining(", "));
+        StringBuilder builder = new StringBuilder();
+        builder.append(
+                functionDecl.type.parameters.stream()
+                        .map(
+                                p ->
+                                        "%s %s"
+                                                .formatted(
+                                                        javaNativeTypename(p.type),
+                                                        javaArgName(p.name)))
+                        .collect(Collectors.joining(", ")));
+        // In the java world, SHADOW_ALLOC functions have 1 hidden arguments: a reference to the
+        // object. The vtable is generated in the JNI layer.
+        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            builder.append(builder.isEmpty() ? "" : ", ")
+                    .append(javaTypename(functionDecl.role.type))
+                    .append(" _self");
+        }
+        return builder.toString();
     }
 
     /** Return the string to declare arguments in the JNI function. */
@@ -300,14 +418,48 @@ public class JavaAPI extends LanguageAPI {
                                                                     jniArgName(p.name)))
                                     .collect(Collectors.joining(", ")));
         }
+        // Java passes an additional argument for shadow alloc functions, corresponding to
+        // the object itself.
+        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            builder.append(builder.isEmpty() ? "" : ", ").append("jobject _self");
+        }
+        return builder.toString();
+    }
+
+    /** Return the string to declare arguments in the JNI function. */
+    public String jniDispatchParameters(FunctionTypeExpr functionType) {
+        StringBuilder builder = new StringBuilder("void *_self_data, jobject _self");
+        if (functionType.parameters.size() > 1) {
+            builder.append(", ")
+                    .append(
+                            functionType.parameters.stream()
+                                    .skip(1)
+                                    .map(
+                                            p ->
+                                                    "%s %s"
+                                                            .formatted(
+                                                                    cTypename(p.type),
+                                                                    jniArgName(p.name)))
+                                    .collect(Collectors.joining(", ")));
+        }
         return builder.toString();
     }
 
     /** Return the string to declare arguments in the C function. */
     public String cParameters(FunctionDecl functionDecl) {
-        return functionDecl.type.parameters.stream()
-                .map(p -> "%s %s".formatted(cTypename(p.type), p.name.toCamel()))
-                .collect(Collectors.joining(", "));
+        StringBuilder builder = new StringBuilder();
+        builder.append(
+                functionDecl.type.parameters.stream()
+                        .map(p -> "%s %s".formatted(cTypename(p.type), p.name.toCamel()))
+                        .collect(Collectors.joining(", ")));
+        //  The C Symbol expects two additional hidden arguments:
+        //  - The self argument of the class's raw pointer type.
+        //  - The vtable argument of the class' vtable raw pointer type.
+        if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
+            builder.append(builder.isEmpty() ? "" : ", ")
+                    .append("void *_self_data, void *_self, void *vtable");
+        }
+        return builder.toString();
     }
 
     /** Create the string to convert the java parameter for calling the native handle. */
@@ -315,9 +467,18 @@ public class JavaAPI extends LanguageAPI {
         return parameterConverter.javaParam(param, isFirstMethodParam);
     }
 
+    /** Create the string to convert the java parameter for calling the native handle. */
+    public String makeJavaDispatchParamConversion(Parameter param) {
+        return dispatchParameterConverter.javaParam(param);
+    }
+
     /** Create the string to convert the JNI parameter for calling the C symbol. */
     public String makeJNIParamConversion(Parameter param) {
         return parameterConverter.jniParam(param);
+    }
+
+    public String makeJNIDispatchParamConversion(Parameter param) {
+        return dispatchParameterConverter.jniParam(param);
     }
 
     /** Return whether a function is a class method. */
@@ -405,5 +566,44 @@ public class JavaAPI extends LanguageAPI {
             return "CallObjectMethod";
         }
         throw new UnsupportedOperationException("Unsupported type");
+    }
+
+    /**
+     * Return the name of the function to call in the JEnv to call a static Java method that returns
+     * the corresponding type.
+     */
+    public String callStaticTypeMethodJNIName(TypeExpr returnedType) {
+        if (context.isNativeScalar(returnedType)) {
+            return switch (NativeTypeDecl.class.cast(context.getTypeDecl(returnedType.getName()))
+                    .nativeType) {
+                case BOOL -> "CallStaticBooleanMethod";
+                case CHAR -> "CallStaticCharMethod";
+                case FLOAT32 -> "CallStaticFloatMethod";
+                case FLOAT64 -> "CallStaticDoubleMethod";
+                case UINT8, SINT8 -> "CallStaticByteMethod";
+                case UINT16, SINT16 -> "CallStaticShortMethod";
+                case UINT32, SINT32 -> "CallStaticIntMethod";
+                case UINT64, SINT64 -> "CallStaticLongMethod";
+                case VOID -> "CallStaticVoidMethod";
+                default -> throw new UnsupportedOperationException("Unsupported native type");
+            };
+        } else if (context.isClassType(returnedType)
+                || context.isStringType(returnedType)
+                || returnedType.isArray()) {
+            return "CallStaticObjectMethod";
+        }
+        throw new UnsupportedOperationException("Unsupported type");
+    }
+
+    public FunctionDecl getMatchingShadowAlloc(FunctionDecl alloc) {
+        if (alloc.role == null || alloc.role.kind != RoleKind.ALLOC) {
+            throw new IllegalArgumentException("Function does not have the role ALLOC");
+        }
+        ClassDecl classDecl = (ClassDecl) context.getTypeDecl(alloc.role.type.getName());
+        if (classDecl.inheritability == Inheritability.FINAL) return null;
+        return getMembers(classDecl).allocFunctions.stream()
+                .filter(a -> a.role.kind == RoleKind.SHADOW_ALLOC && a.type.equals(alloc.type))
+                .findFirst()
+                .orElse(null);
     }
 }

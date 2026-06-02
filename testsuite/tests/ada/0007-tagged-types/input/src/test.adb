@@ -8,7 +8,7 @@ package body Test is
       Put_Line ("(A =>" & R.A'Image & ", B =>" & R.B'Image & ")");
    end P1;
 
-   procedure P2 (R : Root; R2 : Root'Class) is
+   procedure P2 (R : Root; R2 : Rec) is
    begin
       Put_Line
         ("(A =>"
@@ -22,7 +22,7 @@ package body Test is
          & ")");
    end P2;
 
-   procedure P2 (C : Child; R2 : Root'Class) is
+   procedure P2 (C : Child; R2 : Rec) is
    begin
       Put_Line
         ("(A =>"
@@ -57,7 +57,7 @@ package body Test is
       Put_Line (Ada.Tags.External_Tag (R'Tag));
    end P_Root;
 
-   procedure P2_Root (R: Root'Class; R2: Root'Class) is
+   procedure P2_Root (R: Root'Class; R2: Rec) is
    begin
       R.P2 (R2);
    end P2_Root;

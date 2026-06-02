@@ -21,7 +21,13 @@ package GNATpolyglot.Ada is
 
    type Clone_Shadow_Type is
      access function
-       (Self : System.Address; Data : System.Address) return System.Address
+       (Self_Data : System.Address;
+        Self      : System.Address;
+        Data      : System.Address) return System.Address
+   with Convention => C;
+
+   type Free_Dispatch_Shadow_Type is
+     access procedure (Self_Data : System.Address; Self : System.Address)
    with Convention => C;
 
    type Free_Shadow_Type is access procedure (Self : System.Address)
@@ -29,7 +35,8 @@ package GNATpolyglot.Ada is
 
    type Minimal_Vtable is record
       Clone_Dispatch : Clone_Shadow_Type;
-      Free_Dispatch  : Free_Shadow_Type;
+      Free_Dispatch  : Free_Dispatch_Shadow_Type;
+      Free_Data      : Free_Shadow_Type;
    end record
    with Convention => C;
    -- Minimal vtable that can be overlaid over any generated vtable.
@@ -44,6 +51,13 @@ package GNATpolyglot.Ada is
    type Shadow_Data is new Controlled with record
       Self               : System.Address;
       -- The reference to the user-side object
+      Self_Data          : System.Address;
+      -- Additional opaque data. This data is passed to dispatching functions
+      -- called from the vtable. Its goal is to hold values meant to help with
+      -- redispatching to the user implementations (e.g. hold a reference to
+      -- a Java VM).
+      -- If the `Free_Data` function of the minimal vtable is set, it is called
+      -- on this object to free it.
       Vtable             : System.Address;
       -- The virtual table that holds pointers to dispatching functions
       Self_Owner         : Self_Owner_Kind;
