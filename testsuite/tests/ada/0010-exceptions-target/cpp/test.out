@@ -10,8 +10,8 @@ Ada caught Exc1: Foo
 C++ caught Exc1: Foo
 Ada caught Exc2: Bar
 C++ caught Exc2: Bar
-Ada caught Constraint_Error: Baz
-C++ caught Constraint_Error: Baz
+anonymous: Baz
+C++ caught AdaException: Baz
 Ada caught Program_Error: FooBar
 C++ caught Program_Error: FooBar
 

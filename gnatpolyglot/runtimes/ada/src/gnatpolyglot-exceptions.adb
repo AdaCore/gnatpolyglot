@@ -65,6 +65,8 @@ package body GNATpolyglot.Exceptions is
    -- Create_Exception_Occurence --
    --------------------------------
 
+   Anonymous_Error : exception;
+
    function Create_Exception_Occurence
      (Kind : Standard_Exception_Kind) return System.Address is
    begin
@@ -80,6 +82,9 @@ package body GNATpolyglot.Exceptions is
 
          when Tasking_Error_Kind =>
             raise Tasking_Error;
+
+         when Anonymous_Error_Kind =>
+            raise Anonymous_Error;
       end case;
    exception
       when E : others =>
@@ -105,6 +110,9 @@ package body GNATpolyglot.Exceptions is
 
          when Tasking_Error_Kind =>
             raise Tasking_Error with Ada_Msg;
+
+         when Anonymous_Error_Kind =>
+            raise Anonymous_Error with Ada_Msg;
       end case;
    exception
       when E : others =>
