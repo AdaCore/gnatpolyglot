@@ -1,0 +1,44 @@
+library project GNATpolyglot_Proxy2Java is
+
+   for Languages use ("C");
+
+   for Source_Dirs use ("jni");
+   for Object_Dir use "obj";
+
+   type Library_Kind_Type is ("static", "relocatable", "static-pic");
+   Library_Kind : Library_Kind_Type := external ("LIBRARY_KIND", "relocatable");
+
+   for Library_Name use "gnatpolyglot_proxy2java";
+   for Library_Dir use "lib/" & Library_Kind;
+   for Library_Kind use Library_Kind;
+
+   Java_Home := external ("JAVA_HOME");
+   JNI_Headers := ("-I" & Java_Home & "/include/");
+
+   type OS_Type is ("windows", "unix");
+   OS : OS_Type := external ("OS", "unix");
+
+   case OS is
+      when "windows" =>
+         JNI_Headers := ("-I" & Java_Home & "/include/win32") & JNI_Headers;
+      when "unix" =>
+         JNI_Headers := ("-I" & Java_Home & "/include/linux") & JNI_Headers;
+   end case;
+
+   package Compiler is
+      for Switches ("C") use ("-g") & JNI_Headers;
+   end Compiler;
+
+   Test_Lib := external
+      ("PROXY_LIB",
+       "test_proxy");
+   for Library_Options use ("-l" & Test_Lib);
+
+   Test_Lib_Location :=
+      external ("PROXY_LIB_LOCATION");
+
+   package Linker is
+      for Linker_Options use ("-L" & Test_Lib_Location);
+   end Linker;
+
+end GNATpolyglot_Proxy2Java;
