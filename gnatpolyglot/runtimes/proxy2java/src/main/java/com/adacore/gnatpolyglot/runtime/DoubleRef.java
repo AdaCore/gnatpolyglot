@@ -1,22 +1,17 @@
 package com.adacore.gnatpolyglot.runtime;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /** Class holding a mutable double value. Represents mutable double function parameters */
-public class DoubleRef {
-
-    private ByteBuffer value;
+public class DoubleRef extends ScalarRef {
 
     public DoubleRef() {
-        this.value = ByteBuffer.allocateDirect(Double.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Double.BYTES);
         this.value.putDouble(0, 0);
     }
 
     public DoubleRef(double value) {
-        this.value = ByteBuffer.allocateDirect(Double.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Double.BYTES);
         this.value.putDouble(0, value);
     }
 
@@ -25,15 +20,7 @@ public class DoubleRef {
      * <p>Construct a reference from an existing buffer.
      */
     public DoubleRef(ByteBuffer buffer) {
-        this.value = buffer;
-    }
-
-    /** Internal use only.
-     *
-     * <p>Return the internal buffer holding the value.
-     */
-    public ByteBuffer getBuffer() {
-        return value;
+        super(buffer);
     }
 
     public double getValue() {

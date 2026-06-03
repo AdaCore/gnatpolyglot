@@ -1,22 +1,17 @@
 package com.adacore.gnatpolyglot.runtime;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /** Class holding a mutable char value. Represents mutable char function parameters */
-public class CharacterRef {
-
-    private ByteBuffer value;
+public class CharacterRef extends ScalarRef {
 
     public CharacterRef() {
-        this.value = ByteBuffer.allocateDirect(Character.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Character.BYTES);
         this.value.putChar(0, '\0');
     }
 
     public CharacterRef(char value) {
-        this.value = ByteBuffer.allocateDirect(Character.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Character.BYTES);
         this.value.putChar(0, value);
     }
 
@@ -25,15 +20,7 @@ public class CharacterRef {
      * <p>Construct a reference from an existing buffer.
      */
     public CharacterRef(ByteBuffer buffer) {
-        this.value = buffer;
-    }
-
-    /** Internal use only.
-     *
-     * <p>Return the internal buffer holding the value.
-     */
-    public ByteBuffer getBuffer() {
-        return value;
+        super(buffer);
     }
 
     public char getValue() {
