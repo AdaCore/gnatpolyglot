@@ -27,6 +27,11 @@ public class DispatchReturnConverter {
         }
 
         @Override
+        public String boolType(TypeExpr type) {
+            return new StringBuilder("return ").append(returnedValue).append(";").toString();
+        }
+
+        @Override
         public String arrayType(TypeExpr type) {
             return new StringBuilder("return ")
                     .append(returnedValue)
@@ -76,8 +81,19 @@ public class DispatchReturnConverter {
 
         @Override
         public String numberType(TypeExpr type) {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'numberType'");
+            return new StringBuilder("return ")
+                    .append(CGenerator.makeCast(cReturnType, returnedValue))
+                    .append(";")
+                    .toString();
+        }
+
+        @Override
+        public String boolType(TypeExpr type) {
+            return new StringBuilder("return ")
+                    .append(returnedValue)
+                    .append(" != JNI_FALSE")
+                    .append(";")
+                    .toString();
         }
 
         @Override

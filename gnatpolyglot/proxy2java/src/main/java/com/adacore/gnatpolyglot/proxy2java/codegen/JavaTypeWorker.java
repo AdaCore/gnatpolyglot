@@ -7,12 +7,7 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
 
     @Override
     default T charType(TypeExpr type) {
-        throw new UnsupportedOperationException("Unimplemented method 'charType'");
-    }
-
-    @Override
-    default T boolType(TypeExpr type) {
-        throw new UnsupportedOperationException("Unimplemented method 'boolType'");
+        return numberType(type);
     }
 
     @Override
@@ -30,26 +25,11 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
         throw new UnsupportedOperationException("Unimplemented method 'pointerType'");
     }
 
-    @Override
-    default T refType(TypeExpr type) {
-        throw new UnsupportedOperationException("Unimplemented method 'refType'");
-    }
-
     public interface JavaSubreferenceTypeWorker<T> extends TypeWorker.SubreferenceTypeWorker<T> {
 
         @Override
-        default T numberType(TypeExpr type) {
-            throw new UnsupportedOperationException("Unimplemented method 'numberType'");
-        }
-
-        @Override
         default T charType(TypeExpr type) {
-            throw new UnsupportedOperationException("Unimplemented method 'charType'");
-        }
-
-        @Override
-        default T boolType(TypeExpr type) {
-            throw new UnsupportedOperationException("Unimplemented method 'boolType'");
+            return numberType(type);
         }
 
         @Override

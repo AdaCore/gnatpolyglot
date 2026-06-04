@@ -40,6 +40,11 @@ public class ReturnConverter {
         }
 
         @Override
+        public String boolType(TypeExpr type) {
+            return new StringBuilder("return ").append(returnedValue).append(";").toString();
+        }
+
+        @Override
         public String classType(TypeExpr type) {
             List<CharSequence> args =
                     new ArrayList<>(
@@ -124,6 +129,14 @@ public class ReturnConverter {
         }
 
         @Override
+        public String boolType(TypeExpr type) {
+            return new StringBuilder("return ")
+                    .append(returnedValue)
+                    .append(" != JNI_FALSE;")
+                    .toString();
+        }
+
+        @Override
         public String classType(TypeExpr type) {
             return new StringBuilder("return ")
                     .append(CGenerator.makeCast(jniReturnType, returnedValue))
@@ -153,6 +166,11 @@ public class ReturnConverter {
                                             jniReturnType, CGenerator.deref(returnedValue)))
                             .append(";")
                             .toString();
+                }
+
+                @Override
+                public String boolType(TypeExpr type) {
+                    return numberType(type);
                 }
 
                 @Override

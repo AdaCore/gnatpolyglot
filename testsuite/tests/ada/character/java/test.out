@@ -6,11 +6,16 @@ Compiling the library
 Compiling test main program...
 Running test main program...
 
-0
-1
-1
-0
-TRUE
-FALSE
+Got 'A' = 65
+Got 'B' = 66
+Java value: B
+Got 'e' = 101
+Got 'f' = 102
+Java value: f
+Got 'f' = 102
+Java value: e
+j
+e
+f
 
 Done.

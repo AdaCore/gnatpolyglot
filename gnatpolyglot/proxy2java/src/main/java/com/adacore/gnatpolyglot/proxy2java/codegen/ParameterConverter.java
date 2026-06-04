@@ -39,6 +39,11 @@ public class ParameterConverter {
         }
 
         @Override
+        public String boolType(TypeExpr type) {
+            return numberType(type);
+        }
+
+        @Override
         public String classType(TypeExpr type) {
             return new StringBuilder(valueTypename)
                     .append(" ")
@@ -72,6 +77,11 @@ public class ParameterConverter {
                             .append(argName)
                             .append(".getBuffer()")
                             .toString();
+                }
+
+                @Override
+                public String boolType(TypeExpr type) {
+                    return numberType(type);
                 }
 
                 @Override
@@ -133,6 +143,11 @@ public class ParameterConverter {
         }
 
         @Override
+        public String boolType(TypeExpr type) {
+            return numberType(type);
+        }
+
+        @Override
         public String classType(TypeExpr type) {
             return new StringBuilder(valueTypename)
                     .append(" ")
@@ -182,6 +197,11 @@ public class ParameterConverter {
 
                 @Override
                 public String numberType(TypeExpr type) {
+                    return makeScalarRefParam(type);
+                }
+
+                @Override
+                public String boolType(TypeExpr type) {
                     return makeScalarRefParam(type);
                 }
 

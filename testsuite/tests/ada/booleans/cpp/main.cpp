@@ -15,7 +15,4 @@ int main() {
 
     test::print_bool(true);
     test::print_bool(false);
-
-    test::print_my_bool(test::MyBool::TRUE);
-    test::print_my_bool(test::MyBool::FALSE);
 }
