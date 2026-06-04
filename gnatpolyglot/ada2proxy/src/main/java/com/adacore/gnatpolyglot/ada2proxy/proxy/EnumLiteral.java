@@ -17,9 +17,9 @@ public class EnumLiteral implements AdaProxyObject {
     public Name name;
 
     /** Integer value of the enumeration item. */
-    public int value;
+    public long value;
 
-    public EnumLiteral(Libadalang.EnumLiteralDecl origin, Name name, int value) {
+    public EnumLiteral(Libadalang.EnumLiteralDecl origin, Name name, long value) {
         this.origin = origin;
         this.name = name;
         this.value = value;

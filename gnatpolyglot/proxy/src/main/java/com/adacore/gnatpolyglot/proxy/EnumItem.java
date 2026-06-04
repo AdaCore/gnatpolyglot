@@ -16,7 +16,7 @@ public class EnumItem implements ProxyObject {
 
     /** Integer value of the enumeration item. */
     @JsonProperty("value")
-    public final int value;
+    public final long value;
 
     /** Documentation of the enumeration item. */
     @JsonProperty("doc")
@@ -25,7 +25,7 @@ public class EnumItem implements ProxyObject {
     @JsonCreator
     public EnumItem(
             @JsonProperty(value = "name", required = true) Name name,
-            @JsonProperty(value = "value", required = true) int value,
+            @JsonProperty(value = "value", required = true) long value,
             @JsonProperty(value = "doc", required = true) String doc) {
         this.name = name;
         this.value = value;

@@ -734,7 +734,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                                     return new EnumLiteral(
                                             lit,
                                             AdaAPI.getName(lit.pDefiningName()),
-                                            lit.pEnumRep().intValue());
+                                            lit.pEnumRep().longValue());
                                 })
                         .toList();
         return new EnumType(decl, AdaAPI.getName(decl.pDefiningName()), enumValues);
