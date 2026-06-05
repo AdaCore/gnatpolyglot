@@ -12,6 +12,7 @@ Template file to generate a Maven project Java bindings.
 @param String runtimeLocation
 
 with "${runtimeLocation}/ada/gnatpolyglot_ada2java.gpr";
+with "${runtimeLocation}/proxy2java/gnatpolyglot_proxy2java.gpr";
 
 library project ${proxy.name.toPascal()}_JNI is
 

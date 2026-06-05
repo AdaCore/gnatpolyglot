@@ -24,8 +24,7 @@ namespace gnatpolyglot::ada::exceptions {
 AdaException::AdaException(const strings::polyglot_string &what)
     : gnatpolyglot::exceptions::polyglot_exception(
           gnatpolyglot__ada__exceptions__create_exception_occurence_message(
-              static_cast<int>(standard_exception_kind::CONSTRAINT_ERROR_KIND),
-              what.data_())),
+              0, what.data_())),
       _what(gnatpolyglot__ada__strings_to_c_chars_ptr(what.data_())) {}
 AdaException::AdaException(void *data)
     : gnatpolyglot::exceptions::polyglot_exception(data),

@@ -7,6 +7,7 @@ package com.adacore.gnatpolyglot.proxy2java;
 
 import com.adacore.gnatpolyglot.Printer;
 import com.adacore.gnatpolyglot.proxy.ClassDecl;
+import com.adacore.gnatpolyglot.proxy.ExceptionDecl;
 import com.adacore.gnatpolyglot.proxy.ProxyException;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
@@ -80,10 +81,22 @@ public class JavaPrinter extends Printer {
             for (var classDecl :
                     module.declarations.stream().filter(ClassDecl.class::isInstance).toList()) {
                 // Generate the class.
-                Path clazz = srcDir.resolve(api.filepath((ClassDecl) classDecl));
+                Path clazz = srcDir.resolve(api.filepath(classDecl.name));
                 try (FileOutput packageSpec = new FileOutput(clazz)) {
                     templateEngine.render(
                             "class.jte", Map.of("api", api, "classDecl", classDecl), packageSpec);
+                }
+            }
+
+            for (var exceptionDecl :
+                    module.declarations.stream().filter(ExceptionDecl.class::isInstance).toList()) {
+                // Generate the class.
+                Path exception = srcDir.resolve(api.filepath(exceptionDecl.name));
+                try (FileOutput packageSpec = new FileOutput(exception)) {
+                    templateEngine.render(
+                            "exception.jte",
+                            Map.of("api", api, "exceptionDecl", exceptionDecl),
+                            packageSpec);
                 }
             }
         }

@@ -191,7 +191,14 @@ vim: filetype=jtecpp
                 } catch (gnatpolyglot::ada::exceptions::AdaException &e) {
                     gnatpolyglot_get_kernel()->exc_info.exception_data = e.release_();
                     ${api.makeDispatchDefaultReturn(method.functionType)}
+                } catch (...) {
+                    gnatpolyglot::ada::exceptions::AdaException error(
+                        "Uncaught host language exception"
+                    );
+                    gnatpolyglot_get_kernel()->exc_info.exception_data = error.release_();
+                    ${api.makeDispatchDefaultReturn(method.functionType)}
                 }
+
                 @for(var param : method.functionType.parameters.stream().skip(1).toList())
                 ${api.checkDispatchPointerValue(param)};
                 @endfor

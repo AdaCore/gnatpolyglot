@@ -1,4 +1,5 @@
 import com.adacore.libtest.ints.IntsPackage;
+import com.adacore.gnatpolyglot.runtime.ada2java.ConstraintError;
 
 public class Main {
     public static void main(String[] args) {
@@ -15,7 +16,13 @@ public class Main {
         assert IntsPackage.fPositive() == 1;
         assert IntsPackage.fMyPositive() == 2;
 
-        // TODO eng/libadalang/gnatpolyglot#90: Once exceptions are supported, test that
-        // passing arguments out of their expected value range raises an exception.
+        try {
+            IntsPackage.p((short) 100);
+            assert false;
+        } catch (ConstraintError e) {
+            // Avoid printing the exception message: it would contain a sloc from
+            // generated glue code which could change at any moment.
+        }
+
     }
 }

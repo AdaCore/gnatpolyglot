@@ -104,7 +104,7 @@ Template file to generate a class.
                 !{firstMethodParam = false;}
             @endfor
                 ${className} previousValue =
-                    get(${method.type.parameters.get(1).name.toCamel()});
+                    getUnslided(${method.type.parameters.get(1).name.toCamel()});
                 ${api.callJavaNative(method, nativeFunc)};
                 return previousValue;
             }
@@ -124,7 +124,9 @@ Template file to generate a class.
 
         @Override
         protected Consumer<com.adacore.gnatpolyglot.runtime.PolyglotData> getFree() {
-            return (addr) -> ${freeNativeFunc}(addr.getAddress());
+            return (addr) -> ${freeNativeFunc}(
+               (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) addr
+            );
         }
 
         @Override

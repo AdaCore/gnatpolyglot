@@ -22,31 +22,6 @@ import com.adacore.gnatpolyglot.runtime.PolyglotData.Owner;
  * method, please ensure to call the implementation of PolyglotObject.
  */
 public abstract class PolyglotObject implements AutoCloseable {
-    /** Global Cleaner for all bound libraries. */
-    private static Cleaner CLEANER = Cleaner.create();
-
-    /** Runnable object to free a pointer. */
-    private static class CleaningAction implements Runnable {
-
-        /** The data to free. */
-        private PolyglotData data;
-
-        /** The function to free the data. */
-        private Consumer<PolyglotData> free;
-
-        CleaningAction(PolyglotData data, Consumer<PolyglotData> free) {
-            this.data = data;
-            this.free = free;
-        }
-
-        @Override
-        final public void run() {
-            if (this.data != null && this.data.getOwner() == Owner.USER) {
-                free.accept(this.data);
-                this.data = null;
-            }
-        }
-    }
 
     /** The native object. */
     protected PolyglotData data;
@@ -82,7 +57,7 @@ public abstract class PolyglotObject implements AutoCloseable {
     protected final void setData(PolyglotData data) {
         this.data = data;
         if (data != null)
-            this.cleanable = CLEANER.register(this, new CleaningAction(data, getFree()));
+            this.cleanable = PolyglotCleaner.register(this, data, getFree());
     }
 
     public final Owner getOwner() {

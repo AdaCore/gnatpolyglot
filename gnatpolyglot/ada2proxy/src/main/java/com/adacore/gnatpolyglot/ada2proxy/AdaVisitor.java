@@ -453,7 +453,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
             // Record and Array value types are allocated on the heap before being returned from the
             // Ada glue. Since the copy is performed after the called Ada function has returned, we
             // know for sure that the user is the only owner of that heap value.
-            if (returnType.pIsRecordType(Libadalang.AdaNode.NONE)
+            if (AdaTypeMatcher.isBindedAsClass(returnType)
                     || returnType.pIsArrayType(Libadalang.AdaNode.NONE)) returnOwner = Owner.USER;
         }
 

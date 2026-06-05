@@ -45,14 +45,16 @@ package GNATpolyglot.Exceptions is
      (Constraint_Error_Kind,
       Program_Error_Kind,
       Storage_Error_Kind,
-      Tasking_Error_Kind)
+      Tasking_Error_Kind,
+      Anonymous_Error_Kind)
    with Convention => C;
 
    for Standard_Exception_Kind use
      (Constraint_Error_Kind => -4,
       Program_Error_Kind    => -3,
       Storage_Error_Kind    => -2,
-      Tasking_Error_Kind    => -1);
+      Tasking_Error_Kind    => -1,
+      Anonymous_Error_Kind  => 0);
 
    function Create_Exception_Occurence
      (Kind : Standard_Exception_Kind) return System.Address;

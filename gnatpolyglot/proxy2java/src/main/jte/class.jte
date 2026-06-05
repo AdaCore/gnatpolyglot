@@ -21,7 +21,7 @@ Template file to generate a class.
     FunctionMembersEntry arrayFunctions = api.getArrayFunctions(classDecl);
 }
 
-package ${api.packagePath(classDecl)};
+package ${api.packagePath(classDecl.name)};
 
 import java.util.function.Consumer;
 
@@ -160,13 +160,29 @@ class ${className} extends ${api.parentClass(classDecl)}{
         ${api.makeJavaDispatchParamConversion(param)}
     @endfor
 
-    @if (api.returnsVoid(method.functionType))
-        ${api.callJavaDispatch(method)};
-    @else
-        ${api.javaReturnTypename(method.functionType.returnType)} valueReturned =
+        try {
+        @if (api.returnsVoid(method.functionType))
             ${api.callJavaDispatch(method)};
-        ${api.makeJavaDispatchReturnStatement(method, "valueReturned")}
-    @endif
+        @else
+            ${api.javaReturnTypename(method.functionType.returnType)} valueReturned =
+                ${api.callJavaDispatch(method)};
+            ${api.makeJavaDispatchReturnStatement(method, "valueReturned")}
+        @endif
+        } catch (com.adacore.gnatpolyglot.runtime.ada2java.AdaException exc$e) {
+            com.adacore.gnatpolyglot.runtime.PolyglotKernel.ExceptionInformation.setExceptionData(
+                exc$e.release().getAddress()
+            );
+            ${api.makeJavaDispatchDefaultReturnStatement(method.functionType)}
+        } catch (java.lang.Throwable exc$e) {
+            com.adacore.gnatpolyglot.runtime.PolyglotKernel.ExceptionInformation.setExceptionData(
+                new com.adacore.gnatpolyglot.runtime.ada2java.AdaException(
+                    new com.adacore.gnatpolyglot.runtime.ada2java.PolyglotString(
+                        "Uncaught host language exception"
+                    )
+                ).release().getAddress()
+            );
+            ${api.makeJavaDispatchDefaultReturnStatement(method.functionType)}
+        }
     }
 @endfor
 @endif

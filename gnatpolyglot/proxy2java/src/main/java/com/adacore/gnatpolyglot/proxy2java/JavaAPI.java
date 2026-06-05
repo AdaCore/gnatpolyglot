@@ -72,9 +72,9 @@ public class JavaAPI extends LanguageAPI {
     }
 
     /** Return the string of the package for the given class. */
-    public String packagePath(ClassDecl classDecl) {
+    public String packagePath(FullyQualifiedName className) {
         return groupId.append(Name.fromLower("lib".concat(projectName.toLower())))
-                .append(classDecl.name.getParentFullyQualifiedName())
+                .append(className.getParentFullyQualifiedName())
                 .join((n) -> n.getLastName().toLower(), "", ".", "");
     }
 
@@ -88,12 +88,12 @@ public class JavaAPI extends LanguageAPI {
     }
 
     /** Return the path of the file to generate for a class. */
-    public Path filepath(ClassDecl classDecl) {
+    public Path filepath(FullyQualifiedName className) {
         Path p = Path.of(".");
-        for (var n : classDecl.name.getParentFullyQualifiedName().names) {
+        for (var n : className.getParentFullyQualifiedName().names) {
             p = p.resolve(n.toLower());
         }
-        return p.resolve(classDecl.name.getLastName().toPascal().concat(".java"));
+        return p.resolve(className.getLastName().toPascal().concat(".java"));
     }
 
     /** Return the name of a java argument. */
@@ -229,7 +229,8 @@ public class JavaAPI extends LanguageAPI {
                                     "",
                                     "_",
                                     "_".concat(parent.getLastName().toPascal().concat("Package"))));
-        } else if (context.isClassType(function.role.type)) {
+        } else if (context.isClassType(function.role.type)
+                || context.isException(function.role.type)) {
             builder.append(javaTypename(function.role.type).replace(".", "_"));
         } else if (function.role.type.isArray()) {
             builder.append(
@@ -363,6 +364,11 @@ public class JavaAPI extends LanguageAPI {
 
     public String makeJavaDispatchReturnStatement(VTableEntry method, String returnedValue) {
         return dispatchReturnConverter.javaReturnStatement(method, returnedValue);
+    }
+
+    /** Create the default return statement for the function in its Java layer implementation */
+    public String makeJavaDispatchDefaultReturnStatement(FunctionTypeExpr functionType) {
+        return dispatchReturnConverter.javaDefaultReturnStatement(functionType);
     }
 
     /** Return the string to declare arguments in the Java function. */
