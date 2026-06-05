@@ -48,4 +48,10 @@ int main() {
     } catch (const gnatpolyglot::ada::exceptions::ProgramError &e) {
         std::cout << "C++ caught Program_Error: " << e.what() << "\n";
     }
+    try {
+        d.set_i(5);
+        test::get_exception(d);
+    } catch (const gnatpolyglot::ada::exceptions::AdaException &e) {
+        std::cout << "C++ caught AdaException: " << e.what() << "\n";
+    }
 }

@@ -14,5 +14,7 @@ anonymous: Baz
 C++ caught AdaException: Baz
 Ada caught Program_Error: FooBar
 C++ caught Program_Error: FooBar
+anonymous: Uncaught host language exception
+C++ caught AdaException: Uncaught host language exception
 
 Done.
