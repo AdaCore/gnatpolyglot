@@ -27,6 +27,7 @@ Template file to generate shadow types for tagged records.
     String shadowAccess = shadowTypename + "_Access";
 
     List<FunctionDecl> allocFuncs = rec.getShadowAllocFunctions();
+    FunctionDecl cloneFunc = rec.getShadowCloneFunction();
 
     List<Subprogram> methods = rec.getAllMethods();
     Integer i = 0;
@@ -75,6 +76,17 @@ Template file to generate shadow types for tagged records.
         (C, ${allocFunc.getLastName().toPascalWithUnderscore()},
          "${allocFunc.symbol}");
    @endfor
+
+   @if (cloneFunc != null)
+      function ${cloneFunc.getLastName().toPascalWithUnderscore()}
+         (To_Clone_Arg  : System.Address;
+          Self_Data_Arg : System.Address;
+          Self_Arg      : System.Address;
+          Vtable_Arg    : System.Address) return System.Address;
+      pragma Export
+        (C, ${cloneFunc.getLastName().toPascalWithUnderscore()},
+         "${cloneFunc.symbol}");
+   @endif
 
    @for(var method : methods)
       overriding ${api.makeShadowOverride(method, shadowTypename)};
@@ -153,6 +165,40 @@ Template file to generate shadow types for tagged records.
       @template.exception_handler(api, rec.getOrigin())
       end ${allocFunc.getLastName().toPascalWithUnderscore()};
    @endfor
+
+   @if (cloneFunc != null)
+      function ${cloneFunc.getLastName().toPascalWithUnderscore()}
+         (To_Clone_Arg  : System.Address;
+          Self_Data_Arg : System.Address;
+          Self_Arg      : System.Address;
+          Vtable_Arg    : System.Address) return System.Address is
+      begin
+         declare
+            function Convert_To_Clone is new Ada.Unchecked_Conversion
+              (System.Address, ${recordAccessName});
+            To_Clone_Value : ${recordAccessName} := Convert_To_Clone (To_Clone_Arg);
+            Self_Value : System.Address := Self_Arg;
+            Self_Data_Value : System.Address := Self_Data_Arg;
+            Vtable_Value : System.Address := Vtable_Arg;
+            package Converter is new
+              System.Address_To_Access_Conversions (${instantiableRecordName});
+            Tmp : ${shadowAccess} :=
+               new ${shadowTypename}'
+                 (${recordFullName} (To_Clone_Value.all)
+                  with Shadow =>
+                     (Ada.Finalization.Controlled with
+                      Self => Self_Value,
+                      Self_Data => Self_Data_Value,
+                      Vtable => Vtable_Value,
+                      Self_Owner => GNATpolyglot.Ada.User,
+                      Back_Ref_Converter => ${shadowTypename}_Back_Ref_Converter'Access),
+                  others => <>);
+         begin
+            return Converter.To_Address (Converter.Object_Pointer (Tmp));
+         end;
+      @template.exception_handler(api, rec.getOrigin())
+      end ${cloneFunc.getLastName().toPascalWithUnderscore()};
+   @endif
 
    @for(var method : methods)
       !{
