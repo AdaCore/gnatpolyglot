@@ -1,5 +1,9 @@
 library project GNATpolyglot_Proxy2Java is
 
+   type Build_Mode_Type is ("dev", "prod");
+   Build_Mode : Build_Mode_Type := external
+     ("GNATPOLYGLOT_PROXY2JAVA_BUILD_MODE", external ("BUILD_MODE", "dev"));
+
    for Languages use ("C");
 
    for Source_Dirs use ("jni");
@@ -26,19 +30,22 @@ library project GNATpolyglot_Proxy2Java is
    end case;
 
    package Compiler is
-      for Switches ("C") use ("-g") & JNI_Headers;
+      case Build_Mode is
+         when "dev" =>
+            for Switches ("C") use ("-g", "-O0") & JNI_Headers;
+         when "prod" =>
+            for Switches ("C") use ("-Ofast") & JNI_Headers;
+      end case;
    end Compiler;
 
-   Test_Lib := external
-      ("PROXY_LIB",
-       "test_proxy");
-   for Library_Options use ("-l" & Test_Lib);
+   Gnatpolyglot_Lib := external ("GNATPOLYGLOT_LIB", external ("PROXY_LIB"));
+   for Library_Options use ("-l" & Gnatpolyglot_Lib);
 
-   Test_Lib_Location :=
-      external ("PROXY_LIB_LOCATION");
+   Gnatpolyglot_Lib_Location := external
+       ("GNATPOLYGLOT_LIB_LOCATION", external ("PROXY_LIB_LOCATION"));
 
    package Linker is
-      for Linker_Options use ("-L" & Test_Lib_Location);
+      for Linker_Options use ("-L" & Gnatpolyglot_Lib_Location);
    end Linker;
 
 end GNATpolyglot_Proxy2Java;

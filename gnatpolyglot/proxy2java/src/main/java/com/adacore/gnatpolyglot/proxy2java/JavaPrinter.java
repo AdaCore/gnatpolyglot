@@ -29,9 +29,12 @@ public class JavaPrinter extends Printer {
 
     private List<String> groupId;
 
+    private Path proxyLocation;
+
     public JavaPrinter(Path path, List<String> groupId) throws IOException, ProxyException {
         super(path);
         this.groupId = groupId;
+        this.proxyLocation = path.getParent();
     }
 
     @Override
@@ -55,7 +58,12 @@ public class JavaPrinter extends Printer {
                             "proxy",
                             proxy,
                             "runtimeLocation",
-                            outputPath.relativize(runtimeLocation).toString()),
+                            outputPath.relativize(runtimeLocation).toString(),
+                            "proxyLocation",
+                            outputPath
+                                    .toAbsolutePath()
+                                    .relativize(proxyLocation.toAbsolutePath())
+                                    .toString()),
                     packageSpec);
         }
 

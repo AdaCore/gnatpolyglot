@@ -9,12 +9,23 @@ Template file to generate a Maven project Java bindings.
 
 @param JavaAPI api
 @param Proxy proxy
+@param String proxyLocation
 @param String runtimeLocation
 
 with "${runtimeLocation}/ada/gnatpolyglot_ada2java.gpr";
 with "${runtimeLocation}/proxy2java/gnatpolyglot_proxy2java.gpr";
 
 library project ${proxy.name.toPascal()}_JNI is
+
+   type Build_Mode_Type is ("dev", "prod");
+   Build_Mode : Build_Mode_Type := external
+     ("${proxy.name.toUpper()}_JNI_BUILD_MODE",
+      external ("BUILD_MODE", "dev"));
+
+   type Library_Kind_Type is ("static", "relocatable", "static-pic");
+   Library_Kind : Library_Kind_Type := external
+     ("${proxy.name.toUpper()}_JNI_LIBRARY_KIND",
+      external ("LIBRARY_KIND", "relocatable"));
 
    for Languages use ("C");
 
@@ -38,17 +49,27 @@ library project ${proxy.name.toPascal()}_JNI is
          JNI_Headers := ("-I" & Java_Home & "/include/linux") & JNI_Headers;
    end case;
 
+   C_Flags := ();
+
+   case Build_Mode is
+      when "dev" =>
+         C_Flags := ("-g", "-O0");
+      when "prod" =>
+         C_Flags := ("-Ofast");
+   end case;
+
    package Compiler is
-      for Switches ("C") use JNI_Headers;
+      for Switches ("C") use JNI_Headers & C_Flags;
    end Compiler;
 
    ${proxy.name.toPascal()}_Lib := external
       ("PROXY_LIB",
-       "${proxy.name.toLower()}_proxy");
+       "${proxy.name.toLower()}_proxy_agg");
    for Library_Options use ("-l" & ${proxy.name.toPascal()}_Lib);
 
-   ${proxy.name.toPascal()}_Lib_Location :=
-      external ("PROXY_LIB_LOCATION");
+   ${proxy.name.toPascal()}_Lib_Location := external
+     ("PROXY_LIB_LOCATION",
+      "${proxyLocation}/lib_agg/" & Library_Kind & "/" & Build_Mode);
 
    package Linker is
       for Linker_Options use ("-L" & ${proxy.name.toPascal()}_Lib_Location);
