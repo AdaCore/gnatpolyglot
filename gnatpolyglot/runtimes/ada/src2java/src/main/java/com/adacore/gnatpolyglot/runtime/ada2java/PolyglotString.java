@@ -1,7 +1,9 @@
 package com.adacore.gnatpolyglot.runtime.ada2java;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
+import com.adacore.gnatpolyglot.runtime.ObjectRef;
 import com.adacore.gnatpolyglot.runtime.PolyglotData;
 import com.adacore.gnatpolyglot.runtime.PolyglotObject;
 import com.adacore.gnatpolyglot.runtime.PolyglotData.Owner;
@@ -102,6 +104,26 @@ public class PolyglotString extends PolyglotObject implements CharSequence {
     @Override
     public CharSequence subSequence(int start, int end) {
         return new PolyglotString((String) this.toString().subSequence(start, end));
+    }
+
+    public static final class Ref extends ObjectRef<PolyglotString> {
+        public Ref(PolyglotString obj) {
+            super(obj);
+        }
+
+        private Ref(ArrayData data) {
+            super(data == null ? null : new PolyglotString(data));
+            if (data != null) data.setOwner(Owner.LIBRARY);
+        }
+
+        @Override
+        protected void update(PolyglotData data) {
+            PolyglotData oldData = get().map(o -> o.getData()).orElse(null);
+            if (!Objects.deepEquals(data, oldData)) {
+                this.obj = new PolyglotString(
+                        (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
+            }
+        }
     }
 
     static {

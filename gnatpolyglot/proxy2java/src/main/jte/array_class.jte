@@ -142,5 +142,35 @@ Template file to generate a class.
             );
         }
 
+        public static class Ref extends
+                com.adacore.gnatpolyglot.runtime.ObjectRef<${className}.Array> {
+
+            public Ref(${className}.Array obj) {
+                super(obj);
+            }
+
+            private Ref(com.adacore.gnatpolyglot.runtime.ada2java.ArrayData data) {
+                super(data == null ? null : new Array(data));
+                if (data != null)
+                    data.setOwner(com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.LIBRARY);
+            }
+
+            @Override
+            protected void update(com.adacore.gnatpolyglot.runtime.PolyglotData data) {
+                com.adacore.gnatpolyglot.runtime.PolyglotData oldData =
+                    get().map(o -> o.getData()).orElse(null);
+                if (!java.util.Objects.deepEquals(data, oldData)) {
+                    if (data == null) {
+                        this.obj = null;
+                    } else {
+                        this.obj = new Array(
+                            (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data
+                        );
+                    }
+                }
+            }
+
+        }
+
     }
 

@@ -16,6 +16,8 @@ Template file to generate the JNI file for a module
 #include "gnatpolyglot_proxy2java.h"
 #include "gnatpolyglot_ada2java.h"
 
+#include "${api.getProjectName().toLower()}__refs.h"
+
 @for (var decl : module.declarations)
     @if (decl instanceof ClassDecl classDecl)
         @template.jni.class(api, classDecl)

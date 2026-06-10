@@ -134,5 +134,21 @@ public class JavaPrinter extends Printer {
             templateEngine.render(
                     "library_java.jte", Map.of("api", api, "proxy", proxy), packageSpec);
         }
+
+        Path refsHeader = outputPath.resolve("jni", proxy.name.toLower().concat("__refs.h"));
+        try (FileOutput packageSpec = new FileOutput(refsHeader)) {
+            templateEngine.render(
+                    "jni/refs.jte",
+                    Map.of("api", api, "proxy", proxy, "isSource", false),
+                    packageSpec);
+        }
+
+        Path refsBody = outputPath.resolve("jni", proxy.name.toLower().concat("__refs.c"));
+        try (FileOutput packageSpec = new FileOutput(refsBody)) {
+            templateEngine.render(
+                    "jni/refs.jte",
+                    Map.of("api", api, "proxy", proxy, "isSource", true),
+                    packageSpec);
+        }
     }
 }

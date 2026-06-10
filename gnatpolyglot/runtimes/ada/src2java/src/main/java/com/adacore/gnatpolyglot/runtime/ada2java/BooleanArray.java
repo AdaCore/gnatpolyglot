@@ -9,7 +9,7 @@ import com.adacore.gnatpolyglot.runtime.PolyglotData;
 import com.adacore.gnatpolyglot.runtime.PolyglotData.Owner;
 import com.adacore.gnatpolyglot.runtime.PolyglotObject;
 
-public class FloatArray extends PolyglotArray<Float> {
+public class BooleanArray extends PolyglotArray<Boolean> {
 
     private static native ArrayData arrayAlloc(int first, int last);
 
@@ -18,7 +18,7 @@ public class FloatArray extends PolyglotArray<Float> {
      *
      * <p> Create a ShortArray from an existing proxy data.
      */
-    public FloatArray(ArrayData data) {
+    public BooleanArray(ArrayData data) {
         super(data);
     }
 
@@ -28,39 +28,39 @@ public class FloatArray extends PolyglotArray<Float> {
      * <p> Create an array from an existing proxy data and a parent object
      * that represents the root object that owns the memory of the array.
      */
-    public FloatArray(ArrayData data, PolyglotObject parent) {
+    public BooleanArray(ArrayData data, PolyglotObject parent) {
         super(data, parent);
     }
 
-    public FloatArray(int first, int last) {
+    public BooleanArray(int first, int last) {
         super(arrayAlloc(first, last));
     }
 
-    private static native ArrayData arrayFree(ArrayData data);
+    private static native void arrayFree(ArrayData data);
 
     @Override
     protected Consumer<PolyglotData> getFree() {
         return (arrayData) -> { arrayFree((ArrayData) arrayData); };
     }
 
-    private static native float arrayGet(ArrayData data, int index);
+    private static native boolean arrayGet(ArrayData data, int index);
 
     @Override
-    public Float getUnslided(int index) {
+    public Boolean getUnslided(int index) {
         return arrayGet(getData(), index);
     }
 
-    private static native float arraySet(ArrayData data, int index, float element);
+    private static native boolean arraySet(ArrayData data, int index, boolean element);
 
     @Override
-    public Float setUnslided(int index, Float element) {
+    public Boolean setUnslided(int index, Boolean element) {
         Objects.requireNonNull(element);
         return arraySet(getData(), index, element);
     }
 
     @Override
-    public List<Float> subList(int fromIndex, int toIndex) {
-        return new FloatArray(
+    public List<Boolean> subList(int fromIndex, int toIndex) {
+        return new BooleanArray(
             new ArrayData(getBegin(), getEnd() - 1, getData().addr, Owner.STATIC),
             this.parent
         );
@@ -69,19 +69,19 @@ public class FloatArray extends PolyglotArray<Float> {
     private static native ArrayData arrayClone(ArrayData data);
 
     @Override
-    public FloatArray clone() {
+    public BooleanArray clone() {
         ArrayData data = arrayClone(getData());
         data.setOwner(Owner.USER);
-        return new FloatArray(data);
+        return new BooleanArray(data, this);
     }
 
-    public static final class Ref extends ObjectRef<FloatArray> {
-        public Ref(FloatArray obj) {
+    public static final class Ref extends ObjectRef<BooleanArray> {
+        public Ref(BooleanArray obj) {
             super(obj);
         }
 
         private Ref(ArrayData data) {
-            super(data == null ? null : new FloatArray(data));
+            super(data == null ? null : new BooleanArray(data));
             if (data != null) data.setOwner(Owner.LIBRARY);
         }
 
@@ -92,10 +92,11 @@ public class FloatArray extends PolyglotArray<Float> {
                 if (data == null) {
                     this.obj = null;
                 } else {
-                    this.obj = new FloatArray(
+                    this.obj = new BooleanArray(
                             (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
                 }
             }
         }
     }
 }
+

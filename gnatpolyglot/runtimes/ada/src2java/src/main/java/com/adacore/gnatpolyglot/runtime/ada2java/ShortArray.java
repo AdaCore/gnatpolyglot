@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import com.adacore.gnatpolyglot.runtime.ObjectRef;
 import com.adacore.gnatpolyglot.runtime.PolyglotData;
 import com.adacore.gnatpolyglot.runtime.PolyglotData.Owner;
 import com.adacore.gnatpolyglot.runtime.PolyglotObject;
@@ -72,5 +73,29 @@ public class ShortArray extends PolyglotArray<Short> {
         ArrayData data = arrayClone(getData());
         data.setOwner(Owner.USER);
         return new ShortArray(data);
+    }
+
+    public static final class Ref extends ObjectRef<ShortArray> {
+        public Ref(ShortArray obj) {
+            super(obj);
+        }
+
+        private Ref(ArrayData data) {
+            super(data == null ? null : new ShortArray(data));
+            if (data != null) data.setOwner(Owner.LIBRARY);
+        }
+
+        @Override
+        protected void update(PolyglotData data) {
+            PolyglotData oldData = get().map(o -> o.getData()).orElse(null);
+            if (!Objects.deepEquals(data, oldData)) {
+                if (data == null) {
+                    this.obj = null;
+                } else {
+                    this.obj = new ShortArray(
+                            (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
+                }
+            }
+        }
     }
 }

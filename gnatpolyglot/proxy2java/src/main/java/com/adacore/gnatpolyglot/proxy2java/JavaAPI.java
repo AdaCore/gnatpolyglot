@@ -60,6 +60,10 @@ public class JavaAPI extends LanguageAPI {
         return context;
     }
 
+    public Name getProjectName() {
+        return projectName;
+    }
+
     /** Return the string of the base package ({groupId}.lib{projectName}). */
     public String basePackage() {
         return groupId.join((n) -> n.getLastName().toLower(), "", ".", "");
@@ -673,5 +677,32 @@ public class JavaAPI extends LanguageAPI {
             default -> throw new UnsupportedOperationException(
                     "enumerations of type %d are not supported".formatted(nativeType));
         };
+    }
+
+    private String refFunctionName(TypeExpr typeExpr, String suffix) {
+        if (typeExpr.isArray() && context.isNativeScalar(typeExpr.elementType())) {
+            TypeDecl decl = context.getTypeDecl(typeExpr.getName());
+            if (decl instanceof NativeTypeDecl nativeDecl)
+                return ("gnatpolyglot_ada2java_%s_Ref_" + suffix)
+                        .formatted(TypenameGenerator.nativeArrayTypename(nativeDecl.nativeType));
+        } else if (context.isStringType(typeExpr)) {
+            return "gnatpolyglot_ada2java_PolyglotString_Ref_" + suffix;
+        }
+        FullyQualifiedName name =
+                typeExpr.isArray() ? typeExpr.elementType().getName() : typeExpr.getName();
+        return name.getParentFullyQualifiedName()
+                .join((n) -> n.getLastName().toLower(), "", "__", "_")
+                .concat(name.getLastName().toPascal())
+                .concat(typeExpr.isArray() ? "__Array" : "")
+                .concat("_Ref_")
+                .concat(suffix);
+    }
+
+    public String refClassFunctionName(TypeExpr typeExpr) {
+        return refFunctionName(typeExpr, "class");
+    }
+
+    public String refCtorFunctionName(TypeExpr typeExpr) {
+        return refFunctionName(typeExpr, "ctor");
     }
 }
