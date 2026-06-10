@@ -44,4 +44,9 @@ public class CGenerator {
     public static StringBuilder deref(CharSequence returnedValue) {
         return new StringBuilder("(*").append(returnedValue).append(")");
     }
+
+    public static StringBuilder makeTernary(
+            CharSequence cond, CharSequence trueExpr, CharSequence falseExpr) {
+        return JavaGenerator.makeTernary(cond, trueExpr, falseExpr);
+    }
 }

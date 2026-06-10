@@ -36,6 +36,9 @@ ${api.jniName(function)} (${api.jniParameters(function)}) {
         ${api.callCSymbol(function)};
     ${api.makeCReturnStatement(function, "value_returned")}
 @endif
+@for (var param : function.type.parameters)
+    ${api.makeJNIParamUpdate(param)};
+@endfor
 }
 
 @endif

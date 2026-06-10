@@ -15,6 +15,7 @@ import com.adacore.gnatpolyglot.proxy.Owner;
 import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.Role.RoleKind;
+import com.adacore.gnatpolyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.gnatpolyglot.proxy.TypeDecl;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy.VTableEntry;
@@ -194,7 +195,9 @@ public class JavaAPI extends LanguageAPI {
 
     /** Return the Java name of a type when it's used as a return type. */
     public String javaReturnTypename(TypeExpr type) {
-        return typenameGenerator.javaTypename(type.referencedType());
+        String typename = typenameGenerator.javaTypename(type.referencedType());
+        if (type.isPointer()) typename = "java.util.Optional<" + typename + ">";
+        return typename;
     }
 
     /** Return the native Java name of a type. */
@@ -500,6 +503,11 @@ public class JavaAPI extends LanguageAPI {
         return parameterConverter.jniParam(param);
     }
 
+    /** Create the string to convert the JNI parameter for calling the C symbol. */
+    public String makeJNIParamUpdate(Parameter param) {
+        return parameterConverter.jniParamUpdate(param);
+    }
+
     public String makeJNIDispatchParamConversion(Parameter param) {
         return dispatchParameterConverter.jniParam(param);
     }
@@ -540,6 +548,15 @@ public class JavaAPI extends LanguageAPI {
     public String javaOwner(Owner returnOwner) {
         return "com.adacore.gnatpolyglot.runtime.PolyglotData.Owner."
                 .concat(returnOwner.toString());
+    }
+
+    /** Return the name of the required data owner. */
+    public String javaOwner(RequiredOwner requiredOwner) {
+        return switch (requiredOwner) {
+            case LIBRARY -> javaOwner(Owner.LIBRARY);
+            case USER -> javaOwner(Owner.USER);
+            default -> "";
+        };
     }
 
     /** Return the name of the function to call to get the scalar reference jclass value. */

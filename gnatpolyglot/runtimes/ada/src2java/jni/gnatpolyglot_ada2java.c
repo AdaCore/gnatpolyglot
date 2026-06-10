@@ -55,6 +55,13 @@ jfieldID gnatpolyglot_proxy2java_ArrayData_end(JNIEnv *env) {
 }
 
 struct array_data gnatpolyglot_proxy2java_to_array_data(JNIEnv *env, jobject o) {
+    if (o == NULL) {
+        return (struct array_data) {
+            .begin = 0,
+            .end = -1,
+            .data = NULL,
+        };
+    }
     jlong addr = (*env)->GetLongField(
         env, o, gnatpolyglot_proxy2java_ArrayData_addr(env)
     );
@@ -72,6 +79,8 @@ struct array_data gnatpolyglot_proxy2java_to_array_data(JNIEnv *env, jobject o) 
 }
 
 jobject gnatpolyglot_proxy2java_to_ArrayData(JNIEnv *env, struct array_data data) {
+    if (data.data == NULL)
+        return NULL;
     jclass clazz = gnatpolyglot_proxy2java_ArrayData_class(env);
     jmethodID ctor = gnatpolyglot_proxy2java_ArrayData_ctor(env);
     return (*env)->NewObject(

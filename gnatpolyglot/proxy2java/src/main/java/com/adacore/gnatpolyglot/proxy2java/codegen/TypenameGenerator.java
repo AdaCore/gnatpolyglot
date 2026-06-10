@@ -152,6 +152,11 @@ public class TypenameGenerator {
                 public String stringType(TypeExpr type) {
                     return javaTypename(type);
                 }
+
+                @Override
+                public String pointerType(TypeExpr type) {
+                    return javaTypename(type).concat(".Ref");
+                }
             }.apply(type.referencedType());
         }
 
@@ -169,6 +174,11 @@ public class TypenameGenerator {
         @Override
         public String stringType(TypeExpr type) {
             return "com.adacore.gnatpolyglot.runtime.ada2java.PolyglotString";
+        }
+
+        @Override
+        public String pointerType(TypeExpr type) {
+            return javaTypename(type.pointedType());
         }
     }
 
@@ -249,6 +259,11 @@ public class TypenameGenerator {
                 @Override
                 public String stringType(TypeExpr type) {
                     return javaNativeTypename(type);
+                }
+
+                @Override
+                public String pointerType(TypeExpr type) {
+                    return javaTypename(refType);
                 }
             }.apply(refType.referencedType());
         }
@@ -346,6 +361,11 @@ public class TypenameGenerator {
 
                 @Override
                 public String stringType(TypeExpr type) {
+                    return "jobject";
+                }
+
+                @Override
+                public String pointerType(TypeExpr type) {
                     return "jobject";
                 }
             }.apply(type.referencedType());
@@ -450,6 +470,11 @@ public class TypenameGenerator {
                 @Override
                 public String stringType(TypeExpr type) {
                     return cTypename(type);
+                }
+
+                @Override
+                public String pointerType(TypeExpr type) {
+                    return cTypename(type.pointedType()) + "*";
                 }
             }.apply(type.referencedType());
         }

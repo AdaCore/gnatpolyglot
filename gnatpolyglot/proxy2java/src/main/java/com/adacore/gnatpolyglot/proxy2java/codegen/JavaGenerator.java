@@ -26,4 +26,21 @@ public class JavaGenerator {
     public static StringBuilder makeGetAddress(CharSequence expr) {
         return makeGetData(expr).append(".getAddress()");
     }
+
+    public static StringBuilder makeTernary(
+            CharSequence cond, CharSequence trueExpr, CharSequence falseExpr) {
+        return new StringBuilder(cond)
+                .append(" ? ")
+                .append(trueExpr)
+                .append(" : ")
+                .append(falseExpr);
+    }
+
+    public static StringBuilder makeOptGetData(CharSequence expr) {
+        return makeTernary(expr + " == null", "null", makeGetData(expr));
+    }
+
+    public static StringBuilder makeOptGetAddress(CharSequence expr) {
+        return makeTernary(expr + " == null", "0L", makeGetAddress(expr));
+    }
 }
