@@ -43,4 +43,13 @@ public class JavaGenerator {
     public static StringBuilder makeOptGetAddress(CharSequence expr) {
         return makeTernary(expr + " == null", "0L", makeGetAddress(expr));
     }
+
+    public static StringBuilder makeObjectFromAddress(String typename, String addr, String owner) {
+        return JavaGenerator.makeNew(
+                typename,
+                List.of(
+                        JavaGenerator.makeNew(
+                                "com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer",
+                                List.of(addr, owner))));
+    }
 }

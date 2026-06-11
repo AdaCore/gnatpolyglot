@@ -264,6 +264,7 @@ def compile_main(
                 "java" if os.name != "nt" else "java.exe",
                 "-ea",
                 "--enable-native-access=ALL-UNNAMED",
+                "-ea",
                 f"--class-path={class_path}{os.pathsep}.",
                 test_file.replace(".java", "")
             ],

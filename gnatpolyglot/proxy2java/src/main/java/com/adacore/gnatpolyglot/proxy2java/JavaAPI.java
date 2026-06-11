@@ -299,6 +299,10 @@ public class JavaAPI extends LanguageAPI {
         }
         if (context.isClassType(type.referencedType())) {
             return jniTypeSignature(NativeType.UINT64.typeExpr, isReturn);
+        } else if (type.isPointer() && context.isClassType(type.pointedType())) {
+            return jniTypeSignature(NativeType.UINT64.typeExpr, isReturn);
+        } else if (type.isReference() && type.referencedType().isPointer()) {
+            return "L%s$Ref;".formatted(javaTypename(type.referencedType()).replace(".", "/"));
         }
         String javaNativeType =
                 isReturn ? javaNativeReturnTypename(type) : javaNativeTypename(type);
@@ -512,6 +516,10 @@ public class JavaAPI extends LanguageAPI {
         return dispatchParameterConverter.jniParam(param);
     }
 
+    public String makeJNIDispatchParamUpdate(Parameter param) {
+        return dispatchParameterConverter.jniParamUpdate(param);
+    }
+
     /** Return whether a function is a class method. */
     public boolean isMethod(FunctionDecl functionDecl) {
         return functionDecl.role != null
@@ -635,6 +643,10 @@ public class JavaAPI extends LanguageAPI {
                 || context.isStringType(returnedType)
                 || returnedType.isArray()) {
             return "CallStaticObjectMethod";
+        } else if (returnedType.isPointer()) {
+            if (context.isStringOrArray(returnedType.pointedType()))
+                return "CallStaticObjectMethod";
+            return "CallStaticLongMethod";
         }
         throw new UnsupportedOperationException("Unsupported type");
     }
