@@ -53,6 +53,9 @@ public class Record extends AdaDeclaration {
     /** Default cloning function of the type. */
     private FunctionDecl cloneFunction;
 
+    /** Default cloning function of the type. */
+    private FunctionDecl shadowCloneFunction;
+
     /** Default copying function of the type. */
     private FunctionDecl copyFunction;
 
@@ -312,7 +315,7 @@ public class Record extends AdaDeclaration {
                             new FunctionTypeExpr(
                                     List.of(
                                             new Parameter(
-                                                    Name.fromLower("self"),
+                                                    Name.fromLower("to_clone"),
                                                     type.makeReference(true),
                                                     new Transfer(RequiredOwner.USER))),
                                     type,
@@ -322,6 +325,34 @@ public class Record extends AdaDeclaration {
                             FunctionDecl.Staticness.NON_STATIC);
         }
         return this.cloneFunction;
+    }
+
+    /** Return the cloning function of the type, or generate a new one if necessary. */
+    public FunctionDecl getShadowCloneFunction() {
+        if (this.shadowCloneFunction == null && !origin.pIsLimitedType()) {
+            NameTypeExpr type = getTypeExpr();
+            this.shadowCloneFunction =
+                    new FunctionDecl(
+                            getProxyFullyQualifiedName()
+                                    .append(name.concat(Name.fromLower("shadow_default_clone"))),
+                            "Generated function to clone a "
+                                    + name.toPascalWithUnderscore()
+                                    + "_Shadow",
+                            new Role(RoleKind.SHADOW_ALLOC, type, null),
+                            buildMemberSymbol("Shadow_Default_Clone"),
+                            new FunctionTypeExpr(
+                                    List.of(
+                                            new Parameter(
+                                                    Name.fromLower("to_clone"),
+                                                    type.makeReference(true),
+                                                    new Transfer(RequiredOwner.USER))),
+                                    type,
+                                    Owner.USER),
+                            FunctionDecl.Visibility.PUBLIC,
+                            FunctionDecl.Overridability.FINAL,
+                            FunctionDecl.Staticness.NON_STATIC);
+        }
+        return this.shadowCloneFunction;
     }
 
     /** Return the getters and setters of the type, or generate them if necessary. */

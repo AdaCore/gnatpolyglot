@@ -184,11 +184,14 @@ public class AdaProxyTranslator {
             declarations.addAll(rec.getAllocFunctions());
             declarations.add(rec.getFreeFunction());
             if (!rec.isLimited()) {
-                declarations.add(rec.getCloneFunction());
                 declarations.add(rec.getCopyFunction());
+                if (!rec.isAbstract()) declarations.add(rec.getCloneFunction());
             }
             declarations.addAll(rec.getGettersAndSetters());
-            if (rec.isInheritable(api)) declarations.addAll(rec.getShadowAllocFunctions());
+            if (rec.isInheritable(api)) {
+                declarations.addAll(rec.getShadowAllocFunctions());
+                if (!rec.isLimited()) declarations.add(rec.getShadowCloneFunction());
+            }
             if (rec.getTypeDef() instanceof Libadalang.RecordTypeDef
                     || rec.getTypeDef() instanceof Libadalang.PrivateTypeDef
                     || rec.getTypeDef() instanceof Libadalang.DerivedTypeDef) {

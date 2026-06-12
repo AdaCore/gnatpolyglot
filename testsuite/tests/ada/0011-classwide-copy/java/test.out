@@ -1,0 +1,26 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+[1, 2, 3]
+( 1, 2)
+Making copy
+Java clone
+[1, 2, 3]
+( 1, 2)
+[2, 4, 6]
+( 2, 4)
+Copy deleted
+Making copy
+[2, 4, 6]
+( 1, 2)
+[2, 4, 6]
+( 2, 4)
+Copy deleted
+Java clone
+
+Done.

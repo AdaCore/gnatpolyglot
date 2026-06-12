@@ -13,5 +13,12 @@ package body Test is
       GNAT.Threads.Unregister_Thread;
    end Unregister;
 
+   procedure Do_Copy (Obj: T'Class; I: Integer) is
+      Copy : T'Class := Obj;
+   begin
+       null;
+       -- Put_Line(I'Image);
+   end Do_Copy;
+
 end Test;
 

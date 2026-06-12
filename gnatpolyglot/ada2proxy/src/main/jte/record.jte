@@ -55,7 +55,7 @@ Template file to generate bindings for record types.
 
    @if (cloneFunc != null)
       function ${cloneFunc.getLastName().toPascalWithUnderscore()}
-        (Self: System.Address) return System.Address;
+        (To_Clone: System.Address) return System.Address;
       pragma Export
         (C,
          ${cloneFunc.getLastName().toPascalWithUnderscore()},
@@ -151,7 +151,7 @@ Template file to generate bindings for record types.
 
    @if (cloneFunc != null)
       function ${cloneFunc.getLastName().toPascalWithUnderscore()}
-        (Self: System.Address) return System.Address
+        (To_Clone: System.Address) return System.Address
       is
          <%---
            -- In the case of abstract types, we cannot use a variable with an
@@ -161,7 +161,7 @@ Template file to generate bindings for record types.
            (System.Address, ${recordAccessName});
          function Convert_Return is new Ada.Unchecked_Conversion
            (${recordAccessName}, System.Address);
-         Tmp : ${recordAccessName} := Convert_Self (Self);
+         Tmp : ${recordAccessName} := Convert_Self (To_Clone);
       begin
          return Convert_Return (new ${recordName}'(Tmp.all));
       @template.exception_handler(api, rec.getOrigin())

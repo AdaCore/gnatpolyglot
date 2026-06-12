@@ -18,7 +18,7 @@ protected:
 
 public:
     Inherited() : test::Root(1, 2, this) {}
-    Inherited(const Inherited& other) : test::Root(other) {}
+    Inherited(const Inherited& other) : test::Root(other, this) {}
 
     // Points to heap memory which requires CLONING when copied: cannot do shallow copies.
     std::vector<int> vec = { 1, 2, 3};

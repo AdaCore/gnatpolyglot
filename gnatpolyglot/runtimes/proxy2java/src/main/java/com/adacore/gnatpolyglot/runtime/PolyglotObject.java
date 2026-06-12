@@ -2,6 +2,8 @@ package com.adacore.gnatpolyglot.runtime;
 
 import java.lang.ref.Cleaner;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.BiFunction;
 import com.adacore.gnatpolyglot.runtime.PolyglotData;
 import com.adacore.gnatpolyglot.runtime.PolyglotData.Owner;
 
@@ -37,6 +39,12 @@ public abstract class PolyglotObject implements AutoCloseable {
 
     /** Handle to clean up the allocated native object */
     private Cleaner.Cleanable cleanable;
+
+    /**
+     * Internal flag to indicate whether the {@link PolyglotObject#clone} function
+     * should call a native clone function.
+     */
+    private boolean internalCloning = false;
 
     protected PolyglotObject(PolyglotData data) {
         setData(data);
@@ -77,6 +85,57 @@ public abstract class PolyglotObject implements AutoCloseable {
         setData(null);
         return res;
     }
+
+    /**
+     * Create a clone of the object, and set the address of the object to the given one.
+     *
+     * <p>This function should only be called from JNI.
+     */
+    @SuppressWarnings("unused")
+    synchronized private Object internalClone(long addr) throws CloneNotSupportedException  {
+        // Flag the copy as "internal". This indicates to the `clone` funtion
+        // that it should not call a native clone function.
+        this.internalCloning = true;
+        PolyglotObject c = (PolyglotObject) clone();
+        this.internalCloning = false;
+        c.internalCloning = false;
+        // Set the data of the new object.
+        c.setData(new PolyglotData.Pointer(addr, Owner.LIBRARY));
+        return c;
+    }
+
+    @Override
+    synchronized protected Object clone() throws CloneNotSupportedException {
+        // Begin by creating a shallow copy of the object
+        PolyglotObject c = (PolyglotObject) super.clone();
+        // If the call to `clone` originates from a call to `internalClone`, then
+        // the new data already exists and will be set by the former at the end
+        // of the current call.
+        if (!internalCloning) {
+            c.setData(
+                    new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(
+                            c.isShadow()
+                                    ? c.getCloneShadow().apply(this.getData(), c)
+                                    : c.getClone().apply(this.getData()),
+                            com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER));
+        }
+        return c;
+    }
+
+    protected boolean isShadow() {
+        return false;
+    }
+
+    /** Return the function to free the heap memory. */
+    protected Function<PolyglotData, Long> getClone() {
+        return null;
+    }
+
+    /** Return the function to free the heap memory. */
+    protected BiFunction<PolyglotData, PolyglotObject, Long> getCloneShadow() {
+        return null;
+    }
+
 
     @Override
     public final void close() {
