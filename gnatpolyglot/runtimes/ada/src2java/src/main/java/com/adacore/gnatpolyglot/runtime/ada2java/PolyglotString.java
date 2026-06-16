@@ -104,4 +104,8 @@ public class PolyglotString extends PolyglotObject implements CharSequence {
         return new PolyglotString((String) this.toString().subSequence(start, end));
     }
 
+    static {
+        Library.loadLibrary();
+    }
+
 }

@@ -94,4 +94,8 @@ public class AdaException extends PolyglotException {
     final protected Consumer<PolyglotData> getFree() {
         return  (data) -> { freeException(data.getAddress()); };
     }
+
+    static {
+        Library.loadLibrary();
+    }
 }
