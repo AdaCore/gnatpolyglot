@@ -12,8 +12,10 @@ import com.adacore.gnatpolyglot.proxy.ProxyException;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.output.FileOutput;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +35,8 @@ public class JavaPrinter extends Printer {
 
     public JavaPrinter(Path path, List<String> groupId) throws IOException, ProxyException {
         super(path);
-        this.groupId = groupId;
+        this.groupId = new ArrayList<>(groupId);
+        this.groupId.add("lib" + proxy.name.toLower());
         this.proxyLocation = path.getParent();
     }
 
@@ -112,7 +115,8 @@ public class JavaPrinter extends Printer {
         // Generate the base Library.java file.
         // It contains notable the call to ``System.loadLibrary`` that loads the bound dynamic
         // library.
-        Path packageClass = srcDir.resolve("Library.java");
+        Path packageClass =
+                srcDir.resolve(String.join(File.separator, groupId)).resolve("Library.java");
         try (FileOutput packageSpec = new FileOutput(packageClass)) {
             templateEngine.render(
                     "library_java.jte", Map.of("api", api, "proxy", proxy), packageSpec);

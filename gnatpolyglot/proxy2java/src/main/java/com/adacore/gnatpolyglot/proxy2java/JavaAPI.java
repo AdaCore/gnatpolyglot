@@ -60,27 +60,26 @@ public class JavaAPI extends LanguageAPI {
 
     /** Return the string of the base package ({groupId}.lib{projectName}). */
     public String basePackage() {
-        return groupId.append(Name.fromLower("lib".concat(projectName.toLower())))
-                .join((n) -> n.getLastName().toLower(), "", ".", "");
+        return groupId.join((n) -> n.getLastName().toLower(), "", ".", "");
     }
 
     /** Return the string of the package for the given module. */
     public String packagePath(Module module) {
-        return groupId.append(Name.fromLower("lib".concat(projectName.toLower())))
-                .append(module.name)
-                .join((n) -> n.getLastName().toLower(), "", ".", "");
+        return groupId.append(module.name).join((n) -> n.getLastName().toLower(), "", ".", "");
     }
 
     /** Return the string of the package for the given class. */
     public String packagePath(FullyQualifiedName className) {
-        return groupId.append(Name.fromLower("lib".concat(projectName.toLower())))
-                .append(className.getParentFullyQualifiedName())
+        return groupId.append(className.getParentFullyQualifiedName())
                 .join((n) -> n.getLastName().toLower(), "", ".", "");
     }
 
     /** Return the path of the file to generate for a module. */
     public Path filepath(Module module) {
         Path p = Path.of(".");
+        for (var n : groupId.names) {
+            p = p.resolve(n.toLower());
+        }
         for (var n : module.name.names) {
             p = p.resolve(n.toLower());
         }
@@ -90,6 +89,9 @@ public class JavaAPI extends LanguageAPI {
     /** Return the path of the file to generate for a class. */
     public Path filepath(FullyQualifiedName className) {
         Path p = Path.of(".");
+        for (var n : groupId.names) {
+            p = p.resolve(n.toLower());
+        }
         for (var n : className.getParentFullyQualifiedName().names) {
             p = p.resolve(n.toLower());
         }
@@ -219,10 +221,7 @@ public class JavaAPI extends LanguageAPI {
         StringBuilder builder = new StringBuilder("Java_");
         if (function.role == null) {
             FullyQualifiedName parent = function.name.getParentFullyQualifiedName();
-            builder.append(groupId.join((n) -> n.getLastName().toLower(), "", "_", ""))
-                    .append("_lib")
-                    .append(projectName.toLower())
-                    .append("_")
+            builder.append(groupId.join((n) -> n.getLastName().toLower(), "", "_", "_"))
                     .append(
                             parent.join(
                                     (n) -> n.getLastName().toLower(),
