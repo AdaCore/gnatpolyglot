@@ -45,6 +45,7 @@ library project ${proxy.name.toPascal()}_JNI is
    case OS is
       when "windows" =>
          JNI_Headers := ("-I" & Java_Home & "/include/win32") & JNI_Headers;
+         for Shared_Library_Prefix use "";
       when "unix" =>
          JNI_Headers := ("-I" & Java_Home & "/include/linux") & JNI_Headers;
    end case;
