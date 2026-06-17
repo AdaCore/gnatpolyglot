@@ -1,22 +1,17 @@
 package com.adacore.gnatpolyglot.runtime;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /** Class holding a mutable boolean value. Represents mutable boolean function parameters */
-public class BooleanRef {
-
-    private ByteBuffer value;
+public class BooleanRef extends ScalarRef {
 
     public BooleanRef() {
-        this.value = ByteBuffer.allocateDirect(Byte.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Byte.BYTES);
         this.value.put(0, (byte)0);
     }
 
     public BooleanRef(boolean value) {
-        this.value = ByteBuffer.allocateDirect(Byte.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Byte.BYTES);
         this.value.put(0, (byte) (value ? 1 : 0));
     }
 
@@ -25,15 +20,7 @@ public class BooleanRef {
      * <p>Construct a reference from an existing buffer.
      */
     public BooleanRef(ByteBuffer buffer) {
-        this.value = buffer;
-    }
-
-    /** Internal use only.
-     *
-     * <p>Return the internal buffer holding the value.
-     */
-    public ByteBuffer getBuffer() {
-        return value;
+        super(buffer);
     }
 
     public boolean getValue() {

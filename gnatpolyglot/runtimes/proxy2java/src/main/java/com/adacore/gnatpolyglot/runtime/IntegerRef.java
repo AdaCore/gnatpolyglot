@@ -1,22 +1,17 @@
 package com.adacore.gnatpolyglot.runtime;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /** Class holding a mutable int value. Represents mutable integer function parameters */
-public class IntegerRef {
-
-    private ByteBuffer value;
+public class IntegerRef extends ScalarRef {
 
     public IntegerRef() {
-        this.value = ByteBuffer.allocateDirect(Integer.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Integer.BYTES);
         this.value.putInt(0, 0);
     }
 
     public IntegerRef(int value) {
-        this.value = ByteBuffer.allocateDirect(Integer.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Integer.BYTES);
         this.value.putInt(0, value);
     }
 
@@ -25,15 +20,7 @@ public class IntegerRef {
      * <p>Construct a reference from an existing buffer.
      */
     public IntegerRef(ByteBuffer buffer) {
-        this.value = buffer;
-    }
-
-    /** Internal use only.
-     *
-     * <p>Return the internal buffer holding the value.
-     */
-    public ByteBuffer getBuffer() {
-        return value;
+        super(buffer);
     }
 
     public int getValue() {

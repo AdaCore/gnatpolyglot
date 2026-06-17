@@ -85,6 +85,11 @@ public class ParameterConverter {
                 }
 
                 @Override
+                public String enumType(TypeExpr type) {
+                    return numberType(type);
+                }
+
+                @Override
                 public String classType(TypeExpr type) {
                     return JavaParamWorker.this.classType(type);
                 }
@@ -104,6 +109,17 @@ public class ParameterConverter {
                     .append(" = ")
                     .append(argName)
                     .append(".getData()")
+                    .toString();
+        }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            return new StringBuilder(valueTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(argName)
+                    .append(".value")
                     .toString();
         }
     }
@@ -207,6 +223,11 @@ public class ParameterConverter {
                 }
 
                 @Override
+                public String enumType(TypeExpr type) {
+                    return numberType(type);
+                }
+
+                @Override
                 public String classType(TypeExpr type) {
                     return new StringBuilder(valueTypename)
                             .append(" ")
@@ -232,6 +253,16 @@ public class ParameterConverter {
                             CGenerator.makeCall(
                                     "gnatpolyglot_proxy2java_to_array_data",
                                     List.of("env", argName)))
+                    .toString();
+        }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            return new StringBuilder(valueTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(CGenerator.makeCast(valueTypename, argName))
                     .toString();
         }
     }

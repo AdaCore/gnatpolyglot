@@ -2,6 +2,7 @@ package com.adacore.gnatpolyglot.proxy2java.codegen;
 
 import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
+import com.adacore.gnatpolyglot.proxy.EnumerationDecl;
 import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeDecl;
@@ -9,6 +10,20 @@ import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
 
 public class TypenameGenerator {
+
+    public static String nativeWrapperTypename(NativeType nativeType) {
+        return switch (nativeType) {
+            case BOOL -> "Boolean";
+            case CHAR -> "Character";
+            case FLOAT32 -> "Float";
+            case FLOAT64 -> "Double";
+            case UINT8, SINT8 -> "Byte";
+            case UINT16, SINT16 -> "Short";
+            case UINT32, SINT32 -> "Integer";
+            case UINT64, SINT64 -> "Long";
+            default -> throw new UnsupportedOperationException("Unreachable");
+        };
+    }
 
     public static String nativeArrayTypename(NativeType nativeType) {
         return switch (nativeType) {
@@ -62,6 +77,17 @@ public class TypenameGenerator {
         }
 
         @Override
+        public String enumType(TypeExpr type) {
+            FullyQualifiedName name = type.getName();
+            return new StringBuilder(api.basePackage())
+                    .append(
+                            name.getParentFullyQualifiedName()
+                                    .join(n -> n.getLastName().toLower(), ".", ".", "."))
+                    .append(name.getLastName().toPascal())
+                    .toString();
+        }
+
+        @Override
         public String classType(TypeExpr type) {
             FullyQualifiedName name = type.getName();
             return new StringBuilder(api.basePackage())
@@ -105,6 +131,11 @@ public class TypenameGenerator {
                 @Override
                 public String boolType(TypeExpr type) {
                     return getNativeRefTypename(type);
+                }
+
+                @Override
+                public String enumType(TypeExpr type) {
+                    return JavaTypenameWorker.this.enumType(type).concat(".Ref");
                 }
 
                 @Override
@@ -200,6 +231,11 @@ public class TypenameGenerator {
                 }
 
                 @Override
+                public String enumType(TypeExpr type) {
+                    return "java.nio.ByteBuffer";
+                }
+
+                @Override
                 public String classType(TypeExpr type) {
                     return api.javaPrimitiveTypename(NativeType.UINT64);
                 }
@@ -224,6 +260,12 @@ public class TypenameGenerator {
         @Override
         public String stringType(TypeExpr type) {
             return arrayType(type);
+        }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            EnumerationDecl enumDecl = (EnumerationDecl) getContext().getTypeDecl(type.getName());
+            return api.javaPrimitiveTypename(enumDecl.representationType());
         }
     }
 
@@ -286,6 +328,11 @@ public class TypenameGenerator {
                 }
 
                 @Override
+                public String enumType(TypeExpr type) {
+                    return "jobject";
+                }
+
+                @Override
                 public String classType(TypeExpr type) {
                     return "jlong";
                 }
@@ -312,6 +359,12 @@ public class TypenameGenerator {
         public String stringType(TypeExpr type) {
             // String are passed using the "ArrayData" jobject.
             return "jobject";
+        }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            EnumerationDecl enumDecl = (EnumerationDecl) getContext().getTypeDecl(type.getName());
+            return api.jniPrimitiveTypename(enumDecl.representationType());
         }
     }
 
@@ -377,6 +430,11 @@ public class TypenameGenerator {
                 }
 
                 @Override
+                public String enumType(TypeExpr type) {
+                    return cTypename(type).concat("*");
+                }
+
+                @Override
                 public String classType(TypeExpr type) {
                     return "void *";
                 }
@@ -401,6 +459,12 @@ public class TypenameGenerator {
         @Override
         public String stringType(TypeExpr type) {
             return "struct array_data";
+        }
+
+        @Override
+        public String enumType(TypeExpr type) {
+            EnumerationDecl enumDecl = (EnumerationDecl) getContext().getTypeDecl(type.getName());
+            return api.cPrimitiveTypename(enumDecl.representationType());
         }
     }
 

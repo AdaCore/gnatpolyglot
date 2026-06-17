@@ -1,0 +1,26 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Got A = 0
+Got B = 1
+Java value: 1
+Got E = 15
+Got F = 30
+Java value: 30
+Got F = 30
+Java value: 15
+4
+15
+30
+Java big:5000000000
+Got H = 1
+Got A = 0
+0
+1
+
+Done.

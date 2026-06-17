@@ -1,22 +1,17 @@
 package com.adacore.gnatpolyglot.runtime;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /** Class holding a mutable short value. Represents mutable short function parameters */
-public class ShortRef {
-
-    private ByteBuffer value;
+public class ShortRef extends ScalarRef {
 
     public ShortRef() {
-        this.value = ByteBuffer.allocateDirect(Short.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Short.BYTES);
         this.value.putShort(0, (short) 0);
     }
 
     public ShortRef(short value) {
-        this.value = ByteBuffer.allocateDirect(Short.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Short.BYTES);
         this.value.putShort(0, value);
     }
 
@@ -25,15 +20,7 @@ public class ShortRef {
      * <p>Construct a reference from an existing buffer.
      */
     public ShortRef(ByteBuffer buffer) {
-        this.value = buffer;
-    }
-
-    /** Internal use only.
-     *
-     * <p>Return the internal buffer holding the value.
-     */
-    public ByteBuffer getBuffer() {
-        return value;
+        super(buffer);
     }
 
     public short getValue() {

@@ -25,7 +25,7 @@ public class ${excName} extends com.adacore.gnatpolyglot.runtime.ada2java.AdaExc
 
 @for (var alloc : members.allocFunctions)
     !{
-        String nativeFunc = "$%s".formatted(alloc.name.getLastName().toCamel());
+        String nativeFunc = "$%s".formatted(alloc.symbol);
     }
 
     private static native

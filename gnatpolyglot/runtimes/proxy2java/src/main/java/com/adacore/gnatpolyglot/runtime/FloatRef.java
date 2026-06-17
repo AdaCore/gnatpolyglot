@@ -1,22 +1,17 @@
 package com.adacore.gnatpolyglot.runtime;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /** Class holding a mutable float value. Represents mutable float function parameters */
-public class FloatRef {
-
-    private ByteBuffer value;
+public class FloatRef extends ScalarRef {
 
     public FloatRef() {
-        this.value = ByteBuffer.allocateDirect(Float.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Float.BYTES);
         this.value.putFloat(0, 0);
     }
 
     public FloatRef(float value) {
-        this.value = ByteBuffer.allocateDirect(Float.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Float.BYTES);
         this.value.putFloat(0, value);
     }
 
@@ -25,15 +20,7 @@ public class FloatRef {
      * <p>Construct a reference from an existing buffer.
      */
     public FloatRef(ByteBuffer buffer) {
-        this.value = buffer;
-    }
-
-    /** Internal use only.
-     *
-     * <p>Return the internal buffer holding the value.
-     */
-    public ByteBuffer getBuffer() {
-        return value;
+        super(buffer);
     }
 
     public float getValue() {

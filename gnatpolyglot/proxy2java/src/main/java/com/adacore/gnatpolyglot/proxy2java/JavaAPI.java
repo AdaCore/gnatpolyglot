@@ -5,6 +5,7 @@ import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
 import com.adacore.gnatpolyglot.proxy.ClassDecl;
 import com.adacore.gnatpolyglot.proxy.ClassDecl.Inheritability;
+import com.adacore.gnatpolyglot.proxy.EnumerationDecl;
 import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
 import com.adacore.gnatpolyglot.proxy.FunctionDecl;
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
@@ -27,6 +28,7 @@ import com.adacore.gnatpolyglot.proxy2java.codegen.TypenameGenerator;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class JavaAPI extends LanguageAPI {
@@ -216,31 +218,40 @@ public class JavaAPI extends LanguageAPI {
         return typenameGenerator.cTypename(type);
     }
 
-    /** Return the name of the function to implement in the JNI layer. */
+    /**
+     * Return the name of the function to implement in the JNI layer.
+     *
+     * <p>"_" must be replaced with "_1"
+     *
+     * <p>Non-ascii characters must be replaced with "_0XXXX" with XXXX their unicode value.
+     */
     public String jniName(FunctionDecl function) {
         StringBuilder builder = new StringBuilder("Java_");
+        Function<FullyQualifiedName, String> mangle =
+                (n) -> n.getLastName().toLower().replace("_", "_1");
         if (function.role == null) {
             FullyQualifiedName parent = function.name.getParentFullyQualifiedName();
-            builder.append(groupId.join((n) -> n.getLastName().toLower(), "", "_", "_"))
+            builder.append(groupId.join(mangle, "", "_", "_"))
                     .append(
                             parent.join(
-                                    (n) -> n.getLastName().toLower(),
+                                    mangle,
                                     "",
                                     "_",
                                     "_".concat(parent.getLastName().toPascal().concat("Package"))));
         } else if (context.isClassType(function.role.type)
                 || context.isException(function.role.type)) {
-            builder.append(javaTypename(function.role.type).replace(".", "_"));
+            builder.append(javaTypename(function.role.type).replace("_", "_1").replace(".", "_"));
         } else if (function.role.type.isArray()) {
             builder.append(
                     javaTypename(function.role.type.elementType())
+                            .replace("_", "_1")
                             .replace(".", "_")
                             .concat("_00024Array"));
         } else {
             throw new UnsupportedOperationException("unsupported");
         }
         // All native function handle names start with `$` (Unicode character: 00024)
-        return builder.append("__00024").append(function.name.getLastName().toCamel()).toString();
+        return builder.append("__00024").append(function.symbol.replace("_", "_1")).toString();
     }
 
     public String jniSignature(FunctionTypeExpr type, ClassDecl classDecl) {
@@ -262,8 +273,11 @@ public class JavaAPI extends LanguageAPI {
 
     private String jniTypeSignature(TypeExpr type, boolean isReturn) {
         if (context.isNativeScalar(type)) {
-            NativeTypeDecl decl = (NativeTypeDecl) context.getTypeDecl(type.getName());
-            return switch (decl.nativeType) {
+            TypeDecl decl = context.getTypeDecl(type.getName());
+            if (decl instanceof EnumerationDecl enumDecl)
+                decl = enumDecl.representationType().declaration;
+            NativeTypeDecl nativeDecl = (NativeTypeDecl) decl;
+            return switch (nativeDecl.nativeType) {
                 case VOID -> "V";
                 case BOOL -> "Z";
                 case CHAR -> "C";
@@ -554,8 +568,10 @@ public class JavaAPI extends LanguageAPI {
      */
     public String callTypeMethodJNIName(TypeExpr returnedType) {
         if (context.isNativeScalar(returnedType)) {
-            return switch (NativeTypeDecl.class.cast(context.getTypeDecl(returnedType.getName()))
-                    .nativeType) {
+            TypeDecl decl = context.getTypeDecl(returnedType.getName());
+            if (decl instanceof EnumerationDecl) decl = NativeType.SINT32.declaration;
+            NativeTypeDecl nativeDecl = (NativeTypeDecl) decl;
+            return switch (nativeDecl.nativeType) {
                 case BOOL -> "CallBooleanMethod";
                 case CHAR -> "CallCharMethod";
                 case FLOAT32 -> "CallFloatMethod";
@@ -579,8 +595,10 @@ public class JavaAPI extends LanguageAPI {
      */
     public String callStaticTypeMethodJNIName(TypeExpr returnedType) {
         if (context.isNativeScalar(returnedType)) {
-            return switch (NativeTypeDecl.class.cast(context.getTypeDecl(returnedType.getName()))
-                    .nativeType) {
+            TypeDecl decl = context.getTypeDecl(returnedType.getName());
+            if (decl instanceof EnumerationDecl) decl = NativeType.SINT32.declaration;
+            NativeTypeDecl nativeDecl = (NativeTypeDecl) decl;
+            return switch (nativeDecl.nativeType) {
                 case BOOL -> "CallStaticBooleanMethod";
                 case CHAR -> "CallStaticCharMethod";
                 case FLOAT32 -> "CallStaticFloatMethod";
@@ -633,5 +651,27 @@ public class JavaAPI extends LanguageAPI {
                 .filter(a -> a.role.kind == RoleKind.SHADOW_ALLOC && a.type.equals(alloc.type))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public String enumByteBufferGet(NativeType nativeType) {
+        return switch (nativeType) {
+            case SINT8 -> "get";
+            case SINT16 -> "getShort";
+            case SINT32 -> "getInt";
+            case SINT64 -> "getLong";
+            default -> throw new UnsupportedOperationException(
+                    "enumerations of type %d are not supported".formatted(nativeType));
+        };
+    }
+
+    public String enumByteBufferPut(NativeType nativeType) {
+        return switch (nativeType) {
+            case SINT8 -> "put";
+            case SINT16 -> "putShort";
+            case SINT32 -> "putInt";
+            case SINT64 -> "putLong";
+            default -> throw new UnsupportedOperationException(
+                    "enumerations of type %d are not supported".formatted(nativeType));
+        };
     }
 }

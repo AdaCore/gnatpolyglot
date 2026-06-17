@@ -7,6 +7,7 @@ Template file to generate a class.
 @import com.adacore.gnatpolyglot.proxy.ClassDecl
 @import com.adacore.gnatpolyglot.proxy.ClassDecl.Inheritability
 @import com.adacore.gnatpolyglot.proxy.FunctionDecl
+@import com.adacore.gnatpolyglot.proxy.Name
 @import com.adacore.gnatpolyglot.proxy.ProxyContext.FunctionMembersEntry
 @import com.adacore.gnatpolyglot.proxy.Role.RoleKind
 @import com.adacore.gnatpolyglot.proxy2java.JavaAPI
@@ -65,7 +66,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 }
 @for (var alloc : allocFunctions)
     !{
-        String nativeFunc = "$%s".formatted(alloc.name.getLastName().toCamel());
+        String nativeFunc = "$%s".formatted(alloc.symbol);
         FunctionDecl shadow = alloc.role.kind == RoleKind.SHADOW_ALLOC
             ? null
             : api.getMatchingShadowAlloc(alloc);
@@ -100,7 +101,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
       --%>
 
     !{
-        String nativeShadow = "$%s".formatted(shadow.name.getLastName().toCamel());
+        String nativeShadow = "$%s".formatted(shadow.symbol);
     }
 
     private static native
@@ -137,9 +138,22 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
     @template.function(api, method)
 @endfor
 
+@if (members.copyFunction != null)
+    !{
+        Name copyFromName = Name.fromCamel("copyFrom");
+        String name = members.memberFunctions.stream()
+            .filter(m -> m.name.getLastName().equals(copyFromName))
+            .filter(m -> m.type.equals(members.copyFunction.type))
+            .findFirst()
+            .map(_ -> members.copyFunction.name.getLastName().toCamel())
+            .orElse(copyFromName.toCamel());
+    }
+    @template.function(api, members.copyFunction, functionName = name)
+@endif
+
 @if (cloneFunction != null)
     !{
-        String nativeFunc = "$%s".formatted(cloneFunction.name.getLastName().toCamel());
+        String nativeFunc = "$%s".formatted(cloneFunction.symbol);
     }
 
     <%-- The Object.clone function is protected by default. Make it public if possible --%>
@@ -155,7 +169,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
 @if (shadowCloneFunction != null)
     !{
-        String nativeFunc = "$%s".formatted(shadowCloneFunction.name.getLastName().toCamel());
+        String nativeFunc = "$%s".formatted(shadowCloneFunction.symbol);
     }
 
     protected BiFunction<
@@ -169,7 +183,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
     !{
         FunctionDecl freeFunc = members.freeFunction;
-        String freeNativeFunc = "$%s".formatted(freeFunc.name.getLastName().toCamel());
+        String freeNativeFunc = "$%s".formatted(freeFunc.symbol);
     }
 
     private static native

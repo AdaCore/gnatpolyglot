@@ -1,22 +1,17 @@
 package com.adacore.gnatpolyglot.runtime;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /** Class holding a mutable long value. Represents mutable long function parameters */
-public class LongRef {
-
-    private ByteBuffer value;
+public class LongRef extends ScalarRef {
 
     public LongRef() {
-        this.value = ByteBuffer.allocateDirect(Long.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Long.BYTES);
         this.value.putLong(0, 0);
     }
 
     public LongRef(long value) {
-        this.value = ByteBuffer.allocateDirect(Long.BYTES);
-        this.value.order(ByteOrder.nativeOrder());
+        super(Long.BYTES);
         this.value.putLong(0, value);
     }
 
@@ -25,15 +20,7 @@ public class LongRef {
      * <p>Construct a reference from an existing buffer.
      */
     public LongRef(ByteBuffer buffer) {
-        this.value = buffer;
-    }
-
-    /** Internal use only.
-     *
-     * <p>Return the internal buffer holding the value.
-     */
-    public ByteBuffer getBuffer() {
-        return value;
+        super(buffer);
     }
 
     public long getValue() {
