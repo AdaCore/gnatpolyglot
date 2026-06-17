@@ -11,5 +11,13 @@ public class PolyglotKernel {
         public static native void setExceptionData(long addr);
 
         public static native void clearException();
+
+        static {
+            Library.loadLibrary();
+        }
+    }
+
+    static {
+        Library.loadLibrary();
     }
 }

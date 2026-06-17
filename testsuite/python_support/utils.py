@@ -263,7 +263,7 @@ def compile_main(
             exec_cmd=[
                 "java" if os.name != "nt" else "java.exe",
                 "--enable-native-access=ALL-UNNAMED",
-                f"--class-path={class_path}:.",
+                f"--class-path={class_path}{os.pathsep}.",
                 test_file.replace(".java", "")
             ],
             exec_env=exec_env
@@ -366,15 +366,27 @@ def compile_lib(
                 "gprinspect",
                 lib_location,
                 "--display=json-compact",
+                "-r",
                 *extra_args,
             ],
             pipe=True
         ))
+        install_path = os.path.abspath("install")
+        run([
+            "gprinstall",
+            lib_location,
+            f"--prefix={install_path}",
+            "-q",
+            "-r",
+            "-p",
+            "--gpr=2",
+            *extra_args,
+        ])
         return [
             CompilationResult(
                 lang="ada",
                 library_name=inspect.get("projects")[0].get("project").get("library-name"),
-                library_path=inspect.get("projects")[0].get("project").get("library-directory")
+                library_path=os.path.join(install_path, "bin" if os.name == "nt" else "lib")
             )
         ]
     else:

@@ -258,4 +258,9 @@ public abstract class PolyglotArray<E> extends PolyglotObject implements List<E>
             }
         };
     }
+
+    static {
+        Library.loadLibrary();
+    }
+
 }

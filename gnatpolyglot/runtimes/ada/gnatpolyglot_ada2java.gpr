@@ -2,7 +2,7 @@ library project GNATpolyglot_Ada2Java is
 
    type Build_Mode_Type is ("dev", "prod");
    Build_Mode : Build_Mode_Type := external
-     ("GNATPOLYGLOT_ADA2CPP_BUILD_MODE", external ("BUILD_MODE", "dev"));
+     ("GNATPOLYGLOT_ADA2JAVA_BUILD_MODE", external ("BUILD_MODE", "dev"));
 
    for Languages use ("C");
 
@@ -25,12 +25,29 @@ library project GNATpolyglot_Ada2Java is
    case OS is
       when "windows" =>
          JNI_Headers := ("-I" & Java_Home & "/include/win32") & JNI_Headers;
+         for Shared_Library_Prefix use "";
       when "unix" =>
          JNI_Headers := ("-I" & Java_Home & "/include/linux") & JNI_Headers;
    end case;
 
    package Compiler is
-      for Switches ("C") use ("-g") & JNI_Headers;
+      case Build_Mode is
+         when "dev" =>
+            for Switches ("C") use ("-g", "-O0") & JNI_Headers;
+         when "prod" =>
+            for Switches ("C") use ("-Ofast") & JNI_Headers;
+      end case;
    end Compiler;
+
+   Gnatpolyglot_Ada2Proxy_Lib := external
+       ("GNATPOLYGLOT_ADA2PROXY_LIB", external ("PROXY_LIB"));
+   for Library_Options use ("-l" & Gnatpolyglot_Ada2Proxy_Lib);
+
+   Gnatpolyglot_Ada2Proxy_Lib_Location := external
+       ("GNATPOLYGLOT_ADA2PROXY_LIB_LOCATION", external ("PROXY_LIB_LOCATION"));
+
+   package Linker is
+      for Linker_Options use ("-L" & Gnatpolyglot_Ada2Proxy_Lib_Location);
+   end Linker;
 
 end GNATpolyglot_Ada2Java;
