@@ -289,7 +289,7 @@ public class ProxyValidator implements Callable<Integer> {
             validateNonNull("items", enumerationDecl.items);
             if (enumerationDecl.items != null) {
                 location.add(".items");
-                HashSet<Integer> values = new HashSet<>(0);
+                HashSet<Long> values = new HashSet<>(0);
                 HashSet<Name> names = new HashSet<>(0);
                 for (int i = 0; i < enumerationDecl.items.size(); i++) {
                     location.add("[" + i + "]");

@@ -12,6 +12,7 @@ import com.adacore.gnatpolyglot.proxy.GNATpolyglotSetup;
 import com.adacore.gnatpolyglot.proxy.ProxyValidator;
 import com.adacore.gnatpolyglot.proxy2cpp.Proxy2Cpp;
 import com.adacore.gnatpolyglot.proxy2java.Proxy2Java;
+import com.adacore.gnatpolyglot.proxy2rust.Proxy2Rust;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -24,6 +25,7 @@ import picocli.CommandLine.ScopeType;
             Ada2Proxy.class,
             Proxy2Cpp.class,
             Proxy2Java.class,
+            Proxy2Rust.class,
             GNATpolyglotSetup.class
         },
         // Version information are substituted by anod for production builds

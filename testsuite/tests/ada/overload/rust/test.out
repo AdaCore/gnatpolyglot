@@ -1,0 +1,27 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Hello from Ada overloaded procedure 1
+Hello from Ada overloaded procedure 2:  1
+Hello from Ada overloaded function 1:  1
+Got from ada : 5
+Hello from Ada overloaded function 2:  0
+Got from ada : 0
+Hello from Ada overloaded return type 1
+Hello from Ada overloaded return type 2
+Got from ada : 2
+Hello from Ada overloaded return type 3
+Got from ada : 3
+Hello from Ada overloaded return type 4
+Got from ada : -4
+10 * 2 = 20
+10 * 4 = 40
+Hello from Ada overloaded Integer  1
+Hello from Ada overloaded My_Int  2
+
+Done.

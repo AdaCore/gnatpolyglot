@@ -40,10 +40,21 @@ int main() {
    std::cout << static_cast<int>(test::call_t_f(c, test::Enum1::B)) << "\n";
    std::cout << static_cast<int>(test::call_t_f(c, test::Enum1::C)) << "\n";
 
+   // An enumeration whose representation does not fit in 32 bits must use a
+   // 64-bit underlying type: the literal value is preserved, not truncated to
+   // the low 32 bits (which would print 705032704).
+   std::cout << "C++ big:" << static_cast<long long>(test::EnumBig::I) << "\n";
+   // In-range items of the same enum still round-trip through the binding.
+   test::EnumBig eb = f_enum_big(test::EnumBig::G);
+   p_enum_big(eb);
+
    test::Enum3 e3 = test::Enum3::A;
    p_enum_1(e3);
 
    std::cout << static_cast<int>(c.get_e()) << "\n";
    c.set_e(test::Enum1::B);
+   std::cout << static_cast<int>(c.get_e()) << "\n";
+   // An enum getter returns a real reference too: writing through it mutates in place.
+   c.get_e() = test::Enum1::C;
    std::cout << static_cast<int>(c.get_e()) << "\n";
 }

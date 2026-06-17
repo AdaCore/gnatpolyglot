@@ -22,7 +22,7 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.gnatpolyglot.proxy.Name","int","java.lang.String"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.gnatpolyglot.proxy.Name","long","java.lang.String"] }]
 },
 {
   "name":"com.adacore.gnatpolyglot.proxy.EnumerationDecl",

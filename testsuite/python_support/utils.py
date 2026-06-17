@@ -166,6 +166,41 @@ def compile_main(
     Compile the main test file and return a path to its corresponding
     executable.
     """
+    if output_lang == "rust":
+        import shutil
+
+        test_bin_dir = "test_binary"
+        os.makedirs(os.path.join(test_bin_dir, "src"), exist_ok=True)
+
+        shutil.copy(test_file, os.path.join(test_bin_dir, "src", "main.rs"))
+
+        abs_output_proxy = os.path.realpath(output_proxy)
+        with open(os.path.join(test_bin_dir, "Cargo.toml"), "w") as f:
+            f.write(
+                f'[package]\nname = "test_main"\nversion = "0.1.0"\nedition = "2021"\n\n'
+                f'[dependencies]\n{input_lib} = {{ path = "{abs_output_proxy}" }}\n'
+            )
+
+        env = dict(os.environ)
+        for dep in deps:
+            if dep.lang == "ada":
+                env["POLYGLOT_PROXY_LIB_DIR"] = dep.library_path
+                env["POLYGLOT_PROXY_LIB_NAME"] = dep.library_name
+
+        run(
+            ["cargo", "build", "--quiet", "--manifest-path", os.path.join(test_bin_dir, "Cargo.toml")],
+            env=env,
+            pipe=True,
+        )
+
+        return CompilationResult(
+            lang="rust",
+            exec_cmd=[
+                os.path.realpath(os.path.join(test_bin_dir, "target", "debug", "test_main"))
+            ],
+            exec_env={},
+        )
+
     if output_lang == "c++":
         proxy_c_files = glob.glob(os.path.join(output_proxy, "*.cpp"))
         proxy_c_files += glob.glob(
@@ -297,6 +332,23 @@ def compile_lib(
                 library_path=os.path.join(lib_location, "target", "classes")
             )
         ]
+    elif input_lang == "rust":
+        env = dict(os.environ)
+        for dep in deps:
+            if dep.lang == "ada":
+                env["POLYGLOT_PROXY_LIB_DIR"] = dep.library_path
+                env["POLYGLOT_PROXY_LIB_NAME"] = dep.library_name
+        run(
+            ["cargo", "build", "--quiet", "--manifest-path", os.path.join(lib_location, "Cargo.toml")],
+            env=env,
+            pipe=True,
+        )
+        return [
+            CompilationResult(
+                lang="rust",
+                library_path=os.path.join(lib_location, "target", "debug"),
+            )
+        ]
     elif input_lang in ("c", "c++"):
         if os.path.isdir(lib_location):
             lib_location = str(list(Path(lib_location).glob("*.gpr"))[0])
@@ -371,6 +423,8 @@ def run_printer(output_lang: str, proxy_file: str, output_path: str) -> None:
         run_polyglot("proxy2cpp", [proxy_file, "-o", output_path])
     elif output_lang == "java":
         run_polyglot("proxy2java", [proxy_file, "-o", output_path])
+    elif output_lang == "rust":
+        run_polyglot("proxy2rust", [proxy_file, "-o", output_path])
     else:
         raise Exception(f"Unknown language: {output_lang}")
 

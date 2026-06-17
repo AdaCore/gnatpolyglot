@@ -12,11 +12,25 @@ package body Test is
       Put_Line ("Got " & V'Image & " =" & V'Enum_Rep'Image);
    end P_Enum_2;
 
+   procedure P_Enum_Big(V: Enum_Big) is
+   begin
+      Put_Line ("Got " & V'Image & " =" & V'Enum_Rep'Image);
+   end P_Enum_Big;
+
    procedure P_In_Out(V: in out Enum_2) is
    begin
       Put_Line ("Got " & V'Image & " =" & V'Enum_Rep'Image);
       V := Enum_2'Pred(V);
    end P_In_Out;
+
+   function F_Enum_Big(V: Enum_Big) return Enum_Big is
+   begin
+      case V is
+         when G => return H;
+         when H => return I;
+         when I => return G;
+      end case;
+   end F_Enum_Big;
 
    function F_Enum_1(V: Enum_1) return Enum_1 is
    begin
