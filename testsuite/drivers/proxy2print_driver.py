@@ -25,8 +25,9 @@ class Proxy2Print(PythonDriver):
     def set_up(self) -> None:
         super().set_up()
 
-        if self.test_env.get("output_lang") == "java" and not self.env.java_supported:
-            raise TestSkip("Java is not supported on this platform")
+        if self.test_env.get("output_lang") in self.env.unsupported_languages:
+            raise TestSkip(self.test_env.get("output_lang")
+                           + " is not supported on this platform",)
 
         input_proxy_path = self.test_dir(self.test_env["input_proxy"])
         sync_tree(
