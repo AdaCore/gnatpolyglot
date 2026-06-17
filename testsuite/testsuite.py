@@ -78,10 +78,11 @@ class GNATpolyglotTestsuite(Testsuite):
             )
             os.environ["GNATPOLYGLOT_RUNTIME"] = runtime_dir
 
+        self.env.unsupported_languages = []
+
         if self.env.build.platform in (
             "x86_64-linux", "x86_64-windows64"
         ):
-            self.env.java_supported = True
             # Build and install the Java Runtime libraries
             mvn_args = []
             if args.maven_local_repo is not None:
@@ -103,7 +104,7 @@ class GNATpolyglotTestsuite(Testsuite):
                         }
                     )
         else:
-            self.env.java_supported = False
+            self.env.unsupported_languages.extend(["rust", "java"])
 
         # Check if the internal testsuite is present
         self.env.control_condition_env = {
