@@ -40,8 +40,11 @@ public class AdaScanner extends Scanner {
     /** The path to the Gpr project file. */
     private Path projectFile;
 
-    /** The name of the project. */
-    private String projectName;
+    /** The name of the project as it appears in the file system. */
+    private String projectFileName;
+
+    /** The canonical representation of the project's name. */
+    private Name projectName;
 
     /** The list of files to process. */
     private List<String> specFiles;
@@ -66,12 +69,13 @@ public class AdaScanner extends Scanner {
         this.specFiles = specFiles;
         this.gprOptions = options;
         this.sourceMode = mode;
-        this.projectName =
+        this.projectFileName =
                 projectFile
                         .getFileName()
                         .toString()
                         .substring(0, projectFile.getFileName().toString().lastIndexOf(".gpr"));
-        this.api = new AdaAPI(Name.fromLower(projectName));
+        this.projectName = Name.fromLower(projectFileName.toLowerCase());
+        this.api = new AdaAPI(projectName);
         this.visitor = new AdaVisitor(api);
     }
 
@@ -163,7 +167,7 @@ public class AdaScanner extends Scanner {
                         .map(u -> u.getUnit().getFileName(false))
                         .filter(filename -> sources.contains(filename))
                         .toList();
-        this.proxy = new AdaProxy(Name.fromLower(projectName), modules);
+        this.proxy = new AdaProxy(projectName, modules);
     }
 
     @Override
@@ -183,7 +187,7 @@ public class AdaScanner extends Scanner {
         }
 
         // Generate the Gpr file for the proxy.
-        Path proxyGprFile = Path.of(projectName + "-proxy.gpr");
+        Path proxyGprFile = Path.of(projectFileName + "-proxy.gpr");
         try (FileOutput gprOutput = new FileOutput(path.resolve(proxyGprFile))) {
             templateEngine.render(
                     "proxy_gpr.jte",
@@ -193,14 +197,14 @@ public class AdaScanner extends Scanner {
                             "relLibPath",
                             path.relativize(projectFile).toString(),
                             "projectName",
-                            Name.fromLower(projectName),
+                            projectName,
                             "runtimeLocation",
                             path.relativize(runtimeLocation).toString(),
                             "proxy",
                             proxy),
                     gprOutput);
         }
-        Path aggGprFile = Path.of(projectName + "-proxy-agg.gpr");
+        Path aggGprFile = Path.of(projectFileName + "-proxy-agg.gpr");
         try (FileOutput gprOutput = new FileOutput(path.resolve(aggGprFile))) {
             templateEngine.render(
                     "proxy_agg_gpr.jte",
@@ -209,8 +213,10 @@ public class AdaScanner extends Scanner {
                             api,
                             "relLibPath",
                             path.relativize(projectFile).toString(),
+                            "projectFileName",
+                            projectFileName,
                             "projectName",
-                            Name.fromLower(projectName),
+                            projectName,
                             "proxy",
                             proxy,
                             "runtimeLocation",
@@ -246,7 +252,8 @@ public class AdaScanner extends Scanner {
         }
 
         // Create the exception specific functions
-        Path exceptionSpecFile = Path.of("gnatpolyglot-exceptions-%s.ads".formatted(projectName));
+        Path exceptionSpecFile =
+                Path.of("gnatpolyglot-exceptions-%s.ads".formatted(projectFileName));
         try (FileOutput exceptionSpec = new FileOutput(proxySrc.resolve(exceptionSpecFile))) {
             templateEngine.render(
                     "exceptions.jte",
@@ -256,12 +263,13 @@ public class AdaScanner extends Scanner {
                             "proxy",
                             proxy,
                             "projectName",
-                            Name.fromLower(projectName),
+                            projectName,
                             "isSource",
                             false),
                     exceptionSpec);
         }
-        Path exceptionBodyFile = Path.of("gnatpolyglot-exceptions-%s.adb".formatted(projectName));
+        Path exceptionBodyFile =
+                Path.of("gnatpolyglot-exceptions-%s.adb".formatted(projectFileName));
         try (FileOutput exceptionBody = new FileOutput(proxySrc.resolve(exceptionBodyFile))) {
             templateEngine.render(
                     "exceptions.jte",
@@ -271,7 +279,7 @@ public class AdaScanner extends Scanner {
                             "proxy",
                             proxy,
                             "projectName",
-                            Name.fromLower(projectName),
+                            projectName,
                             "isSource",
                             true),
                     exceptionBody);

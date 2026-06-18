@@ -12,12 +12,13 @@ Template file to generate a gprbuild specification of the Ada bindings.
 @import java.util.List
 @param AdaAPI api
 @param String relLibPath
+@param String projectFileName
 @param Name projectName
 @param AdaProxy proxy
 @param String runtimeLocation
 @param List<String> sources
 
-with "${projectName.toLower()}-proxy.gpr";
+with "${projectFileName}-proxy.gpr";
 
 aggregate library project ${projectName.toPascalWithUnderscore()}.Proxy.Agg is
 
@@ -38,7 +39,7 @@ aggregate library project ${projectName.toPascalWithUnderscore()}.Proxy.Agg is
    GNATpolyglot_Runtime := "${runtimeLocation}";
 
    for Project_Files use (
-      "${projectName.toLower()}-proxy.gpr",
+      "${projectFileName}-proxy.gpr",
       GNATpolyglot_Runtime & "/gnatpolyglot/gnatpolyglot.gpr",
       GNATpolyglot_Runtime & "/ada/gnatpolyglot-ada.gpr"
    );
