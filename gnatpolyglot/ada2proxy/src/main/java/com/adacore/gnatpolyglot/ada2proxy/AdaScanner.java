@@ -186,6 +186,11 @@ public class AdaScanner extends Scanner {
             throw new IOException(e);
         }
 
+        Path relativeProjectFilePath =
+                path.toAbsolutePath().relativize(projectFile.toAbsolutePath());
+        Path relativeRuntimePath =
+                path.toAbsolutePath().relativize(runtimeLocation.toAbsolutePath());
+
         // Generate the Gpr file for the proxy.
         Path proxyGprFile = Path.of(projectFileName + "-proxy.gpr");
         try (FileOutput gprOutput = new FileOutput(path.resolve(proxyGprFile))) {
@@ -195,11 +200,11 @@ public class AdaScanner extends Scanner {
                             "api",
                             api,
                             "relLibPath",
-                            path.relativize(projectFile).toString(),
+                            relativeProjectFilePath.toString(),
                             "projectName",
                             projectName,
                             "runtimeLocation",
-                            path.relativize(runtimeLocation).toString(),
+                            relativeRuntimePath.toString(),
                             "proxy",
                             proxy),
                     gprOutput);
@@ -212,7 +217,7 @@ public class AdaScanner extends Scanner {
                             "api",
                             api,
                             "relLibPath",
-                            path.relativize(projectFile).toString(),
+                            relativeProjectFilePath.toString(),
                             "projectFileName",
                             projectFileName,
                             "projectName",
@@ -220,7 +225,7 @@ public class AdaScanner extends Scanner {
                             "proxy",
                             proxy,
                             "runtimeLocation",
-                            path.relativize(runtimeLocation).toString(),
+                            relativeRuntimePath.toString(),
                             "sources",
                             interfaces),
                     gprOutput);
