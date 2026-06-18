@@ -1,0 +1,3 @@
+driver: scan2proxy
+input_lang: ada
+project_file: Foo_bar.gpr
