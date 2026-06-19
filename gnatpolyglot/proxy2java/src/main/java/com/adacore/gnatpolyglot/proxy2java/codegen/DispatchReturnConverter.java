@@ -35,9 +35,7 @@ public class DispatchReturnConverter {
         @Override
         public String arrayType(TypeExpr type) {
             return new StringBuilder("return ")
-                    .append(returnedValue)
-                    .append(".")
-                    .append(JavaGenerator.makeCall("release", List.of()))
+                    .append(JavaGenerator.makeMethodCall(returnedValue, "release", List.of()))
                     .append(";")
                     .toString();
         }
@@ -45,10 +43,12 @@ public class DispatchReturnConverter {
         @Override
         public String classType(TypeExpr type) {
             return new StringBuilder("return ")
-                    .append(returnedValue)
-                    .append(".")
-                    .append(JavaGenerator.makeCall("release", List.of()))
-                    .append(".getAddress()")
+                    .append(
+                            JavaGenerator.makeMethodCall(
+                                    JavaGenerator.makeMethodCall(
+                                            returnedValue, "release", List.of()),
+                                    "getAddress",
+                                    List.of()))
                     .append(";")
                     .toString();
         }

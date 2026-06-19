@@ -49,8 +49,7 @@ public class ParameterConverter {
                     .append(" ")
                     .append(valueName)
                     .append(" = ")
-                    .append(argName)
-                    .append(".getData().getAddress()")
+                    .append(JavaGenerator.makeGetAddress(argName))
                     .toString();
         }
 
