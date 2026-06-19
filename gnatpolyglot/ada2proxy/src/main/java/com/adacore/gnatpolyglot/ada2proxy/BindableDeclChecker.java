@@ -171,6 +171,18 @@ public class BindableDeclChecker {
             for (var paramType : spec.pParamTypes(decl)) {
                 checkUse(decl, paramType);
             }
+            for (var param : spec.pAbstractFormalParams()) {
+                if (param instanceof Libadalang.ParamSpec paramSpec
+                        && paramSpec.pFormalType(spec).pIsAccessType(spec)
+                        && paramSpec.pFormalType(spec).pAccessedType(spec).pIsTaggedType(spec)
+                        && (paramSpec.fMode() instanceof Libadalang.ModeOut
+                                || paramSpec.fMode() instanceof Libadalang.ModeInOut)) {
+                    throw new UnbindableDeclException(
+                            decl,
+                            "Returning access to tagged types through out parameters is not yet"
+                                    + " supported");
+                }
+            }
             if ((decl.pHasAspect(Libadalang.Symbol.create("Pre'Class"), false, false)
                             || decl.pHasAspect(
                                     Libadalang.Symbol.create("Post'Class"), false, false))
@@ -185,6 +197,10 @@ public class BindableDeclChecker {
                     throw new UnbindableDeclException(
                             decl, "Returning class wide object is not yet supported");
                 checkUse(decl, returnType);
+                if (returnType.pIsAccessType(spec)
+                        && returnType.pAccessedType(spec).pIsTaggedType(spec))
+                    throw new UnbindableDeclException(
+                            decl, "Returning access to tagged types is not yet supported");
             }
             if (decl instanceof Libadalang.AbstractSubpDecl
                     && spec.pPrimitiveSubpTaggedType(false).isNone()) {
