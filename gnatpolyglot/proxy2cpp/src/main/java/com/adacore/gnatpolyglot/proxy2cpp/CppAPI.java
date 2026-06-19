@@ -226,10 +226,6 @@ public class CppAPI {
         return builder.toString();
     }
 
-    public boolean isStringOrArray(TypeExpr typeExpr) {
-        return typeExpr.isArray() || context.isStringType(typeExpr);
-    }
-
     public boolean isMethod(FunctionDecl functionDecl) {
         // A method can have the role ``METHOD``, ``GETTER``, ``SETTER``, ``CONSTRUCT``, or
         // ``DESTRUCT``.

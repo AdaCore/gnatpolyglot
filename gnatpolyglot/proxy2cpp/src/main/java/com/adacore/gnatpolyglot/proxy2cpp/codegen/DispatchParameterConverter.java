@@ -132,7 +132,8 @@ public class DispatchParameterConverter {
                     // only return the `polyglot_array` typename, so we must transform this to a
                     // pointer.
                     String bufferTypename =
-                            api.cTypename(type).concat(api.isStringOrArray(pointedType) ? "*" : "");
+                            api.cTypename(type)
+                                    .concat(getContext().isStringOrArray(pointedType) ? "*" : "");
 
                     String bufferName = getBufferValue(argName);
                     CharSequence bufferAccess = bufferName;
@@ -141,7 +142,7 @@ public class DispatchParameterConverter {
                                     .append(" ")
                                     .append(bufferName)
                                     .append(" = ");
-                    if (api.isStringOrArray(pointedType)) {
+                    if (getContext().isStringOrArray(pointedType)) {
                         builder.append(CppGenerator.makeStaticCast(bufferTypename, argName));
                         bufferAccess = CppGenerator.deref(bufferName);
                     } else {
@@ -183,7 +184,7 @@ public class DispatchParameterConverter {
             String argName = api.toLower(param.name);
             String dataName = getConverterValue(argName);
             builder.append("*");
-            if (api.isStringOrArray(ptr.typeExpr)) builder.append("__");
+            if (api.getContext().isStringOrArray(ptr.typeExpr)) builder.append("__");
             builder.append(argName)
                     .append(" = ")
                     .append(dataName)

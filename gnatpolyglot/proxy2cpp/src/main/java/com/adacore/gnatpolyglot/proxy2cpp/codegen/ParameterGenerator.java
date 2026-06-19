@@ -185,7 +185,7 @@ public class ParameterGenerator {
                 String argName = api.toLower(param.name);
                 CharSequence dataName = getParamBuffer(argName);
                 CharSequence copyName = getParamCopy(argName);
-                String addressAccessor = api.isStringOrArray(pointedType) ? ".data" : "";
+                String addressAccessor = getContext().isStringOrArray(pointedType) ? ".data" : "";
                 return new StringBuilder("if (")
                         .append(dataName)
                         .append(addressAccessor)

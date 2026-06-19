@@ -50,7 +50,8 @@ public class ReturnConverter {
         public String pointerType(TypeExpr type) {
             // Pointers to arrays are returned as polyglot_arrays. In order to check for null
             // pointers, we must access the `data` field of the struct.
-            String arrayDataAccess = api.isStringOrArray(type.pointedType()) ? ".data" : "";
+            String arrayDataAccess =
+                    getContext().isStringOrArray(type.pointedType()) ? ".data" : "";
             return new StringBuilder("return ")
                     .append(
                             CppGenerator.makeCall(
