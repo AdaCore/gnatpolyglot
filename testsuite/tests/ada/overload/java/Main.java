@@ -17,7 +17,7 @@ public class Main {
         System.out.println("Got from ada:" + TestPackage.standardIntegerOverloadedRet(4));
 
         System.out.println("10 * 2 = " + TestPackage.noRename(10));
-        System.out.println("10L * 4 = " + TestPackage.noRename(10L, 4L));
+        System.out.println("10L * 4 = " + TestPackage.noRename((short) 10, (short) 4));
 
         TestPackage.overloadedInt(1);
         TestPackage.overloadedInt1(2);
