@@ -178,7 +178,7 @@ def compile_main(
         with open(os.path.join(test_bin_dir, "Cargo.toml"), "w") as f:
             f.write(
                 f'[package]\nname = "test_main"\nversion = "0.1.0"\nedition = "2021"\n\n'
-                f'[dependencies]\n{input_lib} = {{ path = "{abs_output_proxy}" }}\n'
+                f"[dependencies]\n{input_lib} = {{ path = '{abs_output_proxy}' }}\n"
             )
 
         env = dict(os.environ)

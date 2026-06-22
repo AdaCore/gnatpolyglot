@@ -22,4 +22,11 @@ fn main() {
         println!("cargo:rustc-link-lib=dl");
         println!("cargo:rustc-link-lib=pthread");
     }
+    #[cfg(target_os = "windows")]
+    {
+        // The GNAT runtime (adaint.c) calls Win32 security, ACL and registry
+        // APIs (GetFileSecurityW, AccessCheck, RegOpenKeyExA, ...) that live in
+        // advapi32, which rustc does not link against by default.
+        println!("cargo:rustc-link-lib=advapi32");
+    }
 }
