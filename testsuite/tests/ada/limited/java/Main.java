@@ -23,8 +23,12 @@ public class Main {
             System.out.println("found");
         } catch (NoSuchMethodException e) {}
         // PolyglotObject defines the method but it remains protected. Only
-        // copyable object will expose it as public.
-        assert !Value.class.getMethod("clone").canAccess(Main.class);
+        // copyable object will expose it as public. The Value class should not
+        // have a clone function.
+        try {
+            Value.class.getMethod("clone");
+            System.out.println("found Value.clone");
+        } catch (NoSuchMethodException e) {}
         assert !Cloneable.class.isAssignableFrom(Value.class);
 
         Value v = TestPackage.initValue(3, 4);
