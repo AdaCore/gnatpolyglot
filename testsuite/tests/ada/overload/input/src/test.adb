@@ -54,7 +54,7 @@ package body Test is
       return I * 2;
    end No_Rename;
 
-   function No_Rename (A, B: Long_Integer) return Long_Integer is
+   function No_Rename (A, B: Short_Integer) return Short_Integer is
    begin
       return A * B;
    end No_Rename;
