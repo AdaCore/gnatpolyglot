@@ -5,7 +5,7 @@ Proxy2Rust
 **********
 
 Consumes the proxy IR and generates idiomatic Rust bindings, so that Rust code
-can call into the bound Ada library across the C ABI.
+can call into the bound library across the C ABI.
 
 .. warning::
 
@@ -56,7 +56,7 @@ Generation produces a complete Cargo crate:
    $> find 2rust
    2rust/
    2rust/Cargo.toml          # package metadata (name = <proxy name>, edition 2021)
-   2rust/build.rs            # links the native Ada proxy library
+   2rust/build.rs            # links the native proxy library
    2rust/src
    2rust/src/lib.rs          # `pub mod` declaration per module
    2rust/src/<module>.rs     # one file per module: enums, structs, impls, free functions
@@ -69,7 +69,7 @@ Building
 --------
 
 ``build.rs`` reads two environment variables to locate the statically built,
-encapsulated Ada proxy library, and emits the right link directives:
+encapsulated proxy library, and emits the right link directives:
 
 * ``POLYGLOT_PROXY_LIB_DIR`` — directory containing the static archive.
 * ``POLYGLOT_PROXY_LIB_NAME`` — name of the archive (without ``lib`` prefix or
@@ -131,7 +131,7 @@ Classes
 ~~~~~~~
 
 A proxy class maps to a newtype wrapping the opaque pointer to the internal
-Ada object:
+object:
 
 .. code:: rust
 
@@ -164,16 +164,17 @@ Constructors and methods are emitted as inherent functions:
 Ownership
 ~~~~~~~~~
 
-Whether a wrapper frees its underlying Ada object is governed by two things:
+Whether a wrapper frees its underlying object is governed by two things:
 
 * **Per type.** A class that has a destructor gets an ``impl Drop`` calling the
-  Ada free function, so an owned value frees the object at end of scope. A
+  free function exposed by the proxy, so an owned value frees the object at end
+  of scope. A
   class that has a copy function gets an ``impl Clone``.
 * **Per returned value.** When a value is returned, the proxy's ownership
   annotation decides whether the returned wrapper owns the object. A value
   returned with ``STATIC`` ownership — and any class returned *by reference* —
   is wrapped in ``std::mem::ManuallyDrop`` so dropping it never frees the
-  underlying object (a non-owning *view* into the Ada object). Otherwise an
+  underlying object (a non-owning *view* into the object). Otherwise an
   owned wrapper is returned, which runs its ``Drop`` (if any) at end of scope.
 
 Inheritance

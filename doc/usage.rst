@@ -150,7 +150,7 @@ Generating Rust interfaces
    $> gnatpolyglot proxy2rust 2proxy/proxy.json -o ./2rust
 
 The ``proxy2rust`` subcommand generates a Cargo crate. Its ``build.rs`` links
-the native Ada proxy library, whose location and name are passed through
+the native proxy library, whose location and name are passed through
 environment variables:
 
 .. code:: sh
