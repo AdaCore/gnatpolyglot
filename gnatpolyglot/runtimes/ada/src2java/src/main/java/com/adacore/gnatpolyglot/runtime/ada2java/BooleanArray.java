@@ -39,7 +39,7 @@ public class BooleanArray extends PolyglotArray<Boolean> {
     private static native void arrayFree(ArrayData data);
 
     @Override
-    protected Consumer<PolyglotData> getFree() {
+    protected Consumer<PolyglotData> _getFree() {
         return (arrayData) -> { arrayFree((ArrayData) arrayData); };
     }
 
@@ -47,7 +47,7 @@ public class BooleanArray extends PolyglotArray<Boolean> {
 
     @Override
     public Boolean getUnslided(int index) {
-        return arrayGet(getData(), index);
+        return arrayGet(_getData(), index);
     }
 
     private static native boolean arraySet(ArrayData data, int index, boolean element);
@@ -55,13 +55,13 @@ public class BooleanArray extends PolyglotArray<Boolean> {
     @Override
     public Boolean setUnslided(int index, Boolean element) {
         Objects.requireNonNull(element);
-        return arraySet(getData(), index, element);
+        return arraySet(_getData(), index, element);
     }
 
     @Override
     public List<Boolean> subList(int fromIndex, int toIndex) {
         return new BooleanArray(
-            new ArrayData(getBegin(), getEnd() - 1, getData().addr, Owner.STATIC),
+            new ArrayData(getBegin(), getEnd() - 1, _getData().addr, Owner.STATIC),
             this.parent
         );
     }
@@ -70,7 +70,7 @@ public class BooleanArray extends PolyglotArray<Boolean> {
 
     @Override
     public BooleanArray clone() {
-        ArrayData data = arrayClone(getData());
+        ArrayData data = arrayClone(_getData());
         data.setOwner(Owner.USER);
         return new BooleanArray(data, this);
     }
@@ -87,7 +87,7 @@ public class BooleanArray extends PolyglotArray<Boolean> {
 
         @Override
         protected void update(PolyglotData data) {
-            PolyglotData oldData = get().map(o -> o.getData()).orElse(null);
+            PolyglotData oldData = get().map(o -> o._getData()).orElse(null);
             if (!Objects.deepEquals(data, oldData)) {
                 if (data == null) {
                     this.obj = null;

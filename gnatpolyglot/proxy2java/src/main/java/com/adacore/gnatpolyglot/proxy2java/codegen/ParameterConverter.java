@@ -118,8 +118,7 @@ public class ParameterConverter {
                     .append(" ")
                     .append(valueName)
                     .append(" = ")
-                    .append(argName)
-                    .append(".getData()")
+                    .append(JavaGenerator.makeGetData(argName))
                     .toString();
         }
 
@@ -370,10 +369,10 @@ public class ParameterConverter {
         String getOwner;
         if (param.type.isReference()) {
             nullCheck = argName + ".get().isPresent()";
-            getOwner = argName + ".get().get().getOwner()";
+            getOwner = argName + ".get().get()._getOwner()";
         } else {
             nullCheck = argName + " != null";
-            getOwner = argName + ".getOwner()";
+            getOwner = argName + "._getOwner()";
         }
         String owner = api.javaOwner(param.transfer.required_owner);
         return new StringBuilder("if (")

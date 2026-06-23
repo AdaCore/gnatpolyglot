@@ -38,15 +38,15 @@ public class PolyglotString extends PolyglotObject implements CharSequence {
         super(null);
         ArrayData data = fromString(str);
         data.setOwner(Owner.USER);
-        setData(data);
+        _setData(data);
     }
 
     public int getBegin() {
-        return getData().begin;
+        return _getData().begin;
     }
 
     public int getEnd() {
-        return getData().end;
+        return _getData().end;
     }
 
     private static native char stringGet(ArrayData data, int index);
@@ -57,7 +57,7 @@ public class PolyglotString extends PolyglotObject implements CharSequence {
     }
 
     public char charAtUnslided(int index) {
-        return stringGet(getData(), index);
+        return stringGet(_getData(), index);
     }
 
     private static native void stringSet(ArrayData data, int index, char c);
@@ -67,30 +67,30 @@ public class PolyglotString extends PolyglotObject implements CharSequence {
     }
 
     public void setCharAtUnslided(int index, char value) {
-        stringSet(getData(), index, value);
+        stringSet(_getData(), index, value);
     }
 
     @Override
     public int length() {
-        ArrayData data = getData();
+        ArrayData data = _getData();
         return data.end - data.begin + 1;
     }
 
     /** Return the native object. */
     @Override
-    public final ArrayData getData() {
+    public final ArrayData _getData() {
         return (ArrayData) data;
     }
 
     @Override
-    public ArrayData release() {
-        return (ArrayData) super.release();
+    public ArrayData _release() {
+        return (ArrayData) super._release();
     }
 
     private static native void stringFree(ArrayData data);
 
     @Override
-    protected Consumer<PolyglotData> getFree() {
+    protected Consumer<PolyglotData> _getFree() {
         return (data) -> { stringFree((ArrayData) data); };
     }
 
@@ -98,7 +98,7 @@ public class PolyglotString extends PolyglotObject implements CharSequence {
 
     @Override
     public String toString() {
-        return toJavaString(getData());
+        return toJavaString(_getData());
     }
 
     @Override
@@ -118,7 +118,7 @@ public class PolyglotString extends PolyglotObject implements CharSequence {
 
         @Override
         protected void update(PolyglotData data) {
-            PolyglotData oldData = get().map(o -> o.getData()).orElse(null);
+            PolyglotData oldData = get().map(o -> o._getData()).orElse(null);
             if (!Objects.deepEquals(data, oldData)) {
                 this.obj = new PolyglotString(
                         (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);

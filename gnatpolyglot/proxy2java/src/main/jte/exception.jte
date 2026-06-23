@@ -43,7 +43,7 @@ public class ${excName} extends com.adacore.gnatpolyglot.runtime.ada2java.AdaExc
     @for (var param : alloc.type.parameters)
         ${api.makeJavaParamConversion(param, false)};
     @endfor
-        setData(
+        _setData(
             new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(
                 ${api.callJavaNative(alloc, nativeFunc)},
                 com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER
@@ -66,7 +66,7 @@ public class ${excName} extends com.adacore.gnatpolyglot.runtime.ada2java.AdaExc
     @for (var param : alloc.type.parameters)
         ${api.makeJavaParamConversion(param, false)};
     @endfor
-        setData(
+        _setData(
             new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(
                 ${api.callJavaNative(alloc, nativeFunc)},
                 com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER

@@ -18,7 +18,7 @@ public class ProgramError extends AdaException {
             new PolyglotData.Pointer(
                 createExceptionOccurenceMessage(
                     StandardExceptionsKind.PROGRAM_ERROR_KIND.id,
-                    message.getData()
+                    message._getData()
                 ),
                 Owner.USER
             ),

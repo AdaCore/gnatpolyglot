@@ -34,11 +34,11 @@ public abstract class PolyglotArray<E> extends PolyglotObject implements List<E>
     }
 
     public int getBegin() {
-        return getData().begin;
+        return _getData().begin;
     }
 
     public int getEnd() {
-        return getData().end;
+        return _getData().end;
     }
 
     public abstract E getUnslided(int index);
@@ -57,13 +57,13 @@ public abstract class PolyglotArray<E> extends PolyglotObject implements List<E>
 
     /** Return the native object. */
     @Override
-    public final ArrayData getData() {
+    public final ArrayData _getData() {
         return (ArrayData) data;
     }
 
     @Override
-    public ArrayData release() {
-        return (ArrayData) super.release();
+    public ArrayData _release() {
+        return (ArrayData) super._release();
     }
 
     @Override
@@ -73,7 +73,7 @@ public abstract class PolyglotArray<E> extends PolyglotObject implements List<E>
 
     @Override
     public int size() {
-        ArrayData data = getData();
+        ArrayData data = _getData();
         return data.end - data.begin + 1;
     }
 

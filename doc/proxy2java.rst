@@ -330,7 +330,7 @@ Java has no separate smart-pointer wrapper: a proxy pointer to a class is
 exposed as that class itself (the generated wrapper extending
 ``PolyglotObject``). Ownership — which decides whether the pointed-to object is
 ever freed — is carried by the object instance and read or changed through
-``getOwner()`` / ``setOwner(...)``, using the
+``_getOwner()`` / ``_setOwner(...)``, using the
 ``com.adacore.gnatpolyglot.runtime.PolyglotData.Owner`` enum:
 
 * ``USER`` — the object is owned by your Java code; it is freed automatically

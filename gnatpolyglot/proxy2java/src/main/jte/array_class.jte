@@ -62,7 +62,7 @@ Template file to generate a class.
             data.setOwner(
                 com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER
             );
-            setData(data);
+            _setData(data);
         }
     @endfor
 
@@ -123,7 +123,7 @@ Template file to generate a class.
         );
 
         @Override
-        protected Consumer<com.adacore.gnatpolyglot.runtime.PolyglotData> getFree() {
+        protected Consumer<com.adacore.gnatpolyglot.runtime.PolyglotData> _getFree() {
             return (addr) -> ${freeNativeFunc}(
                (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) addr
             );
@@ -135,7 +135,7 @@ Template file to generate a class.
                 new com.adacore.gnatpolyglot.runtime.ada2java.ArrayData(
                     getBegin(),
                     getEnd() - 1,
-                    getData().addr,
+                    _getData().addr,
                     com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.STATIC
                 ),
                 this.parent
@@ -158,7 +158,7 @@ Template file to generate a class.
             @Override
             protected void update(com.adacore.gnatpolyglot.runtime.PolyglotData data) {
                 com.adacore.gnatpolyglot.runtime.PolyglotData oldData =
-                    get().map(o -> o.getData()).orElse(null);
+                    get().map(o -> o._getData()).orElse(null);
                 if (!java.util.Objects.deepEquals(data, oldData)) {
                     if (data == null) {
                         this.obj = null;

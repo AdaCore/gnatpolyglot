@@ -39,7 +39,7 @@ public class IntegerArray extends PolyglotArray<Integer> {
     private static native void arrayFree(ArrayData data);
 
     @Override
-    protected Consumer<PolyglotData> getFree() {
+    protected Consumer<PolyglotData> _getFree() {
         return (arrayData) -> { arrayFree((ArrayData) arrayData); };
     }
 
@@ -47,7 +47,7 @@ public class IntegerArray extends PolyglotArray<Integer> {
 
     @Override
     public Integer getUnslided(int index) {
-        return arrayGet(getData(), index);
+        return arrayGet(_getData(), index);
     }
 
     private static native int arraySet(ArrayData data, int index, int element);
@@ -55,13 +55,13 @@ public class IntegerArray extends PolyglotArray<Integer> {
     @Override
     public Integer setUnslided(int index, Integer element) {
         Objects.requireNonNull(element);
-        return arraySet(getData(), index, element);
+        return arraySet(_getData(), index, element);
     }
 
     @Override
     public List<Integer> subList(int fromIndex, int toIndex) {
         return new IntegerArray(
-            new ArrayData(getBegin(), getEnd() - 1, getData().addr, Owner.STATIC),
+            new ArrayData(getBegin(), getEnd() - 1, _getData().addr, Owner.STATIC),
             this.parent
         );
     }
@@ -70,7 +70,7 @@ public class IntegerArray extends PolyglotArray<Integer> {
 
     @Override
     public IntegerArray clone() {
-        ArrayData data = arrayClone(getData());
+        ArrayData data = arrayClone(_getData());
         data.setOwner(Owner.USER);
         return new IntegerArray(data, this);
     }
@@ -87,7 +87,7 @@ public class IntegerArray extends PolyglotArray<Integer> {
 
         @Override
         protected void update(PolyglotData data) {
-            PolyglotData oldData = get().map(o -> o.getData()).orElse(null);
+            PolyglotData oldData = get().map(o -> o._getData()).orElse(null);
             if (!Objects.deepEquals(data, oldData)) {
                 if (data == null) {
                     this.obj = null;

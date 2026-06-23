@@ -15,40 +15,40 @@ public abstract class PolyglotException extends RuntimeException implements Auto
 
     protected PolyglotException(PolyglotData data, String message) {
         super(message);
-        setData(data);
+        _setData(data);
     }
 
     protected PolyglotException(PolyglotData data) {
-        setData(data);
+        _setData(data);
     }
 
     /** Return the native object. */
-    public PolyglotData getData() {
+    public PolyglotData _getData() {
         return data;
     }
 
     /** Sets the native data of the PolyglotObject and register the data to the global Cleaner. */
-    protected final void setData(PolyglotData data) {
+    protected final void _setData(PolyglotData data) {
         this.data = data;
         if (data != null)
-            this.cleanable = PolyglotCleaner.register(this, data, getFree());
+            this.cleanable = PolyglotCleaner.register(this, data, _getFree());
     }
 
-    public final Owner getOwner() {
+    public final Owner _getOwner() {
         return data.getOwner();
     }
 
-    public final void setOwner(Owner owner) {
+    public final void _setOwner(Owner owner) {
         data.setOwner(owner);
     }
 
-    public PolyglotData release() {
+    public PolyglotData _release() {
         PolyglotData res = data;
         // Prevent the data from being freed: there is no way to cancel a corresponding Cleanable
         // from running once an object has been registered
         res.setOwner(Owner.STATIC);
         // The object should not be usable anymore.
-        setData(null);
+        _setData(null);
         return res;
     }
 
@@ -59,5 +59,5 @@ public abstract class PolyglotException extends RuntimeException implements Auto
     }
 
     /** Return the function to free the heap memory. */
-    abstract protected Consumer<PolyglotData> getFree();
+    abstract protected Consumer<PolyglotData> _getFree();
 }
