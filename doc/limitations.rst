@@ -1,3 +1,5 @@
+.. _limitations:
+
 ***********
 Limitations
 ***********
@@ -440,9 +442,56 @@ member:
    }
 
 Proxy2Java
----------
+----------
 
 Supported platforms
 ~~~~~~~~~~~~~~~~~~~
 
 Currently, only 64bit Linux and Windows platforms are supported by Proxy2Java.
+
+Operator overloading
+~~~~~~~~~~~~~~~~~~~~~
+
+Java does not support operator overloading. Subprograms bound as operators keep
+their placeholder name (e.g. ``operatorPlus``) in the generated interface.
+
+Proxy2Rust
+----------
+
+.. warning::
+
+   The Rust backend is experimental. The list below reflects its current
+   coverage and is expected to shrink as the backend matures.
+
+Arrays and strings
+~~~~~~~~~~~~~~~~~~
+
+Arrays and strings are not yet supported: the supporting Rust runtime crate
+is not provided yet.
+
+Exceptions
+~~~~~~~~~~
+
+Exceptions are not yet bound. There is no mapping from Ada exceptions to a Rust
+``Result`` (or any other error-reporting mechanism) yet.
+
+Virtual inheritance
+~~~~~~~~~~~~~~~~~~~
+
+Virtual types and dynamic dispatch back into Rust are not generated. Only
+non-virtual inheritance (exposed through ``Deref``/``DerefMut`` coercion) is
+supported.
+
+Pointers
+~~~~~~~~
+
+Access values are not exposed as safe Rust wrappers; pointers only appear as
+raw ``*mut``/``*const c_void`` in the internal ``ffi`` layer.
+
+Operators
+~~~~~~~~~
+
+Operators are not mapped to Rust operator traits. Like any other subprogram,
+they are emitted as plain functions or methods keeping their placeholder name
+(e.g. ``operator_plus``). Separately, because Rust has no function overloading,
+overloaded subprograms are disambiguated with ``_1``, ``_2`` … suffixes.

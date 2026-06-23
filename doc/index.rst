@@ -7,8 +7,10 @@ Welcome to GNATpolyglot's documentation!
 
    usage
    ada2proxy
-   proxy2cpp
    call_convention
+   proxy2cpp
+   proxy2java
+   proxy2rust
    limitations
 
 Indices and tables

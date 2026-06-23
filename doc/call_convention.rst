@@ -2,7 +2,19 @@
 ABI
 ***
 
-Every function must use the C ABI as a common interface.
+Every function must use the C ABI as a common interface. This C ABI is the
+**shared contract** between the proxy and every backend: regardless of the
+target language, values cross the boundary as the "Internal C type" shown in
+the tables below.
+
+The tables also list a C++ type column. It is **illustrative** — it shows how
+the C++ backend surfaces each convention. Other backends map the same internal
+representation to their own idioms (for example, an internal ``void *`` becomes
+a ``polyglot_ptr`` in C++, a ``PolyglotData.Pointer`` held by a
+``PolyglotObject`` in Java, and a ``NonNull<c_void>`` newtype in Rust). See
+each backend chapter
+(:ref:`proxy2cpp`, :ref:`proxy2java`, :ref:`proxy2rust`) for its own
+type-mapping.
 
 Argument passing
 ----------------
