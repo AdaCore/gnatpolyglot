@@ -4,6 +4,9 @@
 Proxy2Cpp
 *********
 
+Consumes the proxy IR and generates idiomatic C++ bindings, so that C++ code
+can call into the bound Ada library across the C ABI.
+
 Using the tool
 --------------
 
@@ -301,7 +304,7 @@ values, since cloned before by the proxy before returning, will be owned
 by the user.
 
 GNATpolyglot pointers
------------------
+---------------------
 
 Pointer types are represented using a ref-counted smart pointer
 (``polyglot_ptr``) in order to avoid manual memory management. 

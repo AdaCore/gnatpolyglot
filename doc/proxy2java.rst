@@ -4,6 +4,10 @@
 Proxy2Java
 **********
 
+Consumes the proxy IR and generates idiomatic Java bindings, so that Java code
+can call into the bound Ada library across the C ABI through the Java Native
+Interface (JNI).
+
 Using the tool
 --------------
 

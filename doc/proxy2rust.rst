@@ -4,6 +4,9 @@
 Proxy2Rust
 **********
 
+Consumes the proxy IR and generates idiomatic Rust bindings, so that Rust code
+can call into the bound Ada library across the C ABI.
+
 .. warning::
 
    The Rust backend is **experimental**. It covers a subset of the proxy IR
