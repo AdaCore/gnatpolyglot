@@ -67,28 +67,28 @@ public class JavaAPI extends LanguageAPI {
 
     /** Return the string of the base package ({groupId}.lib{projectName}). */
     public String basePackage() {
-        return groupId.join((n) -> n.getLastName().toLower(), "", ".", "");
+        return groupId.join((n) -> toJavaLower(n.getLastName()), "", ".", "");
     }
 
     /** Return the string of the package for the given module. */
     public String packagePath(Module module) {
-        return groupId.append(module.name).join((n) -> n.getLastName().toLower(), "", ".", "");
+        return groupId.append(module.name).join((n) -> toJavaLower(n.getLastName()), "", ".", "");
     }
 
     /** Return the string of the package for the given class. */
     public String packagePath(FullyQualifiedName className) {
         return groupId.append(className.getParentFullyQualifiedName())
-                .join((n) -> n.getLastName().toLower(), "", ".", "");
+                .join((n) -> toJavaLower(n.getLastName()), "", ".", "");
     }
 
     /** Return the path of the file to generate for a module. */
     public Path filepath(Module module) {
         Path p = Path.of(".");
         for (var n : groupId.names) {
-            p = p.resolve(n.toLower());
+            p = p.resolve(toJavaLower(n));
         }
         for (var n : module.name.names) {
-            p = p.resolve(n.toLower());
+            p = p.resolve(toJavaLower(n));
         }
         return p.resolve(module.name.getLastName().toPascal().concat("Package.java"));
     }
@@ -97,17 +97,50 @@ public class JavaAPI extends LanguageAPI {
     public Path filepath(FullyQualifiedName className) {
         Path p = Path.of(".");
         for (var n : groupId.names) {
-            p = p.resolve(n.toLower());
+            p = p.resolve(toJavaLower(n));
         }
         for (var n : className.getParentFullyQualifiedName().names) {
-            p = p.resolve(n.toLower());
+            p = p.resolve(toJavaLower(n));
         }
         return p.resolve(className.getLastName().toPascal().concat(".java"));
     }
 
+    /**
+     * Return the name formatted in Camel notation. If the result collides with a java keyword, an
+     * underscore is appended.
+     */
+    public String toJavaCamel(Name name) {
+        String camel = name.toCamel();
+        if (JavaReservedWords.KEYWORDS.contains(camel)) return camel + "_";
+        return camel;
+    }
+
+    /**
+     * Return the name formatted in Lower notation. If the result collides with a java keyword, an
+     * underscore is appended.
+     */
+    public String toJavaLower(Name name) {
+        String camel = name.toLower();
+        if (JavaReservedWords.KEYWORDS.contains(camel)) return camel + "_";
+        return camel;
+    }
+
+    /**
+     * Return the name to use for a function. If isMethod is true, also check against methods that
+     * come from the Java Object class.
+     */
+    public String functionName(Name name, boolean isMethod) {
+        String camel = name.toCamel();
+        if (JavaReservedWords.KEYWORDS.contains(camel)
+                || (isMethod && JavaReservedWords.RESERVED_METHODS.contains(camel))) {
+            return camel + "_";
+        }
+        return camel;
+    }
+
     /** Return the name of a java argument. */
     public String javaArgName(Name name) {
-        return name.toCamel();
+        return toJavaCamel(name);
     }
 
     /** Return the expected name of a converted java argument. */
@@ -235,7 +268,7 @@ public class JavaAPI extends LanguageAPI {
     public String jniName(FunctionDecl function) {
         StringBuilder builder = new StringBuilder("Java_");
         Function<FullyQualifiedName, String> mangle =
-                (n) -> n.getLastName().toLower().replace("_", "_1");
+                (n) -> toJavaLower(n.getLastName()).replace("_", "_1");
         if (function.role == null) {
             FullyQualifiedName parent = function.name.getParentFullyQualifiedName();
             builder.append(groupId.join(mangle, "", "_", "_"))
@@ -345,7 +378,7 @@ public class JavaAPI extends LanguageAPI {
                         .map(p -> javaValueName(p.name))
                         .toList();
         return new StringBuilder("_self.")
-                .append(JavaGenerator.makeCall(method.name.toCamel(), args))
+                .append(JavaGenerator.makeCall(functionName(method.name, true), args))
                 .toString();
     }
 
@@ -480,7 +513,7 @@ public class JavaAPI extends LanguageAPI {
         StringBuilder builder = new StringBuilder();
         builder.append(
                 functionDecl.type.parameters.stream()
-                        .map(p -> "%s %s".formatted(cTypename(p.type), p.name.toCamel()))
+                        .map(p -> "%s %s".formatted(cTypename(p.type), jniArgName(p.name)))
                         .collect(Collectors.joining(", ")));
         //  The C Symbol expects two additional hidden arguments:
         //  - The self argument of the class's raw pointer type.

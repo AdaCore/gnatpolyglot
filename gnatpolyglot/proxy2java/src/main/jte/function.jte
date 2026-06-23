@@ -13,11 +13,11 @@ Template file to generate a function.
 @param String functionName = null
 
 !{
-    functionName = functionName != null
-        ? functionName
-        : function.name.getLastName().toCamel();
     String nativeFunc = "$%s".formatted(function.symbol);
     boolean isMethod = api.isMethod(function);
+    functionName = functionName != null
+        ? functionName
+        : api.functionName(function.name.getLastName(), isMethod);
     boolean firstMethodParam = isMethod;
 }
 
