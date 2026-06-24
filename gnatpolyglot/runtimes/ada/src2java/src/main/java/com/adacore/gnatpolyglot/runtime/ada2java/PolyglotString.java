@@ -41,6 +41,10 @@ public class PolyglotString extends PolyglotObject implements CharSequence {
         _setData(data);
     }
 
+    public PolyglotString() {
+        this("");
+    }
+
     public int getBegin() {
         return _getData().begin;
     }

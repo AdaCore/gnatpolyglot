@@ -4,7 +4,4 @@ input_proxy: ../input/
 output_lang: java
 test_file: Main.java
 
-control:
-  - [SKIP, skip_internal, "Internal testsuite sources are not available"]
-
 output_lib_flags: [ "-XLIBRARY_KIND=relocatable", "-XLIBRARY_STANDALONE=standard"]
