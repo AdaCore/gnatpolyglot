@@ -22,6 +22,7 @@ import com.adacore.gnatpolyglot.proxy.VTableEntry;
 import com.adacore.gnatpolyglot.proxy2java.codegen.CGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.DispatchParameterConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.DispatchReturnConverter;
+import com.adacore.gnatpolyglot.proxy2java.codegen.JNITypeSignatureGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.JavaGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.ParameterConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.ReturnConverter;
@@ -41,6 +42,9 @@ public class JavaAPI extends LanguageAPI {
     private ProxyContext context;
 
     private TypenameGenerator typenameGenerator = new TypenameGenerator(this);
+
+    private JNITypeSignatureGenerator jniTypeSignatureGenerator =
+            new JNITypeSignatureGenerator(this);
 
     private ReturnConverter returnConverter = new ReturnConverter(this);
 
@@ -312,34 +316,7 @@ public class JavaAPI extends LanguageAPI {
     }
 
     private String jniTypeSignature(TypeExpr type, boolean isReturn) {
-        if (context.isNativeScalar(type)) {
-            TypeDecl decl = context.getTypeDecl(type.getName());
-            if (decl instanceof EnumerationDecl enumDecl)
-                decl = enumDecl.representationType().declaration;
-            NativeTypeDecl nativeDecl = (NativeTypeDecl) decl;
-            return switch (nativeDecl.nativeType) {
-                case VOID -> "V";
-                case BOOL -> "Z";
-                case CHAR -> "C";
-                case FLOAT32 -> "F";
-                case FLOAT64 -> "D";
-                case UINT8, SINT8 -> "B";
-                case UINT16, SINT16 -> "S";
-                case UINT32, SINT32 -> "I";
-                case UINT64, SINT64 -> "J";
-                default -> throw new UnsupportedOperationException("Unsupported native type");
-            };
-        }
-        if (context.isClassType(type.referencedType())) {
-            return jniTypeSignature(NativeType.UINT64.typeExpr, isReturn);
-        } else if (type.isPointer() && context.isClassType(type.pointedType())) {
-            return jniTypeSignature(NativeType.UINT64.typeExpr, isReturn);
-        } else if (type.isReference() && type.referencedType().isPointer()) {
-            return "L%s$Ref;".formatted(javaTypename(type.referencedType()).replace(".", "/"));
-        }
-        String javaNativeType =
-                isReturn ? javaNativeReturnTypename(type) : javaNativeTypename(type);
-        return "L%s;".formatted(javaNativeType.replace(".", "/"));
+        return jniTypeSignatureGenerator.jniTypeSignature(type, isReturn);
     }
 
     /** Create a call to the C symbol in the JNI layer. */
