@@ -11,7 +11,10 @@ import com.adacore.gnatpolyglot.proxy.TypeWorker;
 /**
  * Partial implementation of the TypeWorker interface for Rust. In Rust, char and bool are distinct
  * primitive types but follow the same code-generation structure as numeric types, so they delegate
- * to numberType by default. Strings and arrays are not yet supported.
+ * to numberType by default. A string is handled like an array of its characters by default (both
+ * cross the FFI boundary as the same {@code array_data} descriptor); workers whose safe-API
+ * representation differs for strings (PolyglotStr/PolyglotString vs PolyglotArray) override
+ * stringType.
  */
 public interface RustTypeWorker<T> extends TypeWorker<T> {
 
@@ -27,7 +30,7 @@ public interface RustTypeWorker<T> extends TypeWorker<T> {
 
     @Override
     default T stringType(TypeExpr type) {
-        throw new UnsupportedOperationException("String type not yet supported in proxy2rust");
+        return arrayType(type);
     }
 
     @Override

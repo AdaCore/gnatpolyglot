@@ -70,6 +70,28 @@ public class ReturnConverter {
             return owner == Owner.STATIC ? RustGenerator.manuallyDropNew(owned) : owned;
         }
 
+        /**
+         * Take ownership of a returned {@code array_data} (string or array) as {@code
+         * ownedTypePath} via {@code from_raw}. The path is the bare owning wrapper without generics
+         * ({@code PolyglotArray}'s element type is inferred from the wrapper's declared return
+         * type). When the library keeps ownership ({@code STATIC}) the value is wrapped so it is
+         * never freed.
+         */
+        private String wrapArrayData(String ownedTypePath) {
+            var owned = ownedTypePath + "::from_raw(" + rawCall + ")";
+            return owner == Owner.STATIC ? RustGenerator.manuallyDropNew(owned) : owned;
+        }
+
+        @Override
+        public String stringType(TypeExpr type) {
+            return wrapArrayData(RustGenerator.runtimePath("ada::strings::PolyglotString"));
+        }
+
+        @Override
+        public String arrayType(TypeExpr type) {
+            return wrapArrayData(RustGenerator.runtimePath("ada::arrays::PolyglotArray"));
+        }
+
         @Override
         public String pointerType(TypeExpr type) {
             throw new UnsupportedOperationException("Raw pointer return type not yet supported");

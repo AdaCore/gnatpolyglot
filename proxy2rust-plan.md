@@ -5,7 +5,13 @@ raw `ffi` module with `extern "C"` declarations + safe public API on top.
 
 **Status:** Phases 1–3 complete (Maven module skeleton, free functions, enumerations, non-virtual
 classes with constructors / getters / setters / methods / Drop / Clone).
-Phase 4 in progress: Deref chain for inheritance done (test 0007 passes); vtable/subclassing deferred.
+Phase 4: Deref chain for inheritance done (test 0007 passes); vtable/subclassing deferred.
+Phase 6 done: runtime crate `gnatpolyglot_runtime` with the shared `array_data` ABI, strings
+(`PolyglotString`/`PolyglotStr`, test 0006), and arrays (`PolyglotArray<T>` + `PolyglotArrayElement`
+trait) for both native integer elements (runtime impls for the 8 widths) and record elements
+(generated `impl PolyglotArrayElement` blocks in `arrays.rs` wiring the per-type accessor symbols
+the proxy emits).
+`setup` wiring + codegen dispatch in place; test 0005 passes for native and record arrays.
 
 ---
 
@@ -73,8 +79,8 @@ src/
 | `isConst` on first param | `&self` vs `&mut self` |
 | `PointerTypeExpr` (isNonNull) | `NonNull<T>` in FFI, `&mut T` in safe layer |
 | `PointerTypeExpr` (!isNonNull) | `Option<NonNull<T>>` |
-| `ArrayTypeExpr` | `AdaArray<T>` (runtime type) |
-| `STRING` native | `AdaString` / `&AdaStr` (runtime type) |
+| `ArrayTypeExpr` | `PolyglotArray<T>` (runtime type) |
+| `STRING` native | `PolyglotString` / `&PolyglotStr` (runtime type) |
 | `ExceptionDecl` | `enum Error` variant; functions return `Result<T, E>` |
 | `Owner::USER` return | wrapper struct calling free on `Drop` |
 | `Owner::LIBRARY` return | wrapper struct with no `Drop` |
@@ -82,16 +88,20 @@ src/
 
 ## Runtime crate
 
-New `runtimes/proxy2rust/` (Apache-2.0, mirrors `runtimes/proxy2java/`):
+`runtimes/ada/src2rust/` (Apache-2.0, crate `gnatpolyglot_runtime`; lives under the Ada runtime
+since it binds the Ada runtime's own FFI symbols). Support types are grouped by construct under an
+`ada::` module tree, mirroring the C++ `gnatpolyglot::ada::*` namespaces:
 
 ```
-runtimes/proxy2rust/
+runtimes/ada/src2rust/
 ├── Cargo.toml
 └── src/
-    ├── lib.rs
-    ├── string.rs    # AdaString / AdaStr wrapping polyglot_string
-    ├── array.rs     # AdaArray<T>
-    └── error.rs     # AdaException, thread-local error slot
+    ├── lib.rs           # pub mod ada;
+    └── ada/
+        ├── mod.rs       # pub mod arrays; pub mod strings;
+        ├── strings.rs   # PolyglotString / PolyglotStr over the shared array_data ABI
+        ├── arrays.rs    # ArrayData, PolyglotArray<T>, PolyglotArrayElement trait
+        └── error.rs     # exception type + thread-local error slot (phase 5, pending)
 ```
 
 ## Test infrastructure
@@ -112,7 +122,7 @@ location via `POLYGLOT_PROXY_LIB_DIR` / `POLYGLOT_PROXY_LIB_NAME` env vars read 
 | 3 | Structs (non-virtual classes) with constructors, methods, `Drop` | ✅ Done |
 | 4 | Inheritance (`Deref` chain), virtual classes + trait generation | 🔄 Deref done (0007 ✅); vtable/subclassing pending |
 | 5 | Exception → `Result` mapping | |
-| 6 | Runtime crate (`AdaString`, `AdaArray`), string + array types | |
+| 6 | Runtime crate (`PolyglotString`, `PolyglotArray`), string + array types | ✅ Strings (test 0006) + arrays (test 0005) — native and record element types |
 | 7 | Baselines for remaining existing `ada/` tests | |
 
 ## Open questions
@@ -120,7 +130,7 @@ location via `POLYGLOT_PROXY_LIB_DIR` / `POLYGLOT_PROXY_LIB_NAME` env vars read 
 1. **Trait vs. Deref for inheritance** — `Deref` is simpler to generate but produces
    `#[warn(deref_on_ref)]` noise; decide upfront before phase 4.
 2. **Cargo workspace vs. standalone crate** — Relevant if an Ada project has multiple libraries.
-3. **String representation** — Ada strings can contain null bytes; `AdaStr` may need to be
+3. **String representation** — Ada strings can contain null bytes; `PolyglotStr` may need to be
    `[u8]`-backed rather than `str`-backed.
 4. **Exception thread-local slot** — `std::thread_local!` needs care in `async` contexts;
    worth documenting as a limitation.
