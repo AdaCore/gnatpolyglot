@@ -80,6 +80,14 @@ In order to bind these library, 2 GPR projects files are generated:
 Generating Language specific interfaces
 ---------------------------------------
 
+From a single ``proxy.json``, GNATpolyglot can generate bindings for any of its
+supported target languages, independently and without re-running the frontend.
+A dedicated subcommand drives each backend:
+
+* ``proxy2cpp`` — C++ bindings.
+* ``proxy2java`` — Java bindings (via JNI).
+* ``proxy2rust`` — Rust bindings (**experimental**).
+
 Generating C++ interfaces
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -105,6 +113,53 @@ See the dedicated :ref:`proxy2cpp` chapter for more information on the subcomman
    2cpp/include/*.h
 
 Use your preferred build system to build these.
+
+See the dedicated :ref:`proxy2cpp` chapter for more information.
+
+Generating Java interfaces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: sh
+
+   $> gnatpolyglot proxy2java 2proxy/proxy.json -o ./2java
+
+The ``proxy2java`` subcommand generates a Maven project containing the Java
+bindings together with the JNI bridge that connects them to the proxy over the
+C ABI. Build the Java sources with Maven, then build the JNI layer with
+``gprbuild``:
+
+.. code:: sh
+
+   $> mvn package -f 2java/
+   $> gprbuild 2java/<proxy>_jni.gpr --gpr=2 \
+          -XOS=unix \
+          -XPROXY_LIB_LOCATION=<proxy-lib-dir> \
+          -XPROXY_LIB=<proxy-lib-name>
+
+See the dedicated :ref:`proxy2java` chapter for more information.
+
+Generating Rust interfaces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+   The Rust backend is experimental.
+
+.. code:: sh
+
+   $> gnatpolyglot proxy2rust 2proxy/proxy.json -o ./2rust
+
+The ``proxy2rust`` subcommand generates a Cargo crate. Its ``build.rs`` links
+the native proxy library, whose location and name are passed through
+environment variables:
+
+.. code:: sh
+
+   $> POLYGLOT_PROXY_LIB_DIR=<proxy-lib-dir> \
+      POLYGLOT_PROXY_LIB_NAME=<proxy-lib-name> \
+      cargo build --manifest-path 2rust/Cargo.toml
+
+See the dedicated :ref:`proxy2rust` chapter for more information.
 
 Example: Generating Ada to C++ bindings
 ---------------------------------------

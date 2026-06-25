@@ -1,5 +1,10 @@
 Welcome to GNATpolyglot's documentation!
-====================================
+========================================
+
+.. note::
+
+   GNATpolyglot is currently in **beta**: its behavior and generated output are
+   still subject to change.
 
 .. toctree::
    :maxdepth: 3
@@ -7,8 +12,10 @@ Welcome to GNATpolyglot's documentation!
 
    usage
    ada2proxy
-   proxy2cpp
    call_convention
+   proxy2cpp
+   proxy2java
+   proxy2rust
    limitations
 
 Indices and tables

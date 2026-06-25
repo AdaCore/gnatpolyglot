@@ -4,6 +4,9 @@
 Proxy2Cpp
 *********
 
+Consumes the proxy IR and generates idiomatic C++ bindings, so that C++ code
+can call into the bound library across the C ABI.
+
 Using the tool
 --------------
 
@@ -201,7 +204,7 @@ expect a ``T*``. This argument expects the ``this`` value.
    // example.h
 
    class Foo {
-      // Normal constructor: creates an `Example.Foo` ada object.
+      // Normal constructor: creates an `Example.Foo` object in the bound library.
       Foo();
 
       // Shadow constructor
@@ -301,7 +304,7 @@ values, since cloned before by the proxy before returning, will be owned
 by the user.
 
 GNATpolyglot pointers
------------------
+---------------------
 
 Pointer types are represented using a ref-counted smart pointer
 (``polyglot_ptr``) in order to avoid manual memory management. 
@@ -368,7 +371,7 @@ inadvertently which could leave a dangling pointer.
            ptr.set_owner(gnatpolyglot::memory_owner::LIBRARY);
            example::set(ptr);
            example::inc();
-           // The managed C++ object of `ptr` is freed, but its underlying Ada
+           // The managed C++ object of `ptr` is freed, but its underlying
            // data is not because it is owned by the library.
        }
        // We can keep calling `Example.Inc`

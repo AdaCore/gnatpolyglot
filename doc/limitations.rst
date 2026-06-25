@@ -1,3 +1,5 @@
+.. _limitations:
+
 ***********
 Limitations
 ***********
@@ -29,10 +31,11 @@ Access to scalar types are not supported.
 
    type Unsupported is access all Integer;
 
-Access to subprograms
-^^^^^^^^^^^^^^^^^^^^^
+Access to subprograms (callbacks)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Access to subprogram types are not supported.
+Access-to-subprogram types are not supported, so passing a callback or
+function pointer across the binding is not possible.
 
 .. code:: ada
 
@@ -242,6 +245,30 @@ Generic declarations cannot be bound and will be ignored.
       end Gen;
    end Example;
 
+Generic instantiations
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Instantiated generic packages are not yet supported.
+
+.. code:: ada
+
+   generic
+   package Gen is
+   end Gen;
+
+   with Gen;
+   package Unsupported is new Gen;
+
+Ghost code
+~~~~~~~~~~
+
+Declarations marked with the ``Ghost`` aspect are not bindable and will be
+ignored.
+
+.. code:: ada
+
+   procedure Unsupported with Ghost;
+
 Inheritable types
 ~~~~~~~~~~~~~~~~~
 
@@ -292,6 +319,17 @@ Interfaces are not supported.
 
    type Unsupported is interface;
 
+Intrinsic subprograms
+~~~~~~~~~~~~~~~~~~~~~~
+
+Subprograms imported as intrinsics (``pragma Import (Intrinsic, ...)``) are
+not bindable.
+
+.. code:: ada
+
+   function Unsupported (L, R : Integer) return Integer;
+   pragma Import (Intrinsic, Unsupported);
+
 Limited Types
 ~~~~~~~~~~~~~
 
@@ -341,6 +379,31 @@ supported.
 
    package Example.Supported is
    end Example.Supported;
+
+Class-wide contracts on abstract primitives
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Primitives of an abstract type that carry a class-wide dynamic contract
+(``Pre'Class`` or ``Post'Class``) are not bindable.
+
+.. code:: ada
+
+   type Unsupported is abstract tagged null record;
+
+   procedure P (Obj : Unsupported) is abstract
+   with Pre'Class => True;
+
+Unimplemented units
+~~~~~~~~~~~~~~~~~~~~
+
+Packages marked with the ``Unimplemented_Unit`` aspect cannot be bound. Any
+child unit whose parent package is unimplemented is dropped as well.
+
+.. code:: ada
+
+   package Unsupported is
+   end Unsupported
+   with Unimplemented_Unit;
 
 Wide characters
 ~~~~~~~~~~~~~~~
@@ -439,10 +502,68 @@ member:
        Child(const Child &other, void *data) : Root(data) { }
    }
 
+References to pointers
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Returning a reference to a pointer is not supported.
+
 Proxy2Java
----------
+----------
 
 Supported platforms
 ~~~~~~~~~~~~~~~~~~~
 
 Currently, only 64bit Linux and Windows platforms are supported by Proxy2Java.
+
+Operator overloading
+~~~~~~~~~~~~~~~~~~~~~
+
+Java does not support operator overloading. Subprograms bound as operators keep
+their placeholder name (e.g. ``operatorPlus``) in the generated interface.
+
+Pointer types
+~~~~~~~~~~~~~
+
+Pointers to arrays and classes are supported in input positions.
+Pointers to arrays and non-inheritable classes are supported in output positions.
+
+Proxy2Rust
+----------
+
+.. warning::
+
+   The Rust backend is experimental. The list below reflects its current
+   coverage and is expected to shrink as the backend matures.
+
+Arrays and strings
+~~~~~~~~~~~~~~~~~~
+
+Arrays and strings are not yet supported: the supporting Rust runtime crate
+is not provided yet.
+
+Exceptions
+~~~~~~~~~~
+
+Exceptions are not yet bound. There is no mapping from Ada exceptions to a Rust
+``Result`` (or any other error-reporting mechanism) yet.
+
+Virtual inheritance
+~~~~~~~~~~~~~~~~~~~
+
+Virtual types and dynamic dispatch back into Rust are not generated. Only
+non-virtual inheritance (exposed through ``Deref``/``DerefMut`` coercion) is
+supported.
+
+Pointers
+~~~~~~~~
+
+Access values are not exposed as safe Rust wrappers; pointers only appear as
+raw ``*mut``/``*const c_void`` in the internal ``ffi`` layer.
+
+Operators
+~~~~~~~~~
+
+Operators are not mapped to Rust operator traits. Like any other subprogram,
+they are emitted as plain functions or methods keeping their placeholder name
+(e.g. ``operator_plus``). Separately, because Rust has no function overloading,
+overloaded subprograms are disambiguated with ``_1``, ``_2`` … suffixes.
