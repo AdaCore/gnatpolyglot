@@ -68,6 +68,15 @@ public abstract class PolyglotData {
         public long getAddress() {
             return addr;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj instanceof Pointer ptr)
+                return this.addr == ptr.addr;
+            return false;
+        }
     }
 
     /** Return the address of the allocated data. */

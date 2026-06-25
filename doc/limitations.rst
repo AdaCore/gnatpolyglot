@@ -31,6 +31,19 @@ Access to scalar types are not supported.
 
    type Unsupported is access all Integer;
 
+Access to tagged types
+^^^^^^^^^^^^^^^^^^^^^^
+
+Returning access to tagged types is not supported.
+
+.. code:: ada
+
+   type T is tagged private;
+   type T_A is access all T;
+
+   procedure Unsupported (V : in out T_A);
+   function Unsupported return T_A;
+
 Access to subprograms (callbacks)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

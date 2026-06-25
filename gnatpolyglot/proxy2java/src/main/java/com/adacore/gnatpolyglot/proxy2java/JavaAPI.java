@@ -15,6 +15,7 @@ import com.adacore.gnatpolyglot.proxy.Owner;
 import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.Role.RoleKind;
+import com.adacore.gnatpolyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.gnatpolyglot.proxy.TypeDecl;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy.VTableEntry;
@@ -58,6 +59,10 @@ public class JavaAPI extends LanguageAPI {
 
     public ProxyContext getContext() {
         return context;
+    }
+
+    public Name getProjectName() {
+        return projectName;
     }
 
     /** Return the string of the base package ({groupId}.lib{projectName}). */
@@ -190,7 +195,9 @@ public class JavaAPI extends LanguageAPI {
 
     /** Return the Java name of a type when it's used as a return type. */
     public String javaReturnTypename(TypeExpr type) {
-        return typenameGenerator.javaTypename(type.referencedType());
+        String typename = typenameGenerator.javaTypename(type.referencedType());
+        if (type.isPointer()) typename = "java.util.Optional<" + typename + ">";
+        return typename;
     }
 
     /** Return the native Java name of a type. */
@@ -292,6 +299,10 @@ public class JavaAPI extends LanguageAPI {
         }
         if (context.isClassType(type.referencedType())) {
             return jniTypeSignature(NativeType.UINT64.typeExpr, isReturn);
+        } else if (type.isPointer() && context.isClassType(type.pointedType())) {
+            return jniTypeSignature(NativeType.UINT64.typeExpr, isReturn);
+        } else if (type.isReference() && type.referencedType().isPointer()) {
+            return "L%s$Ref;".formatted(javaTypename(type.referencedType()).replace(".", "/"));
         }
         String javaNativeType =
                 isReturn ? javaNativeReturnTypename(type) : javaNativeTypename(type);
@@ -496,8 +507,17 @@ public class JavaAPI extends LanguageAPI {
         return parameterConverter.jniParam(param);
     }
 
+    /** Create the string to convert the JNI parameter for calling the C symbol. */
+    public String makeJNIParamUpdate(Parameter param) {
+        return parameterConverter.jniParamUpdate(param);
+    }
+
     public String makeJNIDispatchParamConversion(Parameter param) {
         return dispatchParameterConverter.jniParam(param);
+    }
+
+    public String makeJNIDispatchParamUpdate(Parameter param) {
+        return dispatchParameterConverter.jniParamUpdate(param);
     }
 
     /** Return whether a function is a class method. */
@@ -536,6 +556,15 @@ public class JavaAPI extends LanguageAPI {
     public String javaOwner(Owner returnOwner) {
         return "com.adacore.gnatpolyglot.runtime.PolyglotData.Owner."
                 .concat(returnOwner.toString());
+    }
+
+    /** Return the name of the required data owner. */
+    public String javaOwner(RequiredOwner requiredOwner) {
+        return switch (requiredOwner) {
+            case LIBRARY -> javaOwner(Owner.LIBRARY);
+            case USER -> javaOwner(Owner.USER);
+            default -> "";
+        };
     }
 
     /** Return the name of the function to call to get the scalar reference jclass value. */
@@ -614,6 +643,10 @@ public class JavaAPI extends LanguageAPI {
                 || context.isStringType(returnedType)
                 || returnedType.isArray()) {
             return "CallStaticObjectMethod";
+        } else if (returnedType.isPointer()) {
+            if (context.isStringOrArray(returnedType.pointedType()))
+                return "CallStaticObjectMethod";
+            return "CallStaticLongMethod";
         }
         throw new UnsupportedOperationException("Unsupported type");
     }
@@ -673,5 +706,32 @@ public class JavaAPI extends LanguageAPI {
             default -> throw new UnsupportedOperationException(
                     "enumerations of type %d are not supported".formatted(nativeType));
         };
+    }
+
+    private String refFunctionName(TypeExpr typeExpr, String suffix) {
+        if (typeExpr.isArray() && context.isNativeScalar(typeExpr.elementType())) {
+            TypeDecl decl = context.getTypeDecl(typeExpr.getName());
+            if (decl instanceof NativeTypeDecl nativeDecl)
+                return ("gnatpolyglot_ada2java_%s_Ref_" + suffix)
+                        .formatted(TypenameGenerator.nativeArrayTypename(nativeDecl.nativeType));
+        } else if (context.isStringType(typeExpr)) {
+            return "gnatpolyglot_ada2java_PolyglotString_Ref_" + suffix;
+        }
+        FullyQualifiedName name =
+                typeExpr.isArray() ? typeExpr.elementType().getName() : typeExpr.getName();
+        return name.getParentFullyQualifiedName()
+                .join((n) -> n.getLastName().toLower(), "", "__", "_")
+                .concat(name.getLastName().toPascal())
+                .concat(typeExpr.isArray() ? "__Array" : "")
+                .concat("_Ref_")
+                .concat(suffix);
+    }
+
+    public String refClassFunctionName(TypeExpr typeExpr) {
+        return refFunctionName(typeExpr, "class");
+    }
+
+    public String refCtorFunctionName(TypeExpr typeExpr) {
+        return refFunctionName(typeExpr, "ctor");
     }
 }

@@ -97,6 +97,10 @@ struct ${className}_vtable ${className}_vtable;
             ${api.callJNIDispatch(method)};
         ${api.makeCDispatchReturnStatement(method, "valueReturned")}
     @endif
+
+    @for (var param : method.functionType.parameters.stream().skip(1).toList())
+        ${api.makeJNIDispatchParamUpdate(param)}
+    @endfor
     }
 
 @endfor

@@ -110,6 +110,10 @@ public class ProxyContext {
                 && nativeType.equals(NativeType.STRING.declaration);
     }
 
+    public boolean isStringOrArray(TypeExpr typeExpr) {
+        return typeExpr.isArray() || isStringType(typeExpr);
+    }
+
     public boolean isNativeScalar(TypeExpr typeExpr) {
         return typeExpr instanceof NameTypeExpr name
                 && (getTypeDecl(name.name) instanceof EnumerationDecl

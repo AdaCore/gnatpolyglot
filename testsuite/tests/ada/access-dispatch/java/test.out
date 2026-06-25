@@ -1,0 +1,37 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Java got: 42
+Ada_Got :  40
+40
+Java got: {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, }
+Ada_Got :  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20, 
+10 .. 20 = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, }
+
+Java got: 42
+Ada_Got :  100
+100
+Java got: {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, }
+Ada_Got :  10 ..  20 =  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20, 
+10 .. 20 = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, }
+
+Java got: begin
+Ada_Got : From Java
+Got from Ada: From Java
+Java got: begin
+Ada_Got : From Java
+Got from Ada: From Java
+
+Ada_Got : null
+Ada_Got : null
+Ada_Got : null
+Ada_Got : null
+Ada_Got : null
+Ada_Got : null
+
+Done.

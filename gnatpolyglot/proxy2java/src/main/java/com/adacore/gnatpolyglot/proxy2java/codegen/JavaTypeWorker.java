@@ -25,11 +25,6 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
         return arrayType(type);
     }
 
-    @Override
-    default T pointerType(TypeExpr type) {
-        throw new UnsupportedOperationException("Unimplemented method 'pointerType'");
-    }
-
     public interface JavaSubreferenceTypeWorker<T> extends TypeWorker.SubreferenceTypeWorker<T> {
 
         @Override
@@ -40,11 +35,6 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
         @Override
         default T stringType(TypeExpr type) {
             return arrayType(type);
-        }
-
-        @Override
-        default T pointerType(TypeExpr type) {
-            throw new UnsupportedOperationException("Unimplemented method 'pointerType'");
         }
     }
 }

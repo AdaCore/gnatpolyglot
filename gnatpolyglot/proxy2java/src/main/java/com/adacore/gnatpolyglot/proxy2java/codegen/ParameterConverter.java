@@ -2,6 +2,7 @@ package com.adacore.gnatpolyglot.proxy2java.codegen;
 
 import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
+import com.adacore.gnatpolyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
 import java.util.List;
@@ -49,8 +50,7 @@ public class ParameterConverter {
                     .append(" ")
                     .append(valueName)
                     .append(" = ")
-                    .append(argName)
-                    .append(".getData().getAddress()")
+                    .append(JavaGenerator.makeGetAddress(argName))
                     .toString();
         }
 
@@ -98,6 +98,17 @@ public class ParameterConverter {
                 public String arrayType(TypeExpr type) {
                     return JavaParamWorker.this.arrayType(type);
                 }
+
+                @Override
+                public String pointerType(TypeExpr type) {
+                    return new StringBuilder(makeObjectOwnershipCheck(param, argName))
+                            .append(valueTypename)
+                            .append(" ")
+                            .append(valueName)
+                            .append(" = ")
+                            .append(argName)
+                            .toString();
+                }
             }.apply(type.referencedType());
         }
 
@@ -121,6 +132,22 @@ public class ParameterConverter {
                     .append(argName)
                     .append(".value")
                     .toString();
+        }
+
+        @Override
+        public String pointerType(TypeExpr type) {
+            StringBuilder builder =
+                    new StringBuilder(makeObjectOwnershipCheck(param, argName))
+                            .append(valueTypename)
+                            .append(" ")
+                            .append(valueName)
+                            .append(" = ");
+            if (getContext().isStringOrArray(type.pointedType())) {
+                builder.append(JavaGenerator.makeOptGetData(argName));
+            } else {
+                builder.append(JavaGenerator.makeOptGetAddress(argName));
+            }
+            return builder.toString();
         }
     }
 
@@ -175,7 +202,8 @@ public class ParameterConverter {
 
         @Override
         public String pointerType(TypeExpr type) {
-            if (type.pointedType().isArray()) return arrayType(type.pointedType());
+            if (getContext().isStringOrArray(type.pointedType()))
+                return arrayType(type.pointedType());
             return new StringBuilder(valueTypename)
                     .append(" ")
                     .append(valueName)
@@ -241,6 +269,57 @@ public class ParameterConverter {
                 public String arrayType(TypeExpr type) {
                     return JNIParamWorker.this.arrayType(type);
                 }
+
+                @Override
+                public String pointerType(TypeExpr type) {
+                    TypeExpr pointedType = type.pointedType();
+                    String dataName = api.makeTemp(param.name, "data");
+                    String bufferName = api.makeTemp(param.name, "buffer");
+                    String bufferTypename = api.cTypename(pointedType);
+                    CharSequence convertedData;
+                    if (getContext().isStringOrArray(pointedType)) {
+                        convertedData =
+                                CGenerator.makeCall(
+                                        "gnatpolyglot_proxy2java_to_array_data",
+                                        List.of("env", dataName));
+                    } else {
+                        convertedData =
+                                CGenerator.makeTernary(
+                                        dataName + " != NULL",
+                                        CGenerator.makeCast(
+                                                bufferTypename + "*",
+                                                CGenerator.makeJNICall(
+                                                        "CallLongMethod",
+                                                        "PolyglotData_getAddress_method(env)",
+                                                        List.of(dataName))),
+                                        "NULL");
+                    }
+                    // Get the PolyglotData of the referenced object.
+                    return new StringBuilder("jobject ")
+                            .append(dataName)
+                            .append(" = ")
+                            .append(
+                                    CGenerator.makeJNICall(
+                                            "CallObjectMethod",
+                                            "ObjectRef_getData_method(env)",
+                                            List.of(argName)))
+                            .append(";\n")
+                            // Create a buffer value holding the native data.
+                            .append(bufferTypename)
+                            .append(" ")
+                            .append(bufferName)
+                            .append(" = ")
+                            .append(convertedData)
+                            .append(";\n")
+                            // The value passed to the symbol is the address to the buffer.
+                            .append(valueTypename)
+                            .append(" ")
+                            .append(valueName)
+                            .append(" = ")
+                            .append("&")
+                            .append(bufferName)
+                            .toString();
+                }
             }.apply(refType.referencedType());
         }
 
@@ -281,5 +360,56 @@ public class ParameterConverter {
     /** Create the conversion of a JNI parameter in the C layer. */
     public String jniParam(Parameter param) {
         return new JNIParamWorker(param).apply(param.type);
+    }
+
+    /** Create the conversion of a JNI parameter in the C layer. */
+    public String makeObjectOwnershipCheck(Parameter param, String argName) {
+        if (param.transfer.required_owner == RequiredOwner.ANY) return "";
+
+        String nullCheck;
+        String getOwner;
+        if (param.type.isReference()) {
+            nullCheck = argName + ".get().isPresent()";
+            getOwner = argName + ".get().get().getOwner()";
+        } else {
+            nullCheck = argName + " != null";
+            getOwner = argName + ".getOwner()";
+        }
+        String owner = api.javaOwner(param.transfer.required_owner);
+        return new StringBuilder("if (")
+                .append(nullCheck)
+                .append("&& ")
+                .append(JavaGenerator.makeMethodCall(owner, "compareTo", List.of(getOwner)))
+                .append(" > 0)\n")
+                .append("throw ")
+                .append(
+                        JavaGenerator.makeNew(
+                                "IllegalArgumentException",
+                                List.of("\"" + argName + ": owner should be \" + " + owner)))
+                .append(";\n")
+                .toString();
+    }
+
+    public String jniParamUpdate(Parameter param) {
+        if (!param.type.isReference()
+                || !param.type.referencedType().isPointer()
+                || (param.type.isReference() && param.type.isConst())) return "";
+        String jobjectConverter =
+                api.getContext().isStringOrArray(param.type.referencedType().pointedType())
+                        ? "gnatpolyglot_proxy2java_to_ArrayData"
+                        : "gnatpolyglot_proxy2java_to_Pointer";
+        // Convert the native data to the corresponding PolyglotData and call the update method
+        // of ObjectRef.
+        return CGenerator.makeJNICall(
+                        "CallVoidMethod",
+                        "ObjectRef_update_method(env)",
+                        List.of(
+                                api.jniArgName(param.name),
+                                CGenerator.makeCall(
+                                        jobjectConverter,
+                                        List.of(
+                                                "env",
+                                                CGenerator.deref(api.jniValueName(param.name))))))
+                .toString();
     }
 }

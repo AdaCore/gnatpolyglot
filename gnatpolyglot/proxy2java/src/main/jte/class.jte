@@ -244,6 +244,48 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
          return !this.getClass().equals(${className}.class);
     }
 
+    <%-- (eng/libadalang/gnatpolyglot#31):
+      -- References to non-final types are not yet supported
+      --%>
+    @if(classDecl.inheritability == Inheritability.FINAL)
+    public static final class Ref extends
+            com.adacore.gnatpolyglot.runtime.ObjectRef<${className}> {
+
+        public Ref(${className} obj) {
+            super(obj);
+        }
+
+        private Ref(long addr) {
+            super(
+                addr == 0L
+                    ? null
+                    : new ${className}(
+                        new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(
+                            addr, com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.LIBRARY
+                        )
+                    )
+            );
+        }
+
+        @Override
+        protected void update(com.adacore.gnatpolyglot.runtime.PolyglotData data) {
+            com.adacore.gnatpolyglot.runtime.PolyglotData oldData =
+                get().map(o -> o.getData()).orElse(null);
+            if (!java.util.Objects.deepEquals(data, oldData)) {
+                if (data == null) {
+                    this.obj = null;
+                } else {
+                    data.setOwner(com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.LIBRARY);
+                    this.obj = new ${className}(
+                        (com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer) data
+                    );
+                }
+            }
+        }
+
+    }
+    @endif
+
     static {
         ${api.basePackage()}.Library.loadLibrary();
     }

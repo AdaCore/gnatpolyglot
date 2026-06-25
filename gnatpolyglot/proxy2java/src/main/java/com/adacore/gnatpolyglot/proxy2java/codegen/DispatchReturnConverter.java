@@ -35,9 +35,7 @@ public class DispatchReturnConverter {
         @Override
         public String arrayType(TypeExpr type) {
             return new StringBuilder("return ")
-                    .append(returnedValue)
-                    .append(".")
-                    .append(JavaGenerator.makeCall("release", List.of()))
+                    .append(JavaGenerator.makeMethodCall(returnedValue, "release", List.of()))
                     .append(";")
                     .toString();
         }
@@ -45,10 +43,12 @@ public class DispatchReturnConverter {
         @Override
         public String classType(TypeExpr type) {
             return new StringBuilder("return ")
-                    .append(returnedValue)
-                    .append(".")
-                    .append(JavaGenerator.makeCall("release", List.of()))
-                    .append(".getAddress()")
+                    .append(
+                            JavaGenerator.makeMethodCall(
+                                    JavaGenerator.makeMethodCall(
+                                            returnedValue, "release", List.of()),
+                                    "getAddress",
+                                    List.of()))
                     .append(";")
                     .toString();
         }
@@ -67,6 +67,19 @@ public class DispatchReturnConverter {
         @Override
         public String enumType(TypeExpr type) {
             return new StringBuilder("return ").append(returnedValue).append(".value;").toString();
+        }
+
+        @Override
+        public String pointerType(TypeExpr type) {
+            boolean isArray = getContext().isStringOrArray(type.pointedType());
+            String lambda = "$value -> $value.getData()".concat(isArray ? "" : ".getAddress()");
+            String defaultValue = isArray ? "null" : "0L";
+            return new StringBuilder("return ")
+                    .append(JavaGenerator.makeMethodCall(returnedValue, "map", List.of(lambda)))
+                    .append(".orElse(")
+                    .append(defaultValue)
+                    .append(");")
+                    .toString();
         }
     }
 
@@ -111,6 +124,12 @@ public class DispatchReturnConverter {
         @Override
         public String enumType(TypeExpr type) {
             return "return 0;";
+        }
+
+        @Override
+        public String pointerType(TypeExpr type) {
+            if (getContext().isStringOrArray(type.pointedType())) return "return null;";
+            return "return 0L;";
         }
     }
 
@@ -179,6 +198,20 @@ public class DispatchReturnConverter {
         public String refType(TypeExpr type) {
             throw new UnsupportedOperationException(
                     "Unreachable: returning references in dispatch is not permitted");
+        }
+
+        @Override
+        public String pointerType(TypeExpr type) {
+            StringBuilder builder = new StringBuilder("return ");
+            if (getContext().isStringOrArray(type.pointedType())) {
+                builder.append(
+                        CGenerator.makeCall(
+                                "gnatpolyglot_proxy2java_to_array_data",
+                                List.of("env", returnedValue)));
+            } else {
+                builder.append(CGenerator.makeCast(cReturnType, returnedValue));
+            }
+            return builder.append(";").toString();
         }
     }
 

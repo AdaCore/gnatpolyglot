@@ -28,4 +28,20 @@ jmethodID PolyglotObject_internal_release_method(JNIEnv *env);
 
 jmethodID PolyglotObject_internal_clone_method(JNIEnv *env);
 
+jclass PolyglotData_class(JNIEnv *env);
+
+jmethodID PolyglotData_getAddress_method(JNIEnv *env);
+
+jclass PolyglotData_Pointer_class(JNIEnv *env);
+
+jmethodID PolyglotData_Pointer_ctor(JNIEnv *env);
+
+jobject gnatpolyglot_proxy2java_to_Pointer(JNIEnv *env, void *);
+
+jclass ObjectRef_class(JNIEnv *env);
+
+jmethodID ObjectRef_update_method(JNIEnv *env);
+
+jmethodID ObjectRef_getData_method(JNIEnv *env);
+
 #endif /* ! GNATPOLYGLOT_PROXY2JAVA_H */

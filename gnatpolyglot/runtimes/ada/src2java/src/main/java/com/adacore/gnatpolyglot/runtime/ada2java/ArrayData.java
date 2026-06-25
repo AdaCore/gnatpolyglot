@@ -32,4 +32,15 @@ public class ArrayData extends PolyglotData {
     public long getAddress() {
         return addr;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj instanceof ArrayData data)
+            return this.begin == data.begin
+                && this.end == data.end
+                && this.addr == data.addr;
+        return false;
+    }
 }

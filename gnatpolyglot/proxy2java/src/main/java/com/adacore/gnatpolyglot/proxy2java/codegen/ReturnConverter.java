@@ -87,12 +87,10 @@ public class ReturnConverter {
         public String arrayType(TypeExpr type) {
             // The JNI layer does not set the owner of the data in order to offload as much of the
             // work to the Java world, so we must set it here.
-            return new StringBuilder(returnedValue)
-                    .append(".")
-                    .append(
-                            JavaGenerator.makeCall(
-                                    "setOwner",
-                                    List.of(api.javaOwner(functionDecl.type.returnOwner))))
+            return JavaGenerator.makeMethodCall(
+                            returnedValue,
+                            "setOwner",
+                            List.of(api.javaOwner(functionDecl.type.returnOwner)))
                     .append(";\n")
                     .append("return ")
                     .append(JavaGenerator.makeNew(api.javaTypename(type), List.of(returnedValue)))
@@ -103,9 +101,54 @@ public class ReturnConverter {
         @Override
         public String enumType(TypeExpr type) {
             return new StringBuilder("return ")
-                    .append(javaReturnType)
-                    .append(".fromValue.")
-                    .append(JavaGenerator.makeCall("get", List.of(returnedValue)))
+                    .append(
+                            JavaGenerator.makeMethodCall(
+                                    javaReturnType + ".fromValue", "get", List.of(returnedValue)))
+                    .append(";")
+                    .toString();
+        }
+
+        @Override
+        public String pointerType(TypeExpr type) {
+            StringBuilder builder = new StringBuilder();
+            CharSequence pointerData;
+            String nullData;
+            if (getContext().isStringOrArray(type.pointedType())) {
+                pointerData = returnedValue;
+                nullData = "null";
+                // In the case of arrays, also set the data owner of the data, if any. The
+                // ArrayData is created in the JNI layer without setting an owner.
+                builder.append("if (")
+                        .append(returnedValue)
+                        .append(" != null) ")
+                        .append(
+                                JavaGenerator.makeMethodCall(
+                                        returnedValue,
+                                        "setOwner",
+                                        List.of(api.javaOwner(functionDecl.type.returnOwner))))
+                        .append(";\n");
+            } else {
+                nullData = "0L";
+                pointerData =
+                        JavaGenerator.makeNew(
+                                "com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer",
+                                List.of(
+                                        returnedValue,
+                                        api.javaOwner(functionDecl.type.returnOwner)));
+            }
+
+            // Create an Optional that contain the possibly null object.
+            return builder.append("return ")
+                    .append(
+                            JavaGenerator.makeCall(
+                                    "java.util.Optional.ofNullable",
+                                    List.of(
+                                            JavaGenerator.makeTernary(
+                                                    returnedValue + " == " + nullData,
+                                                    "null",
+                                                    JavaGenerator.makeNew(
+                                                            api.javaTypename(type.pointedType()),
+                                                            List.of(pointerData))))))
                     .append(";")
                     .toString();
         }
@@ -197,6 +240,12 @@ public class ReturnConverter {
                 public String arrayType(TypeExpr type) {
                     return CReturnWorker.this.arrayType(type);
                 }
+
+                @Override
+                public String pointerType(TypeExpr type) {
+                    throw new UnsupportedOperationException(
+                            "References to pointers are not supported");
+                }
             }.apply(type.referencedType());
         }
 
@@ -214,6 +263,11 @@ public class ReturnConverter {
                     .append(CGenerator.makeCast(jniReturnType, returnedValue))
                     .append(";")
                     .toString();
+        }
+
+        @Override
+        public String pointerType(TypeExpr type) {
+            return apply(type.pointedType());
         }
     }
 

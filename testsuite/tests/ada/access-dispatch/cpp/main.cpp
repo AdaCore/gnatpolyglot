@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 
 #include "gnatpolyglot_ada_arrays.h"
 #include "gnatpolyglot_ada_strings.h"
@@ -126,10 +127,33 @@ void strings() {
     ptr2.reset();
 }
 
+class Nulls : public test::Root {
+public:
+    Nulls() : Root(this) {}
+};
+
+void nulls() {
+    Nulls n;
+    gnatpolyglot::polyglot_ptr<test::Rec> rPtr(nullptr);
+    gnatpolyglot::polyglot_ptr<polyglot_array<int>> aPtr(nullptr);
+    gnatpolyglot::polyglot_ptr<polyglot_string> sPtr(nullptr);
+    assert(test::call_root_rec(n, rPtr).get() == nullptr);
+    assert(test::call_root_arr(n, aPtr).get() == nullptr);
+    assert(test::call_root_str(n, sPtr).get() == nullptr);
+    test::call_root_rec_p(n, rPtr);
+    test::call_root_arr_p(n, aPtr);
+    test::call_root_str_p(n, sPtr);
+    assert(rPtr.get() == nullptr);
+    assert(aPtr.get() == nullptr);
+    assert(sPtr.get() == nullptr);
+}
+
 int main() {
     dynamic_dispatch();
     std::cout << "\n";
     in_out();
     std::cout << "\n";
     strings();
+    std::cout << "\n";
+    nulls();
 }

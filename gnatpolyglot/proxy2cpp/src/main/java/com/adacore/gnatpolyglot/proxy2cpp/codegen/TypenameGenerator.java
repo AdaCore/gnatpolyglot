@@ -152,7 +152,7 @@ public class TypenameGenerator {
         @Override
         public String pointerType(TypeExpr type) {
             StringBuilder builder = new StringBuilder(constness(type));
-            if (api.isStringOrArray(type.pointedType()))
+            if (getContext().isStringOrArray(type.pointedType()))
                 builder.append(cTypename(type.pointedType()));
             else builder.append("gnatpolyglot::data*");
             return builder.toString();
@@ -219,7 +219,7 @@ public class TypenameGenerator {
                 @Override
                 public String pointerType(TypeExpr type) {
                     if (refType.isConst()) return cTypename(type);
-                    else if (api.isStringOrArray(type.pointedType()))
+                    else if (getContext().isStringOrArray(type.pointedType()))
                         return constness(refType).concat("void *");
                     else return constness(refType).concat("gnatpolyglot::data **");
                 }

@@ -221,7 +221,12 @@ public class ShadowReturnConverter {
 
         @Override
         public String arrayAccessType(Libadalang.BaseTypeDecl type) {
-            return common().append(RETURNED_ACCESS).append(".all'Unchecked_Access").toString();
+            return common().append(
+                            AdaGenerator.makeConditionalExpr(
+                                    RETURNED_ACCESS + " = null",
+                                    "null",
+                                    RETURNED_ACCESS.concat(".all'Unchecked_Access")))
+                    .toString();
         }
 
         @Override

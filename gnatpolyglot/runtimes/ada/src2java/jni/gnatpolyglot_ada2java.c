@@ -55,6 +55,13 @@ jfieldID gnatpolyglot_proxy2java_ArrayData_end(JNIEnv *env) {
 }
 
 struct array_data gnatpolyglot_proxy2java_to_array_data(JNIEnv *env, jobject o) {
+    if (o == NULL) {
+        return (struct array_data) {
+            .begin = 0,
+            .end = -1,
+            .data = NULL,
+        };
+    }
     jlong addr = (*env)->GetLongField(
         env, o, gnatpolyglot_proxy2java_ArrayData_addr(env)
     );
@@ -72,6 +79,8 @@ struct array_data gnatpolyglot_proxy2java_to_array_data(JNIEnv *env, jobject o) 
 }
 
 jobject gnatpolyglot_proxy2java_to_ArrayData(JNIEnv *env, struct array_data data) {
+    if (data.data == NULL)
+        return NULL;
     jclass clazz = gnatpolyglot_proxy2java_ArrayData_class(env);
     jmethodID ctor = gnatpolyglot_proxy2java_ArrayData_ctor(env);
     return (*env)->NewObject(
@@ -82,4 +91,233 @@ jobject gnatpolyglot_proxy2java_to_ArrayData(JNIEnv *env, struct array_data data
         (jint) data.end,
         (jlong) data.data
     );
+}
+
+/////////////////////////////
+// Native Array References //
+/////////////////////////////
+
+jclass gnatpolyglot_ada2java_BooleanArray_Ref_class(JNIEnv *env) {
+    static jclass c = NULL;
+    if (c == NULL) {
+        c = (*env)->NewGlobalRef(
+            env,
+            (*env)->FindClass(
+                env,
+                "com/adacore/gnatpolyglot/runtime/ada2java/BooleanArray$Ref"
+            )
+        );
+    }
+    return c;
+}
+
+jmethodID gnatpolyglot_ada2java_BooleanArray_Ref_ctor(JNIEnv *env) {
+    static jmethodID m = NULL;
+    if (m == NULL) {
+        jclass clazz = gnatpolyglot_ada2java_BooleanArray_Ref_class(env);
+        m = (*env)->GetMethodID(
+            env, clazz, "<init>",
+            "(Lcom/adacore/gnatpolyglot/runtime/ada2java/ArrayData;)V");
+    }
+    return m;
+}
+
+jclass gnatpolyglot_ada2java_CharacterArray_Ref_class(JNIEnv *env) {
+    static jclass c = NULL;
+    if (c == NULL) {
+        c = (*env)->NewGlobalRef(
+            env,
+            (*env)->FindClass(
+                env,
+                "com/adacore/gnatpolyglot/runtime/ada2java/CharacterArray$Ref"
+            )
+        );
+    }
+    return c;
+}
+
+jmethodID gnatpolyglot_ada2java_CharacterArray_Ref_ctor(JNIEnv *env) {
+    static jmethodID m = NULL;
+    if (m == NULL) {
+        jclass clazz = gnatpolyglot_ada2java_CharacterArray_Ref_class(env);
+        m = (*env)->GetMethodID(
+            env, clazz, "<init>",
+            "(Lcom/adacore/gnatpolyglot/runtime/ada2java/ArrayData;)V");
+    }
+    return m;
+}
+
+jclass gnatpolyglot_ada2java_ByteArray_Ref_class(JNIEnv *env) {
+    static jclass c = NULL;
+    if (c == NULL) {
+        c = (*env)->NewGlobalRef(
+            env,
+            (*env)->FindClass(
+                env,
+                "com/adacore/gnatpolyglot/runtime/ada2java/ByteArray$Ref"
+            )
+        );
+    }
+    return c;
+}
+
+jmethodID gnatpolyglot_ada2java_ByteArray_Ref_ctor(JNIEnv *env) {
+    static jmethodID m = NULL;
+    if (m == NULL) {
+        jclass clazz = gnatpolyglot_ada2java_ByteArray_Ref_class(env);
+        m = (*env)->GetMethodID(
+            env, clazz, "<init>",
+            "(Lcom/adacore/gnatpolyglot/runtime/ada2java/ArrayData;)V");
+    }
+    return m;
+}
+
+jclass gnatpolyglot_ada2java_ShortArray_Ref_class(JNIEnv *env) {
+    static jclass c = NULL;
+    if (c == NULL) {
+        c = (*env)->NewGlobalRef(
+            env,
+            (*env)->FindClass(
+                env,
+                "com/adacore/gnatpolyglot/runtime/ada2java/ShortArray$Ref"
+            )
+        );
+    }
+    return c;
+}
+
+jmethodID gnatpolyglot_ada2java_ShortArray_Ref_ctor(JNIEnv *env) {
+    static jmethodID m = NULL;
+    if (m == NULL) {
+        jclass clazz = gnatpolyglot_ada2java_ShortArray_Ref_class(env);
+        m = (*env)->GetMethodID(
+            env, clazz, "<init>",
+            "(Lcom/adacore/gnatpolyglot/runtime/ada2java/ArrayData;)V");
+    }
+    return m;
+}
+
+jclass gnatpolyglot_ada2java_IntegerArray_Ref_class(JNIEnv *env) {
+    static jclass c = NULL;
+    if (c == NULL) {
+        c = (*env)->NewGlobalRef(
+            env,
+            (*env)->FindClass(
+                env,
+                "com/adacore/gnatpolyglot/runtime/ada2java/IntegerArray$Ref"
+            )
+        );
+    }
+    return c;
+}
+
+jmethodID gnatpolyglot_ada2java_IntegerArray_Ref_ctor(JNIEnv *env) {
+    static jmethodID m = NULL;
+    if (m == NULL) {
+        jclass clazz = gnatpolyglot_ada2java_IntegerArray_Ref_class(env);
+        m = (*env)->GetMethodID(
+            env, clazz, "<init>",
+            "(Lcom/adacore/gnatpolyglot/runtime/ada2java/ArrayData;)V");
+    }
+    return m;
+}
+
+jclass gnatpolyglot_ada2java_LongArray_Ref_class(JNIEnv *env) {
+    static jclass c = NULL;
+    if (c == NULL) {
+        c = (*env)->NewGlobalRef(
+            env,
+            (*env)->FindClass(
+                env,
+                "com/adacore/gnatpolyglot/runtime/ada2java/LongArray$Ref"
+            )
+        );
+    }
+    return c;
+}
+
+jmethodID gnatpolyglot_ada2java_LongArray_Ref_ctor(JNIEnv *env) {
+    static jmethodID m = NULL;
+    if (m == NULL) {
+        jclass clazz = gnatpolyglot_ada2java_LongArray_Ref_class(env);
+        m = (*env)->GetMethodID(
+            env, clazz, "<init>",
+            "(Lcom/adacore/gnatpolyglot/runtime/ada2java/ArrayData;)V");
+    }
+    return m;
+}
+
+jclass gnatpolyglot_ada2java_FloatArray_Ref_class(JNIEnv *env) {
+    static jclass c = NULL;
+    if (c == NULL) {
+        c = (*env)->NewGlobalRef(
+            env,
+            (*env)->FindClass(
+                env,
+                "com/adacore/gnatpolyglot/runtime/ada2java/FloatArray$Ref"
+            )
+        );
+    }
+    return c;
+}
+
+jmethodID gnatpolyglot_ada2java_FloatArray_Ref_ctor(JNIEnv *env) {
+    static jmethodID m = NULL;
+    if (m == NULL) {
+        jclass clazz = gnatpolyglot_ada2java_FloatArray_Ref_class(env);
+        m = (*env)->GetMethodID(
+            env, clazz, "<init>",
+            "(Lcom/adacore/gnatpolyglot/runtime/ada2java/ArrayData;)V");
+    }
+    return m;
+}
+
+jclass gnatpolyglot_ada2java_DoubleArray_Ref_class(JNIEnv *env) {
+    static jclass c = NULL;
+    if (c == NULL) {
+        c = (*env)->NewGlobalRef(
+            env,
+            (*env)->FindClass(
+                env,
+                "com/adacore/gnatpolyglot/runtime/ada2java/DoubleArray$Ref"
+            )
+        );
+    }
+    return c;
+}
+
+jmethodID gnatpolyglot_ada2java_DoubleArray_Ref_ctor(JNIEnv *env) {
+    static jmethodID m = NULL;
+    if (m == NULL) {
+        jclass clazz = gnatpolyglot_ada2java_DoubleArray_Ref_class(env);
+        m = (*env)->GetMethodID(
+            env, clazz, "<init>",
+            "(Lcom/adacore/gnatpolyglot/runtime/ada2java/ArrayData;)V");
+    }
+    return m;
+}
+
+jclass gnatpolyglot_ada2java_PolyglotString_Ref_class(JNIEnv *env) {
+    static jclass c = NULL;
+    if (c == NULL) {
+        c = (*env)->NewGlobalRef(
+            env,
+            (*env)->FindClass(
+                env,
+                "com/adacore/gnatpolyglot/runtime/ada2java/PolyglotString$Ref"
+            )
+        );
+    }
+    return c;
+}
+
+jmethodID gnatpolyglot_ada2java_PolyglotString_Ref_ctor(JNIEnv *env) {
+    static jmethodID m = NULL;
+    if (m == NULL) {
+        jclass clazz = gnatpolyglot_ada2java_PolyglotString_Ref_class(env);
+        m = (*env)->GetMethodID(
+            env, clazz, "<init>",
+            "(Lcom/adacore/gnatpolyglot/runtime/ada2java/ArrayData;)V");
+    }
+    return m;
 }

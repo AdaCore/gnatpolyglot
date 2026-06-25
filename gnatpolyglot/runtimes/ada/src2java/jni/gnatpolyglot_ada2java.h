@@ -31,4 +31,35 @@ struct array_data gnatpolyglot_proxy2java_to_array_data(JNIEnv *env, jobject o);
 jobject gnatpolyglot_proxy2java_to_ArrayData(JNIEnv *env,
                                              struct array_data data);
 
+/////////////////////////////
+// Native Array References //
+/////////////////////////////
+
+jclass gnatpolyglot_ada2java_BooleanArray_Ref_class(JNIEnv *env);
+jmethodID gnatpolyglot_ada2java_BooleanArray_Ref_ctor(JNIEnv *env);
+
+jclass gnatpolyglot_ada2java_CharacterArray_Ref_class(JNIEnv *env);
+jmethodID gnatpolyglot_ada2java_CharacterArray_Ref_ctor(JNIEnv *env);
+
+jclass gnatpolyglot_ada2java_ByteArray_Ref_class(JNIEnv *env);
+jmethodID gnatpolyglot_ada2java_ByteArray_Ref_ctor(JNIEnv *env);
+
+jclass gnatpolyglot_ada2java_ShortArray_Ref_class(JNIEnv *env);
+jmethodID gnatpolyglot_ada2java_ShortArray_Ref_ctor(JNIEnv *env);
+
+jclass gnatpolyglot_ada2java_IntegerArray_Ref_class(JNIEnv *env);
+jmethodID gnatpolyglot_ada2java_IntegerArray_Ref_ctor(JNIEnv *env);
+
+jclass gnatpolyglot_ada2java_LongArray_Ref_class(JNIEnv *env);
+jmethodID gnatpolyglot_ada2java_LongArray_Ref_ctor(JNIEnv *env);
+
+jclass gnatpolyglot_ada2java_FloatArray_Ref_class(JNIEnv *env);
+jmethodID gnatpolyglot_ada2java_FloatArray_Ref_ctor(JNIEnv *env);
+
+jclass gnatpolyglot_ada2java_DoubleArray_Ref_class(JNIEnv *env);
+jmethodID gnatpolyglot_ada2java_DoubleArray_Ref_ctor(JNIEnv *env);
+
+jclass gnatpolyglot_ada2java_PolyglotString_Ref_class(JNIEnv *env);
+jmethodID gnatpolyglot_ada2java_PolyglotString_Ref_ctor(JNIEnv *env);
+
 #endif /* ! GNATPOLYGLOT_ADA2JAVA_H */
