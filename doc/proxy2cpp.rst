@@ -157,11 +157,21 @@ be translated to an operator overload.
 
           int operator+(long i, T v);
 
-Class types
------------
+Types
+-----
 
-Final types
-~~~~~~~~~~~
+Scalars
+~~~~~~~
+
+TODO
+
+Enumerations
+~~~~~~~~~~~~
+
+TODO
+
+Classes
+~~~~~~~
 
 Classes marked ``final`` in the proxy should not be inherited. They lack
 the support for dynamic dispatch in the bound library.
@@ -171,13 +181,24 @@ future, we will add a mechanism to prevent inheritance, and as such
 incorrect behaviours when that would happen.
 
 Function members
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 
 As mentioned previously, functions with a role will be function members
 of the class. The first parameter has to be of the same type as the
 role's. The latter becomes the implicit ``this`` value. If the first
 argument type in the proxy is constant, then the the function member
 will be marked as ``const``.
+
+Uncopyable classes (copy elision (C++17))
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+C++ only supports guaranteed copy elision since C++17. However, there
+may be times where input languages support returning uncopyable values
+through similar concepts to copy elision. In order to avoid errors with
+invalid code generation, when these values are returned before with
+standards prior to C++17, they will be returned though a pointer. These
+values, since cloned before by the proxy before returning, will be owned
+by the user.
 
 Inheritance
 ~~~~~~~~~~~
@@ -231,7 +252,7 @@ expect a ``T*``. This argument expects the ``this`` value.
    constructed actually inherits from ``example::Foo``.
 
 Overriding virtual functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Virtual functions from bound types can be overriden. This allows inside
 the bound libraries to dynamically dispatch back to overrides.
@@ -292,19 +313,8 @@ the bound libraries to dynamically dispatch back to overrides.
               example::call_hello(bar); // Hello from C++;
           }
 
-Uncopyable classes (copy elision (C++17))
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-C++ only supports guaranteed copy elision since C++17. However, there
-may be times where input languages support returning uncopyable values
-through similar concepts to copy elision. In order to avoid errors with
-invalid code generation, when these values are returned before with
-standards prior to C++17, they will be returned though a pointer. These
-values, since cloned before by the proxy before returning, will be owned
-by the user.
-
-GNATpolyglot pointers
----------------------
+Pointers
+~~~~~~~~
 
 Pointer types are represented using a ref-counted smart pointer
 (``polyglot_ptr``) in order to avoid manual memory management. 
@@ -385,7 +395,7 @@ inadvertently which could leave a dangling pointer.
    example
 
 References and view types
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Returning non-scalar references is not possible, so instead, view types
 are generated. Similarly to the ``std::vector<bool>::reference``
