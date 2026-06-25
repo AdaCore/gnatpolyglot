@@ -290,7 +290,10 @@ public class JavaAPI extends LanguageAPI {
                     javaTypename(function.role.type.elementType())
                             .replace("_", "_1")
                             .replace(".", "_")
-                            .concat("_00024Array"));
+                            .concat(
+                                    function.role.type.elementType().isPointer()
+                                            ? "_00024PtrArray"
+                                            : "_00024Array"));
         } else {
             throw new UnsupportedOperationException("unsupported");
         }
@@ -562,6 +565,11 @@ public class JavaAPI extends LanguageAPI {
         return context.getMembers(decl.name.asTypeExpr().makeArray());
     }
 
+    /** Return the member functions of a type. */
+    public ProxyContext.FunctionMembersEntry getPtrArrayFunctions(TypeDecl decl) {
+        return context.getMembers(decl.name.asTypeExpr().makePointer(false, false).makeArray());
+    }
+
     /** Return the name of the data owner. */
     public String javaOwner(Owner returnOwner) {
         return "com.adacore.gnatpolyglot.runtime.PolyglotData.Owner."
@@ -732,7 +740,10 @@ public class JavaAPI extends LanguageAPI {
         return name.getParentFullyQualifiedName()
                 .join((n) -> n.getLastName().toLower(), "", "__", "_")
                 .concat(name.getLastName().toPascal())
-                .concat(typeExpr.isArray() ? "__Array" : "")
+                .concat(
+                        typeExpr.isArray()
+                                ? typeExpr.elementType().isPointer() ? "__PtrArray" : "__Array"
+                                : "")
                 .concat("_Ref_")
                 .concat(suffix);
     }

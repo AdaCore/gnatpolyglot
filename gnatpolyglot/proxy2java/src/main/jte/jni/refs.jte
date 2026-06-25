@@ -33,6 +33,9 @@ Template file to generate the accessors of Ref classes of ClassDecls.
 
     boolean hasArray = api.getArrayFunctions(clazz) != null;
     TypeExpr arrayTypeExpr = clazz.name.asTypeExpr().makeArray();
+
+    boolean hasPtrArray = api.getArrayFunctions(clazz) != null;
+    TypeExpr ptrArrayTypeExpr = clazz.name.asTypeExpr().makePointer(false, false).makeArray();
 }
 @if (!isSource)
 
@@ -42,6 +45,11 @@ Template file to generate the accessors of Ref classes of ClassDecls.
     @if (hasArray)
         jclass ${api.refClassFunctionName(arrayTypeExpr)}(JNIEnv *env);
         jmethodID ${api.refCtorFunctionName(arrayTypeExpr)}(JNIEnv *env);
+    @endif
+
+    @if (hasPtrArray)
+        jclass ${api.refClassFunctionName(ptrArrayTypeExpr)}(JNIEnv *env);
+        jmethodID ${api.refCtorFunctionName(ptrArrayTypeExpr)}(JNIEnv *env);
     @endif
 
 @else
@@ -86,6 +94,33 @@ Template file to generate the accessors of Ref classes of ClassDecls.
             static jmethodID m = NULL;
             if (m == NULL) {
                 jclass clazz = ${api.refClassFunctionName(arrayTypeExpr)}(env);
+                m = (*env)->GetMethodID(
+                    env, clazz, "<init>",
+                    "(Lcom/adacore/gnatpolyglot/runtime/ada2java/ArrayData;)V"
+                );
+            }
+            return m;
+        }
+
+    @endif
+
+    @if (hasPtrArray)
+
+        jclass ${api.refClassFunctionName(ptrArrayTypeExpr)}(JNIEnv *env) {
+            static jclass c = NULL;
+            if (c == NULL) {
+                c = (*env)->NewGlobalRef(
+                    env,
+                    (*env)->FindClass(env, "${className.replace(".", "/")}$PtrArray$Ref")
+                );
+            }
+            return c;
+        }
+
+        jmethodID ${api.refCtorFunctionName(ptrArrayTypeExpr)}(JNIEnv *env) {
+            static jmethodID m = NULL;
+            if (m == NULL) {
+                jclass clazz = ${api.refClassFunctionName(ptrArrayTypeExpr)}(env);
                 m = (*env)->GetMethodID(
                     env, clazz, "<init>",
                     "(Lcom/adacore/gnatpolyglot/runtime/ada2java/ArrayData;)V"

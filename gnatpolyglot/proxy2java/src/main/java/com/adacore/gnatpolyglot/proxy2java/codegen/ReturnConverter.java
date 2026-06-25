@@ -8,6 +8,7 @@ import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class ReturnConverter {
 
@@ -138,17 +139,28 @@ public class ReturnConverter {
             }
 
             // Create an Optional that contain the possibly null object.
+            StringBuilder ternary =
+                    JavaGenerator.makeTernary(
+                            returnedValue + " == " + nullData,
+                            "null",
+                            JavaGenerator.makeNew(
+                                    api.javaTypename(type.pointedType()), List.of(pointerData)));
+            // We cannot wrap the result of array pointer getters inside optionals, or overrding
+            // would fail.
+            boolean wrapToOptional =
+                    Optional.ofNullable(functionDecl.role)
+                            .map(
+                                    r ->
+                                            !(r.kind == RoleKind.GETTER
+                                                    && r.type.isArray()
+                                                    && r.type.elementType().isPointer()))
+                            .orElse(true);
             return builder.append("return ")
                     .append(
-                            JavaGenerator.makeCall(
-                                    "java.util.Optional.ofNullable",
-                                    List.of(
-                                            JavaGenerator.makeTernary(
-                                                    returnedValue + " == " + nullData,
-                                                    "null",
-                                                    JavaGenerator.makeNew(
-                                                            api.javaTypename(type.pointedType()),
-                                                            List.of(pointerData))))))
+                            wrapToOptional
+                                    ? JavaGenerator.makeCall(
+                                            "java.util.Optional.ofNullable", List.of(ternary))
+                                    : ternary)
                     .append(";")
                     .toString();
         }

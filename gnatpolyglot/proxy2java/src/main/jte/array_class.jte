@@ -13,19 +13,21 @@ Template file to generate a class.
 @param JavaAPI api
 @param ClassDecl classDecl
 @param FunctionMembersEntry arrayFunctions
+@param boolean isPtrArray
 
 !{
     String className = classDecl.name.getLastName().toPascal();
+    String arrayName = isPtrArray ? "PtrArray" : "Array";
 }
 
-    public static class Array extends
+    public static class ${arrayName} extends
             com.adacore.gnatpolyglot.runtime.ada2java.PolyglotArray<${className}> {
         /**
          * Internal use only.
          *
          * <p> Create an array from an existing proxy data.
          */
-        public Array(com.adacore.gnatpolyglot.runtime.ada2java.ArrayData data) {
+        public ${arrayName}(com.adacore.gnatpolyglot.runtime.ada2java.ArrayData data) {
             super(data);
         }
 
@@ -35,7 +37,7 @@ Template file to generate a class.
          * <p> Create an array from an existing proxy data and a parent object
          * that represents the root object that owns the memory of the array.
          */
-        public Array(
+        public ${arrayName}(
             com.adacore.gnatpolyglot.runtime.ada2java.ArrayData data,
             com.adacore.gnatpolyglot.runtime.PolyglotObject parent
         ) {
@@ -52,7 +54,7 @@ Template file to generate a class.
             ${api.javaNativeParameters(alloc)}
         );
 
-        public Array (${api.javaParameters(alloc)}) {
+        public ${arrayName} (${api.javaParameters(alloc)}) {
             super((com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) null);
         @for (var param : alloc.type.parameters)
             ${api.makeJavaParamConversion(param, false)};
@@ -131,7 +133,7 @@ Template file to generate a class.
 
         @Override
         public java.util.List<${className}> subList(int fromIndex, int toIndex) {
-            return new Array(
+            return new ${arrayName}(
                 new com.adacore.gnatpolyglot.runtime.ada2java.ArrayData(
                     getBegin(),
                     getEnd() - 1,
@@ -143,14 +145,14 @@ Template file to generate a class.
         }
 
         public static class Ref extends
-                com.adacore.gnatpolyglot.runtime.ObjectRef<${className}.Array> {
+                com.adacore.gnatpolyglot.runtime.ObjectRef<${className}.${arrayName}> {
 
-            public Ref(${className}.Array obj) {
+            public Ref(${className}.${arrayName} obj) {
                 super(obj);
             }
 
             private Ref(com.adacore.gnatpolyglot.runtime.ada2java.ArrayData data) {
-                super(data == null ? null : new Array(data));
+                super(data == null ? null : new ${arrayName}(data));
                 if (data != null)
                     data.setOwner(com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.LIBRARY);
             }
@@ -163,7 +165,7 @@ Template file to generate a class.
                     if (data == null) {
                         this.obj = null;
                     } else {
-                        this.obj = new Array(
+                        this.obj = new ${arrayName}(
                             (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data
                         );
                     }

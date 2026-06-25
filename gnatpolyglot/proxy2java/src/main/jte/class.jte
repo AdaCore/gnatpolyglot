@@ -20,6 +20,7 @@ Template file to generate a class.
     FunctionMembersEntry members = api.getMembers(classDecl);
     String className = classDecl.name.getLastName().toPascal();
     FunctionMembersEntry arrayFunctions = api.getArrayFunctions(classDecl);
+    FunctionMembersEntry ptrArrayFunctions = api.getPtrArrayFunctions(classDecl);
     FunctionDecl cloneFunction = api.getCloneCtor(classDecl, RoleKind.ALLOC);
     FunctionDecl shadowCloneFunction = api.getCloneCtor(classDecl, RoleKind.SHADOW_ALLOC);
     String interfaces = "";
@@ -197,7 +198,11 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
     }
 
 @if (arrayFunctions != null)
-    @template.array_class(api, classDecl, arrayFunctions)
+    @template.array_class(api, classDecl, arrayFunctions, false)
+@endif
+
+@if (ptrArrayFunctions != null)
+    @template.array_class(api, classDecl, ptrArrayFunctions, true)
 @endif
 
 @if(classDecl.inheritability != Inheritability.FINAL)

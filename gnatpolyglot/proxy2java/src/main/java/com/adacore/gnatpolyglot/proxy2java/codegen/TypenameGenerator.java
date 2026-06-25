@@ -168,7 +168,9 @@ public class TypenameGenerator {
                 return "com.adacore.gnatpolyglot.runtime.ada2java."
                         + nativeArrayTypename(NativeTypeDecl.class.cast(decl).nativeType);
             }
-            return javaTypename(elementType).concat(".Array");
+            String javaTypename = javaTypename(elementType);
+            if (type.elementType().isPointer()) return javaTypename.concat(".PtrArray");
+            return javaTypename.concat(".Array");
         }
 
         @Override

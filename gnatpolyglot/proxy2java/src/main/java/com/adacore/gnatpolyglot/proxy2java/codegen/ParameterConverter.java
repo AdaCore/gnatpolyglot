@@ -367,7 +367,7 @@ public class ParameterConverter {
 
         String nullCheck;
         String getOwner;
-        if (param.type.isReference()) {
+        if (param.type.isReference() && !param.type.isConst()) {
             nullCheck = argName + ".get().isPresent()";
             getOwner = argName + ".get().get()._getOwner()";
         } else {
