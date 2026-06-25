@@ -1,6 +1,6 @@
-********
+************
 GNATpolyglot
-********
+************
 
 GNATpolyglot is a multi-language, high-level bindings generator.
 

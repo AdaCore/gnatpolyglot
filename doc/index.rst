@@ -12,10 +12,10 @@ Welcome to GNATpolyglot's documentation!
 
    usage
    ada2proxy
-   call_convention
    proxy2cpp
    proxy2java
    proxy2rust
+   call_convention
    limitations
 
 Indices and tables
