@@ -465,7 +465,12 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         }
         // Create a similar subprogram for "/=" when the current subprogram is "="
         if (name.equals(Name.operatorEq)) {
-            processSubprogram(node.pCorrespondingNeqSubprogram());
+            // TODO: We should not have to edit the role of this function. This is caused by
+            // node synthetisation in LAL creating invalid results of some property.
+            Libadalang.BasicSubpDecl correspondingNeqSubprogram =
+                    node.pCorrespondingNeqSubprogram();
+            processSubprogram(correspondingNeqSubprogram);
+            ((Subprogram) mappedDecls.get(correspondingNeqSubprogram)).role = role;
         }
         declarations.add(subProg);
         mappedDecls.put(node, subProg);
