@@ -429,7 +429,7 @@ public class Record extends AdaDeclaration {
 
     @Override
     public String getDoc() {
-        return origin.pDoc();
+        return AdaAPI.getDoc(origin);
     }
 
     public Libadalang.BaseTypeDecl getFirstPrivateParentType() {

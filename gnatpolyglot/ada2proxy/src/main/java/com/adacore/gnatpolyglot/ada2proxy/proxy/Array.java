@@ -213,6 +213,6 @@ public class Array extends AdaDeclaration {
 
     @Override
     public String getDoc() {
-        return arrayType.pDoc();
+        return AdaAPI.getDoc(arrayType);
     }
 }

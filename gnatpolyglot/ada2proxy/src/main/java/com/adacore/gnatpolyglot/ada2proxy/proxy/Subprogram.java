@@ -55,7 +55,7 @@ public class Subprogram extends AdaDeclaration {
 
     @Override
     public String getDoc() {
-        StringBuilder builder = new StringBuilder(origin.pDoc());
+        StringBuilder builder = new StringBuilder(AdaAPI.getDoc(origin));
         // If the function has a different name when binded in the proxy, add documentation to
         // inform the origin.
         if (!name.toPascalWithUnderscore().equals(origin.pRelativeName().getText())) {
