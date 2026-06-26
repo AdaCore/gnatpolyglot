@@ -22,8 +22,10 @@ Template file to generate a class.
 
 package ${api.packagePath(enumDecl.name)};
 
+${api.formatDoc(enumDecl, 0)}
 public enum ${enumName} {
 @for (var lit : enumDecl.items)
+    ${api.formatDoc(lit.doc, 1)}
     ${lit.name.toUpper()}((${nativeTypename}) ${lit.value}${longSuffix}),
 @endfor
     ;

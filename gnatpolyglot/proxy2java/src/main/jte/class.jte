@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.BiFunction;
 
+${api.formatDoc(classDecl, 0)}
 public ${api.getOverridability(classDecl)}
 class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
@@ -80,6 +81,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
     @if (shadow == null || alloc.role.kind == RoleKind.SHADOW_ALLOC)
 
+    ${api.formatDoc(alloc, 1)}
     public ${className} (${api.javaParameters(alloc)}) {
         super((com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer) null);
     @for (var param : alloc.type.parameters)
@@ -110,6 +112,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
         ${api.javaNativeParameters(shadow)}
     );
 
+    ${api.formatDoc(alloc, 1)}
     public ${className} (${api.javaParameters(alloc)}) {
         super((com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer) null);
     @for (var param : alloc.type.parameters)

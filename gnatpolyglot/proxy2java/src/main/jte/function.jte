@@ -22,6 +22,7 @@ Template file to generate a function.
 }
 
 @if (function.overridability == Overridability.ABSTRACT)
+    ${api.formatDoc(function, 1)}
     public abstract
     ${api.javaReturnTypename(function.type.returnType)}
     ${functionName}(${api.javaParameters(function)});
@@ -30,6 +31,7 @@ Template file to generate a function.
     ${api.javaNativeReturnTypename(function.type.returnType)}
     ${nativeFunc}(${api.javaNativeParameters(function)});
 
+    ${api.formatDoc(function, 1)}
     public ${isMethod ? "" : "static"}
     ${api.javaReturnTypename(function.type.returnType)}
     ${functionName}(${api.javaParameters(function)}) {

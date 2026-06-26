@@ -1,0 +1,78 @@
+==============================================================
+2java/src/main/java/com/adacore/libtest/test/TestPackage.java:
+/**
+ * paragraph1
+ * line1
+ * line2
+ *
+ * <p>
+ * paragraph2
+ * line1
+ * line2
+ *
+ */
+public static
+void
+p() {
+
+/**
+ * @param a must be owned by LIBRARY
+ * @return {@link com.adacore.libtest.test.T} owned by {@link com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.LIBRARY}
+ */
+public static
+java.util.Optional<com.adacore.libtest.test.T>
+f(com.adacore.libtest.test.T a) {
+
+
+
+====================================================
+2java/src/main/java/com/adacore/libtest/test/T.java:
+/** T Type Doc */
+public final
+class T extends com.adacore.gnatpolyglot.runtime.PolyglotObject implements Cloneable {
+
+/** Internal use only.
+ *
+ * <p> Create a T from an existing proxy data.
+ */
+public T (com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer data) {
+
+/** Internal use only.
+ *
+ * <p> Create a T from an existing proxy data.
+ */
+public T (
+
+/**
+ * Generated function to alloc a T
+ *
+ */
+public T () {
+
+/**
+ * Generated function to clone a T
+ *
+ * @param toClone can be owned by USER
+ */
+public T (com.adacore.libtest.test.T toClone) {
+
+/**
+ * @param a can be owned by ANY
+ * @return {@link com.adacore.libtest.test.T} owned by {@link com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER}
+ */
+public
+com.adacore.libtest.test.T
+primitive() {
+
+/**
+ * Generated function to copy ``Other`` to ``Self``
+ *
+ * @param self can be owned by USER
+ * @param other can be owned by USER
+ */
+public
+void
+copyFrom(com.adacore.libtest.test.T other) {
+
+
+

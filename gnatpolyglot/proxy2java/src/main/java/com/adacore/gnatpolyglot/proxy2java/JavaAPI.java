@@ -5,6 +5,7 @@ import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
 import com.adacore.gnatpolyglot.proxy.ClassDecl;
 import com.adacore.gnatpolyglot.proxy.ClassDecl.Inheritability;
+import com.adacore.gnatpolyglot.proxy.Declaration;
 import com.adacore.gnatpolyglot.proxy.EnumerationDecl;
 import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
 import com.adacore.gnatpolyglot.proxy.FunctionDecl;
@@ -22,6 +23,7 @@ import com.adacore.gnatpolyglot.proxy.VTableEntry;
 import com.adacore.gnatpolyglot.proxy2java.codegen.CGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.DispatchParameterConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.DispatchReturnConverter;
+import com.adacore.gnatpolyglot.proxy2java.codegen.DocumentationFormater;
 import com.adacore.gnatpolyglot.proxy2java.codegen.JNITypeSignatureGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.JavaGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.ParameterConverter;
@@ -54,6 +56,8 @@ public class JavaAPI extends LanguageAPI {
 
     private DispatchParameterConverter dispatchParameterConverter =
             new DispatchParameterConverter(this);
+
+    private DocumentationFormater documentationFormater = new DocumentationFormater(this);
 
     public JavaAPI(ProxyContext context, List<String> groupId, Name projectName) {
         this.context = context;
@@ -140,6 +144,14 @@ public class JavaAPI extends LanguageAPI {
             return camel + "_";
         }
         return camel;
+    }
+
+    public String formatDoc(String str, int indent) {
+        return documentationFormater.formatAnyDoc(str, indent);
+    }
+
+    public String formatDoc(Declaration decl, int indent) {
+        return documentationFormater.formatDoc(decl, indent);
     }
 
     /** Return the name of a java argument. */
