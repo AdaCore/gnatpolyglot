@@ -133,18 +133,129 @@ signed / unsigned int 8              ``byte``
 signed / unsigned int 16             ``short``
 signed / unsigned int 32             ``int``
 signed / unsigned int 64             ``long``
-float 32 / 64                        ``float`` / ``double``
+float 32                             ``float``
+float 64                             ``double``
 ``void``                             ``void``
 ==================================== ===================
 
 Java has no unsigned integer types, so signed and unsigned proxy integers of a
-given size map to the same (signed) Java type. 128-bit scalars are not
-supported.
+given size map to the same (signed) Java type. 128-bit scalars are not supported (see :ref:`Limitations <limitations>`).
 
 Enumerations
 ~~~~~~~~~~~~
 
-TODO
+An enumeration in the proxy becomes a Java ``enum``. Each constant carries its
+underlying native integer (the representation value carried by the proxy) in a
+public ``final value`` field, and a static ``fromValue`` map provides the
+reverse lookup (native integer → enum constant) used to reconstruct the
+constant when a value crosses the JNI boundary.
+
+The type of ``value`` follows the enum's representation — the smallest signed
+Java integer that holds the largest enumerator value (``byte``, ``short``,
+``int`` or ``long``). A nested ``Ref`` class (extending
+``com.adacore.gnatpolyglot.runtime.ScalarRef``) wraps the value in a
+``ByteBuffer`` so an enum can be passed as a mutable (in-out) parameter.
+
+A proxy enumeration ``Color`` with enumerators ``Red``, ``Green`` and ``Blue``
+generates:
+
+.. code:: java
+
+   public enum Color {
+       RED((byte) 0),
+       GREEN((byte) 1),
+       BLUE((byte) 2),
+       ;
+
+       public final byte value;
+
+       Color(byte value) {
+           this.value = value;
+       }
+
+       // native int -> enum constant, used at the JNI boundary
+       public static final java.util.Map<Byte, Color> fromValue = /* ... */;
+
+       // wraps the value so the enum can be passed as a mutable parameter
+       public static class Ref
+           extends com.adacore.gnatpolyglot.runtime.ScalarRef {
+           /* ... */
+       }
+   }
+
+Arrays
+~~~~~~
+
+A proxy array becomes a Java class implementing ``java.util.List<E>`` (and
+``RandomAccess``), so it can be indexed, iterated and streamed like any Java
+list — but its size is fixed: ``add``, ``remove`` and friends throw
+``UnsupportedOperationException``.
+
+* For a **scalar** element type, a ready-made runtime class is used —
+  ``IntegerArray``, ``BooleanArray``, ``FloatArray``, ``DoubleArray``,
+  ``CharacterArray``, ``ByteArray``, ``ShortArray`` or ``LongArray``.
+* For a **class** element type, a nested ``Array`` class is generated on the
+  element class (e.g. ``MyInt.Array``).
+
+Arrays of arrays (multidimensional arrays) are not supported.
+
+.. note::
+
+    These classes are part of the runtime support specific to the input language.
+    Unlike scalars, enumerations or classes — which map to neutral Java types —
+    an array carries semantics that belong to the input language's own array model:
+    most visibly its index bounds, which need not start at zero, but also how its
+    storage is allocated and freed. No single neutral type can capture that for
+    every possible input language, so an array maps instead to runtime support
+    provided per input language.
+
+Both ``get(i)`` / ``set(i, e)`` (zero-based, the usual ``List`` convention) and
+``getUnslided(i)`` / ``setUnslided(i, e)`` (using the index bounds carried by
+the proxy) are available; ``getBegin()``, ``getEnd()`` and ``size()`` expose
+the bounds. A new array is allocated by passing its bounds to the constructor;
+arrays returned from a function are wrapped automatically, and the underlying
+native storage is released automatically when the wrapper is garbage-collected.
+
+.. code:: java
+
+   // a function returning, then consuming, an array of int
+   IntegerArray arr = ExamplePackage.make();
+
+   for (int v : arr) {
+       System.out.println(v);
+   }
+
+   arr.set(0, 42);            // zero-based
+   ExamplePackage.consume(arr);
+
+   // allocate a fresh array with bounds 1 .. 10
+   IntegerArray fresh = new IntegerArray(1, 10);
+
+Strings
+~~~~~~~
+
+A proxy string maps to the runtime class ``PolyglotString``. It is a dedicated
+string type rather than one of the array classes, but it relies on the same
+per-input-language runtime support, and for the same reason (see the note
+above). ``PolyglotString`` implements ``java.lang.CharSequence``, but it is not
+a drop-in ``java.lang.String`` — convert explicitly at the boundary.
+
+* ``new PolyglotString(String)`` — build one from a Java ``String``.
+* ``toString()`` — copy the contents back out into a Java ``String``.
+* ``charAt(i)`` (zero-based) and ``charAtUnslided(i)`` (using the index bounds
+  carried by the proxy) return a character; ``length()`` gives the length.
+
+Text crosses the JNI boundary as UTF-8. The underlying native storage is
+released automatically when the ``PolyglotString`` is garbage-collected, like
+any other binding object.
+
+.. code:: java
+
+   // a function returning, then consuming, a string
+   PolyglotString s = ExamplePackage.greeting();
+   System.out.println(s.toString());
+
+   ExamplePackage.greet(new PolyglotString("hello"));
 
 Classes
 ~~~~~~~
@@ -211,6 +322,55 @@ methods you want.
           // Describe runs in the bound library, but its dispatching call
           // to Area calls back into Square.area().
           ExamplePackage.describe(shape);
+
+Pointers
+~~~~~~~~
+
+Java has no separate smart-pointer wrapper: a proxy pointer to a class is
+exposed as that class itself (the generated wrapper extending
+``PolyglotObject``). Ownership — which decides whether the pointed-to object is
+ever freed — is carried by the object instance and read or changed through
+``getOwner()`` / ``setOwner(...)``, using the
+``com.adacore.gnatpolyglot.runtime.PolyglotData.Owner`` enum:
+
+* ``USER`` — the object is owned by your Java code; it is freed automatically
+  once it becomes unreachable (see below).
+* ``LIBRARY`` — the object is owned by the bound library; the Java side never
+  frees it.
+* ``STATIC`` — the object is statically allocated and is never freed; its owner
+  cannot be changed.
+* ``UNKNOWN`` — ownership could not be determined.
+
+An object you construct yourself starts as ``USER``; an object returned from a
+function takes the ownership the proxy annotated its return with (typically
+``LIBRARY`` for something the library keeps owning).
+
+When you pass an object to a function, the function expects a *minimum*
+ownership level: this makes sure that a pointer the call may escape is not
+later freed from under the library, leaving a dangling reference.
+Passing an object whose ownership is too weak throws an
+``IllegalArgumentException`` before the native call.
+
+A pointer that may be null is returned as a ``java.util.Optional<T>``
+(``Optional.empty()`` for null), and ``null`` may be passed where a pointer
+parameter is expected. A mutable (in-out) pointer parameter is passed through a
+nested ``T.Ref`` wrapper whose ``get()`` returns the current ``Optional<T>``.
+
+Freeing is automatic: a ``USER``-owned object is released once the garbage
+collector finds it unreachable (a ``LIBRARY``- or ``STATIC``-owned one is left
+alone). Because GC timing is not deterministic, the object also implements
+``AutoCloseable`` if you want to release it promptly with try-with-resources.
+
+.. code:: java
+
+   Rec rec = new Rec(1);          // owned by USER
+   rec.setOwner(Owner.LIBRARY);   // hand ownership to the library
+
+   // a function returning a (possibly null) pointer
+   Optional<Rec> other = ExamplePackage.recF(rec);
+   other.ifPresent(r -> System.out.println(r.getI()));
+
+   ExamplePackage.recP(null);     // null is accepted
 
 Exceptions
 ----------

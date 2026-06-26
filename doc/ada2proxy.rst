@@ -297,6 +297,8 @@ extension).
 Primitives that do not match these criteria will remain as free
 functions.
 
+.. _ada2proxy_operators:
+
 Operators
 ~~~~~~~~~
 
