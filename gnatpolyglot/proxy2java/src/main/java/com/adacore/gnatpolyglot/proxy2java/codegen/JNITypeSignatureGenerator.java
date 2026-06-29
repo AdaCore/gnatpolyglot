@@ -115,8 +115,22 @@ public class JNITypeSignatureGenerator {
 
                 @Override
                 public String pointerType(TypeExpr type) {
-                    String javaNativeType = api.javaTypename(type.referencedType());
-                    return "L%s;".formatted(javaNativeType.replace(".", "/") + "$Ref");
+                    String suffix = "$Ref";
+                    TypeExpr pointedType = type.pointedType();
+                    if (pointedType.isArray()) {
+                        // Use the native java typename to get the nested classes. If the element is
+                        // a scalar type, use the runtime array type instead.
+                        if (getContext().isNativeScalar(pointedType.elementType())) {
+                            type = pointedType;
+                        } else {
+                            suffix =
+                                    pointedType.elementType().isPointer()
+                                            ? "$PtrArray$Ref"
+                                            : "$Array$Ref";
+                            type = pointedType.elementType();
+                        }
+                    }
+                    return "L%s;".formatted(api.javaTypename(type).replace(".", "/") + suffix);
                 }
             }.apply(refType.referencedType());
         }
