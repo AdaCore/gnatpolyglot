@@ -61,5 +61,8 @@ MAKE_ARRAY_FUNCTIONS(std::int32_t, int)
 MAKE_ARRAY_FUNCTIONS(std::uint32_t, unsigned_int)
 MAKE_ARRAY_FUNCTIONS(std::int64_t, long)
 MAKE_ARRAY_FUNCTIONS(std::uint64_t, unsigned_long)
+MAKE_ARRAY_FUNCTIONS(float, float)
+MAKE_ARRAY_FUNCTIONS(double, double)
+MAKE_ARRAY_FUNCTIONS(bool, boolean)
 
 } // namespace gnatpolyglot::ada::arrays
