@@ -39,6 +39,80 @@ package body Test is
       end loop;
    end;
 
+   function Make_Bytes return Byte_Arr is
+   begin
+      return (1, -2, 127);
+   end Make_Bytes;
+
+   function Make_Shorts return Short_Arr is
+   begin
+      return (1000, -2000, 32000);
+   end Make_Shorts;
+
+   function Make_Longs return Long_Arr is
+   begin
+      --  The second and third values exceed 32 bits, so a getter that
+      --  truncated to 32 bits would corrupt them.
+      return (1, 5_000_000_000, -5_000_000_000);
+   end Make_Longs;
+
+   function Make_Floats return Float_Arr is
+   begin
+      return (1.5, 2.5, 3.5);
+   end Make_Floats;
+
+   function Sum_Floats (Arr : Float_Arr) return Float is
+      Ret : Float := 0.0;
+   begin
+      for I in Arr'Range loop
+         Ret := Ret + Arr (I);
+      end loop;
+      return Ret;
+   end Sum_Floats;
+
+   procedure Scale_Floats (Arr : in out Float_Arr) is
+   begin
+      for I in Arr'Range loop
+         Arr (I) := Arr (I) * 2.0;
+      end loop;
+   end Scale_Floats;
+
+   function Make_Doubles return Double_Arr is
+   begin
+      return (10.5, 20.25);
+   end Make_Doubles;
+
+   function Sum_Doubles (Arr : Double_Arr) return Long_Float is
+      Ret : Long_Float := 0.0;
+   begin
+      for I in Arr'Range loop
+         Ret := Ret + Arr (I);
+      end loop;
+      return Ret;
+   end Sum_Doubles;
+
+   function Make_Bools return Bool_Arr is
+   begin
+      return (True, False, True);
+   end Make_Bools;
+
+   function Any_True (Arr : Bool_Arr) return Boolean is
+   begin
+      for I in Arr'Range loop
+         if Arr (I) then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end Any_True;
+
+   procedure Negate_Bools (Arr : in out Bool_Arr) is
+   begin
+      for I in Arr'Range loop
+         Arr (I) := not Arr (I);
+      end loop;
+   end Negate_Bools;
+
    function My_Int_Arr_Func return My_Int_Arr is
       Arr : My_Int_Arr := ((I => 1), (I => 2), (I => 3), (I => 4), (I => 5));
    begin
