@@ -36,7 +36,7 @@ public class DoubleArray extends PolyglotArray<Double> {
         super(arrayAlloc(first, last));
     }
 
-    private static native ArrayData arrayFree(ArrayData data);
+    private static native void arrayFree(ArrayData data);
 
     @Override
     protected Consumer<PolyglotData> _getFree() {
