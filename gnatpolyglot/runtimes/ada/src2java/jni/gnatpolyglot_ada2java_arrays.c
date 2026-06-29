@@ -581,3 +581,89 @@ Java_com_adacore_gnatpolyglot_runtime_ada2java_DoubleArray_arraySet(
   gnatpolyglot__ada__arrays__native__double_array_set(data, index, element);
   return prev;
 }
+
+//////////////////////////
+// BooleanArray methods //
+//////////////////////////
+
+extern struct array_data
+gnatpolyglot__ada__arrays__native__boolean_array_alloc(int first, int last);
+
+extern void gnatpolyglot__ada__arrays__native__boolean_array_free(void *self);
+
+extern struct array_data
+    gnatpolyglot__ada__arrays__native__boolean_array_clone(struct array_data);
+
+extern unsigned char *
+gnatpolyglot__ada__arrays__native__boolean_array_get(struct array_data data,
+                                                 int index);
+
+extern void
+gnatpolyglot__ada__arrays__native__boolean_array_set(struct array_data data,
+                                                 int index, unsigned char new_val);
+
+/**
+ * Java native method implementation
+ * Class: com.adacore.gnatpolyglot.runtime.ada2java.BooleanArray
+ * Method: arrayAlloc
+ */
+JNIEXPORT jobject
+Java_com_adacore_gnatpolyglot_runtime_ada2java_BooleanArray_arrayAlloc(
+    JNIEnv *env, jclass c, jint begin, jint end) {
+  struct array_data res =
+      gnatpolyglot__ada__arrays__native__boolean_array_alloc(begin, end);
+  return gnatpolyglot_proxy2java_to_ArrayData(env, res);
+}
+
+/**
+ * Java native method implementation
+ * Class: com.adacore.gnatpolyglot.runtime.ada2java.BooleanArray
+ * Method: arrayFree
+ */
+JNIEXPORT void
+Java_com_adacore_gnatpolyglot_runtime_ada2java_BooleanArray_arrayFree(
+    JNIEnv *env, jclass c, jobject self) {
+  struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
+  gnatpolyglot__ada__arrays__native__boolean_array_free(&data);
+}
+
+/**
+ * Java native method implementation
+ * Class: com.adacore.gnatpolyglot.runtime.ada2java.BooleanArray
+ * Method: arrayClone
+ */
+JNIEXPORT jobject
+Java_com_adacore_gnatpolyglot_runtime_ada2java_BooleanArray_arrayClone(
+    JNIEnv *env, jclass c, jobject self) {
+  struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
+  struct array_data res =
+      gnatpolyglot__ada__arrays__native__boolean_array_clone(data);
+  return gnatpolyglot_proxy2java_to_ArrayData(env, res);
+}
+
+/**
+ * Java native method implementation
+ * Class: com.adacore.gnatpolyglot.runtime.ada2java.BooleanArray
+ * Method: arrayGet
+ */
+JNIEXPORT jboolean
+Java_com_adacore_gnatpolyglot_runtime_ada2java_BooleanArray_arrayGet(
+    JNIEnv *env, jclass c, jobject self, jint index) {
+  struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
+  return *gnatpolyglot__ada__arrays__native__boolean_array_get(data, index);
+}
+
+/**
+ * Java native method implementation
+ * Class: com.adacore.gnatpolyglot.runtime.ada2java.BooleanArray
+ * Method: arraySet
+ */
+JNIEXPORT jboolean
+Java_com_adacore_gnatpolyglot_runtime_ada2java_BooleanArray_arraySet(
+    JNIEnv *env, jclass c, jobject self, jint index, jboolean element) {
+  struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
+  unsigned char prev =
+      *gnatpolyglot__ada__arrays__native__boolean_array_get(data, index);
+  gnatpolyglot__ada__arrays__native__boolean_array_set(data, index, element);
+  return prev;
+}
