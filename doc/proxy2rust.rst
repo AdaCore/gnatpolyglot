@@ -10,8 +10,8 @@ can call into the bound library across the C ABI.
 .. warning::
 
    The Rust backend is **experimental**. It covers a subset of the proxy IR
-   and several constructs are not yet supported (see `Not yet supported`_ and
-   the :ref:`Limitations <limitations>` chapter). Generated crates and the
+   and several constructs are not yet supported (see
+   :ref:`Limitations <limitations>` chapter). Generated crates and the
    conventions described here are subject to change.
 
 Using the tool
@@ -57,7 +57,29 @@ keyword are escaped with the raw-identifier syntax (``r#priv``, ``r#type`` …).
 Functions
 ---------
 
-TODO
+Function placement
+~~~~~~~~~~~~~~~~~~~
+
+Free functions of a module become module-level ``pub fn`` items. Functions
+carrying a ``method`` role instead become inherent methods of the role's class
+(``&self`` / ``&mut self`` — see `Classes`_), and constructors follow the
+naming described there. Function names are lowercased to ``snake_case``.
+
+Because Rust has no overloading, functions that would otherwise share a name
+within the same scope (a module's free functions, or one class's methods) are
+disambiguated with a numeric suffix: the first keeps the base name, the rest
+become ``..._1``, ``..._2`` …
+
+Parameters and return values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Scalars are passed and returned by value.
+* Class-typed parameters are passed by reference: ``&Class`` for a constant
+  parameter, ``&mut Class`` for a mutable one.
+* For a ``method`` function, the controlling first parameter becomes the
+  ``self`` receiver and is dropped from the argument list.
+* Returned class values follow the ownership rules described under
+  `Ownership`_.
 
 Types
 -----
@@ -72,28 +94,39 @@ Proxy type                           Rust type
 ==================================== ===================
 ``bool``                             ``bool``
 character                            ``u8``
-signed int 8 / 16 / 32 / 64          ``i8`` / ``i16`` / ``i32`` / ``i64``
-unsigned int 8 / 16 / 32 / 64        ``u8`` / ``u16`` / ``u32`` / ``u64``
-float 32 / 64                        ``f32`` / ``f64``
+signed int 8                         ``i8``
+signed int 16                        ``i16``
+signed int 32                        ``i32``
+signed int 64                        ``i64``
+unsigned int 8                       ``u8``
+unsigned int 16                      ``u16``
+unsigned int 32                      ``u32``
+unsigned int 64                      ``u64``
+float 32                             ``f32``
+float 64                             ``f64``
 ``void``                             ``()``
 ==================================== ===================
 
-128-bit scalars are not supported (consistent with the proxy frontend).
+128-bit scalars are not supported (see :ref:`Limitations <limitations>`).
 
 Enumerations
 ~~~~~~~~~~~~
 
-Enumerations map to a ``#[repr(...)]`` Rust enum sized to the underlying proxy
-type, deriving the usual value traits.
+An enumeration in the proxy becomes a ``#[repr(...)]`` Rust enum, sized to the
+underlying proxy type and deriving the usual value traits. The representation
+values carried by the proxy are preserved.
+
+A proxy enumeration ``Color`` with enumerators ``Red``, ``Green`` and ``Blue``
+generates:
 
 .. code:: rust
 
-   #[repr(i32)]
+   #[repr(i8)]
    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-   pub enum Enum {
-       A = 0,
-       B = 1,
-       C = 2,
+   pub enum Color {
+       Red = 0,
+       Green = 1,
+       Blue = 2,
    }
 
 Classes
@@ -203,15 +236,8 @@ on Linux; ``advapi32`` on Windows, which the GNAT runtime needs).
       POLYGLOT_PROXY_LIB_NAME=<proxy-lib-name> \
       cargo build --manifest-path 2rust/Cargo.toml
 
-Not yet supported
------------------
+Supported platforms
+--------------------
 
-The following are not implemented yet in the Rust backend:
-
-* **Arrays** and **strings** — the supporting runtime crate
-  (``runtimes/proxy2rust``) is not yet provided.
-* **Exceptions** — there is no exception-to-``Result`` mapping yet.
-* **Virtual inheritance / dynamic dispatch into Rust** — virtual types and
-  vtable-backed overriding are not generated.
-* **Pointers in the safe API** — access values are not exposed as safe wrappers
-  (the ``ffi`` layer uses raw ``*mut``/``*const c_void``).
+Proxy2Rust currently supports only 64-bit Linux and Windows platforms (see
+:ref:`Limitations <limitations>`).

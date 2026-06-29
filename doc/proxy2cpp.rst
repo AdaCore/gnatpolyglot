@@ -163,12 +163,144 @@ Types
 Scalars
 ~~~~~~~
 
-TODO
+Scalars are mapped to fixed-width C++ types (the integer types come from
+``<cstdint>``):
+
+==================================== ===================
+Proxy type                           C++ type
+==================================== ===================
+``bool``                             ``bool``
+character                            ``char``
+signed int 8                         ``int8_t``
+signed int 16                        ``int16_t``
+signed int 32                        ``int32_t``
+signed int 64                        ``int64_t``
+unsigned int 8                       ``uint8_t``
+unsigned int 16                      ``uint16_t``
+unsigned int 32                      ``uint32_t``
+unsigned int 64                      ``uint64_t``
+float 32                             ``float``
+float 64                             ``double``
+``void``                             ``void``
+==================================== ===================
+
+128-bit scalars are not supported (see :ref:`Limitations <limitations>`).
 
 Enumerations
 ~~~~~~~~~~~~
 
-TODO
+An enumeration in the proxy becomes a scoped ``enum class``. Its underlying
+type is the smallest signed integer that can hold the largest enumerator value
+(``int8_t``, ``int16_t``, ``int32_t`` or ``int64_t``), and the representation
+values carried by the proxy are preserved. Enumerator names are emitted in
+upper case.
+
+For C++11 and later, a companion ``constexpr std::array`` holding every
+enumerator is also emitted — named ``<enum>_values`` (lower case) — so the
+values can be iterated over.
+
+A proxy enumeration ``Color`` with enumerators ``Red``, ``Green`` and ``Blue``
+generates:
+
+.. code:: cpp
+
+   // example.h
+   namespace example {
+
+   enum class Color : int8_t {
+       RED = 0,
+       GREEN = 1,
+       BLUE = 2,
+   };
+
+   #if __cplusplus >= 201103L
+   constexpr const std::array<Color, 3> color_values = {
+       Color::RED,
+       Color::GREEN,
+       Color::BLUE,
+   };
+   #endif
+
+   } // namespace example
+
+Arrays
+~~~~~~
+
+A proxy array becomes an instance of the runtime class template
+``polyglot_array<T>``, where ``T`` is the element type. Scalars, class types
+and pointers (``polyglot_ptr<C>``) are supported as element types; arrays of
+arrays (multidimensional arrays) are not.
+
+.. note::
+
+    These classes are part of the runtime support specific to the input language.
+    Unlike scalars, enumerations or classes — which map to neutral C++ types —
+    an array carries semantics that belong to the input language's own array model:
+    most visibly its index bounds, which need not start at zero, but also how its
+    storage is allocated and freed. No single neutral type can capture that for
+    every possible input language, so an array maps instead to runtime support
+    provided per input language.
+
+The array preserves the index bounds carried by the proxy rather than
+normalising to zero-based indexing:
+
+* ``get_begin()`` / ``get_end()`` — the inclusive lower and upper bounds.
+* ``size()`` — the number of elements.
+* ``get(i)`` — a reference to the element at index ``i``; ``set(i, value)``
+  overwrites it.
+* ``begin()`` / ``end()`` — iterators, so the array works with range-based
+  ``for`` and the standard algorithms.
+
+A new array is allocated by passing its bounds to the constructor. An array
+returned from a function owns its underlying storage and frees it when it goes
+out of scope; an array returned *by reference* instead yields a non-owning
+``polyglot_array<T>::view`` (a view, like the reference types described above).
+
+.. code:: cpp
+
+   // a function returning, then consuming, an array of int32_t
+   arrays::polyglot_array<int32_t> arr = example::make();
+
+   for (int i = arr.get_begin(); i <= arr.get_end(); ++i)
+       std::cout << arr.get(i) << '\n';
+
+   arr.set(arr.get_begin(), 42);
+   example::consume(arr);
+
+   // allocate a fresh array with bounds 1 .. 10
+   arrays::polyglot_array<int32_t> fresh(1, 10);
+
+Strings
+~~~~~~~
+
+A proxy string maps to the runtime class ``polyglot_string``. It is a dedicated
+string type rather than a ``polyglot_array<char>``, but it relies on the same
+per-input-language runtime support, and for the same reason (see the note
+above).
+
+Construct one from a C string or an ``std::string``, and read it back as an
+``std::string``:
+
+* ``polyglot_string(const char *)`` — construct from a literal or C string;
+  ``strings::from_string(const std::string &)`` — construct from an
+  ``std::string``.
+* ``strings::to_string(const polyglot_string &)`` — copy the contents out into
+  an ``std::string``.
+* ``at(i)`` (bounds-checked, throws on overflow) and ``operator[](i)``
+  (unchecked) return a reference to the character at index ``i``; ``size()``
+  gives the length.
+
+A ``polyglot_string`` owns its underlying buffer and frees it when it goes out
+of scope. Characters are handled as raw bytes: text is passed through
+unchanged, with no re-encoding performed.
+
+.. code:: cpp
+
+   // a function returning, then consuming, a string
+   strings::polyglot_string s = example::greeting();
+   std::cout << strings::to_string(s) << '\n';
+
+   example::greet(strings::from_string("hello"));
 
 Classes
 ~~~~~~~
@@ -509,3 +641,46 @@ time.
 
    For a concrete example of using bound exceptions, checkout the "ex3"
    example
+
+Building
+--------
+
+Generation writes into the output directory:
+
+* the binding headers under ``include/``;
+* the binding sources (``*.cpp``);
+* the C++ support runtime under ``runtimes/ada/src2cpp/`` (the
+  ``gnatpolyglot::...`` string, array, pointer and exception support);
+* a GNAT project file ``<Proxy>_2Cpp.gpr``, to build the bindings as a C++
+  library if needed.
+
+The bindings reach the bound library through the **proxy library**, built
+separately as an encapsulated standalone library; its archive lives in
+``<proxy-dir>/lib_agg/`` and is linked as ``<proxy>_proxy_agg``.
+
+To build a C++ program against the bindings, you can do it entirely manually by
+compiling your own sources together with the generated and runtime ``.cpp`` files,
+adding both include directories, and linking the proxy library:
+
+.. code:: sh
+
+   $> g++ main.cpp \
+          2cpp/*.cpp \
+          2cpp/runtimes/ada/src2cpp/*.cpp \
+          -I2cpp/include \
+          -I2cpp/runtimes/ada/src2cpp \
+          -L<proxy-lib-dir> \
+          -l<proxy>_proxy_agg \
+          -ldl -lpthread \
+          -std=c++11 \
+          -o main
+
+.. note::
+
+   ``-ldl`` and ``-lpthread`` are required by the GNAT runtime on Linux; they are
+   not needed on Windows. The bindings compile under C++11;
+
+Alternatively, if you have access to `gprbuild`, you can also build the bindings
+as a C++ library using the generated ``<Proxy>_2Cpp.gpr`` project file, and link
+with it from your build system of choice.
+
