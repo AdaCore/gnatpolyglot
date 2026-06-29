@@ -18,7 +18,7 @@ public class StorageError extends AdaException {
             new PolyglotData.Pointer(
                 createExceptionOccurenceMessage(
                     StandardExceptionsKind.STORAGE_ERROR_KIND.id,
-                    message.getData()
+                    message._getData()
                 ),
                 Owner.USER
             ),

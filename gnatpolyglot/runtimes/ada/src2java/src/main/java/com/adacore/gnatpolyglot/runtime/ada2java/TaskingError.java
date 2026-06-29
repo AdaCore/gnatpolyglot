@@ -18,7 +18,7 @@ public class TaskingError extends AdaException {
             new PolyglotData.Pointer(
                 createExceptionOccurenceMessage(
                     StandardExceptionsKind.TASKING_ERROR_KIND.id,
-                    message.getData()
+                    message._getData()
                 ),
                 Owner.USER
             ),

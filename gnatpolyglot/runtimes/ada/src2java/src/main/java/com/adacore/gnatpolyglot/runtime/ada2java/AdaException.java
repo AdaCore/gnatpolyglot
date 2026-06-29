@@ -71,7 +71,7 @@ public class AdaException extends PolyglotException {
         super(
             new PolyglotData.Pointer(
                 createExceptionOccurenceMessage(
-                    StandardExceptionsKind.ANONYMOUS_ERROR_KIND.id, message.getData()),
+                    StandardExceptionsKind.ANONYMOUS_ERROR_KIND.id, message._getData()),
                 Owner.USER
             ),
             message.toString()
@@ -91,7 +91,7 @@ public class AdaException extends PolyglotException {
     private native void freeException(long addr);
 
     /** Return the function to free the heap memory. */
-    final protected Consumer<PolyglotData> getFree() {
+    final protected Consumer<PolyglotData> _getFree() {
         return  (data) -> { freeException(data.getAddress()); };
     }
 

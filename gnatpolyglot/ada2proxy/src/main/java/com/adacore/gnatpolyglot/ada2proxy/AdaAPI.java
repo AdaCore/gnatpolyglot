@@ -241,6 +241,15 @@ public class AdaAPI extends LanguageAPI {
         return Name.fromLower(name.pCanonicalText().text);
     }
 
+    /** Safe method to get the documentation of a BasicDecl */
+    public static String getDoc(Libadalang.BasicDecl decl) {
+        try {
+            return decl.pDoc();
+        } catch (Libadalang.LangkitException e) {
+            return "";
+        }
+    }
+
     /** Return whether the declaration requires to write in a package body during codegen. */
     public static boolean requiresBodyPackage(AdaDeclaration decl) {
         return !(decl instanceof Array || decl instanceof Subtype || decl instanceof EnumType);

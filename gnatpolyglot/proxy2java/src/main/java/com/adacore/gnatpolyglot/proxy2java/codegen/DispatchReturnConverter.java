@@ -35,7 +35,7 @@ public class DispatchReturnConverter {
         @Override
         public String arrayType(TypeExpr type) {
             return new StringBuilder("return ")
-                    .append(JavaGenerator.makeMethodCall(returnedValue, "release", List.of()))
+                    .append(JavaGenerator.makeMethodCall(returnedValue, "_release", List.of()))
                     .append(";")
                     .toString();
         }
@@ -46,7 +46,7 @@ public class DispatchReturnConverter {
                     .append(
                             JavaGenerator.makeMethodCall(
                                     JavaGenerator.makeMethodCall(
-                                            returnedValue, "release", List.of()),
+                                            returnedValue, "_release", List.of()),
                                     "getAddress",
                                     List.of()))
                     .append(";")
@@ -72,7 +72,10 @@ public class DispatchReturnConverter {
         @Override
         public String pointerType(TypeExpr type) {
             boolean isArray = getContext().isStringOrArray(type.pointedType());
-            String lambda = "$value -> $value.getData()".concat(isArray ? "" : ".getAddress()");
+            String lambda =
+                    "$value -> "
+                            + JavaGenerator.makeGetData("$value")
+                            + (isArray ? "" : ".getAddress()");
             String defaultValue = isArray ? "null" : "0L";
             return new StringBuilder("return ")
                     .append(JavaGenerator.makeMethodCall(returnedValue, "map", List.of(lambda)))

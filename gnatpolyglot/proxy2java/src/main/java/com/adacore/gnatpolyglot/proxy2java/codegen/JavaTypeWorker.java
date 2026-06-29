@@ -12,6 +12,9 @@ public interface JavaTypeWorker<T> extends TypeWorker<T> {
         // similar handling.
         if (type.isName() && getContext().getTypeDecl(type.getName()) instanceof ExceptionDecl)
             return classType(type);
+        // Unwrap const references to pointers: it should behave the same in Java.
+        if (type.isReference() && type.isConst() && type.referencedType().isPointer())
+            return pointerType(type.referencedType());
         return TypeWorker.super.apply(type);
     }
 

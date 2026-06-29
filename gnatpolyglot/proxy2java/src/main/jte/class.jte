@@ -20,6 +20,7 @@ Template file to generate a class.
     FunctionMembersEntry members = api.getMembers(classDecl);
     String className = classDecl.name.getLastName().toPascal();
     FunctionMembersEntry arrayFunctions = api.getArrayFunctions(classDecl);
+    FunctionMembersEntry ptrArrayFunctions = api.getPtrArrayFunctions(classDecl);
     FunctionDecl cloneFunction = api.getCloneCtor(classDecl, RoleKind.ALLOC);
     FunctionDecl shadowCloneFunction = api.getCloneCtor(classDecl, RoleKind.SHADOW_ALLOC);
     String interfaces = "";
@@ -34,6 +35,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.BiFunction;
 
+${api.formatDoc(classDecl, 0)}
 public ${api.getOverridability(classDecl)}
 class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
@@ -79,12 +81,13 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
     @if (shadow == null || alloc.role.kind == RoleKind.SHADOW_ALLOC)
 
+    ${api.formatDoc(alloc, 1)}
     public ${className} (${api.javaParameters(alloc)}) {
         super((com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer) null);
     @for (var param : alloc.type.parameters)
         ${api.makeJavaParamConversion(param, false)};
     @endfor
-        setData(
+        _setData(
             new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(
                 ${api.callJavaNative(alloc, nativeFunc)},
                 com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER
@@ -109,6 +112,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
         ${api.javaNativeParameters(shadow)}
     );
 
+    ${api.formatDoc(alloc, 1)}
     public ${className} (${api.javaParameters(alloc)}) {
         super((com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer) null);
     @for (var param : alloc.type.parameters)
@@ -117,13 +121,13 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
         long addr;
 
-        if (isShadow()) {
+        if (_isShadow()) {
             addr = ${api.callJavaNative(shadow, nativeShadow)};
         } else {
            addr = ${api.callJavaNative(alloc, nativeFunc)};
         }
 
-        setData(
+        _setData(
             new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(
                 addr,
                 com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER
@@ -162,7 +166,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
         return super.clone();
     }
 
-    protected Function<com.adacore.gnatpolyglot.runtime.PolyglotData, Long> getClone() {
+    protected Function<com.adacore.gnatpolyglot.runtime.PolyglotData, Long> _getClone() {
         return (addr) -> ${nativeFunc}(addr.getAddress());
     }
 @endif
@@ -176,7 +180,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
                     com.adacore.gnatpolyglot.runtime.PolyglotData,
                     com.adacore.gnatpolyglot.runtime.PolyglotObject,
                     Long>
-            getCloneShadow() {
+            _getCloneShadow() {
         return (addr, obj) -> ${nativeFunc}(addr.getAddress(), (${className}) obj);
     }
 @endif
@@ -192,12 +196,16 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
     );
 
     @Override
-    protected Consumer<com.adacore.gnatpolyglot.runtime.PolyglotData> getFree() {
+    protected Consumer<com.adacore.gnatpolyglot.runtime.PolyglotData> _getFree() {
         return (addr) -> ${freeNativeFunc}(addr.getAddress());
     }
 
 @if (arrayFunctions != null)
-    @template.array_class(api, classDecl, arrayFunctions)
+    @template.array_class(api, classDecl, arrayFunctions, false)
+@endif
+
+@if (ptrArrayFunctions != null)
+    @template.array_class(api, classDecl, ptrArrayFunctions, true)
 @endif
 
 @if(classDecl.inheritability != Inheritability.FINAL)
@@ -222,7 +230,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
         @endif
         } catch (com.adacore.gnatpolyglot.runtime.ada2java.AdaException exc$e) {
             com.adacore.gnatpolyglot.runtime.PolyglotKernel.ExceptionInformation.setExceptionData(
-                exc$e.release().getAddress()
+                exc$e._release().getAddress()
             );
             ${api.makeJavaDispatchDefaultReturnStatement(method.functionType)}
         } catch (java.lang.Throwable exc$e) {
@@ -231,7 +239,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
                     new com.adacore.gnatpolyglot.runtime.ada2java.PolyglotString(
                         "Uncaught host language exception"
                     )
-                ).release().getAddress()
+                )._release().getAddress()
             );
             ${api.makeJavaDispatchDefaultReturnStatement(method.functionType)}
         }
@@ -240,7 +248,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 @endif
 
     @Override
-    protected boolean isShadow() {
+    protected boolean _isShadow() {
          return !this.getClass().equals(${className}.class);
     }
 
@@ -270,7 +278,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
         @Override
         protected void update(com.adacore.gnatpolyglot.runtime.PolyglotData data) {
             com.adacore.gnatpolyglot.runtime.PolyglotData oldData =
-                get().map(o -> o.getData()).orElse(null);
+                get().map(o -> o._getData()).orElse(null);
             if (!java.util.Objects.deepEquals(data, oldData)) {
                 if (data == null) {
                     this.obj = null;

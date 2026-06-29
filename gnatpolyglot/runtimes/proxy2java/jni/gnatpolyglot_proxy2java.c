@@ -77,7 +77,7 @@ jmethodID PolyglotObject_internal_release_method (JNIEnv *env) {
         m = (*env)->GetMethodID(
             env,
             clazz,
-            "release",
+            "_release",
             "()Lcom/adacore/gnatpolyglot/runtime/PolyglotData;"
         );
     }
@@ -91,7 +91,7 @@ jmethodID PolyglotObject_internal_clone_method (JNIEnv *env) {
         m = (*env)->GetMethodID(
             env,
             clazz,
-            "internalClone",
+            "_internalClone",
             "(J)Ljava/lang/Object;"
         );
     }

@@ -1,0 +1,37 @@
+import os
+from utils import run_scanner, run_printer
+
+
+run_scanner("ada", "test.gpr", "proxy")
+run_printer("java", os.path.join("proxy", "proxy.json"), "2java")
+
+def get_docstrings(filename):
+    print(f"{'=' * len(filename)}=")
+    print(f"{filename}:")
+    with open(filename) as f:
+        lines = [l.strip() for l in f.readlines()]
+        i = 0
+        while i < len(lines):
+            if lines[i].startswith("/**"):
+                print(lines[i])
+                i += 1
+                while not lines[i - 1].endswith("*/"):
+                    print(f" {lines[i]}")
+                    i += 1
+                # print the decl
+                while lines[i - 1].count("(") == 0 and lines[i - 1].count("{") == 0:
+                    print(lines[i])
+                    i += 1
+                print()
+            i += 1
+    print()
+    print()
+
+
+
+for root, _, files in os.walk(
+    os.path.join("2java", "src", "main", "java", "com", "adacore", "libtest", "test")
+):
+    for f in files:
+        if f.endswith(".java") and not f == "Library.java":
+            get_docstrings(os.path.join(root, f))

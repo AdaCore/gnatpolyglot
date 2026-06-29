@@ -24,7 +24,7 @@ public abstract class ObjectRef<T extends PolyglotObject> {
      * <p> Return the data of the underlying object, or null if there is none.
      */
     public PolyglotData getData() {
-        return get().map(PolyglotObject::getData).orElse(null);
+        return get().map(PolyglotObject::_getData).orElse(null);
     }
 
     /**

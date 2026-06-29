@@ -5,6 +5,7 @@
 
 package com.adacore.gnatpolyglot.ada2proxy.proxy;
 
+import com.adacore.gnatpolyglot.ada2proxy.AdaAPI;
 import com.adacore.gnatpolyglot.proxy.Name;
 import com.adacore.libadalang.Libadalang;
 
@@ -32,6 +33,6 @@ public class Subtype extends AdaDeclaration {
 
     @Override
     public String getDoc() {
-        return origin.pDoc();
+        return AdaAPI.getDoc(origin);
     }
 }

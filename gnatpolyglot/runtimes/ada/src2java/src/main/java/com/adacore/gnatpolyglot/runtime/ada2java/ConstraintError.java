@@ -18,7 +18,7 @@ public class ConstraintError extends AdaException {
             new PolyglotData.Pointer(
                 createExceptionOccurenceMessage(
                     StandardExceptionsKind.CONSTRAINT_ERROR_KIND.id,
-                    message.getData()
+                    message._getData()
                 ),
                 Owner.USER
             ),

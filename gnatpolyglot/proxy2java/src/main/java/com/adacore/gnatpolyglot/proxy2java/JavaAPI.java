@@ -5,6 +5,7 @@ import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
 import com.adacore.gnatpolyglot.proxy.ClassDecl;
 import com.adacore.gnatpolyglot.proxy.ClassDecl.Inheritability;
+import com.adacore.gnatpolyglot.proxy.Declaration;
 import com.adacore.gnatpolyglot.proxy.EnumerationDecl;
 import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
 import com.adacore.gnatpolyglot.proxy.FunctionDecl;
@@ -22,6 +23,8 @@ import com.adacore.gnatpolyglot.proxy.VTableEntry;
 import com.adacore.gnatpolyglot.proxy2java.codegen.CGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.DispatchParameterConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.DispatchReturnConverter;
+import com.adacore.gnatpolyglot.proxy2java.codegen.DocumentationFormater;
+import com.adacore.gnatpolyglot.proxy2java.codegen.JNITypeSignatureGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.JavaGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.ParameterConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.ReturnConverter;
@@ -42,6 +45,9 @@ public class JavaAPI extends LanguageAPI {
 
     private TypenameGenerator typenameGenerator = new TypenameGenerator(this);
 
+    private JNITypeSignatureGenerator jniTypeSignatureGenerator =
+            new JNITypeSignatureGenerator(this);
+
     private ReturnConverter returnConverter = new ReturnConverter(this);
 
     private DispatchReturnConverter dispatchReturnConverter = new DispatchReturnConverter(this);
@@ -50,6 +56,8 @@ public class JavaAPI extends LanguageAPI {
 
     private DispatchParameterConverter dispatchParameterConverter =
             new DispatchParameterConverter(this);
+
+    private DocumentationFormater documentationFormater = new DocumentationFormater(this);
 
     public JavaAPI(ProxyContext context, List<String> groupId, Name projectName) {
         this.context = context;
@@ -67,28 +75,28 @@ public class JavaAPI extends LanguageAPI {
 
     /** Return the string of the base package ({groupId}.lib{projectName}). */
     public String basePackage() {
-        return groupId.join((n) -> n.getLastName().toLower(), "", ".", "");
+        return groupId.join((n) -> toJavaLower(n.getLastName()), "", ".", "");
     }
 
     /** Return the string of the package for the given module. */
     public String packagePath(Module module) {
-        return groupId.append(module.name).join((n) -> n.getLastName().toLower(), "", ".", "");
+        return groupId.append(module.name).join((n) -> toJavaLower(n.getLastName()), "", ".", "");
     }
 
     /** Return the string of the package for the given class. */
     public String packagePath(FullyQualifiedName className) {
         return groupId.append(className.getParentFullyQualifiedName())
-                .join((n) -> n.getLastName().toLower(), "", ".", "");
+                .join((n) -> toJavaLower(n.getLastName()), "", ".", "");
     }
 
     /** Return the path of the file to generate for a module. */
     public Path filepath(Module module) {
         Path p = Path.of(".");
         for (var n : groupId.names) {
-            p = p.resolve(n.toLower());
+            p = p.resolve(toJavaLower(n));
         }
         for (var n : module.name.names) {
-            p = p.resolve(n.toLower());
+            p = p.resolve(toJavaLower(n));
         }
         return p.resolve(module.name.getLastName().toPascal().concat("Package.java"));
     }
@@ -97,17 +105,58 @@ public class JavaAPI extends LanguageAPI {
     public Path filepath(FullyQualifiedName className) {
         Path p = Path.of(".");
         for (var n : groupId.names) {
-            p = p.resolve(n.toLower());
+            p = p.resolve(toJavaLower(n));
         }
         for (var n : className.getParentFullyQualifiedName().names) {
-            p = p.resolve(n.toLower());
+            p = p.resolve(toJavaLower(n));
         }
         return p.resolve(className.getLastName().toPascal().concat(".java"));
     }
 
+    /**
+     * Return the name formatted in Camel notation. If the result collides with a java keyword, an
+     * underscore is appended.
+     */
+    public String toJavaCamel(Name name) {
+        String camel = name.toCamel();
+        if (JavaReservedWords.KEYWORDS.contains(camel)) return camel + "_";
+        return camel;
+    }
+
+    /**
+     * Return the name formatted in Lower notation. If the result collides with a java keyword, an
+     * underscore is appended.
+     */
+    public String toJavaLower(Name name) {
+        String camel = name.toLower();
+        if (JavaReservedWords.KEYWORDS.contains(camel)) return camel + "_";
+        return camel;
+    }
+
+    /**
+     * Return the name to use for a function. If isMethod is true, also check against methods that
+     * come from the Java Object class.
+     */
+    public String functionName(Name name, boolean isMethod) {
+        String camel = name.toCamel();
+        if (JavaReservedWords.KEYWORDS.contains(camel)
+                || (isMethod && JavaReservedWords.RESERVED_METHODS.contains(camel))) {
+            return camel + "_";
+        }
+        return camel;
+    }
+
+    public String formatDoc(String str, int indent) {
+        return documentationFormater.formatAnyDoc(str, indent);
+    }
+
+    public String formatDoc(Declaration decl, int indent) {
+        return documentationFormater.formatDoc(decl, indent);
+    }
+
     /** Return the name of a java argument. */
     public String javaArgName(Name name) {
-        return name.toCamel();
+        return toJavaCamel(name);
     }
 
     /** Return the expected name of a converted java argument. */
@@ -235,7 +284,7 @@ public class JavaAPI extends LanguageAPI {
     public String jniName(FunctionDecl function) {
         StringBuilder builder = new StringBuilder("Java_");
         Function<FullyQualifiedName, String> mangle =
-                (n) -> n.getLastName().toLower().replace("_", "_1");
+                (n) -> toJavaLower(n.getLastName()).replace("_", "_1");
         if (function.role == null) {
             FullyQualifiedName parent = function.name.getParentFullyQualifiedName();
             builder.append(groupId.join(mangle, "", "_", "_"))
@@ -253,7 +302,10 @@ public class JavaAPI extends LanguageAPI {
                     javaTypename(function.role.type.elementType())
                             .replace("_", "_1")
                             .replace(".", "_")
-                            .concat("_00024Array"));
+                            .concat(
+                                    function.role.type.elementType().isPointer()
+                                            ? "_00024PtrArray"
+                                            : "_00024Array"));
         } else {
             throw new UnsupportedOperationException("unsupported");
         }
@@ -279,34 +331,7 @@ public class JavaAPI extends LanguageAPI {
     }
 
     private String jniTypeSignature(TypeExpr type, boolean isReturn) {
-        if (context.isNativeScalar(type)) {
-            TypeDecl decl = context.getTypeDecl(type.getName());
-            if (decl instanceof EnumerationDecl enumDecl)
-                decl = enumDecl.representationType().declaration;
-            NativeTypeDecl nativeDecl = (NativeTypeDecl) decl;
-            return switch (nativeDecl.nativeType) {
-                case VOID -> "V";
-                case BOOL -> "Z";
-                case CHAR -> "C";
-                case FLOAT32 -> "F";
-                case FLOAT64 -> "D";
-                case UINT8, SINT8 -> "B";
-                case UINT16, SINT16 -> "S";
-                case UINT32, SINT32 -> "I";
-                case UINT64, SINT64 -> "J";
-                default -> throw new UnsupportedOperationException("Unsupported native type");
-            };
-        }
-        if (context.isClassType(type.referencedType())) {
-            return jniTypeSignature(NativeType.UINT64.typeExpr, isReturn);
-        } else if (type.isPointer() && context.isClassType(type.pointedType())) {
-            return jniTypeSignature(NativeType.UINT64.typeExpr, isReturn);
-        } else if (type.isReference() && type.referencedType().isPointer()) {
-            return "L%s$Ref;".formatted(javaTypename(type.referencedType()).replace(".", "/"));
-        }
-        String javaNativeType =
-                isReturn ? javaNativeReturnTypename(type) : javaNativeTypename(type);
-        return "L%s;".formatted(javaNativeType.replace(".", "/"));
+        return jniTypeSignatureGenerator.jniTypeSignature(type, isReturn);
     }
 
     /** Create a call to the C symbol in the JNI layer. */
@@ -345,7 +370,7 @@ public class JavaAPI extends LanguageAPI {
                         .map(p -> javaValueName(p.name))
                         .toList();
         return new StringBuilder("_self.")
-                .append(JavaGenerator.makeCall(method.name.toCamel(), args))
+                .append(JavaGenerator.makeCall(functionName(method.name, true), args))
                 .toString();
     }
 
@@ -480,7 +505,7 @@ public class JavaAPI extends LanguageAPI {
         StringBuilder builder = new StringBuilder();
         builder.append(
                 functionDecl.type.parameters.stream()
-                        .map(p -> "%s %s".formatted(cTypename(p.type), p.name.toCamel()))
+                        .map(p -> "%s %s".formatted(cTypename(p.type), jniArgName(p.name)))
                         .collect(Collectors.joining(", ")));
         //  The C Symbol expects two additional hidden arguments:
         //  - The self argument of the class's raw pointer type.
@@ -550,6 +575,11 @@ public class JavaAPI extends LanguageAPI {
     /** Return the member functions of a type. */
     public ProxyContext.FunctionMembersEntry getArrayFunctions(TypeDecl decl) {
         return context.getMembers(decl.name.asTypeExpr().makeArray());
+    }
+
+    /** Return the member functions of a type. */
+    public ProxyContext.FunctionMembersEntry getPtrArrayFunctions(TypeDecl decl) {
+        return context.getMembers(decl.name.asTypeExpr().makePointer(false, false).makeArray());
     }
 
     /** Return the name of the data owner. */
@@ -722,7 +752,10 @@ public class JavaAPI extends LanguageAPI {
         return name.getParentFullyQualifiedName()
                 .join((n) -> n.getLastName().toLower(), "", "__", "_")
                 .concat(name.getLastName().toPascal())
-                .concat(typeExpr.isArray() ? "__Array" : "")
+                .concat(
+                        typeExpr.isArray()
+                                ? typeExpr.elementType().isPointer() ? "__PtrArray" : "__Array"
+                                : "")
                 .concat("_Ref_")
                 .concat(suffix);
     }

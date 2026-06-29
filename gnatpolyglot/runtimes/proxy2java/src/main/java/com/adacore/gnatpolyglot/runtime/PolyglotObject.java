@@ -47,42 +47,42 @@ public abstract class PolyglotObject implements AutoCloseable {
     private boolean internalCloning = false;
 
     protected PolyglotObject(PolyglotData data) {
-        setData(data);
+        _setData(data);
         this.parent = this;
     }
 
     protected PolyglotObject(PolyglotData data, PolyglotObject parent) {
-        setData(data);
+        _setData(data);
         this.parent = parent;
     }
 
     /** Return the native object. */
-    public PolyglotData getData() {
+    public PolyglotData _getData() {
         return data;
     }
 
     /** Sets the native data of the PolyglotObject and register the data to the global Cleaner. */
-    protected final void setData(PolyglotData data) {
+    protected final void _setData(PolyglotData data) {
         this.data = data;
         if (data != null)
-            this.cleanable = PolyglotCleaner.register(this, data, getFree());
+            this.cleanable = PolyglotCleaner.register(this, data, _getFree());
     }
 
-    public final Owner getOwner() {
+    public final Owner _getOwner() {
         return data.getOwner();
     }
 
-    public final void setOwner(Owner owner) {
+    public final void _setOwner(Owner owner) {
         data.setOwner(owner);
     }
 
-    public PolyglotData release() {
+    public PolyglotData _release() {
         PolyglotData res = data;
         // Prevent the data from being freed: there is no way to cancel a corresponding Cleanable
         // from running once an object has been registered
         res.setOwner(Owner.STATIC);
         // The object should not be usable anymore.
-        setData(null);
+        _setData(null);
         return res;
     }
 
@@ -92,7 +92,7 @@ public abstract class PolyglotObject implements AutoCloseable {
      * <p>This function should only be called from JNI.
      */
     @SuppressWarnings("unused")
-    synchronized private Object internalClone(long addr) throws CloneNotSupportedException  {
+    synchronized private Object _internalClone(long addr) throws CloneNotSupportedException  {
         // Flag the copy as "internal". This indicates to the `clone` funtion
         // that it should not call a native clone function.
         this.internalCloning = true;
@@ -100,7 +100,7 @@ public abstract class PolyglotObject implements AutoCloseable {
         this.internalCloning = false;
         c.internalCloning = false;
         // Set the data of the new object.
-        c.setData(new PolyglotData.Pointer(addr, Owner.LIBRARY));
+        c._setData(new PolyglotData.Pointer(addr, Owner.LIBRARY));
         return c;
     }
 
@@ -112,27 +112,27 @@ public abstract class PolyglotObject implements AutoCloseable {
         // the new data already exists and will be set by the former at the end
         // of the current call.
         if (!internalCloning) {
-            c.setData(
+            c._setData(
                     new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(
-                            c.isShadow()
-                                    ? c.getCloneShadow().apply(this.getData(), c)
-                                    : c.getClone().apply(this.getData()),
+                            c._isShadow()
+                                    ? c._getCloneShadow().apply(this._getData(), c)
+                                    : c._getClone().apply(this._getData()),
                             com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER));
         }
         return c;
     }
 
-    protected boolean isShadow() {
+    protected boolean _isShadow() {
         return false;
     }
 
     /** Return the function to free the heap memory. */
-    protected Function<PolyglotData, Long> getClone() {
+    protected Function<PolyglotData, Long> _getClone() {
         return null;
     }
 
     /** Return the function to free the heap memory. */
-    protected BiFunction<PolyglotData, PolyglotObject, Long> getCloneShadow() {
+    protected BiFunction<PolyglotData, PolyglotObject, Long> _getCloneShadow() {
         return null;
     }
 
@@ -144,5 +144,5 @@ public abstract class PolyglotObject implements AutoCloseable {
     }
 
     /** Return the function to free the heap memory. */
-    abstract protected Consumer<PolyglotData> getFree();
+    abstract protected Consumer<PolyglotData> _getFree();
 }

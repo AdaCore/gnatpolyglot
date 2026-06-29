@@ -36,6 +36,6 @@ public class EnumType extends AdaDeclaration {
 
     @Override
     public String getDoc() {
-        return origin.pDoc();
+        return AdaAPI.getDoc(origin);
     }
 }

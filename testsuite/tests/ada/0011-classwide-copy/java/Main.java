@@ -71,9 +71,9 @@ public class Main {
         TestPackage.pMakeCopy(new MissingClone());
 
         Inherited in2 = (Inherited) in.clone();
-        assert in.getData().getAddress() != in2.getData().getAddress();
+        assert in._getData().getAddress() != in2._getData().getAddress();
 
         Root r = new Root(1, 2);
-        assert r.getData().getAddress() != ((Root) r.clone()).getData().getAddress();
+        assert r._getData().getAddress() != ((Root) r.clone())._getData().getAddress();
     }
 }

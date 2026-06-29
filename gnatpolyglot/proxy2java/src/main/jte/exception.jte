@@ -21,6 +21,7 @@ Template file to generate an exception.
 
 package ${api.packagePath(exceptionDecl.name)};
 
+${api.formatDoc(exceptionDecl, 0)}
 public class ${excName} extends com.adacore.gnatpolyglot.runtime.ada2java.AdaException {
 
 @for (var alloc : members.allocFunctions)
@@ -33,6 +34,7 @@ public class ${excName} extends com.adacore.gnatpolyglot.runtime.ada2java.AdaExc
         ${api.javaNativeParameters(alloc)}
     );
 
+    ${api.formatDoc(alloc, 1)}
     public ${excName} (${api.javaParameters(alloc)}) {
         super(
             (com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer) null
@@ -43,7 +45,7 @@ public class ${excName} extends com.adacore.gnatpolyglot.runtime.ada2java.AdaExc
     @for (var param : alloc.type.parameters)
         ${api.makeJavaParamConversion(param, false)};
     @endfor
-        setData(
+        _setData(
             new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(
                 ${api.callJavaNative(alloc, nativeFunc)},
                 com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER
@@ -51,6 +53,7 @@ public class ${excName} extends com.adacore.gnatpolyglot.runtime.ada2java.AdaExc
         );
     }
 
+    ${api.formatDoc(alloc, 1)}
     public ${excName} (
         com.adacore.gnatpolyglot.runtime.PolyglotData data
     @if (!alloc.type.parameters.isEmpty())
@@ -66,7 +69,7 @@ public class ${excName} extends com.adacore.gnatpolyglot.runtime.ada2java.AdaExc
     @for (var param : alloc.type.parameters)
         ${api.makeJavaParamConversion(param, false)};
     @endfor
-        setData(
+        _setData(
             new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(
                 ${api.callJavaNative(alloc, nativeFunc)},
                 com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER

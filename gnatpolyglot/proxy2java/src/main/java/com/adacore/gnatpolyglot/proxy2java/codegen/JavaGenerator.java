@@ -20,7 +20,7 @@ public class JavaGenerator {
     }
 
     public static StringBuilder makeGetData(CharSequence expr) {
-        return new StringBuilder(expr).append(".getData()");
+        return new StringBuilder(expr).append("._getData()");
     }
 
     public static StringBuilder makeGetAddress(CharSequence expr) {

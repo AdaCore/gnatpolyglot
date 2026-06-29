@@ -13,9 +13,9 @@ public class Main {
         System.out.println(v.getV() + " " + x.getV());
 
         TestPackage.foo(new T());
-        v.setOwner(Owner.LIBRARY);
+        v._setOwner(Owner.LIBRARY);
         System.out.println(TestPackage.identity(v).get().getV());
-        v.setOwner(Owner.USER);
+        v._setOwner(Owner.USER);
     }
 
 }

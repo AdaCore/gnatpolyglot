@@ -47,7 +47,7 @@ public class Main {
             // Test that simultaneous classwide copies do not break.
             // In java, there is object-wide state for polymorphic copies called
             // from ada. Verify that data is still correctly set.
-            assert ((Inherit)inherit.clone()).getData() != null;
+            assert ((Inherit)inherit.clone())._getData() != null;
         }
         futures.stream().forEach(CompletableFuture::join);
     }

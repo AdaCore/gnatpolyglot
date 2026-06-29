@@ -37,7 +37,7 @@ public class Main {
             for (int i = ptr.getBegin(); i <= ptr.getEnd(); i++) {
                 ptr.setUnslided(i, i);
             }
-            ptr.setOwner(Owner.LIBRARY);
+            ptr._setOwner(Owner.LIBRARY);
             return Optional.of(ptr);
         }
 
@@ -52,7 +52,7 @@ public class Main {
             for (int i = ptr.getBegin(); i <= ptr.getEnd(); i++) {
                 ptr.setUnslided(i, i);
             }
-            ptr.setOwner(Owner.LIBRARY);
+            ptr._setOwner(Owner.LIBRARY);
             acc.set(ptr);
         }
 
@@ -60,7 +60,7 @@ public class Main {
         public Optional<PolyglotString> rootStr(PolyglotString acc) {
             System.out.println("Java got: " + acc.toString());
             PolyglotString res = new PolyglotString("From Java");
-            res.setOwner(Owner.LIBRARY);
+            res._setOwner(Owner.LIBRARY);
             return Optional.of(res);
         }
 
@@ -68,7 +68,7 @@ public class Main {
         public void rootStrP(PolyglotString.Ref acc) {
             System.out.println("Java got: " + acc.get().map(Object::toString).orElseThrow());
             PolyglotString res = new PolyglotString("From Java");
-            res.setOwner(Owner.LIBRARY);
+            res._setOwner(Owner.LIBRARY);
             acc.set(res);
         }
 
@@ -77,30 +77,30 @@ public class Main {
     static void dynamicDispatch() {
         Child c = new Child();
         Rec r = new Rec(42);
-        r.setOwner(Owner.LIBRARY);
+        r._setOwner(Owner.LIBRARY);
         Rec rec = TestPackage.callRootRec(c, r).get();
         System.out.println(rec.getI());
-        rec.setOwner(Owner.USER);
+        rec._setOwner(Owner.USER);
 
         IntegerArray a = new IntegerArray(1, 10);
         for (int i = a.getBegin(); i <= a.getEnd(); i++) {
             a.setUnslided(i, i);
         }
-        a.setOwner(Owner.LIBRARY);
+        a._setOwner(Owner.LIBRARY);
         IntegerArray arr = TestPackage.callRootArr(c, a).get();
         System.out.format("%d .. %d = {", arr.getBegin(), arr.getEnd());
         for (var e : arr) {
             System.out.print(e + ", ");
         }
         System.out.println("}");
-        a.setOwner(Owner.USER);
-        arr.setOwner(Owner.USER);
+        a._setOwner(Owner.USER);
+        arr._setOwner(Owner.USER);
     }
 
     static void inOut() {
         Child c = new Child();
         Rec.Ref r = new Rec.Ref(new Rec(42));
-        r.get().ifPresent(rec -> rec.setOwner(Owner.LIBRARY));
+        r.get().ifPresent(rec -> rec._setOwner(Owner.LIBRARY));
         TestPackage.callRootRecP(c, r);
         System.out.println(r.get().get().getI());
 
@@ -108,7 +108,7 @@ public class Main {
         for (int i = a.getBegin(); i <= a.getEnd(); i++) {
             a.setUnslided(i, i);
         }
-        a.setOwner(Owner.LIBRARY);
+        a._setOwner(Owner.LIBRARY);
         IntegerArray.Ref arrPtr = new IntegerArray.Ref(a);
         TestPackage.callRootArrP(c, arrPtr);
         IntegerArray arr = arrPtr.get().get();
@@ -117,23 +117,23 @@ public class Main {
             System.out.print(e + ", ");
         }
         System.out.println("}");
-        arr.setOwner(Owner.USER);
+        arr._setOwner(Owner.USER);
     }
 
     static void string() {
         Child c = new Child();
         PolyglotString ptr1 = new PolyglotString("begin");
-        ptr1.setOwner(Owner.LIBRARY);
+        ptr1._setOwner(Owner.LIBRARY);
         PolyglotString ptr2 = TestPackage.callRootStr(c, ptr1).get();
         System.out.println("Got from Ada: " + ptr2.toString());
-        ptr2.setOwner(Owner.USER);
+        ptr2._setOwner(Owner.USER);
 
         PolyglotString.Ref ref = new PolyglotString.Ref(ptr1);
         TestPackage.callRootStrP(c, ref);
         System.out.println("Got from Ada: " + ref.get().get().toString());
-        ref.get().ifPresent(s -> s.setOwner(Owner.USER));
+        ref.get().ifPresent(s -> s._setOwner(Owner.USER));
 
-        ptr1.setOwner(Owner.USER);
+        ptr1._setOwner(Owner.USER);
     }
 
     // Default implementations already return null.

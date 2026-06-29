@@ -6,7 +6,11 @@ public class Main {
         assert IntsPackage.fChar() == 80;
         assert IntsPackage.fShort() == Short.MAX_VALUE;
         assert IntsPackage.fInt() == Integer.MAX_VALUE;
-        assert IntsPackage.fLongInt() == Long.MAX_VALUE;
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            assert IntsPackage.fLongInt() == Integer.MAX_VALUE;
+        } else {
+            assert IntsPackage.fLongInt() == Long.MAX_VALUE;
+        }
 
         assert IntsPackage.fMyInt() == (1 << 20);
         assert IntsPackage.fMyNewShort() == 1000;
