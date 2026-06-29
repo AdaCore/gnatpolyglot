@@ -24,6 +24,8 @@ Template file to generate the accessors of Ref classes of ClassDecls.
             .toList();
 }
 
+@template.text_header()
+
 #include <jni.h>
 
 @for (var clazz : classes)

@@ -29,6 +29,8 @@ Template file to generate a class.
     }
 }
 
+@template.text_header()
+
 package ${api.packagePath(classDecl.name)};
 
 import java.util.function.Consumer;

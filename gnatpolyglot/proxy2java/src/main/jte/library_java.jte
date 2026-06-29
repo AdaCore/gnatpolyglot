@@ -24,6 +24,8 @@ Template file to generate a central class for the Java bindings.
         .toList();
 }
 
+@template.text_header()
+
 package ${api.basePackage()};
 
 import com.adacore.gnatpolyglot.runtime.PolyglotKernel;

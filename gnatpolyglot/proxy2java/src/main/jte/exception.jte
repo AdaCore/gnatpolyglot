@@ -19,6 +19,8 @@ Template file to generate an exception.
     String excName = exceptionDecl.name.getLastName().toPascal();
 }
 
+@template.text_header()
+
 package ${api.packagePath(exceptionDecl.name)};
 
 ${api.formatDoc(exceptionDecl, 0)}

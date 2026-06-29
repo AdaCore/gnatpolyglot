@@ -20,6 +20,42 @@ Checking presence of the user-given header in the following generated source fil
   - cpp/gnatpolyglot_exceptions_lib.h:
     // LICENSE
     // 2026
+  - cpp/include/lib.h:
+    // LICENSE
+    // 2026
   - cpp/lib.cpp:
+    // LICENSE
+    // 2026
+  - java/jni/gnatpolyglot.c:
+    // LICENSE
+    // 2026
+  - java/jni/gnatpolyglot_ada.c:
+    // LICENSE
+    // 2026
+  - java/jni/gnatpolyglot_ada_arrays.c:
+    // LICENSE
+    // 2026
+  - java/jni/lib.c:
+    // LICENSE
+    // 2026
+  - java/jni/lib__refs.c:
+    // LICENSE
+    // 2026
+  - java/jni/lib__refs.h:
+    // LICENSE
+    // 2026
+  - java/src/main/java/com/adacore/liblib/Library.java:
+    // LICENSE
+    // 2026
+  - java/src/main/java/com/adacore/liblib/gnatpolyglot/GnatpolyglotPackage.java:
+    // LICENSE
+    // 2026
+  - java/src/main/java/com/adacore/liblib/gnatpolyglot/ada/AdaPackage.java:
+    // LICENSE
+    // 2026
+  - java/src/main/java/com/adacore/liblib/gnatpolyglot/ada/arrays/ArraysPackage.java:
+    // LICENSE
+    // 2026
+  - java/src/main/java/com/adacore/liblib/lib/LibPackage.java:
     // LICENSE
     // 2026

@@ -11,6 +11,8 @@ Template file to generate the JNI file for a module
 @param JavaAPI api
 @param Module module
 
+@template.text_header()
+
 #include <jni.h>
 
 #include "gnatpolyglot_proxy2java.h"
