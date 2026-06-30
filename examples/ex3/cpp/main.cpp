@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "exceptions.h"
+#include "../2cpp/include/exceptions.h"
 #include "gnatpolyglot_ada_exceptions.h"
 
 class Deriv : public exceptions::Tag {

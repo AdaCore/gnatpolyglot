@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "2cpp/include/animals.h"
+#include "../2cpp/include/animals.h"
 #include "gnatpolyglot_ada_arrays.h"
 #include "gnatpolyglot_ada_strings.h"
 #include "gnatpolyglot_ptr.h"
