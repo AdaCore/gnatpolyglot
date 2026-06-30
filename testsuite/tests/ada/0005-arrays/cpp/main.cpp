@@ -1,97 +1,182 @@
 #include <iostream>
-#include <vector>
 
 #include "test.h"
 
-void test_native_arrays() {
+using gnatpolyglot::ada::arrays::polyglot_array;
 
-    std::cout << "Starting test_native_arrays\n";
+void test_integer_arrays() {
+    std::cout << "-- integer arrays --\n";
 
-    gnatpolyglot::ada::arrays::polyglot_array<int32_t> arr = test::f_u_1();
+    // A function returning an unconstrained array, owned on the C++ side.
+    polyglot_array<int32_t> arr = test::f_u_1();
+    std::cout << "bounds: " << arr.get_begin() << " " << arr.get_end() << "\n";
+    std::cout << "content: [" << arr.get(1) << " " << arr.get(2) << " "
+              << arr.get(3) << "]\n";
+    std::cout << "sum: " << test::f_u_2(arr) << "\n";
 
-    std::cout << "bounds:" << arr.get_begin() << " " << arr.get_end() << "\n";
-    std::cout << "content : [" << arr.get(1) << " " << arr.get(2) << " "
-        << arr.get(3) << "]\n";
-
-    std::cout << "total: " << test::f_u_2(arr) << "\n";
-
-    std::cout << "setting new value\n";
+    // Write elements back, then read them through a parameter.
     arr.set(1, 4);
     arr.set(2, 5);
     arr.set(3, 6);
+    std::cout << "content: [" << arr.get(1) << " " << arr.get(2) << " "
+              << arr.get(3) << "]\n";
+    std::cout << "sum: " << test::f_u_2(arr) << "\n";
 
-    std::cout << "content : [" << arr.get(1) << " " << arr.get(2) << " "
-        << arr.get(3) << "]\n";
-    std::cout << "total: " << test::f_u_2(arr) << "\n";
-
-    std::cout << "==================\narr: ";
-    for (int i = arr.get_begin(); i <= arr.get_end(); i++) {
-        std::cout << arr.get(i) << ", ";
+    // An `in out` parameter: Ada mutates the shared buffer in place.
+    test::out_proc(arr);
+    std::cout << "doubled:";
+    for (auto &x : arr) {
+        std::cout << " " << x;
     }
     std::cout << "\n";
 
-    std::cout << "Calling out array param procedure...\n";
-    test::out_proc(arr);;;
-
-    std::cout << "arr: ";
-    for (int i = arr.get_begin(); i <= arr.get_end(); i++) {
-        std::cout << arr.get(i) << ", ";
+    // An array allocated and filled on the C++ side (through the iterator).
+    polyglot_array<int> owned(1, 5);
+    int v = 0;
+    for (auto &x : owned) {
+        x = (v += 2);
     }
-    std::cout << "\nDone.\n============================================\n";
+    std::cout << "owned:";
+    for (auto &x : owned) {
+        std::cout << " " << x;
+    }
+    std::cout << "\n";
 }
 
-void test_struct_arrays() {
-    std::cout << "Starting test_struct_arrays\n";
-    gnatpolyglot::ada::arrays::polyglot_array<test::MyInt> arr = test::my_int_arr_func();
-    std::cout << "bounds:" << arr.get_begin() << " " << arr.get_end() << "\n";
-    std::cout << "==================\narr: ";
-    for (int i = arr.get_begin(); i <= arr.get_end(); i++) {
-        std::cout << arr.get(i)->get_i() << ", ";
+void test_integer_widths() {
+    std::cout << "-- integer widths --\n";
+
+    polyglot_array<int8_t> bytes = test::make_bytes();
+    std::cout << "bytes:";
+    for (int i = bytes.get_begin(); i <= bytes.get_end(); i++) {
+        std::cout << " " << (int) bytes.get(i);
     }
     std::cout << "\n";
 
-    std::cout << "Calling out array param procedure...\n";
+    polyglot_array<int16_t> shorts = test::make_shorts();
+    std::cout << "shorts:";
+    for (int i = shorts.get_begin(); i <= shorts.get_end(); i++) {
+        std::cout << " " << shorts.get(i);
+    }
+    std::cout << "\n";
+
+    // The 64-bit values exceed 32 bits, proving the elements are not truncated.
+    polyglot_array<int64_t> longs = test::make_longs();
+    std::cout << "longs:";
+    for (int i = longs.get_begin(); i <= longs.get_end(); i++) {
+        std::cout << " " << longs.get(i);
+    }
+    std::cout << "\n";
+}
+
+void test_floating_point_arrays() {
+    std::cout << "-- floating-point arrays --\n";
+
+    polyglot_array<float> floats = test::make_floats();
+    std::cout << "floats:";
+    for (auto &x : floats) {
+        std::cout << " " << x;
+    }
+    std::cout << "\n";
+    std::cout << "sum: " << test::sum_floats(floats) << "\n";
+
+    // An `in out` parameter mutates the shared buffer in place.
+    test::scale_floats(floats);
+    std::cout << "scaled:";
+    for (auto &x : floats) {
+        std::cout << " " << x;
+    }
+    std::cout << "\n";
+    std::cout << "sum: " << test::sum_floats(floats) << "\n";
+
+    // A float array allocated on the C++ side.
+    polyglot_array<float> owned(1, 3);
+    owned.set(1, 0.25f);
+    owned.set(2, 0.5f);
+    owned.set(3, 0.75f);
+    std::cout << "owned:";
+    for (auto &x : owned) {
+        std::cout << " " << x;
+    }
+    std::cout << "\n";
+
+    polyglot_array<double> doubles = test::make_doubles();
+    std::cout << "doubles:";
+    for (auto &x : doubles) {
+        std::cout << " " << x;
+    }
+    std::cout << "\n";
+    std::cout << "sum: " << test::sum_doubles(doubles) << "\n";
+}
+
+void test_boolean_arrays() {
+    std::cout << std::boolalpha << "-- boolean arrays --\n";
+
+    polyglot_array<bool> bools = test::make_bools();
+    std::cout << "bools:";
+    for (auto &x : bools) {
+        std::cout << " " << x;
+    }
+    std::cout << "\n";
+    std::cout << "any: " << test::any_true(bools) << "\n";
+
+    // An `in out` parameter flips each element in place.
+    test::negate_bools(bools);
+    std::cout << "negated:";
+    for (auto &x : bools) {
+        std::cout << " " << x;
+    }
+    std::cout << "\n";
+    std::cout << "any: " << test::any_true(bools) << "\n";
+
+    // A boolean array allocated on the C++ side.
+    polyglot_array<bool> owned(1, 2);
+    owned.set(1, true);
+    owned.set(2, false);
+    std::cout << "owned:";
+    for (auto &x : owned) {
+        std::cout << " " << x;
+    }
+    std::cout << "\n";
+}
+
+void test_record_arrays() {
+    std::cout << "-- record arrays --\n";
+
+    polyglot_array<test::MyInt> arr = test::my_int_arr_func();
+    std::cout << "bounds: " << arr.get_begin() << " " << arr.get_end() << "\n";
+    std::cout << "content:";
+    for (auto &el : arr) {
+        std::cout << " " << el.get_i();
+    }
+    std::cout << "\n";
+
+    // An `in out` parameter mutates the records in place.
     test::my_int_arr_proc(arr);
-
-    std::cout << "arr: ";
-    for (int i = arr.get_begin(); i <= arr.get_end(); i++) {
-        std::cout << arr.get(i)->get_i() << ", ";
+    std::cout << "tripled:";
+    for (auto &el : arr) {
+        std::cout << " " << el.get_i();
     }
     std::cout << "\n";
-
     test::print_image(arr);
 
-    std::cout << "\nDone.\n============================================\n";
-}
-
-void foreach_loop() {
-    {
-        gnatpolyglot::ada::arrays::polyglot_array<int> arr(1, 10);
-        int i = 0;
-        for (auto &el : arr) {
-            el = i += 2;
-        }
-        for (auto &el : arr) {
-            std::cout << el << ", ";
-        }
-        std::cout << "\n";
+    // A record array allocated and filled on the C++ side.
+    polyglot_array<test::MyInt> owned(1, 3);
+    int v = 0;
+    for (auto &el : owned) {
+        el = test::MyInt((v += 1) * 10);
     }
-    {
-        gnatpolyglot::ada::arrays::polyglot_array<test::MyInt> arr(1, 10);
-        int i = 0;
-        for (auto &el : arr) {
-            el = test::MyInt(i += 2);
-        }
-        for (auto &el : arr) {
-            std::cout << el.get_i() << ", ";
-        }
-        std::cout << "\n";
-        arr.begin()->get_i();
+    std::cout << "owned:";
+    for (auto &el : owned) {
+        std::cout << " " << el.get_i();
     }
+    std::cout << "\n";
 }
 
 int main() {
-    test_native_arrays();
-    test_struct_arrays();
-    foreach_loop();
+    test_integer_arrays();
+    test_integer_widths();
+    test_floating_point_arrays();
+    test_boolean_arrays();
+    test_record_arrays();
 }

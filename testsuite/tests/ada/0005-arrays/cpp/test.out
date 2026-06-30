@@ -6,30 +6,37 @@ Compiling the library
 Compiling test main program...
 Running test main program...
 
-Starting test_native_arrays
-bounds:1 3
-content : [1 2 3]
-total: 6
-setting new value
-content : [4 5 6]
-total: 15
-==================
-arr: 4, 5, 6, 
-Calling out array param procedure...
-arr: 8, 10, 12, 
-Done.
-============================================
-Starting test_struct_arrays
-bounds:1 5
-==================
-arr: 1, 2, 3, 4, 5, 
-Calling out array param procedure...
-arr: 3, 6, 9, 12, 15, 
+-- integer arrays --
+bounds: 1 3
+content: [1 2 3]
+sum: 6
+content: [4 5 6]
+sum: 15
+doubled: 8 10 12
+owned: 2 4 6 8 10
+-- integer widths --
+bytes: 1 -2 127
+shorts: 1000 -2000 32000
+longs: 1 5000000000 -5000000000
+-- floating-point arrays --
+floats: 1.5 2.5 3.5
+sum: 7.5
+scaled: 3 5 7
+sum: 15
+owned: 0.25 0.5 0.75
+doubles: 10.5 20.25
+sum: 30.75
+-- boolean arrays --
+bools: true false true
+any: true
+negated: false true false
+any: true
+owned: true false
+-- record arrays --
+bounds: 1 5
+content: 1 2 3 4 5
+tripled: 3 6 9 12 15
 ( 1 => (I =>  3),  2 => (I =>  6),  3 => (I =>  9),  4 => (I =>  12),  5 => (I =>  15), )
-
-Done.
-============================================
-2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 
-2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 
+owned: 10 20 30
 
 Done.

@@ -245,6 +245,21 @@ polyglot_array<unsigned long>::iterator::to_hold(unsigned long &view) {
     return &view;
 }
 
+template<>
+inline float *polyglot_array<float>::iterator::to_hold(float &view) {
+    return &view;
+}
+
+template<>
+inline double *polyglot_array<double>::iterator::to_hold(double &view) {
+    return &view;
+}
+
+template<>
+inline bool *polyglot_array<bool>::iterator::to_hold(bool &view) {
+    return &view;
+}
+
 } // namespace gnatpolyglot::ada::arrays
 
 #endif /* ! GNATPOLYGLOT_ADA_ARRAYS_H */
