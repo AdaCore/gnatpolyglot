@@ -11,6 +11,8 @@ Template file to generate a Package containing free functions of a module.
 @param JavaAPI api
 @param Module module
 
+@template.text_header()
+
 package ${api.packagePath(module)};
 
 public class ${module.name.getLastName().toPascal()}Package {

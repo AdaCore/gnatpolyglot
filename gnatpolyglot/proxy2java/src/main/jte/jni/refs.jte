@@ -24,6 +24,8 @@ Template file to generate the accessors of Ref classes of ClassDecls.
             .toList();
 }
 
+@template.text_header()
+
 #include <jni.h>
 
 @for (var clazz : classes)
@@ -34,7 +36,7 @@ Template file to generate the accessors of Ref classes of ClassDecls.
     boolean hasArray = api.getArrayFunctions(clazz) != null;
     TypeExpr arrayTypeExpr = clazz.name.asTypeExpr().makeArray();
 
-    boolean hasPtrArray = api.getArrayFunctions(clazz) != null;
+    boolean hasPtrArray = api.getPtrArrayFunctions(clazz) != null;
     TypeExpr ptrArrayTypeExpr = clazz.name.asTypeExpr().makePointer(false, false).makeArray();
 }
 @if (!isSource)

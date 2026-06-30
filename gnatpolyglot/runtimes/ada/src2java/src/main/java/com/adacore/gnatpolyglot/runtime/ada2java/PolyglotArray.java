@@ -1,3 +1,8 @@
+//
+//  Copyright (C) 2025-2026, AdaCore
+//  SPDX-License-Identifier: Apache-2.0
+//
+
 package com.adacore.gnatpolyglot.runtime.ada2java;
 
 import com.adacore.gnatpolyglot.runtime.PolyglotObject;

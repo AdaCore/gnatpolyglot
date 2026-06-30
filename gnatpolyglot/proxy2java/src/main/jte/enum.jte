@@ -20,6 +20,8 @@ Template file to generate a class.
     String nativeWrapper = TypenameGenerator.nativeWrapperTypename(nativeType);
 }
 
+@template.text_header()
+
 package ${api.packagePath(enumDecl.name)};
 
 ${api.formatDoc(enumDecl, 0)}

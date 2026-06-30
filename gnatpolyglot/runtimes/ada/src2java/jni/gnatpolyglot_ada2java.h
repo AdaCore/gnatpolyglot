@@ -1,3 +1,8 @@
+//
+//  Copyright (C) 2025-2026, AdaCore
+//  SPDX-License-Identifier: Apache-2.0
+//
+
 #ifndef GNATPOLYGLOT_ADA2JAVA_H
 #define GNATPOLYGLOT_ADA2JAVA_H
 

@@ -10,16 +10,19 @@ from pathlib import Path
 from utils import run_polyglot, list_generated_sources
 
 
-SRC_EXTENSIONS = ["ads", "adb", "h", "c", "hpp", "cpp"]
+SRC_EXTENSIONS = ["ads", "adb", "h", "c", "hpp", "cpp", "java"]
 
-def collect_sources(src_dir: Path) -> list[Path]:
+def collect_sources(src_dir: Path, ignore: Path | None = None) -> list[Path]:
     result = []
-    for f in os.listdir(src_dir.as_posix()):
-        if any(
-            f.endswith(ext)
-            for ext in SRC_EXTENSIONS
-        ):
-            result.append(Path(src_dir, f))
+    for root, _, files in os.walk(src_dir.as_posix()):
+        if ignore is not None and root.startswith(str(ignore)):
+            continue
+        for f in files:
+            if any(
+                f.endswith(ext)
+                for ext in SRC_EXTENSIONS
+            ):
+                result.append(Path(root, f))
     result.sort()
     return result
 
@@ -30,7 +33,10 @@ run_polyglot("ada2proxy", ["--header-file", "header.txt", "-P", "lib.gpr", "-o",
 all_sources += collect_sources(Path("proxy", "src"))
 
 run_polyglot("proxy2cpp", ["--header-file", "header.txt", "proxy/proxy.json", "-o", "cpp"])
-all_sources += collect_sources(Path("cpp"))
+all_sources += collect_sources(Path("cpp"), Path("cpp", "runtime"))
+
+run_polyglot("proxy2java", ["--header-file", "header.txt", "proxy/proxy.json", "-o", "java"])
+all_sources += collect_sources(Path("java"), Path("java", "runtime"))
 
 header_line_count = 0
 with open("header.txt", "r") as header_file:
