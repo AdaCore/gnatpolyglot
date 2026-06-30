@@ -357,4 +357,49 @@ package GNATpolyglot.Ada.Arrays.Native is
    pragma
      Export (C, Double_Set, "gnatpolyglot__ada__arrays__native__double_array_set");
 
+   --------------------
+   -- Boolean arrays --
+   --------------------
+
+   --  Standard.Boolean is a one-byte (0 => False, 1 => True) addressable
+   --  component in an unpacked array, so it crosses the boundary as a byte the
+   --  client reads as a Rust ``bool``.
+
+   function Boolean_Alloc is new Alloc (Standard.Boolean);
+   pragma
+     Export (C, Boolean_Alloc, "gnatpolyglot__ada__arrays__native__boolean_array_alloc");
+
+   procedure Boolean_Construct is new Construct (Standard.Boolean);
+   pragma
+     Export
+       (C,
+        Boolean_Construct,
+        "gnatpolyglot__ada__arrays__native__boolean_array_construct");
+
+   function Boolean_Clone is new Clone (Standard.Boolean);
+   pragma
+     Export (C, Boolean_Clone, "gnatpolyglot__ada__arrays__native__boolean_array_clone");
+
+   procedure Boolean_Copy is new Copy (Standard.Boolean);
+   pragma
+     Export (C, Boolean_Copy, "gnatpolyglot__ada__arrays__native__boolean_array_copy");
+
+   procedure Boolean_Free is new Free (Standard.Boolean);
+   pragma
+     Export (C, Boolean_Free, "gnatpolyglot__ada__arrays__native__boolean_array_free");
+
+   function Boolean_Get is new Get (Standard.Boolean);
+   pragma
+     Export (C, Boolean_Get, "gnatpolyglot__ada__arrays__native__boolean_array_get");
+
+   --  Boolean_Set passes the element as an 8-bit Ada Boolean; GNAT warns that
+   --  the matching C type should be ``char`` (a byte). That is exactly the ABI:
+   --  callers pass a 0/1 byte and the glue converts to/from the language's
+   --  boolean type, so the warning is benign and suppressed here.
+   pragma Warnings (Off, "*is an 8-bit Ada Boolean*");
+   procedure Boolean_Set is new Set (Standard.Boolean);
+   pragma Warnings (On, "*is an 8-bit Ada Boolean*");
+   pragma
+     Export (C, Boolean_Set, "gnatpolyglot__ada__arrays__native__boolean_array_set");
+
 end GNATpolyglot.Ada.Arrays.Native;
