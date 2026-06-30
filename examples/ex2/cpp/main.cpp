@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "2cpp/include/example.h"
+#include "../2cpp/include/example.h"
 #include "gnatpolyglot_ada_arrays.h"
 #include "gnatpolyglot_ada_strings.h"
 #include "gnatpolyglot_ptr.h"

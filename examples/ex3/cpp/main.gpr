@@ -1,5 +1,5 @@
-with "2proxy/ex2-proxy-agg.gpr";
-with "2cpp/ex2_2cpp.gpr";
+with "../2proxy/ex3-proxy-agg.gpr";
+with "../2cpp/ex3_2cpp.gpr";
 
 project Main is
 
