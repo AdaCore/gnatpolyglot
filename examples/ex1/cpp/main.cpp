@@ -14,4 +14,6 @@ int main() {
     std::cout << "count = " << c.get_count() << "\n";
     c.get_count() = 5;
     std::cout << "count = " << c.get_count() << "\n";
+    c.set_count(6);
+    std::cout << "count = " << c.get_count() << "\n";
 }
