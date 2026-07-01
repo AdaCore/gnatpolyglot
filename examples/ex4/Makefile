@@ -10,7 +10,7 @@ java:
 	$(MAKE) -C java/
 
 ada2proxy:
-	gnatpolyglot ada2proxy -P ex3.gpr -o 2proxy
+	gnatpolyglot ada2proxy -P ex4.gpr -o 2proxy
 
 proxy2cpp:
 	gnatpolyglot proxy2cpp 2proxy/proxy.json -o 2cpp
