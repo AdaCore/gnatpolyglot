@@ -7,6 +7,7 @@ CPP_PROXY=$(CURDIR)/../2cpp/
 
 main:
 	gprbuild2 main.gpr
+	bin/main
 
 # Example: compiling without a gnat environment
 gpp:
@@ -17,7 +18,7 @@ gpp:
 	gprbuild2 $(CPP_PROXY)/runtimes/ada/gnatpolyglot_ada2cpp.gpr
 	# Build the executable
 	g++ main.cpp -o bin/gppmain \
-		$(CPP_PROXY)/animals.cpp $(CPP_PROXY)/gnatpolyglot_ada_arrays.cpp $(CPP_PROXY)/gnatpolyglot_exceptions_$(LIB_NAME).cpp \
+		$(wildcard $(CPP_PROXY)/*.cpp) \
 		-I $(CPP_PROXY)/include/ \
 		-I $(CPP_PROXY)/runtimes/ada/src2cpp/ \
 		-Wall -Wextra -Werror -pedantic \
@@ -26,3 +27,4 @@ gpp:
 		-L$(CPP_PROXY)/runtimes/ada/lib2cpp/static/dev/ \
 		-lgnatpolyglotada2cpp \
 		-ldl -lpthread
+	bin/gppmain
