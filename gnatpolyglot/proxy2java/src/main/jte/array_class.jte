@@ -174,5 +174,8 @@ Template file to generate a class.
 
         }
 
+        static {
+            ${api.basePackage()}.Library.loadLibrary();
+        }
     }
 
