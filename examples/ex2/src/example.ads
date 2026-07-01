@@ -1,21 +1,17 @@
--- This example showcases the use access type in the generated interface, how
--- memory can be managed both manually and automatically if the target language
--- allows it.
-
-with Ada.Unchecked_Deallocation;
-
 package Example is
 
-   type P is record
-      I : Integer := 0;
-   end record;
+    type Counter is record
+        Count : Natural := 0;
+    end record;
 
-   type P_A is access all P;
+    procedure Increment (C : in out Counter);
 
-   Acc : P_A := null;
+    type C_Arr is array (Positive range <>) of Counter;
 
-   procedure Print;
+    procedure Increment (Arr : in out C_Arr);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation (P, P_A);
+    type Int_Arr is array (Positive range <>) of Natural;
+
+    function To_Int_Arr (Arr : in out C_Arr) return Int_Arr;
 
 end Example;

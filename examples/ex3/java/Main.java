@@ -1,43 +1,43 @@
-import com.adacore.libex3.exceptions.ExceptionsPackage;
-import com.adacore.libex3.exceptions.Exc1;
-import com.adacore.libex3.exceptions.Exc2;
-import com.adacore.libex3.exceptions.Tag;
-import com.adacore.gnatpolyglot.runtime.ada2java.ConstraintError;
-import com.adacore.gnatpolyglot.runtime.ada2java.ProgramError;
+import com.adacore.libex3.animals.AnimalsPackage;
+import com.adacore.libex3.animals.Animal;
+import com.adacore.libex3.animals.Parrot;
+import com.adacore.libex3.animals.Color;
+
 import com.adacore.gnatpolyglot.runtime.ada2java.PolyglotString;
+import com.adacore.gnatpolyglot.runtime.PolyglotData.Owner;
 
 public class Main {
-
-    static class Deriv extends Tag {
+    static class Dog extends Animal {
         @Override
-        public void raiseExc() {
-            throw new Exc2(new PolyglotString("Foo"));
+        public void shout() {
+            System.out.println("Woof!");
         }
     }
-
     public static void main(String[] args) {
-        Deriv d = new Deriv();
+        Parrot p = new Parrot(Color.BLUE);
+        p.shout();
+        p.repeat(new PolyglotString("Ada"));
+        p.repeat(new PolyglotString("C++"));
 
-        try {
-            ExceptionsPackage.raiseExc(false);
-        } catch (Exc1 e) {
-            System.out.println("Java caught Exc1: " + e.getMessage());
-        }
-        try {
-            ExceptionsPackage.raiseExc(true);
-        } catch (ProgramError e) {
-            System.out.println("Java caught Program_Error: " + e.getMessage());
-        }
-        try {
-            ExceptionsPackage.callRaiseExc(d);
-        } catch (Exc2 e) {
-            System.out.println("Java caught Exc1: " + e.getMessage());
-        }
-        try {
-            ExceptionsPackage.raiseConstraint();
-        } catch (ConstraintError e) {
-            System.out.println("Java caught Exc1: " + e.getMessage());
-        }
+        System.out.format("p is %s\n", AnimalsPackage.image(p.getC()).toString());
+
+        Dog d = new Dog();
+        d.shout();
+
+        AnimalsPackage.callShout(d);
+        Parrot.PtrArray flock = new Parrot.PtrArray(1, 2);
+        p._setOwner(Owner.LIBRARY);
+        flock.set(0, p);
+        Parrot otherParrot = new Parrot(Color.BLUE);
+        otherParrot._setOwner(Owner.LIBRARY);
+        // 2 versions for indexing:
+        // - java.util.List#set: slides indexes to 0.
+        // - PolyglotArray#setUnslided: uses Ada indexes.
+        flock.set(0, p);
+        flock.setUnslided(2, p);
+        AnimalsPackage.shout(flock);
+
+        p._setOwner(Owner.USER);
+        otherParrot._setOwner(Owner.USER);
     }
-
 }

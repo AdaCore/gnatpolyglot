@@ -1,4 +1,4 @@
-all: ada2proxy proxy2cpp main
+all: ada2proxy proxy2cpp cpp
 
 cpp:
 	$(MAKE) -C cpp/

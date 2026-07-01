@@ -2,30 +2,27 @@
 
 #include "../2cpp/include/example.h"
 #include "gnatpolyglot_ada_arrays.h"
-#include "gnatpolyglot_ada_strings.h"
-#include "gnatpolyglot_ptr.h"
 
-void escape_acc() {
-    gnatpolyglot::polyglot_ptr<example::P> acc(new example::P);
-    acc.set_owner(gnatpolyglot::memory_owner::LIBRARY);
-    example::set_acc(acc);
-    example::print();
-    // Acc's owner is LIBRARY: The C++ object will be freed, but not the ada
-    // record.
-}
+using namespace gnatpolyglot::ada::arrays;
 
 int main() {
-    escape_acc();
-    example::print();
-    gnatpolyglot::polyglot_ptr<example::P> acc = example::get_acc();
-    example::unchecked_free(acc);
+    polyglot_array<example::Counter> arr{1, 4};
+    for (auto &c : arr) {
+        c.increment();
+    }
+    for (auto &c : arr) {
+        std::cout << c.get_count() << ", ";
+    }
+    std::cout << "\n";
+    example::increment(arr);
+    for (auto &c : arr) {
+        std::cout << c.get_count() << ", ";
+    }
+    std::cout << "\n";
+    polyglot_array<int> int_arr = example::to_int_arr(arr);
+    for (auto &i : int_arr) {
+        std::cout << i << ", ";
+    }
+    std::cout << "\n";
 
-    example::set_acc(nullptr);
-    example::print();
-
-    escape_acc();
-    example::print();
-    acc = example::get_acc();
-    acc.set_owner(gnatpolyglot::memory_owner::USER);
-    example::set_acc(nullptr);
 }
