@@ -429,3 +429,90 @@ Supported platforms
 
 Proxy2Java currently supports only 64-bit Linux and Windows platforms (see
 :ref:`Limitations <limitations>`).
+
+Comparison with AJIS
+--------------------
+
+AJIS (the ``ada2java`` tool) is AdaCore's established generator of Java
+bindings for Ada libraries, likewise implemented over JNI. Proxy2Java targets
+the same core use case — calling a natively-compiled Ada library from Java — so
+this section is aimed at users moving an existing AJIS workflow to GNATpolyglot,
+and focuses on the parts they actually touch: how the bindings are generated,
+how they are built, and how they are consumed.
+
+Generation workflow
+~~~~~~~~~~~~~~~~~~~~~
+
+AJIS generates in a single step: ``ada2java`` is pointed directly at the Ada
+package specs and emits the Java binding classes together with the Ada *glue
+code* that implements the JNI layer.
+
+GNATpolyglot splits this into two stages, around the language-neutral proxy IR:
+
+#. ``gnatpolyglot ada2proxy`` scans the Ada library (through Libadalang) into a
+   ``proxy.json`` file;
+#. ``gnatpolyglot proxy2java`` consumes that ``proxy.json`` and emits the Java
+   bindings together with the C JNI layer.
+
+You therefore no longer point the Java generator at Ada sources; you scan once
+into the IR, then run the backend. The same ``proxy.json`` can also feed the
+other backends, e.g. C++ or Rust.
+
+Building the generated code
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The build model is the largest day-to-day change.
+
+With AJIS you build two things: the Ada glue is compiled into a native
+*dynamic* library (typically via the ``<LibraryName>.gpr`` produced by the
+``-L`` switch — ``gprbuild -p -P <LibraryName>.gpr``), and the generated Java
+classes are compiled with ``javac`` against ``ajis.jar``. The native library is
+then loaded automatically when a generated class is loaded.
+
+With proxy2java the steps are (see `Building`_ above for the full commands):
+
+#. Build the **proxy library** — the Ada library exposed across the C ABI. This
+   artifact has no AJIS counterpart: it is produced from the ``ada2proxy``
+   output and is what the bindings ultimately call into.
+#. ``mvn package`` the generated Maven project, to compile the Java bindings.
+#. ``gprbuild`` the generated ``<proxy>_jni.gpr``, passing ``-XOS``,
+   ``-XPROXY_LIB_LOCATION`` and ``-XPROXY_LIB`` so the JNI/C bridge links
+   against the proxy library.
+
+In other words, "one gpr + ``javac``" becomes "proxy library + Maven + a
+JNI-bridge gpr". The JNI bridge plays the role of the AJIS glue library, and the
+native library is still loaded for you (via ``System.loadLibrary`` at class
+initialisation).
+
+Consuming the bindings
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+AJIS produces a flat set of class files under the base package given by ``-b``,
+used alongside ``ajis.jar`` on the classpath. proxy2java instead produces a
+**Maven project**: the bindings are published as a ``lib<proxy>`` artifact under
+the ``--group-id`` you choose, so downstream Java code depends on them as an
+ordinary Maven dependency rather than a hand-managed jar, and the runtime
+support comes from the ``gnatpolyglot`` runtime instead of ``ajis.jar``.
+
+Expect package and class names to move when porting Java code:
+
+* the binding package is rooted at ``<group-id>.lib<proxy>`` (e.g.
+  ``com.adacore.libtest.<module>``), where AJIS rooted it at the ``-b`` base
+  package;
+* free subprograms of a package land in a ``<Module>Package`` class, where AJIS
+  uses a ``<Package>_Package`` default class.
+
+
+Moreover, while AJIS reused the raw Ada name for its corresponding Java counterpart,
+Proxy2Java generates more idiomatic Java names. For example, a
+``procedure Example_Procedure`` declaration would be bound by AJIS as
+``void Example_Procedure()``, whereas Proxy2Java binds it to
+``void exampleProcedure()``.
+
+Array types are also handled differently: whereas AJIS would generate one Java class
+per Ada array type definition, GNATpolyglot will aggregate all similar array type
+definitions in a single Java class compatible with all of them.
+
+Object lifetime is heavily inspired by the AJIS memory model (see `Pointers`_).
+It however uses more modern Java features to hook the GC, e.g. by using the
+``Cleaner`` pattern instead of the now deprecated ``Object#finalize`` method.
