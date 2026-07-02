@@ -23,7 +23,7 @@ def collect_sources(src_dir: Path, ignore: Path | None = None) -> list[Path]:
                 for ext in SRC_EXTENSIONS
             ):
                 result.append(Path(root, f))
-    result.sort()
+    result.sort(key=Path.as_posix)
     return result
 
 
