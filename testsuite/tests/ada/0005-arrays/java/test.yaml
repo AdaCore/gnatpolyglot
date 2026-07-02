@@ -5,3 +5,6 @@ output_lang: java
 test_file: Main.java
 
 output_lib_flags: [ "-XLIBRARY_KIND=relocatable", "-XLIBRARY_STANDALONE=standard"]
+
+control:
+  - [XFAIL, "'windows' in env.build.platform", "Arrays of 64bit integers are not supported on windows"]
