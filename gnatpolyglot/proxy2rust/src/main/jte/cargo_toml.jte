@@ -8,8 +8,12 @@ Template file to generate the Cargo.toml for a Rust binding crate.
 
 @param RustAPI api
 @param Proxy proxy
+@param String runtimeLocation
 
 [package]
 name = "${proxy.name.toLower()}"
 version = "0.1.0"
 edition = "2021"
+
+[dependencies]
+gnatpolyglot_runtime = { path = "${runtimeLocation}/ada/src2rust" }

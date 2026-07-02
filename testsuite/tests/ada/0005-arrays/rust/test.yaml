@@ -1,0 +1,8 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: rust
+test_file: main.rs
+
+control:
+  - [XFAIL, "'windows' in env.build.platform", "Arrays of 64bit integers are not supported on windows"]

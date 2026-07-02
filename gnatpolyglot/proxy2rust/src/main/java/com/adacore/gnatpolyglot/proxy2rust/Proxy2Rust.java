@@ -5,6 +5,7 @@
 
 package com.adacore.gnatpolyglot.proxy2rust;
 
+import com.adacore.gnatpolyglot.proxy.GNATpolyglotSetup;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,6 +34,13 @@ public class Proxy2Rust implements Callable<Integer> {
             description = "display sub-command usage and exit")
     boolean helpRequested;
 
+    @Option(
+            names = {"--with-runtime"},
+            description =
+                    "location of the GNATpolyglot runtime to use. Defaults to"
+                            + " <outputPath>/runtimes")
+    Path withRuntime;
+
     @Override
     public Integer call() throws Exception {
         RustPrinter printer = new RustPrinter(proxyFile);
@@ -44,7 +52,18 @@ public class Proxy2Rust implements Callable<Integer> {
             return 1;
         }
 
-        printer.generate(outputPath, null);
+        if (withRuntime == null) {
+            withRuntime = outputPath.resolve("runtimes");
+            new GNATpolyglotSetup(
+                            withRuntime,
+                            Files.isDirectory(withRuntime),
+                            GNATpolyglotSetup.Lang.valueOf(printer.getProxy().inputLanguage),
+                            GNATpolyglotSetup.Lang.rust,
+                            true)
+                    .call();
+        }
+
+        printer.generate(outputPath, withRuntime);
 
         return 0;
     }

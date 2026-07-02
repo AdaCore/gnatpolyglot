@@ -26,6 +26,7 @@ import com.adacore.gnatpolyglot.proxy2rust.codegen.ParameterConverter;
 import com.adacore.gnatpolyglot.proxy2rust.codegen.ReturnConverter;
 import com.adacore.gnatpolyglot.proxy2rust.codegen.RustGenerator;
 import com.adacore.gnatpolyglot.proxy2rust.codegen.TypenameGenerator;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -177,19 +178,53 @@ public class RustAPI extends LanguageAPI {
     /** Return whether a TypeExpr is supported in the current implementation phase. */
     public boolean isSupported(TypeExpr typeExpr) {
         if (typeExpr.isReference()) return isSupported(typeExpr.referencedType());
-        if (typeExpr.isPointer()) return isSupported(typeExpr.pointedType());
-        if (typeExpr.isArray()) return false;
+        // A bare pointer (Ada access type) has no representation in the safe API yet: the
+        // safe type-name generators reject it. Report it as unsupported so the whole function
+        // is skipped, rather than letting generation fail partway.
+        if (typeExpr.isPointer()) return false;
+        // Arrays map to PolyglotArray<E>. A native scalar element is backed by the runtime's
+        // PolyglotArrayElement impls; a record element is backed by a generated impl (see
+        // recordArrayElements). Both are supported; other element kinds are not.
+        if (typeExpr.isArray()) return isSupportedArrayElement(typeExpr.elementType());
         if (typeExpr.isName()) {
             var typeDecl = context.getTypeDecl(typeExpr.getName());
             if (typeDecl instanceof ClassDecl classDecl) {
                 return classDecl.inheritability != ClassDecl.Inheritability.VIRTUAL;
             }
-            if (typeDecl instanceof NativeTypeDecl nativeDecl) {
-                return nativeDecl.nativeType != NativeType.STRING;
-            }
             return true;
         }
         return false;
+    }
+
+    /**
+     * Return whether an array element type is a native scalar backed by the runtime. Every native
+     * scalar the frontend can present as an array element has an PolyglotArrayElement impl in the
+     * runtime, except STRING (an array whose element is itself a string). An array of Character is
+     * classified as a string rather than a CHAR-element array, and the 128-bit widths are dropped
+     * by the frontend before reaching here, so STRING is the only exclusion.
+     */
+    private boolean isNativeArrayElement(TypeExpr element) {
+        return element.isName()
+                && context.getTypeDecl(element.getName()) instanceof NativeTypeDecl nativeDecl
+                && nativeDecl.nativeType != NativeType.STRING;
+    }
+
+    /**
+     * Return whether an array element type is a non-virtual record (generated
+     * PolyglotArrayElement).
+     */
+    private boolean isRecordArrayElement(TypeExpr element) {
+        return element.isName()
+                && context.getTypeDecl(element.getName()) instanceof ClassDecl classDecl
+                && classDecl.inheritability != ClassDecl.Inheritability.VIRTUAL;
+    }
+
+    /**
+     * Return whether an array element type maps to an {@code PolyglotArray<E>} the backend can
+     * emit.
+     */
+    private boolean isSupportedArrayElement(TypeExpr element) {
+        return isNativeArrayElement(element) || isRecordArrayElement(element);
     }
 
     /** Return whether all parameter and return types of a function are supported. */
@@ -537,8 +572,14 @@ public class RustAPI extends LanguageAPI {
     }
 
     /**
-     * Return all functions in a module for FFI declaration, excluding shadow_alloc functions whose
-     * actual C signature has implicit extra parameters not present in the proxy IR.
+     * Return the functions in a module that need an FFI declaration, excluding shadow_alloc
+     * functions whose actual C signature has implicit extra parameters not present in the proxy IR.
+     * Every other type is renderable in the FFI layer — arrays and strings as {@code array_data},
+     * pointers and classes as {@code c_void} — so shadow_alloc is the only filter. The FFI layer is
+     * broader than the safe API, so it keeps the class lifecycle functions (free/clone/alloc) that
+     * the safe API never exposes directly but that the generated {@code Drop}/{@code
+     * Clone}/constructor code still calls. A function with no safe wrapper just leaves an unused
+     * (dead-code-allowed) FFI declaration.
      */
     public List<FunctionDecl> allFfiFunctions(Module module) {
         return module.declarations.stream()
@@ -546,5 +587,71 @@ public class RustAPI extends LanguageAPI {
                 .map(FunctionDecl.class::cast)
                 .filter(f -> f.role == null || f.role.kind != Role.RoleKind.SHADOW_ALLOC)
                 .collect(Collectors.toList());
+    }
+
+    // ===== Record-element arrays =====
+
+    /**
+     * The array accessor functions (alloc / clone / free / getter / setter) for arrays whose
+     * element is this class's type, or {@code null} when the class is never used as an array
+     * element.
+     */
+    public FunctionMembersEntry getArrayMembers(ClassDecl classDecl) {
+        return context.getMembers(classDecl.name.asTypeExpr().makeArray());
+    }
+
+    /**
+     * The non-virtual record classes used as an array element type, for which an {@code
+     * PolyglotArrayElement} impl must be generated (see {@code arrays.jte}). gnatpolyglot-internal
+     * modules are skipped, since their types are not generated.
+     */
+    public List<ClassDecl> recordArrayElements(List<Module> modules) {
+        var elements = new ArrayList<ClassDecl>();
+        for (var module : modules) {
+            if (isGnatpolyglotModule(module)) continue;
+            for (var decl : module.declarations) {
+                if (decl instanceof ClassDecl classDecl
+                        && classDecl.inheritability != ClassDecl.Inheritability.VIRTUAL) {
+                    var members = getArrayMembers(classDecl);
+                    if (members != null && members.freeFunction != null) elements.add(classDecl);
+                }
+            }
+        }
+        return elements;
+    }
+
+    /**
+     * The allocator ({@code clone == false}) or cloner ({@code clone == true}) among an array's
+     * alloc-role functions, for arrays of this element class. Both share the ALLOC role, so they
+     * are told apart by whether they take the source array as a parameter: the cloner does, the
+     * bounds allocator takes only scalar bounds. This mirrors how {@link #isCloneAlloc} splits a
+     * class's own constructors. Its {@code symbol} is the Ada entry point the generated {@code
+     * arrays.jte} binds.
+     */
+    public FunctionDecl arrayAllocFunction(ClassDecl classDecl, boolean clone) {
+        return getArrayMembers(classDecl).allocFunctions.stream()
+                .filter(
+                        f ->
+                                f.type.parameters.stream()
+                                                .anyMatch(
+                                                        p ->
+                                                                p.type.isReference()
+                                                                        && p.type.referencedType()
+                                                                                .isArray())
+                                        == clone)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    /**
+     * The element getter or setter ({@code kind}) among an array's member functions, for arrays of
+     * this element class. Its {@code symbol} is the Ada entry point the generated {@code
+     * arrays.jte} binds.
+     */
+    public FunctionDecl arrayMemberFunction(ClassDecl classDecl, Role.RoleKind kind) {
+        return getArrayMembers(classDecl).memberFunctions.stream()
+                .filter(f -> f.role.kind == kind)
+                .findFirst()
+                .orElseThrow();
     }
 }

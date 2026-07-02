@@ -548,12 +548,6 @@ Proxy2Rust
    The Rust backend is experimental. The list below reflects its current
    coverage and is expected to shrink as the backend matures.
 
-Arrays and strings
-~~~~~~~~~~~~~~~~~~
-
-Arrays and strings are not yet supported: the supporting Rust runtime crate
-is not provided yet.
-
 Exceptions
 ~~~~~~~~~~
 

@@ -129,6 +129,95 @@ generates:
        Blue = 2,
    }
 
+Arrays
+~~~~~~
+
+A proxy array maps to the runtime type ``PolyglotArray<T>``, where ``T`` is the
+element type. The supported element types are the native scalar widths
+(``i8``/``u8``/``i16``/``u16``/``i32``/``u32``/``i64``/``u64``, ``f32``,
+``f64`` and ``bool``) and record (class) element types; arrays of arrays
+(multidimensional arrays) are not supported.
+
+.. note::
+
+    ``PolyglotArray<T>`` is part of the runtime support specific to the input
+    language. Unlike scalars, enumerations or classes — which map to neutral
+    Rust types — an array carries semantics that belong to the input
+    language's own array model: most visibly its index bounds, which need not
+    start at zero, but also how its storage is allocated and freed. No single
+    neutral type can capture that for every possible input language, so an
+    array maps instead to runtime support provided per input language.
+
+Indexing uses the Ada-style bounds carried by the proxy (1-based by default,
+but any lower bound is honoured) rather than being rebased to zero:
+
+* ``get(i)`` returns ``Some`` of the element at index ``i`` — a copy for a
+  scalar element, a non-owning view for a record element — or ``None`` when
+  ``i`` is outside the bounds.
+* ``set(i, value)`` overwrites the element at index ``i``.
+* ``begin()`` / ``end()`` give the first and last valid index, ``len()`` the
+  element count and ``is_empty()`` whether it has none. Iterate either over a
+  ``begin()..=end()`` index range or directly with ``for x in &array`` (or
+  ``array.iter()``), which yields the same per-element value as ``get``.
+
+A new array is allocated by passing its bounds to ``PolyglotArray::<T>::new``.
+Class-typed array parameters are passed by reference — ``&PolyglotArray<T>``
+for a constant parameter, ``&mut PolyglotArray<T>`` for a mutable one — and a
+returned array follows the ownership rules described under `Ownership`_ (an
+owned ``PolyglotArray<T>`` frees its storage on drop, while an array returned
+by reference or with ``STATIC`` ownership is a non-owning view wrapped in
+``std::mem::ManuallyDrop``).
+
+.. code:: rust
+
+   use test::test as pkg;
+
+   // a function returning, then consuming, an array of i32
+   let mut arr = pkg::make();
+   for x in &arr {
+       println!("{x}");                 // iterates in Ada index order
+   }
+   println!("{:?}", arr.get(0));        // bounds-checked: None when out of range
+   arr.set(arr.begin(), 42);
+   pkg::consume(&arr);
+
+   // allocate a fresh array with bounds 1 .. 10
+   let fresh = PolyglotArray::<i32>::new(1, 10);
+
+Strings
+~~~~~~~
+
+A proxy string maps to two runtime types — ``PolyglotString``, an owned string
+that frees its backing storage on drop, and ``PolyglotStr``, a borrowed view
+over it. They mirror Rust's own ``String`` / ``str`` pair: ``PolyglotString``
+derefs to ``PolyglotStr``, and a read-only string parameter takes
+``&PolyglotStr`` (so an ``&PolyglotString`` coerces to it). They are dedicated
+string types rather than a ``PolyglotArray<u8>``, but rely on the same
+per-input-language runtime support, and for the same reason (see the note
+above).
+
+* ``PolyglotString::from(s)`` builds one from a Rust ``&str``.
+* ``PolyglotString``/``PolyglotStr`` implement ``Display``, so ``to_string()``
+  or ``{}`` formatting copies the contents back out into a Rust ``String``.
+
+Text crosses the boundary as a UTF-8 C string: an embedded NUL byte is
+rejected (the conversion panics), and on the way back any bytes that are not
+valid UTF-8 are replaced (Ada strings are not UTF-8 guaranteed). A returned
+``PolyglotString`` follows the same `Ownership`_ rules as any other returned
+value.
+
+.. code:: rust
+
+   use test::test as pkg;
+
+   // a function returning, then consuming, a string
+   let s = pkg::greeting();
+   println!("{}", s);
+   pkg::greet(&s);
+
+   // a string built on the Rust side
+   pkg::greet(&PolyglotString::from("hello"));
+
 Classes
 ~~~~~~~
 
@@ -212,10 +301,20 @@ Generation produces a complete Cargo crate:
    2rust/src
    2rust/src/lib.rs          # `pub mod` declaration per module
    2rust/src/<module>.rs     # one file per module: enums, structs, impls, free functions
+   2rust/src/arrays.rs       # PolyglotArrayElement impls for record element types (only if any)
 
 Each generated module file contains a private ``ffi`` submodule holding the
 ``extern "C"`` declarations of the proxy symbols; the safe API wraps those
 calls.
+
+The crate depends on the ``gnatpolyglot_runtime`` support crate (installed
+under the runtime directory by the ``setup`` step, via a path dependency in
+``Cargo.toml``), which provides the array and string types. Those live under a
+module path that encodes the input language.
+
+``lib.rs`` re-exports the runtime module tree, preserving its structure, so
+downstream code can name these type through the generated crate without
+depending on the runtime crate directly.
 
 Building
 --------

@@ -57,6 +57,9 @@ public class ParameterConverter {
             throw new UnsupportedOperationException("Cannot pass void as call argument");
         }
 
+        // Strings and arrays only ever reach a parameter as a reference, so they are handled by
+        // the reference worker in refType below, not directly here.
+
         @Override
         public String pointerType(TypeExpr type) {
             return RustGenerator.cast(RustGenerator.asPtr(name), RustGenerator.cVoidPtr(false));
@@ -88,6 +91,16 @@ public class ParameterConverter {
                 public String classType(TypeExpr type) {
                     return RustGenerator.cast(
                             RustGenerator.asPtr(name), RustGenerator.cVoidPtr(refType.isConst()));
+                }
+
+                /**
+                 * A {@code &PolyglotStr} / {@code &PolyglotArray<E>} parameter yields its raw,
+                 * non-owning {@code array_data} (stringType delegates to arrayType via the worker
+                 * default).
+                 */
+                @Override
+                public String arrayType(TypeExpr type) {
+                    return name + ".raw()";
                 }
 
                 @Override

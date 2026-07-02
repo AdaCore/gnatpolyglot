@@ -54,6 +54,23 @@ public class TypenameGenerator {
         return api.rustTypePath(type.name);
     }
 
+    /** The safe element type name of an array, e.g. {@code i32} or {@code crate::pkg::MyInt}. */
+    private String elementTypename(TypeExpr element) {
+        var decl = api.getContext().getTypeDecl(element.getName());
+        if (decl instanceof ClassDecl classDecl) {
+            return userTypename(classDecl);
+        }
+        return nativeTypename(element);
+    }
+
+    /** The safe array type name for an array TypeExpr, e.g. {@code PolyglotArray<i32>}. */
+    private String arrayTypename(TypeExpr arrayType) {
+        return RustGenerator.runtimePath("ada::arrays::PolyglotArray")
+                + "<"
+                + elementTypename(arrayType.elementType())
+                + ">";
+    }
+
     // ===== Worker: inner type of a reference (no & prefix) =====
 
     private class SubreferenceTypenameWorker
@@ -77,6 +94,24 @@ public class TypenameGenerator {
         @Override
         public String classType(TypeExpr type) {
             return userTypename((ClassDecl) api.getContext().getTypeDecl(type.getName()));
+        }
+
+        /**
+         * A reference to a string is borrowed as {@code PolyglotStr} (the enclosing {@code refType}
+         * adds the {@code &}), like Rust's {@code &str}.
+         */
+        @Override
+        public String stringType(TypeExpr type) {
+            return RustGenerator.runtimePath("ada::strings::PolyglotStr");
+        }
+
+        /**
+         * A reference to an array is borrowed as {@code PolyglotArray<E>} (the enclosing {@code
+         * refType} adds the {@code &} / {@code &mut}).
+         */
+        @Override
+        public String arrayType(TypeExpr type) {
+            return arrayTypename(type);
         }
 
         @Override
@@ -113,6 +148,9 @@ public class TypenameGenerator {
         public String voidType(TypeExpr type) {
             return "()";
         }
+
+        // Strings and arrays only ever reach a parameter as a reference, so they are
+        // handled by the SubreferenceTypenameWorker via refType below, not directly here.
 
         @Override
         public String pointerType(TypeExpr type) {
@@ -160,6 +198,28 @@ public class TypenameGenerator {
         @Override
         public String voidType(TypeExpr type) {
             return "()";
+        }
+
+        /**
+         * A returned string is an owned {@code PolyglotString} (freed on drop), unless the library
+         * keeps ownership ({@code STATIC}), in which case it is a non-owning {@code ManuallyDrop}
+         * view.
+         */
+        @Override
+        public String stringType(TypeExpr type) {
+            var name = RustGenerator.runtimePath("ada::strings::PolyglotString");
+            return owner == Owner.STATIC ? RustGenerator.manuallyDropType(name) : name;
+        }
+
+        /**
+         * A returned array is an owned {@code PolyglotArray<E>} (freed on drop), unless the library
+         * keeps ownership ({@code STATIC}), in which case it is a non-owning {@code ManuallyDrop}
+         * view.
+         */
+        @Override
+        public String arrayType(TypeExpr type) {
+            var name = arrayTypename(type);
+            return owner == Owner.STATIC ? RustGenerator.manuallyDropType(name) : name;
         }
 
         @Override
@@ -214,6 +274,15 @@ public class TypenameGenerator {
             return "()";
         }
 
+        /**
+         * A string or array crosses the FFI boundary by value as the raw {@code array_data}
+         * descriptor (stringType delegates to arrayType via the RustTypeWorker default).
+         */
+        @Override
+        public String arrayType(TypeExpr type) {
+            return RustGenerator.runtimePath("ada::arrays::ArrayData");
+        }
+
         @Override
         public String pointerType(TypeExpr type) {
             return RustGenerator.cVoidPtr(false);
@@ -245,6 +314,16 @@ public class TypenameGenerator {
                 @Override
                 public String classType(TypeExpr type) {
                     return RustGenerator.cVoidPtr(refType.isConst());
+                }
+
+                /**
+                 * A string or array passes by value as the {@code array_data} descriptor, not as a
+                 * pointer to it, so the reference wrapper is absorbed here (no pointer prefix).
+                 * stringType delegates to arrayType via the RustTypeWorker default.
+                 */
+                @Override
+                public String arrayType(TypeExpr type) {
+                    return RustGenerator.runtimePath("ada::arrays::ArrayData");
                 }
 
                 @Override

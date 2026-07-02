@@ -14,6 +14,14 @@ public final class RustGenerator {
 
     private RustGenerator() {}
 
+    /** The runtime support crate that generated bindings depend on. */
+    public static final String RUNTIME_CRATE = "gnatpolyglot_runtime";
+
+    /** A fully-qualified path into the runtime crate. */
+    public static String runtimePath(String item) {
+        return RUNTIME_CRATE + "::" + item;
+    }
+
     /** A raw pointer to {@code pointee}: {@code *const}/{@code *mut <pointee>}. */
     public static String rawPtr(boolean isConst, String pointee) {
         return (isConst ? "*const " : "*mut ") + pointee;
