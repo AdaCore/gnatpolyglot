@@ -151,8 +151,9 @@ element type. The supported element types are the native scalar widths
 Indexing uses the Ada-style bounds carried by the proxy (1-based by default,
 but any lower bound is honoured) rather than being rebased to zero:
 
-* ``get(i)`` returns the element at index ``i`` — a copy for a scalar element,
-  a non-owning view for a record element.
+* ``get(i)`` returns ``Some`` of the element at index ``i`` — a copy for a
+  scalar element, a non-owning view for a record element — or ``None`` when
+  ``i`` is outside the bounds.
 * ``set(i, value)`` overwrites the element at index ``i``.
 * ``begin()`` / ``end()`` give the first and last valid index, ``len()`` the
   element count and ``is_empty()`` whether it has none. Iterate either over a
@@ -176,6 +177,7 @@ by reference or with ``STATIC`` ownership is a non-owning view wrapped in
    for x in &arr {
        println!("{x}");                 // iterates in Ada index order
    }
+   println!("{:?}", arr.get(0));        // bounds-checked: None when out of range
    arr.set(arr.begin(), 42);
    pkg::consume(&arr);
 

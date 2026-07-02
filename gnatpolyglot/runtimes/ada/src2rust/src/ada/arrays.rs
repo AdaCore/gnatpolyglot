@@ -123,10 +123,14 @@ impl<T: PolyglotArrayElement> PolyglotArray<T> {
         self.len() <= 0
     }
 
-    /// Read the element at Ada index `index`: a copy for a scalar element, a non-owning view for a
+    /// Read the element at Ada index `index`, or `None` when `index` is outside the array's bounds
+    /// (`begin ..= end`). The element is a copy for a scalar element, a non-owning view for a
     /// record element.
-    pub fn get(&self, index: i32) -> T::Ref {
-        unsafe { T::_ada_array_get(self.data, index) }
+    pub fn get(&self, index: i32) -> Option<T::Ref> {
+        if index < self.data.begin || index > self.data.end {
+            return None;
+        }
+        Some(unsafe { T::_ada_array_get(self.data, index) })
     }
 
     /// Overwrite the element at Ada index `index`. For a record element the value is copied into

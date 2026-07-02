@@ -9,21 +9,23 @@ fn test_integer_arrays() {
     println!("bounds: {} {}", arr.begin(), arr.end());
     // The Debug impl reports the descriptor (bounds and length), not the elements.
     println!("debug: {arr:?}");
-    println!("content: [{} {} {}]", arr.get(1), arr.get(2), arr.get(3));
+    // get() is bounds-checked and returns an Option: None outside the Ada bounds.
+    println!("get: {:?} {:?}", arr.get(1), arr.get(0));
+    println!("content: [{} {} {}]", arr.get(1).unwrap(), arr.get(2).unwrap(), arr.get(3).unwrap());
     println!("sum: {}", pkg::f_u_2(&arr));
 
     // Write elements back, then read them through a parameter.
     arr.set(1, 4);
     arr.set(2, 5);
     arr.set(3, 6);
-    println!("content: [{} {} {}]", arr.get(1), arr.get(2), arr.get(3));
+    println!("content: [{} {} {}]", arr.get(1).unwrap(), arr.get(2).unwrap(), arr.get(3).unwrap());
     println!("sum: {}", pkg::f_u_2(&arr));
 
     // An `in out` parameter: Ada mutates the shared buffer in place.
     pkg::out_proc(&mut arr);
     print!("doubled:");
     for i in arr.begin()..=arr.end() {
-        print!(" {}", arr.get(i));
+        print!(" {}", arr.get(i).unwrap());
     }
     println!();
 
@@ -36,7 +38,7 @@ fn test_integer_arrays() {
     }
     print!("owned:");
     for i in owned.begin()..=owned.end() {
-        print!(" {}", owned.get(i));
+        print!(" {}", owned.get(i).unwrap());
     }
     println!();
 
@@ -63,14 +65,14 @@ fn test_integer_widths() {
     let bytes = pkg::make_bytes();
     print!("bytes:");
     for i in bytes.begin()..=bytes.end() {
-        print!(" {}", bytes.get(i));
+        print!(" {}", bytes.get(i).unwrap());
     }
     println!();
 
     let shorts = pkg::make_shorts();
     print!("shorts:");
     for i in shorts.begin()..=shorts.end() {
-        print!(" {}", shorts.get(i));
+        print!(" {}", shorts.get(i).unwrap());
     }
     println!();
 
@@ -78,7 +80,7 @@ fn test_integer_widths() {
     let longs = pkg::make_longs();
     print!("longs:");
     for i in longs.begin()..=longs.end() {
-        print!(" {}", longs.get(i));
+        print!(" {}", longs.get(i).unwrap());
     }
     println!();
 }
@@ -89,7 +91,7 @@ fn test_floating_point_arrays() {
     let mut floats = pkg::make_floats();
     print!("floats:");
     for i in floats.begin()..=floats.end() {
-        print!(" {:.1}", floats.get(i));
+        print!(" {:.1}", floats.get(i).unwrap());
     }
     println!();
     println!("sum: {:.1}", pkg::sum_floats(&floats));
@@ -98,7 +100,7 @@ fn test_floating_point_arrays() {
     pkg::scale_floats(&mut floats);
     print!("scaled:");
     for i in floats.begin()..=floats.end() {
-        print!(" {:.1}", floats.get(i));
+        print!(" {:.1}", floats.get(i).unwrap());
     }
     println!();
     println!("sum: {:.1}", pkg::sum_floats(&floats));
@@ -110,14 +112,14 @@ fn test_floating_point_arrays() {
     owned.set(3, 0.75);
     print!("owned:");
     for i in owned.begin()..=owned.end() {
-        print!(" {:.2}", owned.get(i));
+        print!(" {:.2}", owned.get(i).unwrap());
     }
     println!();
 
     let doubles = pkg::make_doubles();
     print!("doubles:");
     for i in doubles.begin()..=doubles.end() {
-        print!(" {:.2}", doubles.get(i));
+        print!(" {:.2}", doubles.get(i).unwrap());
     }
     println!();
     println!("sum: {:.2}", pkg::sum_doubles(&doubles));
@@ -129,7 +131,7 @@ fn test_boolean_arrays() {
     let mut bools = pkg::make_bools();
     print!("bools:");
     for i in bools.begin()..=bools.end() {
-        print!(" {}", bools.get(i));
+        print!(" {}", bools.get(i).unwrap());
     }
     println!();
     println!("any: {}", pkg::any_true(&bools));
@@ -138,7 +140,7 @@ fn test_boolean_arrays() {
     pkg::negate_bools(&mut bools);
     print!("negated:");
     for i in bools.begin()..=bools.end() {
-        print!(" {}", bools.get(i));
+        print!(" {}", bools.get(i).unwrap());
     }
     println!();
     println!("any: {}", pkg::any_true(&bools));
@@ -149,7 +151,7 @@ fn test_boolean_arrays() {
     owned.set(2, false);
     print!("owned:");
     for i in owned.begin()..=owned.end() {
-        print!(" {}", owned.get(i));
+        print!(" {}", owned.get(i).unwrap());
     }
     println!();
 }
@@ -157,13 +159,13 @@ fn test_boolean_arrays() {
 fn test_record_arrays() {
     println!("-- record arrays --");
 
-    // A getter on a record element yields a non-owning view, so `get(i).get_i()`
+    // A getter on a record element yields a non-owning view, so `get(i).unwrap().get_i()`
     // reads a field.
     let mut structs = pkg::my_int_arr_func();
     println!("bounds: {} {}", structs.begin(), structs.end());
     print!("content:");
     for i in structs.begin()..=structs.end() {
-        print!(" {}", structs.get(i).get_i());
+        print!(" {}", structs.get(i).unwrap().get_i());
     }
     println!();
 
@@ -171,7 +173,7 @@ fn test_record_arrays() {
     pkg::my_int_arr_proc(&mut structs);
     print!("tripled:");
     for i in structs.begin()..=structs.end() {
-        print!(" {}", structs.get(i).get_i());
+        print!(" {}", structs.get(i).unwrap().get_i());
     }
     println!();
     pkg::print_image(&structs);
@@ -183,7 +185,7 @@ fn test_record_arrays() {
     }
     print!("owned:");
     for i in owned.begin()..=owned.end() {
-        print!(" {}", owned.get(i).get_i());
+        print!(" {}", owned.get(i).unwrap().get_i());
     }
     println!();
 
