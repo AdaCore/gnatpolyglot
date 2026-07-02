@@ -7,6 +7,8 @@ fn test_integer_arrays() {
     // A function returning an unconstrained array, owned on the Rust side.
     let mut arr = pkg::f_u_1();
     println!("bounds: {} {}", arr.begin(), arr.end());
+    // The Debug impl reports the descriptor (bounds and length), not the elements.
+    println!("debug: {arr:?}");
     println!("content: [{} {} {}]", arr.get(1), arr.get(2), arr.get(3));
     println!("sum: {}", pkg::f_u_2(&arr));
 

@@ -7,6 +7,7 @@
 //! `PolyglotArray<T>` owned wrapper, and the `PolyglotArrayElement` trait binding
 //! the per-element-type FFI entry points.
 
+use std::fmt;
 use std::marker::PhantomData;
 use std::os::raw::{c_int, c_void};
 
@@ -144,6 +145,16 @@ impl<T: PolyglotArrayElement> Drop for PolyglotArray<T> {
 impl<T: PolyglotArrayElement> Clone for PolyglotArray<T> {
     fn clone(&self) -> PolyglotArray<T> {
         unsafe { PolyglotArray::from_raw(T::_ada_array_clone(self.data)) }
+    }
+}
+
+impl<T: PolyglotArrayElement> fmt::Debug for PolyglotArray<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PolyglotArray")
+            .field("begin", &self.begin())
+            .field("end", &self.end())
+            .field("len", &self.len())
+            .finish()
     }
 }
 
