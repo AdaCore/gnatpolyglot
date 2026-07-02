@@ -9,6 +9,9 @@ cpp_gpp:
 java:
 	$(MAKE) -C java/
 
+rust:
+	$(MAKE) -C rust/
+
 ada2proxy:
 	gnatpolyglot ada2proxy -P ex2.gpr -o 2proxy
 
@@ -18,9 +21,12 @@ proxy2cpp:
 proxy2java:
 	gnatpolyglot proxy2java 2proxy/proxy.json -o 2java
 
-clean:
-	$(RM) -r 2proxy 2cpp 2java
-	$(RM) -r obj lib
-	$(RM) -r cpp/bin cpp/obj
+proxy2rust:
+	gnatpolyglot proxy2rust 2proxy/proxy.json -o 2rust
 
-.PHONY: ada2proxy proxy2cpp all gpp clean java cpp
+clean:
+	$(RM) -r 2proxy 2cpp 2java 2rust
+	$(RM) -r obj lib
+	$(RM) -r cpp/bin cpp/obj rust/target
+
+.PHONY: ada2proxy proxy2cpp proxy2rust all gpp clean java cpp rust

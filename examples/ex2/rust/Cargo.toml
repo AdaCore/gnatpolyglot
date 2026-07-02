@@ -1,0 +1,8 @@
+[package]
+name = "ex2_main"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ex2 = { path = '../2rust' }
+

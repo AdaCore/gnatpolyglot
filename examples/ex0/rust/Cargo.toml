@@ -1,0 +1,8 @@
+[package]
+name = "ex0_main"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ex0 = { path = '../2rust' }
+
