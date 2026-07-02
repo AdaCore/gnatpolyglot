@@ -1,13 +1,14 @@
 import os
 from utils import run_scanner, run_printer
+from pathlib import Path
 
 
 run_scanner("ada", "test.gpr", "proxy")
 run_printer("java", os.path.join("proxy", "proxy.json"), "2java")
 
-def get_docstrings(filename):
-    print(f"{'=' * len(filename)}=")
-    print(f"{filename}:")
+def get_docstrings(filename: Path):
+    print(f"{'=' * len(filename.as_posix())}=")
+    print(f"{filename.as_posix()}:")
     with open(filename) as f:
         lines = [l.strip() for l in f.readlines()]
         i = 0
@@ -28,10 +29,15 @@ def get_docstrings(filename):
     print()
 
 
+sources = []
 
 for root, _, files in os.walk(
-    os.path.join("2java", "src", "main", "java", "com", "adacore", "libtest", "test")
+    Path("2java", "src", "main", "java", "com", "adacore", "libtest", "test")
 ):
     for f in files:
         if f.endswith(".java") and not f == "Library.java":
-            get_docstrings(os.path.join(root, f))
+            sources.append(Path(root, f))
+
+sources.sort()
+for s in sources:
+    get_docstrings(s)
