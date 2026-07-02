@@ -1,3 +1,4 @@
+import java.io.File;
 import java.nio.file.Path;
 import java.util.HashMap;
 
@@ -132,7 +133,7 @@ public class Main {
 
     public static void main(String[] args) throws Throwable {
         VirtualFile curDir = VfsPackage.getCurrentDir(VfsPackage.getLocalHost());
-        String curDirAd = Path.of(".").toAbsolutePath().normalize() + "/";
+        String curDirAd = Path.of(".").toAbsolutePath().normalize() + File.separator;
         assert VfsPackage.operatorPlus(curDir.dirName()).toString().equals(curDirAd);
         assert VfsPackage.operatorPlus(
                 curDir.baseName(new PolyglotString(""), false)).toString().equals("");

@@ -14,7 +14,11 @@ public class Main {
 
         assert IntsPackage.fMyInt() == (1 << 20);
         assert IntsPackage.fMyNewShort() == 1000;
-        assert IntsPackage.fMyLongInt() == Long.MIN_VALUE;
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            assert IntsPackage.fMyLongInt() == Integer.MIN_VALUE;
+        } else {
+            assert IntsPackage.fMyLongInt() == Long.MIN_VALUE;
+        }
         assert IntsPackage.fMySmall() == -256;
 
         assert IntsPackage.fPositive() == 1;
