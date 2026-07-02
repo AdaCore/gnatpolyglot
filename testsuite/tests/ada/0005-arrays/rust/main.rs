@@ -39,6 +39,22 @@ fn test_integer_arrays() {
         print!(" {}", owned.get(i));
     }
     println!();
+
+    // IntoIterator (`for x in &array`) and the iter() adapter walk the same elements; iter() is a
+    // DoubleEndedIterator so `.rev()` works.
+    let sum: i32 = owned.iter().sum();
+    print!("iter:");
+    for v in &owned {
+        print!(" {v}");
+    }
+    println!(" (sum {sum})");
+    print!("rev:");
+    for v in owned.iter().rev() {
+        print!(" {v}");
+    }
+    println!();
+    // ExactSizeIterator: the element count is known without walking.
+    println!("len: {}", owned.iter().len());
 }
 
 fn test_integer_widths() {
@@ -168,6 +184,13 @@ fn test_record_arrays() {
     print!("owned:");
     for i in owned.begin()..=owned.end() {
         print!(" {}", owned.get(i).get_i());
+    }
+    println!();
+
+    // Iteration yields the same non-owning views as get(), for record elements too.
+    print!("iter:");
+    for e in &owned {
+        print!(" {}", e.get_i());
     }
     println!();
 }

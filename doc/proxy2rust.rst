@@ -155,8 +155,9 @@ but any lower bound is honoured) rather than being rebased to zero:
   a non-owning view for a record element.
 * ``set(i, value)`` overwrites the element at index ``i``.
 * ``begin()`` / ``end()`` give the first and last valid index, ``len()`` the
-  element count and ``is_empty()`` whether it has none — so a ``begin()..=end()``
-  range iterates the array.
+  element count and ``is_empty()`` whether it has none. Iterate either over a
+  ``begin()..=end()`` index range or directly with ``for x in &array`` (or
+  ``array.iter()``), which yields the same per-element value as ``get``.
 
 A new array is allocated by passing its bounds to ``PolyglotArray::<T>::new``.
 Class-typed array parameters are passed by reference — ``&PolyglotArray<T>``
@@ -172,8 +173,8 @@ by reference or with ``STATIC`` ownership is a non-owning view wrapped in
 
    // a function returning, then consuming, an array of i32
    let mut arr = pkg::make();
-   for i in arr.begin()..=arr.end() {
-       println!("{}", arr.get(i));   // Ada-style indices
+   for x in &arr {
+       println!("{x}");                 // iterates in Ada index order
    }
    arr.set(arr.begin(), 42);
    pkg::consume(&arr);

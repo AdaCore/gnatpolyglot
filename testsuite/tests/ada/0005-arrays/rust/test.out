@@ -15,6 +15,9 @@ content: [4 5 6]
 sum: 15
 doubled: 8 10 12
 owned: 2 4 6 8 10
+iter: 2 4 6 8 10 (sum 30)
+rev: 10 8 6 4 2
+len: 5
 -- integer widths --
 bytes: 1 -2 127
 shorts: 1000 -2000 32000
@@ -39,5 +42,6 @@ content: 1 2 3 4 5
 tripled: 3 6 9 12 15
 ( 1 => (I =>  3),  2 => (I =>  6),  3 => (I =>  9),  4 => (I =>  12),  5 => (I =>  15), )
 owned: 10 20 30
+iter: 10 20 30
 
 Done.

@@ -134,6 +134,13 @@ impl<T: PolyglotArrayElement> PolyglotArray<T> {
     pub fn set(&mut self, index: i32, value: T) {
         unsafe { T::_ada_array_set(self.data, index, value) }
     }
+
+    /// Iterate the elements in Ada index order, yielding for each what [`get`](Self::get) yields:
+    /// a copy for a scalar element, a non-owning view for a record element. This is the iterator
+    /// backing `for x in &array`.
+    pub fn iter(&self) -> Iter<'_, T> {
+        Iter { array: self, front: self.data.begin, back: self.data.end }
+    }
 }
 
 impl<T: PolyglotArrayElement> Drop for PolyglotArray<T> {
@@ -155,6 +162,57 @@ impl<T: PolyglotArrayElement> fmt::Debug for PolyglotArray<T> {
             .field("end", &self.end())
             .field("len", &self.len())
             .finish()
+    }
+}
+
+/// Iterator over the elements of a [`PolyglotArray`], created by [`PolyglotArray::iter`] or by
+/// `IntoIterator` on a `&PolyglotArray`. Yields `T::Ref` (a copy for a scalar element, a non-owning
+/// view for a record element) walking the Ada bounds inclusively. `front`/`back` are the next Ada
+/// indices to yield from each end; the iterator is exhausted once `front` passes `back`.
+pub struct Iter<'a, T: PolyglotArrayElement> {
+    array: &'a PolyglotArray<T>,
+    front: i32,
+    back: i32,
+}
+
+impl<'a, T: PolyglotArrayElement> Iterator for Iter<'a, T> {
+    type Item = T::Ref;
+
+    fn next(&mut self) -> Option<T::Ref> {
+        if self.front > self.back {
+            return None;
+        }
+        // In bounds by the check above, and the array outlives the iterator (`'a`).
+        let item = unsafe { T::_ada_array_get(self.array.data, self.front) };
+        self.front += 1;
+        Some(item)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = (self.back - self.front + 1).max(0) as usize;
+        (remaining, Some(remaining))
+    }
+}
+
+impl<'a, T: PolyglotArrayElement> DoubleEndedIterator for Iter<'a, T> {
+    fn next_back(&mut self) -> Option<T::Ref> {
+        if self.front > self.back {
+            return None;
+        }
+        let item = unsafe { T::_ada_array_get(self.array.data, self.back) };
+        self.back -= 1;
+        Some(item)
+    }
+}
+
+impl<'a, T: PolyglotArrayElement> ExactSizeIterator for Iter<'a, T> {}
+
+impl<'a, T: PolyglotArrayElement> IntoIterator for &'a PolyglotArray<T> {
+    type Item = T::Ref;
+    type IntoIter = Iter<'a, T>;
+
+    fn into_iter(self) -> Iter<'a, T> {
+        self.iter()
     }
 }
 
