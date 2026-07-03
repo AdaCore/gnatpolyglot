@@ -27,6 +27,8 @@ with Ada.Exceptions;
 with Ada.Finalization;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with Interfaces;
+use all type Interfaces.Integer_32;
 with Interfaces.C;
 use all type Interfaces.C.int;
 with System;

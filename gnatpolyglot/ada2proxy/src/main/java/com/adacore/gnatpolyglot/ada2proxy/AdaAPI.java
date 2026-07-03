@@ -465,7 +465,7 @@ public class AdaAPI extends LanguageAPI {
     public String cInterfaceNativeTypename(NativeType nativeType) {
         switch (nativeType) {
             case BOOL:
-                return "Interfaces.C.int";
+                return "Interfaces.Integer_32";
             case FLOAT128:
                 return "Interfaces.C.long_double";
             case FLOAT32:
@@ -474,19 +474,19 @@ public class AdaAPI extends LanguageAPI {
                 return "Interfaces.C.double";
             case UINT8:
             case SINT8:
-                return "Interfaces.C.signed_char";
+                return "Interfaces.Integer_8";
             case UINT16:
             case SINT16:
-                return "Interfaces.C.short";
+                return "Interfaces.Integer_16";
             case UINT32:
             case SINT32:
-                return "Interfaces.C.int";
+                return "Interfaces.Integer_32";
             case UINT64:
             case SINT64:
-                return "Interfaces.C.long";
+                return "Interfaces.Integer_64";
             case UINT128:
             case SINT128:
-                return "Interfaces.C.long";
+                return "Interfaces.Integer_128";
             case CHAR:
                 return "Interfaces.C.char";
             case STRING:
