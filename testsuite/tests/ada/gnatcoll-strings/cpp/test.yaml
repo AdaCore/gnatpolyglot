@@ -1,0 +1,17 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+control:
+  - [SKIP, skip_internal, "Internal testsuite sources are not available"]
+
+# This test uses std::filesystem which is only available in C++17 and above
+main_cflags: ["-Wall", "-Wextra", "-Werror", "-std=c++17"]
+
+valgrind: never
+
+env:
+  windows:
+    GNATCOLL_OS: windows

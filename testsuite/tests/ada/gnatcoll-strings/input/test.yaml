@@ -1,0 +1,26 @@
+driver: scan2proxy
+
+input_lang: ada
+project_file: gnatcoll/core/gnatcoll_core.gpr
+sync_tree:
+  - ../../../internal/sources
+spec_files:
+  - "gnatcoll-strings.ads"
+
+scanner_extra_args:
+  - "-q"
+
+input_lib_flags:
+  - "-gnatws"
+
+control:
+  - [SKIP, skip_internal, "Internal testsuite sources are not available"]
+
+local_project_path:
+  - gnatcoll/minimal
+  - gpr/
+  - xmlada/
+
+env:
+  windows:
+    GNATCOLL_OS: windows

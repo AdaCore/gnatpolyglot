@@ -18,4 +18,6 @@ int main() {
 
     rec4::R4 r4;
     test::p4(gnatpolyglot::polyglot_ptr<rec4::R4>(r4));
+
+    test::p6(rec6::inst::Typ{1});
 }
