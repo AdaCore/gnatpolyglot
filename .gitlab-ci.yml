@@ -1,8 +1,9 @@
 stages:
-  - single
+  - auto
+  - manual
 
 check_issue:
-  stage: single
+  stage: auto
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   services:
@@ -14,19 +15,20 @@ check_issue:
     - require_issue
 
 .build_and_test: &build_and_test
-  stage: single
   interruptible: true
+  needs: []
   script:
     - generic_anod_ci
     - . /tmp/ci_env.sh
-    - anod test gnatpolyglot $TEST_QUALIFIERS
+    - anod test gnatpolyglot $TEST_QUALIFIERS $ANOD_PLATFORM_ARG
     - testsuite_reports
   artifacts:
     reports:
       junit: xunit-*.xml
 
-auto-linux:
+x86_64-linux:
   <<: *build_and_test
+  stage: auto
   variables:
     # The testsuite is fast enough that we can always run it with valgrind
     TEST_QUALIFIERS: "--qualifier=valgrind"
@@ -36,8 +38,36 @@ auto-linux:
     - image:pe-base
     - cpu:8
 
-manual-win:
+x86-linux:
   <<: *build_and_test
+  stage: manual
+  variables:
+    ANOD_PLATFORM_ARG: "--build=x86-linux"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
+  services:
+    - image:pe-base
+    - cpu:8
+
+x86_64-windows64:
+  <<: *build_and_test
+  stage: manual
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
+  services:
+    - image:visual-studio-2022
+    - platform:x86_64-windows-2022
+    - cpu:8
+
+x86-windows:
+  <<: *build_and_test
+  stage: manual
+  variables:
+    ANOD_PLATFORM_ARG: "--build=x86-windows"
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual
