@@ -3,6 +3,8 @@
 //  SPDX-License-Identifier: Apache-2.0
 //
 
+#include <stdint.h>
+
 #include "gnatpolyglot_ada2java.h"
 
 ////////////////////////////
@@ -17,13 +19,13 @@ extern void gnatpolyglot__ada__arrays__native__short_short_array_free(void *self
 extern struct array_data
     gnatpolyglot__ada__arrays__native__short_short_array_clone(struct array_data);
 
-extern char *
+extern int8_t *
 gnatpolyglot__ada__arrays__native__short_short_array_get(struct array_data data,
                                                  int index);
 
 extern void
 gnatpolyglot__ada__arrays__native__short_short_array_set(struct array_data data,
-                                                 int index, char new_val);
+                                                 int index, int8_t new_val);
 
 /**
  * Java native method implementation
@@ -73,7 +75,7 @@ JNIEXPORT jchar
 Java_com_adacore_gnatpolyglot_runtime_ada2java_CharacterArray_arrayGet(
     JNIEnv *env, jclass c, jobject self, jint index) {
   struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
-  return (unsigned char)
+  return (jchar)
       *gnatpolyglot__ada__arrays__native__short_short_array_get(data, index);
 }
 
@@ -86,7 +88,7 @@ JNIEXPORT jchar
 Java_com_adacore_gnatpolyglot_runtime_ada2java_CharacterArray_arraySet(
     JNIEnv *env, jclass c, jobject self, jint index, jchar element) {
   struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
-  unsigned char prev =
+  int8_t prev =
       *gnatpolyglot__ada__arrays__native__short_short_array_get(data, index);
   gnatpolyglot__ada__arrays__native__short_short_array_set(data, index,
                                                            (char)element);
@@ -157,7 +159,7 @@ JNIEXPORT jbyte
 Java_com_adacore_gnatpolyglot_runtime_ada2java_ByteArray_arraySet(
     JNIEnv *env, jclass c, jobject self, jint index, jbyte element) {
   struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
-  char prev = *gnatpolyglot__ada__arrays__native__short_short_array_get(data, index);
+  int8_t prev = *gnatpolyglot__ada__arrays__native__short_short_array_get(data, index);
   gnatpolyglot__ada__arrays__native__short_short_array_set(data, index, element);
   return prev;
 }
@@ -174,13 +176,13 @@ extern void gnatpolyglot__ada__arrays__native__short_array_free(void *self);
 extern struct array_data
     gnatpolyglot__ada__arrays__native__short_array_clone(struct array_data);
 
-extern short *
+extern int16_t *
 gnatpolyglot__ada__arrays__native__short_array_get(struct array_data data,
                                                  int index);
 
 extern void
 gnatpolyglot__ada__arrays__native__short_array_set(struct array_data data,
-                                                 int index, short new_val);
+                                                 int index, int16_t new_val);
 
 /**
  * Java native method implementation
@@ -242,7 +244,7 @@ JNIEXPORT jshort
 Java_com_adacore_gnatpolyglot_runtime_ada2java_ShortArray_arraySet(
     JNIEnv *env, jclass c, jobject self, jint index, jshort element) {
   struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
-  short prev = *gnatpolyglot__ada__arrays__native__short_array_get(data, index);
+  int16_t prev = *gnatpolyglot__ada__arrays__native__short_array_get(data, index);
   gnatpolyglot__ada__arrays__native__short_array_set(data, index, element);
   return prev;
 }
@@ -259,13 +261,13 @@ extern void gnatpolyglot__ada__arrays__native__int_array_free(void *self);
 extern struct array_data
     gnatpolyglot__ada__arrays__native__int_array_clone(struct array_data);
 
-extern int *
+extern int32_t *
 gnatpolyglot__ada__arrays__native__int_array_get(struct array_data data,
                                                  int index);
 
 extern void
 gnatpolyglot__ada__arrays__native__int_array_set(struct array_data data,
-                                                 int index, int new_val);
+                                                 int index, int32_t new_val);
 
 /**
  * Java native method implementation
@@ -327,7 +329,7 @@ JNIEXPORT jint
 Java_com_adacore_gnatpolyglot_runtime_ada2java_IntegerArray_arraySet(
     JNIEnv *env, jclass c, jobject self, jint index, jint element) {
   struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
-  int prev = *gnatpolyglot__ada__arrays__native__int_array_get(data, index);
+  int32_t prev = *gnatpolyglot__ada__arrays__native__int_array_get(data, index);
   gnatpolyglot__ada__arrays__native__int_array_set(data, index, element);
   return prev;
 }
@@ -344,13 +346,13 @@ extern void gnatpolyglot__ada__arrays__native__long_array_free(void *self);
 extern struct array_data
     gnatpolyglot__ada__arrays__native__long_array_clone(struct array_data);
 
-extern long *
+extern int64_t *
 gnatpolyglot__ada__arrays__native__long_array_get(struct array_data data,
                                                  int index);
 
 extern void
 gnatpolyglot__ada__arrays__native__long_array_set(struct array_data data,
-                                                 int index, long new_val);
+                                                 int index, int64_t new_val);
 
 /**
  * Java native method implementation
@@ -412,7 +414,7 @@ JNIEXPORT jlong
 Java_com_adacore_gnatpolyglot_runtime_ada2java_LongArray_arraySet(
     JNIEnv *env, jclass c, jobject self, jint index, jlong element) {
   struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
-  long prev = *gnatpolyglot__ada__arrays__native__long_array_get(data, index);
+  int64_t prev = *gnatpolyglot__ada__arrays__native__long_array_get(data, index);
   gnatpolyglot__ada__arrays__native__long_array_set(data, index, element);
   return prev;
 }
