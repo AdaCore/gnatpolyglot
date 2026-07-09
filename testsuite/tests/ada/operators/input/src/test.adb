@@ -158,4 +158,9 @@ package body Test is
       return Res;
    end "not";
 
+   function "/=" (P: Pair; I : Integer) return Pair is
+   begin
+       return (P.Left * I, P.Right / I);
+   end "/=";
+
 end Test;

@@ -29,6 +29,7 @@ public class Main {
         print(new Pair(1, 2).operatorBitOr(new Pair(3, 4)));
         print(new Pair(-1, -1).operatorBitXor(new Pair(1, 2)));
         print(new Pair(~3, ~4).operatorBitNot());
+        print(new Pair(10, 10).operatorNe(2));
 
         System.out.println(TestPackage.operatorMult(4, 'c').toString());
         System.out.println(TestPackage.operatorPlus(new PolyglotString("foo")).toString());
