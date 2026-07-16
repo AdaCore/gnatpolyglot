@@ -227,14 +227,14 @@ public class JavaAPI extends LanguageAPI {
             case CHAR -> "char";
             case FLOAT32 -> "float";
             case FLOAT64 -> "double";
-            case UINT8 -> "unsigned char";
-            case SINT8 -> "signed char";
-            case UINT16 -> "unsigned short";
-            case SINT16 -> "short";
-            case UINT32 -> "unsigned int";
-            case SINT32 -> "int";
-            case UINT64 -> "unsigned long";
-            case SINT64 -> "long";
+            case UINT8 -> "uint8_t";
+            case SINT8 -> "int8_t";
+            case UINT16 -> "uint16_t";
+            case SINT16 -> "int16_t";
+            case UINT32 -> "uint32_t";
+            case SINT32 -> "int32_t";
+            case UINT64 -> "uint64_t";
+            case SINT64 -> "int64_t";
             case VOID -> "void";
             case STRING -> throw new UnsupportedOperationException(
                     "String types are not yet supported");

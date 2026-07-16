@@ -14,6 +14,7 @@ Template file to generate the JNI file for a module
 @template.text_header()
 
 #include <jni.h>
+#include <stdint.h>
 
 #include "gnatpolyglot_proxy2java.h"
 #include "gnatpolyglot_ada2java.h"
