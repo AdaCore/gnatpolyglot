@@ -18,7 +18,6 @@ Template file to generate package bodies.
 
 !{
    String packageName = pack.getProxyUnitName();
-   String parentPackage = pack.getFullyQualifiedName();
 }
 
 @template.text_header()
@@ -42,7 +41,7 @@ with GNATpolyglot.Exceptions;
 with GNATpolyglot.Exceptions.${api.getProjectName().toPascalWithUnderscore()};
 with GNATpolyglot.Ada.Strings;
 
-with ${pack.getWithPackage()}; use ${parentPackage};
+with ${pack.getWithPackage()};
 
 @for(var necessaryWith : WithCollector.getIncludes(pack, api))
    with ${necessaryWith}; use ${necessaryWith};

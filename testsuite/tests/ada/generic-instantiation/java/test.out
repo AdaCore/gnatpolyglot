@@ -1,0 +1,38 @@
+Running printer test.
+Running the scanner...
+gen.ads:1:1: warning: Could not bind Gen: Generic declarations are not bindable
+gen.ads:15:5: warning: Could not bind Test.Top_Level_Child.Subgen: Generic declarations are not bindable
+gen.ads:15:5: warning: Could not bind Test.Inst.Subgen: Generic declarations are not bindable
+test.ads:11:5: warning: Could not bind Test.Transit: Generic declarations are not bindable
+gen.ads:15:5: warning: Could not bind Top_Level_Inst.Subgen: Generic declarations are not bindable
+transitive_top_level.ads:3:1: warning: Could not bind Transitive_Top_Level: Generic declarations are not bindable
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+ 1
+Call from instantiation  1: P1 : 42
+Nested : 1
+
+ 2
+Call from instantiation  2: P1 : 43
+Nested : 2
+
+ 3
+Call from instantiation  3: P1 : 44
+Nested : 3
+
+P1 : 22
+42
+P1 : 22
+42
+P1 : 22
+42
+P1 : 22
+42
+P1 : 22
+42
+
+Done.

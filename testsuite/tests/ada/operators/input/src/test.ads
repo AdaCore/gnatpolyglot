@@ -27,6 +27,7 @@ package Test is
    function "or" (P : Pair; P2 : Pair) return Pair;
    function "xor" (P : Pair; P2 : Pair) return Pair;
    function "not" (P : Pair) return Pair;
+   function "/=" (P: Pair; I : Integer) return Pair;
 
    function "*" (I : Integer; C : Character) return String
    is (To_String (I * C));

@@ -3,6 +3,7 @@ with Rec1; use Rec1;
 with Rec2; use Rec2;
 with Arr; use Arr;
 with Rec4; use Rec4;
+with Rec6; use Rec6;
 with Tagged_Type;
 with Int;
 
@@ -25,5 +26,7 @@ package Test is
    procedure P5(V: Tagged_Type.T) is null;
 
    type Index is array (Int.I range <>) of T;
+
+   procedure P6(V : Rec6.Inst.Typ) is null;
 
 end Test;

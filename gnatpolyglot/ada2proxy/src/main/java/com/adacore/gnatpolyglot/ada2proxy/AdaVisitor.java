@@ -101,7 +101,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     private List<AdaDeclaration> declarations = new ArrayList<>();
 
     /** The current package being analyzed */
-    private Libadalang.PackageDecl analyzedPackage;
+    private Libadalang.BasePackageDecl analyzedPackage;
 
     /** Nested packages discovered during the current analyzeSpec call */
     private List<Package> nestedPackages = new ArrayList<>();
@@ -110,7 +110,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     private HashMap<Libadalang.BasicDecl, AdaDeclaration> mappedDecls = new HashMap<>();
 
     /** Map Ada PackageDecl to their AdaProxy Package. */
-    private HashMap<Libadalang.PackageDecl, Package> mappedPackages = new HashMap<>();
+    private HashMap<Libadalang.BasePackageDecl, Package> mappedPackages = new HashMap<>();
 
     private int exceptionNumber = 1;
 
@@ -155,6 +155,10 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         Libadalang.BasicDecl parent = decl.pParentBasicDecl();
         while (!parent.isNone()) {
             if (parent instanceof Libadalang.BasePackageDecl packageDecl) return packageDecl;
+            if (parent instanceof Libadalang.GenericPackageInstantiation inst
+                    && inst.pDesignatedGenericDecl()
+                            instanceof Libadalang.GenericPackageDecl genPack)
+                return genPack.fPackageDecl();
             parent = parent.pParentBasicDecl();
         }
         AdaScanner.warning(new UnbindableDeclException(decl, "Could not find a parent package"));
@@ -181,10 +185,14 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         List<Package> packages = new ArrayList<>();
         while (!queuedDecls.isEmpty()) {
             Libadalang.BasicDecl decl = queuedDecls.poll();
-            if (decl instanceof Libadalang.BasePackageDecl p
+            if (decl instanceof Libadalang.PackageDecl p
                     && !p.getUnit().equals(p.pStandardUnit())) {
                 if (mappedPackages.containsKey(p)) continue;
                 packages.addAll(analyzeSpec(p.getUnit()));
+            } else if (decl instanceof Libadalang.GenericPackageInternal p) {
+                if (mappedPackages.containsKey(p)) continue;
+                packages.addAll(
+                        analyzeSpec(p.pParentBasicDecl().pGenericInstantiations()[0].getUnit()));
             } else if (!decl.getUnit().equals(decl.pStandardUnit())) {
                 enqueueDecl(getOwningPackage(decl));
             }
@@ -315,11 +323,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
     }
 
     void enqueueParentPackages(Libadalang.BasePackageDecl node) {
-        Libadalang.Name name = node.fPackageName().fName();
-        while (name instanceof Libadalang.DottedName dotted) {
-            if (dotted.fPrefix().pReferencedDecl(false) instanceof Libadalang.PackageDecl p)
-                enqueueDecl(p);
-            name = dotted.fPrefix();
+        Libadalang.BasicDecl parent = node.pParentBasicDecl();
+        Libadalang.AnalysisUnit stdUnit = parent.pStandardUnit();
+        while (!parent.getUnit().equals(stdUnit)) {
+            enqueueDecl(parent);
+            parent = parent.pParentBasicDecl();
         }
     }
 
@@ -338,12 +346,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         }
     }
 
-    @Override
-    public Void visit(Libadalang.PackageDecl node) {
+    public void visitPackage(Libadalang.BasePackageDecl node) {
         boolean isNested = !this.analyzedPackage.isNone();
 
         // Save outer state so we can restore it after visiting a nested package.
-        Libadalang.PackageDecl savedPackage = this.analyzedPackage;
+        Libadalang.BasePackageDecl savedPackage = this.analyzedPackage;
         List<AdaDeclaration> savedDeclarations = this.declarations;
 
         this.analyzedPackage = node;
@@ -364,7 +371,11 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         } else {
             enqueueParentPackages(node);
         }
+    }
 
+    @Override
+    public Void visit(Libadalang.PackageDecl node) {
+        visitPackage(node);
         return null;
     }
 
@@ -790,5 +801,12 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     public Void visit(Libadalang.GenericSubpDecl node) {
         throw new UnbindableDeclException(node, "Generic subprograms are not supported");
+    }
+
+    @Override
+    public Void visit(Libadalang.GenericPackageInstantiation node) {
+        visitPackage(
+                ((Libadalang.GenericPackageDecl) node.pDesignatedGenericDecl()).fPackageDecl());
+        return null;
     }
 }

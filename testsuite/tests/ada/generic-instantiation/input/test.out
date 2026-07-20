@@ -1,0 +1,12 @@
+Running scanner test.
+Running the scanner...
+gen.ads:1:1: warning: Could not bind Gen: Generic declarations are not bindable
+gen.ads:15:5: warning: Could not bind Test.Top_Level_Child.Subgen: Generic declarations are not bindable
+gen.ads:15:5: warning: Could not bind Test.Inst.Subgen: Generic declarations are not bindable
+test.ads:11:5: warning: Could not bind Test.Transit: Generic declarations are not bindable
+gen.ads:15:5: warning: Could not bind Top_Level_Inst.Subgen: Generic declarations are not bindable
+transitive_top_level.ads:3:1: warning: Could not bind Transitive_Top_Level: Generic declarations are not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

@@ -28,6 +28,7 @@ int main() {
     print(Pair(1, 2) | Pair(3, 4));
     print(Pair(-1, -1) ^ Pair(1, 2));
     print(~Pair(~3, ~4));
+    print(Pair(10, 10) != 2);
 
     std::cout
        << gnatpolyglot::ada::strings::to_string(test::operator_mult(4, 'c'))

@@ -296,7 +296,10 @@ public class AdaAPI extends LanguageAPI {
 
     public String getProxyAccessFullyQualifiedName(Libadalang.BaseTypeDecl type) {
         if (type.equals(type.pStdStringType())) return "GNATpolyglot.Ada.Strings.String_Access";
-        Libadalang.BasePackageDecl pack = (Libadalang.BasePackageDecl) type.pParentBasicDecl();
+        Libadalang.BasePackageDecl pack;
+        if (type.pParentBasicDecl() instanceof Libadalang.GenericPackageDecl gen) {
+            pack = gen.fPackageDecl();
+        } else pack = (Libadalang.BasePackageDecl) type.pParentBasicDecl();
         if (Package.isAdaRuntimePackage(pack))
             return Package.getProxyUnitName(pack).concat(".").concat(asAccess(type));
         return Package.getProxyUnitName(pack).concat(".").concat(asAccess(type));
@@ -400,10 +403,20 @@ public class AdaAPI extends LanguageAPI {
 
     /** Create a string to call a function from the proxy. */
     public String call(Subprogram subp) {
-        return AdaGenerator.makeCall(
-                        subp.getOriginFullyQualifiedName(),
-                        subp.parameters.stream().map(p -> getParamForCall(p)).toList())
-                .toString();
+        // (eng/toolchain/gnat#1918): Avoid calling the "/=" subpgram. It may be rejected by GNAT.
+        // Instead, call the "=" operator and negate the result.
+        String subpFQN = subp.getOriginFullyQualifiedName();
+        Libadalang.BaseTypeDecl returnType = subp.getReturnType();
+        boolean isImplicitNeq =
+                subpFQN.endsWith("\"/=\"") && returnType.equals(returnType.pBoolType());
+        if (isImplicitNeq) subpFQN = subpFQN.replace("/=", "=");
+        String call =
+                AdaGenerator.makeCall(
+                                subpFQN,
+                                subp.parameters.stream().map(p -> getParamForCall(p)).toList())
+                        .toString();
+        if (isImplicitNeq) return "not " + call;
+        return call;
     }
 
     public String getParamForCall(Component component) {

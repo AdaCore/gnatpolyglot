@@ -61,10 +61,7 @@ public class BindableDeclChecker {
         // For other type, we must ignore any type derivation
         decl = decl.pRootType(decl);
 
-        if (decl.pParentBasicDecl() instanceof Libadalang.GenericPackageDecl)
-            throw new UnbindableDeclException(
-                    decl, "Instantiated generic packages are not yet supported");
-        else if (decl.pIsInterfaceType(Libadalang.AdaNode.NONE))
+        if (decl.pIsInterfaceType(Libadalang.AdaNode.NONE))
             throw new UnbindableDeclException(decl, "Interfaces are not yet supported");
 
         // Check that we are able to compute the size of a given scalar type.

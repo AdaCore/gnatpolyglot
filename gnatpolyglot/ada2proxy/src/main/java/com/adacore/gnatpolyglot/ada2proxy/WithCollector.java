@@ -61,6 +61,9 @@ public class WithCollector {
             else if (decl instanceof Libadalang.BasePackageDecl pack) {
                 units.add(Package.getProxyUnitName(pack));
                 units.add(Package.getWithPackageName(pack));
+            } else if (decl instanceof Libadalang.GenericPackageDecl pack) {
+                units.add(Package.getProxyUnitName(pack.fPackageDecl()));
+                units.add(Package.getWithPackageName(pack.fPackageDecl()));
             } else includeDecl(decl.pParentBasicDecl());
         }
 
@@ -70,6 +73,8 @@ public class WithCollector {
                 checkDecl(pack.pRenamedPackage());
             else if (decl instanceof Libadalang.BasePackageDecl pack) {
                 includeDecl(pack);
+            } else if (decl instanceof Libadalang.GenericPackageDecl pack) {
+                includeDecl(pack.fPackageDecl());
             } else checkDecl(decl.pParentBasicDecl());
         }
 
