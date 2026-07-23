@@ -258,20 +258,6 @@ Generic declarations cannot be bound and will be ignored.
       end Gen;
    end Example;
 
-Generic instantiations
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Instantiated generic packages are not yet supported.
-
-.. code:: ada
-
-   generic
-   package Gen is
-   end Gen;
-
-   with Gen;
-   package Unsupported is new Gen;
-
 Ghost code
 ~~~~~~~~~~
 

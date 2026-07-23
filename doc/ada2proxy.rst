@@ -110,11 +110,6 @@ When converting a scalar from C to an Ada type, contraints are checked
 and may raise a ``Constraint_Error`` if they are not respected. This
 exception will be propagated back to the caller.
 
-.. warning::
-
-   On Windows platforms, integer types of size 64bits or more are incorrectly
-   supported at the moment. It is unadvised to try to use them.
-
 Enumeration types
 ~~~~~~~~~~~~~~~~~
 
@@ -354,3 +349,11 @@ otherwise they are considered anonymous exceptions.
 The predefined exceptions of the Ada language (``Constraint_Error``,
 ``Program_Error``, ``Storage_Error`` and ``Tasking_Error``) are also
 bound.
+
+Generics instantiations
+-----------------------
+
+Generic packages and declarations are not bindable and are ignored.
+However, instantiations of generics will be bound and appear as
+independant packages or declarations (the generic declaration of origin
+does not appear in the interfaces anymore).
