@@ -22,6 +22,7 @@ Template file to generate shadow types for tagged records.
         ? rec.getClasswideFullyQualifiedName()
         : rec.getFullyQualifiedName();
     String recordAccessName = rec.name.toPascalWithUnderscore() + "_Access";
+    String cwAccessName = rec.name.toPascalWithUnderscore() + "_Classwide";
     String recordFullName = rec.getFullyQualifiedName();
 
     String shadowTypename = rec.name.toPascalWithUnderscore() + "_Shadow";
@@ -45,8 +46,31 @@ Template file to generate shadow types for tagged records.
       Shadow: GNATpolyglot.Ada.Shadow_Data;
    end record;
 
+   <%-- Functions to set the Owner of the shadow object --%>
+
    procedure Set_Self_Owner
      (Shadow : out ${shadowTypename}; Owner : GNATpolyglot.Ada.Self_Owner_Kind);
+
+   <%-- Functions to get the back reference of the shadow object.
+     --%>
+
+   function Update_Back_Reference
+       (Shadow  : in out ${shadowTypename};
+        New_Ref : System.Address) return System.Address;
+
+   <%-- Functions to get the back reference of the shadow object.
+     -- This function does not have a matching C symbol: it is only used by
+     -- the identification function.
+     --%>
+
+   function Get_Self (Shadow : ${shadowTypename}) return System.Address;
+
+   procedure Set_Self_Owner_${shadowTypename} (Data : System.Address; O : Interfaces.Integer_32);
+   pragma Export (C, Set_Self_Owner_${shadowTypename}, "${rec.getOwnerSetterSymbol(api)}");
+
+   function Update_Back_Reference_${shadowTypename}
+      (Data : System.Address; New_Ref : System.Address) return System.Address;
+   pragma Export (C, Update_Back_Reference_${shadowTypename}, "${rec.getBackRefUpdaterSymbol(api)}");
 
    type ${shadowAccess} is access all ${shadowTypename};
 
@@ -100,6 +124,47 @@ Template file to generate shadow types for tagged records.
    begin
       Shadow.Shadow.Self_Owner := Owner;
    end Set_Self_Owner;
+
+   procedure Set_Self_Owner_${shadowTypename} (Data : System.Address; O : Interfaces.Integer_32) is
+      function Convert is new Ada.Unchecked_Conversion
+         (System.Address, ${cwAccessName});
+      Acc : ${cwAccessName} := Convert (Data);
+   begin
+      if Acc.all in GNATpolyglot.Ada.Shadow_Interface'Class then
+         GNATpolyglot.Ada.Shadow_Interface'Class
+            (Acc.all).Set_Self_Owner
+               (GNATpolyglot.Ada.Self_Owner_Kind'Enum_Val(O));
+      end if;
+   end Set_Self_Owner_${shadowTypename};
+
+   function Update_Back_Reference
+       (Shadow  : in out ${shadowTypename};
+        New_Ref : System.Address) return System.Address
+   is
+      Old_Ref : System.Address := Shadow.Shadow.Self;
+   begin
+      Shadow.Shadow.Self := New_Ref;
+      return Old_Ref;
+   end Update_Back_Reference;
+
+   function Update_Back_Reference_${shadowTypename}
+      (Data : System.Address; New_Ref : System.Address) return System.Address
+   is
+      function Convert is new Ada.Unchecked_Conversion
+         (System.Address, ${cwAccessName});
+      Acc : ${cwAccessName} := Convert (Data);
+   begin
+      if Acc.all in GNATpolyglot.Ada.Shadow_Interface'Class then
+         return GNATpolyglot.Ada.Shadow_Interface'Class
+            (Acc.all).Update_Back_Reference (New_Ref);
+      end if;
+      return System.Null_address;
+   end Update_Back_Reference_${shadowTypename};
+
+   function Get_Self (Shadow : ${shadowTypename}) return System.Address is
+   begin
+      return Shadow.Shadow.Self;
+   end Get_Self;
 
    function ${shadowTypename}_Back_Ref_Converter
      (Self : access GNATpolyglot.Ada.Shadow_Data) return System.Address

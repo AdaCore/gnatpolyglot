@@ -56,14 +56,25 @@ public class WithCollector {
         }
 
         /** Include the parent proxy package of the decl, or decl if it already is a package. */
-        void includeDecl(Libadalang.BasicDecl decl) {
+        void includeDeclWithProxy(Libadalang.BasicDecl decl) {
             if (decl instanceof Libadalang.PackageRenamingDecl pack)
-                includeDecl(pack.pRenamedPackage());
+                includeDeclWithProxy(pack.pRenamedPackage());
             else if (decl instanceof Libadalang.BasePackageDecl pack) {
                 units.add(Package.getProxyUnitName(pack));
                 units.add(Package.getWithPackageName(pack));
             } else if (decl instanceof Libadalang.GenericPackageDecl pack) {
                 units.add(Package.getProxyUnitName(pack.fPackageDecl()));
+                units.add(Package.getWithPackageName(pack.fPackageDecl()));
+            } else includeDeclWithProxy(decl.pParentBasicDecl());
+        }
+
+        /** Include the parent package of the decl, or decl if it already is a package. */
+        void includeDecl(Libadalang.BasicDecl decl) {
+            if (decl instanceof Libadalang.PackageRenamingDecl pack)
+                includeDecl(pack.pRenamedPackage());
+            else if (decl instanceof Libadalang.BasePackageDecl pack) {
+                units.add(Package.getWithPackageName(pack));
+            } else if (decl instanceof Libadalang.GenericPackageDecl pack) {
                 units.add(Package.getWithPackageName(pack.fPackageDecl()));
             } else includeDecl(decl.pParentBasicDecl());
         }
@@ -73,9 +84,9 @@ public class WithCollector {
             if (decl instanceof Libadalang.PackageRenamingDecl pack)
                 checkDecl(pack.pRenamedPackage());
             else if (decl instanceof Libadalang.BasePackageDecl pack) {
-                includeDecl(pack);
+                includeDeclWithProxy(pack);
             } else if (decl instanceof Libadalang.GenericPackageDecl pack) {
-                includeDecl(pack.fPackageDecl());
+                includeDeclWithProxy(pack.fPackageDecl());
             } else checkDecl(decl.pParentBasicDecl());
         }
 
@@ -131,12 +142,17 @@ public class WithCollector {
             // It is necessary to with the package that contains the first private parent
             // type for extension aggregate.
             Libadalang.BaseTypeDecl parent = rec.getFirstPrivateParentType();
-            if (!parent.isNone()) includeDecl(parent);
+            if (!parent.isNone()) includeDeclWithProxy(parent);
 
-            // We need to include all types that the shadow type will override.
             if (rec.isInheritable(api)) {
+                // We need to include all types that the shadow type will reach in its overrides.
                 for (var m : rec.getAllMethods()) {
                     m.accept(this);
+                }
+                // The identification function must reach all child types of the type in order
+                // to compare their tag.
+                for (var t : rec.getAllChildTypes()) {
+                    includeDecl(t.getOrigin());
                 }
             }
             return null;

@@ -663,6 +663,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                     rec.parent = makeRecord(BaseRecordDef.NONE, parentType);
                 else throw new RuntimeException("Could not process parent type");
                 enqueueDecl(parentType);
+                rec.parent.childTypes.add(rec);
             }
 
             declarations.add(rec);

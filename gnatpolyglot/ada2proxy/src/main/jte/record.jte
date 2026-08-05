@@ -30,6 +30,8 @@ Template file to generate bindings for record types.
     FunctionDecl copyFunc = rec.getCopyFunction();
     List<FunctionDecl> allocFuncs = rec.getAllocFunctions();
     FunctionDecl cloneFunc = rec.getCloneFunction();
+    String identifyFunction =
+      "Identify_" + rec.getFullyQualifiedName().replace(".", "_") + "_Type_Id";
 }
 
 @if(!isBody)
@@ -90,6 +92,16 @@ Template file to generate bindings for record types.
 
    @if(rec.isInheritable(api))
       @template.shadow(api, rec, isBody)
+
+   @endif
+
+   @if(rec.isTaggedType())
+      function ${identifyFunction}
+         (Addr : System.Address; Buffer_Addr : System.Address) return Interfaces.Integer_32;
+      pragma Export
+        (C,
+         ${identifyFunction},
+         "${rec.getIdentificatorSymbol(api)}");
    @endif
 
 @else
@@ -237,5 +249,29 @@ Template file to generate bindings for record types.
 
    @if(rec.isInheritable(api))
       @template.shadow(api, rec, isBody)
+   @endif
+
+   @if(rec.isTaggedType())
+      function ${identifyFunction}
+         (Addr : System.Address; Buffer_Addr : System.Address) return Interfaces.Integer_32 is
+         use type Ada.Tags.Tag;
+         function Convert is new Ada.Unchecked_Conversion
+           (System.Address, ${cwAccessName});
+         Acc : ${cwAccessName} := Convert (Addr);
+         Buffer : System.Address with Address => Buffer_Addr;
+      begin
+         if Acc = null then
+            return -1;
+         elsif Acc.all in GNATpolyglot.Ada.Shadow_Interface'Class then
+            Buffer := GNATpolyglot.Ada.Shadow_Interface'Class(Acc.all).Get_Self;
+            return -1;
+         @for (var childType : rec.getAllChildTypes())
+         elsif Acc.all'Tag = ${childType.getFullyQualifiedName()}'Tag then
+            return ${childType.getId(api)};
+         @endfor
+         else
+            return ${rec.getId(api)};
+         end if;
+      end ${identifyFunction};
    @endif
 @endif

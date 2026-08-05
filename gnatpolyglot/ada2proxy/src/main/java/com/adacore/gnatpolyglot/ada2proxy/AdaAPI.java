@@ -322,9 +322,17 @@ public class AdaAPI extends LanguageAPI {
         if (type.pParentBasicDecl() instanceof Libadalang.GenericPackageDecl gen) {
             pack = gen.fPackageDecl();
         } else pack = (Libadalang.BasePackageDecl) type.pParentBasicDecl();
-        if (Package.isAdaRuntimePackage(pack))
-            return Package.getProxyUnitName(pack).concat(".").concat(asAccess(type));
         return Package.getProxyUnitName(pack).concat(".").concat(asAccess(type));
+    }
+
+    public String getProxyClasswideAccessFullyQualifiedName(Libadalang.BaseTypeDecl type) {
+        Libadalang.BasePackageDecl pack;
+        if (type.pParentBasicDecl() instanceof Libadalang.GenericPackageDecl gen) {
+            pack = gen.fPackageDecl();
+        } else pack = (Libadalang.BasePackageDecl) type.pParentBasicDecl();
+        return Package.getProxyUnitName(pack)
+                .concat(".")
+                .concat(type.pRelativeName().getText() + "_Classwide");
     }
 
     /**
@@ -821,5 +829,24 @@ public class AdaAPI extends LanguageAPI {
      */
     public String syncDispatchParamValue(SubpParam param) {
         return paramUpdater.buildUpcall(param);
+    }
+
+    /**
+     * Return a string that changes the owner of the value to {@code newOwner} if it is a shadow
+     * type.
+     */
+    public String changeShadowOwnership(String value, String newOwner) {
+        return new StringBuilder("if ")
+                .append(value)
+                .append(" in GNATpolyglot.Ada.Shadow_Interface'Class then")
+                .append("\n")
+                .append("GNATpolyglot.Ada.Shadow_Interface'Class (")
+                .append(value)
+                .append(").Set_Self_Owner (")
+                .append(newOwner)
+                .append(")")
+                .append(";\n")
+                .append("end if;")
+                .toString();
     }
 }

@@ -122,6 +122,14 @@ public class AdaProxyTranslator {
 
         @Override
         public FunctionDecl visit(Subprogram subprogram) {
+            BaseTypeDecl returnType = subprogram.getReturnType();
+            TypeExpr returnTypeExpr = AdaAPI.makeTypeExpr(returnType);
+            if (!returnType.isNone() && returnType.pIsClasswide()) {
+                // Returning classwides is cannot be supported in the proxy. Instead,
+                // mark as returning a pointer to the specific class: this changes nothing
+                // in the Ada glue as only an adresss is returned in the end.
+                returnTypeExpr = returnTypeExpr.makePointer(false, true);
+            }
             return new FunctionDecl(
                     subprogram.getProxyFullyQualifiedName(),
                     subprogram.getDoc(),
@@ -131,7 +139,7 @@ public class AdaProxyTranslator {
                             subprogram.parameters.stream()
                                     .map(p -> (Parameter) p.accept(this))
                                     .toList(),
-                            AdaAPI.makeTypeExpr(subprogram.getReturnType()),
+                            returnTypeExpr,
                             subprogram.owner),
                     FunctionDecl.Visibility.PUBLIC,
                     subprogram.getOverridability(),
@@ -172,6 +180,10 @@ public class AdaProxyTranslator {
                     && !classDecl.isInheritable(api)) return List.of();
             List<VTableEntry> entries = new ArrayList<>();
             for (var m : classDecl.getAllMethods()) {
+                BaseTypeDecl returnType = m.getReturnType();
+                TypeExpr returnTypeExpr = AdaAPI.makeTypeExpr(returnType);
+                if (!returnType.isNone() && returnType.pIsClasswide())
+                    returnTypeExpr = returnTypeExpr.makePointer(false, true);
                 Name name = m.name;
                 entries.add(
                         new VTableEntry(
@@ -180,7 +192,7 @@ public class AdaProxyTranslator {
                                         m.parameters.stream()
                                                 .map(p -> (Parameter) p.accept(this))
                                                 .toList(),
-                                        AdaAPI.makeTypeExpr(m.getReturnType()),
+                                        returnTypeExpr,
                                         m.owner)));
             }
             return entries;
@@ -211,7 +223,11 @@ public class AdaProxyTranslator {
                         8,
                         getInheritability(rec),
                         rec.components.stream().map(c -> (Field) c.accept(this)).toList(),
-                        makeVtable(rec));
+                        makeVtable(rec),
+                        rec.getIdentificatorSymbol(api),
+                        rec.getId(api),
+                        rec.getOwnerSetterSymbol(api),
+                        rec.getBackRefUpdaterSymbol(api));
             }
             throw new UnsupportedOperationException(
                     "Unsupported Ada type:" + rec.getTypeDef().getImage());

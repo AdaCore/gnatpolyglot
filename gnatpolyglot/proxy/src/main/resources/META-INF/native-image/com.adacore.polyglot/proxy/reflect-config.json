@@ -4,7 +4,7 @@
   "allDeclaredFields":true,
   "queryAllDeclaredMethods":true,
   "queryAllDeclaredConstructors":true,
-  "methods":[{"name":"<init>","parameterTypes":["com.adacore.gnatpolyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.gnatpolyglot.proxy.FullyQualifiedName","int","com.adacore.gnatpolyglot.proxy.ClassDecl$Inheritability","java.util.List","java.util.List"] }]
+  "methods":[{"name":"<init>","parameterTypes":["com.adacore.gnatpolyglot.proxy.FullyQualifiedName","java.lang.String","com.adacore.gnatpolyglot.proxy.FullyQualifiedName","int","com.adacore.gnatpolyglot.proxy.ClassDecl$Inheritability","java.util.List","java.util.List","java.lang.String","java.lang.Integer","java.lang.String","java.lang.String"] }]
 },
 {
   "name":"com.adacore.gnatpolyglot.proxy.ClassDecl$Inheritability",

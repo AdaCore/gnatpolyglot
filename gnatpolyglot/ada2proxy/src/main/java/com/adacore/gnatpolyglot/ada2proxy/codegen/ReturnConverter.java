@@ -7,6 +7,7 @@ package com.adacore.gnatpolyglot.ada2proxy.codegen;
 
 import com.adacore.gnatpolyglot.ada2proxy.AdaAPI;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback;
+import com.adacore.gnatpolyglot.proxy.Name;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import java.util.List;
@@ -47,7 +48,9 @@ public class ReturnConverter {
             // Records are copied on the heap and the resulting access is converted to an Address.
             return AdaGenerator.uncheckedConverter(
                             RETURN_TYPE_CONVERTER,
-                            api.getProxyAccessFullyQualifiedName(type),
+                            type.pIsClasswide()
+                                    ? api.getProxyClasswideAccessFullyQualifiedName(type)
+                                    : api.getProxyAccessFullyQualifiedName(type),
                             "System.Address")
                     .append(";")
                     .toString();
@@ -157,11 +160,33 @@ public class ReturnConverter {
         @Override
         public String recordType(Libadalang.BaseTypeDecl type) {
             // Convert the heap copy to an address.
-            return new StringBuilder("return ")
-                    .append(
-                            AdaGenerator.makeCall(
-                                    RETURN_TYPE_CONVERTER,
-                                    List.of(AdaGenerator.makeHeapCopy(type, returnedValue))))
+            // If the value returned is a classwide type, and if it is a shadow object, change the
+            // object ownership to USER.
+            CharSequence heapCopy = AdaGenerator.makeHeapCopy(type, returnedValue);
+            String heapCopyVar =
+                    api.makeTemp(Name.fromPascalWithUnderscore(returnedValue), "Heap_Copy");
+            StringBuilder builder = new StringBuilder("declare\n");
+            boolean isClasswide = type.pIsClasswide();
+            if (isClasswide) {
+                builder.append(heapCopyVar)
+                        .append(" : ")
+                        .append(api.getProxyClasswideAccessFullyQualifiedName(type))
+                        .append(" := ")
+                        .append(heapCopy)
+                        .append(";\n");
+                // Use the variable as the heap copy to return instead of one created in the call to
+                // the converter.
+                heapCopy = heapCopyVar;
+            }
+            builder.append("begin\n");
+            if (isClasswide) {
+                builder.append(
+                        api.changeShadowOwnership(heapCopyVar + ".all", "GNATpolyglot.Ada.USER"));
+            }
+            return builder.append("return ")
+                    .append(AdaGenerator.makeCall(RETURN_TYPE_CONVERTER, List.of(heapCopy)))
+                    .append(";\n")
+                    .append("end")
                     .toString();
         }
 
