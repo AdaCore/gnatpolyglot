@@ -9,6 +9,7 @@ import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaException;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaProxy;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaProxyVisitor;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.Array;
+import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.Component;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.EnumLiteral;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.EnumType;
@@ -95,6 +96,11 @@ public class ExceptionCollector {
 
         @Override
         public Void visit(Subtype subtype) {
+            return null;
+        }
+
+        @Override
+        public Void visit(Callback Callback) {
             return null;
         }
     }

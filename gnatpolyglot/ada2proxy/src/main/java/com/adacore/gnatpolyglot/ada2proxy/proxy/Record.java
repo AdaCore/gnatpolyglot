@@ -473,13 +473,24 @@ public class Record extends AdaDeclaration {
      *
      * <p>Until we implement type shadow type identification, we are unable to dispatch on
      * subprograms that have a classwide parameter formal type
+     *
+     * <p>Upcalls that allow Ada to receive an access-to-subprogram is not supported, so mark any of
+     * these occurences as non-inheritable.
      */
     public boolean isInheritable(AdaAPI api) {
         Predicate<Libadalang.BasicDecl> predicate =
                 p -> {
                     Libadalang.BaseSubpSpec spec = p.pSubpSpecOrNull(false);
+                    Libadalang.BaseTypeDecl returnType = spec.pReturnType(spec);
                     return api.getDeclChecker().seenUnbindable(p)
                             || spec.pReturnType(spec).equals(origin)
+                            || (!returnType.isNone() && AdaTypeMatcher.isAccessToSubp(returnType))
+                            || Stream.of(spec.pAbstractFormalParams())
+                                    .anyMatch(
+                                            param ->
+                                                    SubpParam.isOutMode(param)
+                                                            && AdaTypeMatcher.isAccessToSubp(
+                                                                    param.pFormalType(param)))
                             || Stream.of(spec.pParamTypes(spec))
                                     .skip(1)
                                     .anyMatch(

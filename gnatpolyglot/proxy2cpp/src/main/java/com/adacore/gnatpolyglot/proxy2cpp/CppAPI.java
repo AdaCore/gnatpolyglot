@@ -21,13 +21,12 @@ import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.Role.RoleKind;
 import com.adacore.gnatpolyglot.proxy.TypeDecl;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
-import com.adacore.gnatpolyglot.proxy.VTableEntry;
 import com.adacore.gnatpolyglot.proxy2cpp.codegen.CppGenerator;
-import com.adacore.gnatpolyglot.proxy2cpp.codegen.DispatchParameterConverter;
-import com.adacore.gnatpolyglot.proxy2cpp.codegen.DispatchReturnConverter;
 import com.adacore.gnatpolyglot.proxy2cpp.codegen.ParameterGenerator;
 import com.adacore.gnatpolyglot.proxy2cpp.codegen.ReturnConverter;
 import com.adacore.gnatpolyglot.proxy2cpp.codegen.TypenameGenerator;
+import com.adacore.gnatpolyglot.proxy2cpp.codegen.UpcallParameterConverter;
+import com.adacore.gnatpolyglot.proxy2cpp.codegen.UpcallReturnConverter;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,10 +52,9 @@ public class CppAPI {
 
     private ReturnConverter returnConverter = new ReturnConverter(this);
 
-    private DispatchReturnConverter dispatchReturnConverter = new DispatchReturnConverter(this);
+    private UpcallReturnConverter upcallReturnConverter = new UpcallReturnConverter(this);
 
-    private DispatchParameterConverter dispatchParameterConverter =
-            new DispatchParameterConverter(this);
+    private UpcallParameterConverter upcallParameterConverter = new UpcallParameterConverter(this);
 
     private TypenameGenerator typenameGenerator = new TypenameGenerator(this);
 
@@ -241,6 +239,16 @@ public class CppAPI {
     }
 
     /** Create a string of all the C++ parameters of the function. */
+    public String cppParameters(FunctionTypeExpr functionType) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(
+                functionType.parameters.stream()
+                        .map(p -> toCppParam(p))
+                        .collect(Collectors.joining(", ")));
+        return builder.toString();
+    }
+
+    /** Create a string of all the C++ parameters of the function. */
     public String cppParameters(FunctionDecl functionDecl) {
         StringBuilder builder = new StringBuilder();
         builder.append(
@@ -259,11 +267,11 @@ public class CppAPI {
     }
 
     /** Return a string that gets the value of a parameter for the call to the Ada subprogram */
-    public String getParamForCall(Parameter p) {
-        return parameterConverter.buildConversion(p);
+    public String getParamForCall(Parameter p, FunctionDecl functionDecl) {
+        return parameterConverter.buildConversion(p, functionDecl);
     }
 
-    public String getParamForConstructor(Parameter p) {
+    public String getParamForConstructor(Parameter p, FunctionDecl functionDecl) {
         TypeExpr type = p.type.referencedType();
         if (type.isPointer()) {
             String name = toLower(p.name);
@@ -273,7 +281,14 @@ public class CppAPI {
                             name.concat("->data_()"))
                     .toString();
         }
-        return getParamForCall(p);
+        return getParamForCall(p, functionDecl);
+    }
+
+    /**
+     * Return the name of the callback to use for the parameter {@code p} of {@code functionDecl}.
+     */
+    public String getCallbackName(Parameter p, FunctionDecl functionDecl) {
+        return functionDecl.symbol + "__" + toLower(p.name) + "_" + "callback";
     }
 
     /** Create a call to the C symbol of the funtion. */
@@ -295,8 +310,8 @@ public class CppAPI {
                 .skip(funcIsMethod ? 1 : 0)
                 .map(
                         roleKind == RoleKind.ALLOC || roleKind == RoleKind.SHADOW_ALLOC
-                                ? p -> getParamForConstructor(p)
-                                : p -> getParamForCall(p))
+                                ? p -> getParamForConstructor(p, functionDecl)
+                                : p -> getParamForCall(p, functionDecl))
                 .collect(() -> parameters, ArrayList::add, ArrayList::addAll);
         if (roleKind == RoleKind.SHADOW_ALLOC) {
             String className = functionDecl.role.type.getName().getLastName().toPascal();
@@ -400,30 +415,34 @@ public class CppAPI {
         return false;
     }
 
-    /** Return a string of the parameters of the dispatching function. */
-    public String dispatchParameters(FunctionTypeExpr function) {
+    /** Return a string of the parameters of the upcalling function. */
+    public String upcallParameters(FunctionTypeExpr function, boolean isDispatch) {
         StringBuilder builder = new StringBuilder();
-        builder.append("void *,");
-        builder.append("gnatpolyglot::data *_self");
-        for (var param : function.parameters.stream().skip(1).toList()) {
+        if (isDispatch) {
+            builder.append("void *,");
+            builder.append("gnatpolyglot::data *_self");
+        } else {
+            builder.append("gnatpolyglot::callback_data _data");
+        }
+        for (var param : function.parameters.stream().skip(isDispatch ? 1 : 0).toList()) {
             builder.append(", ").append(toCParam(param));
         }
         return builder.toString();
     }
 
     /** Return a string that is the C++ converted parameter from its raw data given by argument. */
-    public String convertForDispatch(Parameter param) {
-        return dispatchParameterConverter.buildConversion(param);
+    public String convertForUpcall(Parameter param) {
+        return upcallParameterConverter.buildConversion(param);
     }
 
-    /** Create a dispatching call to the member function set in the vtable's extra data. */
-    public String callDispatch(VTableEntry function) {
+    /** Create a upcalling call to the member function set in the vtable's extra data. */
+    public String makeUpcall(FunctionTypeExpr functionType, String callee, boolean isDispatch) {
         return CppGenerator.makeCall(
-                        "__self->".concat(function.name.toLower()),
-                        function.functionType.parameters.stream()
-                                .skip(1)
+                        callee,
+                        functionType.parameters.stream()
+                                .skip(isDispatch ? 1 : 0)
                                 .map(p -> toLower(p.name))
-                                .map(DispatchParameterConverter::getConverterValue)
+                                .map(UpcallParameterConverter::getConverterValue)
                                 .toList())
                 .toString();
     }
@@ -433,7 +452,7 @@ public class CppAPI {
      * returned is an object in order to prevent the destructor from freeing the memory returned.
      */
     public String makeReturnFromDispatch(FunctionTypeExpr functionType, String returnedValue) {
-        return dispatchReturnConverter.buildReturn(functionType, returnedValue);
+        return upcallReturnConverter.buildReturn(functionType, returnedValue);
     }
 
     public boolean returnsVoid(FunctionTypeExpr functionType) {
@@ -460,15 +479,15 @@ public class CppAPI {
      * not be used by the library.
      */
     public String makeDispatchDefaultReturn(FunctionTypeExpr function) {
-        return dispatchReturnConverter.buildDefaultReturn(function);
+        return upcallReturnConverter.buildDefaultReturn(function);
     }
 
     public String verifyOwnership(Parameter param) {
         return parameterConverter.buildPointerOwnershipCheck(param);
     }
 
-    public String createPointerBuffer(Parameter param) {
-        return parameterConverter.buildPointerBuffer(param);
+    public String createPointerBuffer(Parameter param, FunctionDecl functionDecl) {
+        return parameterConverter.buildPointerBuffer(param, functionDecl);
     }
 
     public String checkPointerValue(Parameter param) {
@@ -476,7 +495,7 @@ public class CppAPI {
     }
 
     public String checkDispatchPointerValue(Parameter param) {
-        return dispatchParameterConverter.buildPointerValueUpdate(param);
+        return upcallParameterConverter.buildPointerValueUpdate(param);
     }
 
     public boolean isCopyable(ClassDecl classDecl) {
@@ -503,5 +522,60 @@ public class CppAPI {
 
     public String getEnumSizeType(EnumerationDecl enumDecl) {
         return nativeTypeName(enumDecl.representationType());
+    }
+
+    /**
+     * Return a string that creates a lambda expression to call a C funciton pointer of type {@code
+     * functionType} in {@code callbackData}
+     */
+    public String buildUpcallLambda(FunctionTypeExpr functionType, String callbackData) {
+        StringBuilder builder =
+                new StringBuilder("[")
+                        // The lambda holds a copy of the returned value.
+                        .append(callbackData)
+                        .append("](")
+                        .append(cppParameters(functionType))
+                        .append(") {\n");
+        for (var param : functionType.parameters) {
+            builder.append(verifyOwnership(param))
+                    .append(createPointerBuffer(param, null))
+                    .append("\n");
+        }
+
+        // Build the C function pointer type string
+        StringBuilder cFunctionPtrType =
+                new StringBuilder(cTypename(functionType.returnType))
+                        .append("(*)(gnatpolyglot::callback_data");
+        for (var param : functionType.parameters)
+            cFunctionPtrType.append(", ").append(cTypename(param.type));
+        cFunctionPtrType.append(")");
+
+        // The callee is the returned value "addr" field cast as the C pointer function type.
+        String callee =
+                CppGenerator.makeReinterpretCast(cFunctionPtrType, callbackData + ".addr")
+                        .toString();
+        ArrayList<String> args = new ArrayList<>();
+        // The first argument is the callback data.
+        args.add(callbackData);
+        args.addAll(functionType.parameters.stream().map(p -> getParamForCall(p, null)).toList());
+
+        if (returnsVoid(functionType)) {
+            builder.append(CppGenerator.makeCall(callee, args)).append(";\n");
+            for (var param : functionType.parameters)
+                builder.append(checkPointerValue(param)).append("\n");
+        } else {
+            String lambdaReturnedValue = "lambda" + callbackData;
+            builder.append(cTypename(functionType.returnType))
+                    .append(" ")
+                    .append(lambdaReturnedValue)
+                    .append(" = ")
+                    .append(CppGenerator.makeCall(callee, args))
+                    .append(";\n");
+            for (var param : functionType.parameters)
+                builder.append(checkPointerValue(param)).append("\n");
+            // Create the return statement of the lambda
+            builder.append(returnConverter.build(functionType, lambdaReturnedValue)).append(";");
+        }
+        return builder.append("}").toString();
     }
 }

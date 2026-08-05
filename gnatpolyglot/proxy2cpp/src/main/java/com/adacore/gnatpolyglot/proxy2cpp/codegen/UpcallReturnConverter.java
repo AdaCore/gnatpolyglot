@@ -11,7 +11,7 @@ import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2cpp.CppAPI;
 
-public class DispatchReturnConverter {
+public class UpcallReturnConverter {
 
     private class ReturnWorker implements CppTypeWorker<String> {
 
@@ -74,6 +74,12 @@ public class DispatchReturnConverter {
             throw new UnsupportedOperationException(
                     "Unreachable: returning references in dispatch is not permitted");
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            throw new UnsupportedOperationException(
+                    "Unreachable: returning functions in dispatch is not permitted");
+        }
     }
 
     private class DefaultReturnWorker implements CppTypeWorker<String> {
@@ -121,11 +127,17 @@ public class DispatchReturnConverter {
             throw new UnsupportedOperationException(
                     "Unreachable: returning references in dispatch is not permitted");
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            throw new UnsupportedOperationException(
+                    "Unreachable: returning functions in dispatch is not permitted");
+        }
     }
 
     CppAPI api;
 
-    public DispatchReturnConverter(CppAPI api) {
+    public UpcallReturnConverter(CppAPI api) {
         this.api = api;
     }
 

@@ -10,6 +10,7 @@ import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaException;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaProxy;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaProxyVisitor;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.Array;
+import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.Component;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.EnumLiteral;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.EnumType;
@@ -34,6 +35,7 @@ import com.adacore.gnatpolyglot.proxy.Name;
 import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.Proxy;
 import com.adacore.gnatpolyglot.proxy.ProxyObject;
+import com.adacore.gnatpolyglot.proxy.Transfer;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy.VTableEntry;
 import com.adacore.libadalang.Libadalang;
@@ -43,6 +45,22 @@ import java.util.List;
 import java.util.Optional;
 
 public class AdaProxyTranslator {
+
+    public static Parameter makeParameter(
+            Name name, BaseTypeDecl type, boolean isOutMode, Transfer transfer) {
+        TypeExpr typeRef = AdaAPI.makeTypeExpr(type);
+        boolean isConst = false;
+        // If the parameter has the mode ``in`` or default, it is constant.
+        if (!isOutMode) isConst = true;
+        // If the parameter is neither a scalar, an enum type, an access type, or has ``out`` or
+        // ``in out`` mode, it must be a reference.
+        NativeType nat = AdaAPI.checkNativeType(type);
+        if ((!type.pIsEnumType(Libadalang.AdaNode.NONE)
+                        && !type.pIsAccessType(Libadalang.AdaNode.NONE)
+                        && (nat == null || nat == NativeType.STRING))
+                || isOutMode) typeRef = typeRef.makeReference(isConst);
+        return new Parameter(name, typeRef, transfer);
+    }
 
     private static class Visitor implements AdaProxyVisitor<ProxyObject> {
 
@@ -130,19 +148,8 @@ public class AdaProxyTranslator {
 
         @Override
         public Parameter visit(SubpParam subpParam) {
-            BaseTypeDecl type = subpParam.getType();
-            TypeExpr typeRef = AdaAPI.makeTypeExpr(type);
-            boolean isConst = false;
-            // If the parameter has the mode ``in`` or default, it is constant.
-            if (!subpParam.isOutMode()) isConst = true;
-            // If the parameter is neither a scalar, an enum type, an access type, or has ``out`` or
-            // ``in out`` mode, it must be a reference.
-            NativeType nat = AdaAPI.checkNativeType(type);
-            if ((!type.pIsEnumType(Libadalang.AdaNode.NONE)
-                            && !type.pIsAccessType(Libadalang.AdaNode.NONE)
-                            && (nat == null || nat == NativeType.STRING))
-                    || subpParam.isOutMode()) typeRef = typeRef.makeReference(isConst);
-            return new Parameter(subpParam.name, typeRef, subpParam.transfer);
+            return makeParameter(
+                    subpParam.name, subpParam.getType(), subpParam.isOutMode(), subpParam.transfer);
         }
 
         @Override
@@ -240,6 +247,12 @@ public class AdaProxyTranslator {
 
         @Override
         public ProxyObject visit(Subtype subtype) {
+            // Nothing to do
+            return null;
+        }
+
+        @Override
+        public ProxyObject visit(Callback callback) {
             // Nothing to do
             return null;
         }

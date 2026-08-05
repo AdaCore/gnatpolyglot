@@ -8,6 +8,7 @@ Template file to generate package bodies.
 @import com.adacore.gnatpolyglot.ada2proxy.WithCollector
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaDeclaration
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaException
+@import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.GlobalVariable
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.Package
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.Record
@@ -61,6 +62,8 @@ package body ${packageName} is
         @template.exception(api, exc, true)
     @elseif(decl instanceof GlobalVariable gv)
         @template.global_var(api, gv, true)
+    @elseif(decl instanceof Callback callback)
+        @template.callback(api, callback, true)
     @endif
 @endfor
 end ${packageName};

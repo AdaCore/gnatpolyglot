@@ -10,6 +10,12 @@ namespace gnatpolyglot {
 
 struct data {};
 
+struct callback_data {
+    void *addr;
+    void *data;
+    void *extra;
+};
+
 } // namespace gnatpolyglot
 
 extern "C" {

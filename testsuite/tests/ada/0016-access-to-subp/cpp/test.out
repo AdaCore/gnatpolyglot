@@ -1,0 +1,25 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Hello!
+9
+20
+Rec{3, 3}
+{Rec{5, 10}, {Rec{7, 12}}
+
+28
+Rec{18, 80}
+{Rec{2, 4}, {Rec{4, 6}}
+
+28
+Hello!
+3
+Hello!
+-3
+
+Done.

@@ -38,6 +38,11 @@ public interface RustTypeWorker<T> extends TypeWorker<T> {
         throw new UnsupportedOperationException("Array type not yet supported in proxy2rust");
     }
 
+    @Override
+    default T functionType(TypeExpr type) {
+        throw new UnsupportedOperationException("Function type not yet supported in proxy2rust");
+    }
+
     /**
      * Partial implementation for use when a ReferenceTypeExpr has already been traversed, so
      * reference-to-reference and void-reference are unreachable.

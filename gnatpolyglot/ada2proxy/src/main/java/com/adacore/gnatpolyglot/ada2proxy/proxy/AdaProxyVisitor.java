@@ -29,4 +29,6 @@ public interface AdaProxyVisitor<T> {
     T visit(GlobalVariable globalVariable);
 
     T visit(Subtype subtype);
+
+    T visit(Callback callback);
 }

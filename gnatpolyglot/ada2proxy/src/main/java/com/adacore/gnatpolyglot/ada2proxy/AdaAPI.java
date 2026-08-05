@@ -12,10 +12,11 @@ import com.adacore.gnatpolyglot.ada2proxy.codegen.GetterReturnConverter;
 import com.adacore.gnatpolyglot.ada2proxy.codegen.ParamConverter;
 import com.adacore.gnatpolyglot.ada2proxy.codegen.ParamUpdater;
 import com.adacore.gnatpolyglot.ada2proxy.codegen.ReturnConverter;
-import com.adacore.gnatpolyglot.ada2proxy.codegen.ShadowParamConverter;
 import com.adacore.gnatpolyglot.ada2proxy.codegen.ShadowReturnConverter;
+import com.adacore.gnatpolyglot.ada2proxy.codegen.UpcallParamConverter;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaDeclaration;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.Array;
+import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.Component;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.EnumType;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.Package;
@@ -25,6 +26,7 @@ import com.adacore.gnatpolyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.Subtype;
 import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
 import com.adacore.gnatpolyglot.proxy.FunctionDecl;
+import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.Name;
 import com.adacore.gnatpolyglot.proxy.Role.RoleKind;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
@@ -32,6 +34,7 @@ import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import java.math.BigInteger;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,7 +52,7 @@ public class AdaAPI extends LanguageAPI {
 
     private GetterReturnConverter getterReturnConverter = new GetterReturnConverter(this);
 
-    private ShadowParamConverter shadowParamConverter = new ShadowParamConverter(this);
+    private UpcallParamConverter shadowParamConverter = new UpcallParamConverter(this);
 
     private ShadowReturnConverter shadowReturnConverter = new ShadowReturnConverter(this);
 
@@ -139,6 +142,26 @@ public class AdaAPI extends LanguageAPI {
             if (AdaTypeMatcher.isStringType(typeDecl)) return NativeType.STRING.typeExpr;
             else if (typeDecl.pIsArrayType(Libadalang.AdaNode.NONE)) {
                 return makeTypeExpr(typeDecl.pCompType(false, decl)).makeArray();
+            } else if (AdaTypeMatcher.isAccessToSubp(typeDecl)) {
+                Libadalang.BaseSubpSpec spec = Callback.getSpec(typeDecl);
+                BaseTypeDecl returnType = spec.pReturnType(spec);
+                return new FunctionTypeExpr(
+                        Arrays.stream(spec.pFormalParams())
+                                .map(
+                                        name -> {
+                                            Libadalang.BaseFormalParamDecl param =
+                                                    (Libadalang.BaseFormalParamDecl)
+                                                            name.pBasicDecl();
+                                            Libadalang.BaseTypeDecl type = param.pFormalType(param);
+                                            return AdaProxyTranslator.makeParameter(
+                                                    getName(name),
+                                                    type,
+                                                    SubpParam.isOutMode(param),
+                                                    AdaVisitor.getTransfer(type));
+                                        })
+                                .toList(),
+                        makeTypeExpr(returnType),
+                        AdaVisitor.getReturnOwner(returnType));
             } else if (typeDecl.pIsAccessType(Libadalang.AdaNode.NONE)) {
                 Libadalang.TypeDecl rootType = (Libadalang.TypeDecl) typeDecl.pRootType(decl);
                 Libadalang.AccessDef accessDef = (Libadalang.AccessDef) rootType.fTypeDef();
@@ -222,7 +245,7 @@ public class AdaAPI extends LanguageAPI {
                     if (digits >= 11) return NativeType.FLOAT64;
                     return NativeType.FLOAT32;
                 } catch (Libadalang.LangkitException e) {
-                    throw new UnbindableDeclException(baseTypeDecl, e.getLocalizedMessage());
+                    throw new UnbindableDeclException(baseTypeDecl, e);
                 }
             }
         }
@@ -278,7 +301,6 @@ public class AdaAPI extends LanguageAPI {
      * Return name with the correct Ada syntax with ``_Proxy`` as a suffix and the parameter type
      * names to avoid conflicts with duplicated subprograms.
      */
-    /** Return name with the correct Ada syntax with ``_Proxy`` as a suffix. */
     public String proxyName(Subprogram subp) {
         StringBuilder builder = new StringBuilder(proxyName(subp.name));
         for (var p : subp.parameters) {
@@ -305,12 +327,36 @@ public class AdaAPI extends LanguageAPI {
         return Package.getProxyUnitName(pack).concat(".").concat(asAccess(type));
     }
 
-    /** Return the typename of the parameter */
-    public String cInterfaceParamTypename(SubpParam p) {
+    /**
+     * {@link Libadalang.BaseFormalParamDecl} variant of {@link #cInterfaceParamTypename(SubpParam)}
+     */
+    public String cInterfaceParamTypename(Libadalang.BaseFormalParamDecl p) {
         // If the parameter has a Out mode, it is a reference and will be passed as an address.
-        if (p.isOutMode() && !p.getType().pIsArrayType(Libadalang.AdaNode.NONE))
+        if (SubpParam.isOutMode(p) && !p.pFormalType(p).pIsArrayType(Libadalang.AdaNode.NONE))
             return "System.Address";
-        else return cInterfaceTypename(p.getType());
+        else return cInterfaceTypename(p.pFormalType(p));
+    }
+
+    /** Return the typename of the SubpParam {@code p} */
+    public String cInterfaceParamTypename(SubpParam p) {
+        return cInterfaceParamTypename(p.getOrigin());
+    }
+
+    /** {@link Libadalang.BaseSubpSpec} variant of {@link #cInterfaceParameters(Subprogram)}. */
+    public String cInterfaceParameters(Libadalang.BaseSubpSpec spec) {
+        return Arrays.stream(spec.pFormalParams())
+                .map(
+                        (p -> {
+                            Libadalang.BaseFormalParamDecl param =
+                                    (Libadalang.BaseFormalParamDecl) p.pBasicDecl();
+                            StringBuilder argBuilder = new StringBuilder();
+                            argBuilder
+                                    .append(argName(AdaAPI.getName(p)))
+                                    .append(": ")
+                                    .append(cInterfaceParamTypename(param));
+                            return argBuilder.toString();
+                        }))
+                .collect(Collectors.joining("; "));
     }
 
     /** Build a string containing the parameter specifications of a subprogram. */
@@ -401,6 +447,28 @@ public class AdaAPI extends LanguageAPI {
                 param.name, param.getType(), param.isOutMode(), param.isAliased());
     }
 
+    /**
+     * Create an entity that is the conversion from a C interface DefiningName into its actual Ada
+     * type. {@code paramName} is assumed to be part of a {@link Libadalang.BaseFormalParamDecl}.
+     */
+    public String makeParamConversion(Libadalang.DefiningName paramName) {
+        Libadalang.BaseFormalParamDecl paramDecl =
+                (Libadalang.BaseFormalParamDecl) paramName.pBasicDecl();
+        return makeParamConversion(
+                getName(paramName),
+                paramDecl.pFormalType(paramDecl),
+                SubpParam.isOutMode(paramDecl),
+                SubpParam.isAliased(paramDecl));
+    }
+
+    /** Create a string to call a function from the proxy. */
+    public String call(Libadalang.BaseSubpSpec spec, String name) {
+        return AdaGenerator.makeCall(
+                        name,
+                        Arrays.stream(spec.pFormalParams()).map(p -> getParamForCall(p)).toList())
+                .toString();
+    }
+
     /** Create a string to call a function from the proxy. */
     public String call(Subprogram subp) {
         // (eng/toolchain/gnat#1918): Avoid calling the "/=" subpgram. It may be rejected by GNAT.
@@ -417,6 +485,20 @@ public class AdaAPI extends LanguageAPI {
                         .toString();
         if (isImplicitNeq) return "not " + call;
         return call;
+    }
+
+    /**
+     * Return a string that gets the converted value of a parameter for calling the Ada subprogram.
+     */
+    public String getParamForCall(Libadalang.DefiningName paramName) {
+        Libadalang.BaseFormalParamDecl paramDecl =
+                (Libadalang.BaseFormalParamDecl) paramName.pBasicDecl();
+        BaseTypeDecl type = paramDecl.pFormalType(paramDecl);
+        String valueName = valueName(getName(paramName));
+        if (type.pIsArrayType(Libadalang.AdaNode.NONE)) {
+            return AdaGenerator.makeCast(type, valueName).toString();
+        }
+        return valueName;
     }
 
     public String getParamForCall(Component component) {
@@ -516,6 +598,7 @@ public class AdaAPI extends LanguageAPI {
     public String cInterfaceTypename(Libadalang.BaseTypeDecl typeDecl) {
         NativeType nativeType = checkNativeType(typeDecl);
         if (nativeType != null) return cInterfaceNativeTypename(nativeType);
+        if (AdaTypeMatcher.isAccessToSubp(typeDecl)) return "GNATpolyglot.Callback_Data";
         if (AdaTypeMatcher.isArrayAccess(typeDecl))
             return cInterfaceTypename(typeDecl.pAccessedType(typeDecl));
         if (typeDecl.pIsArrayType(Libadalang.AdaNode.NONE))
@@ -527,10 +610,62 @@ public class AdaAPI extends LanguageAPI {
     }
 
     /**
-     * Return a string of a type definition that corresponds to the subprogram's access type in the
-     * C ABI.
+     * Return a string of a Subprogram spec that corresponds to the subprogram's access type in the
+     * C ABI. In order to form the spec of an access-to-subprogram type, the name can be the empty
+     * string.
      */
-    /** */
+    public String subpSpecCallbackSpec(Libadalang.BaseSubpSpec spec, String name) {
+        StringBuilder builder = new StringBuilder();
+        // The subprogram has an extra parameter: Callback_Data. It represents the address of
+        // the data to use for the callback call:
+        //  - When Ada2Proxy returns a callback, it is the returned access-to-subp
+        //  - When Ada2Proxy receives a callback, it is the address of the opaque data used by the
+        //    Printer.
+        builder.append(Subprogram.isProcedure(spec) ? "procedure " : "function ")
+                .append(name)
+                .append("(Callback_Data: GNATpolyglot.Callback_Data")
+                .append(spec.pFormalParams().length > 0 ? "; " : "")
+                .append(cInterfaceParameters(spec))
+                .append(")");
+        if (!Subprogram.isProcedure(spec))
+            builder.append("return ").append(cInterfaceTypename(spec.pReturnType(spec)));
+        return builder.toString();
+    }
+
+    /**
+     * Return a string of a Subprogram spec that corresponds to the subprogram's Ada spec. In order
+     * to form the spec of an access-to-subprogram type, the name can be the empty string.
+     */
+    public String subpSpecAdaCallbackSpec(Libadalang.BaseSubpSpec spec, String name) {
+        StringBuilder builder = new StringBuilder();
+        boolean isProcedure = Subprogram.isProcedure(spec);
+        if (isProcedure) builder.append("procedure ");
+        else builder.append("function ");
+        builder.append(name);
+        Libadalang.DefiningName[] formalParams = spec.pFormalParams();
+        if (formalParams.length != 0) {
+            builder.append(" (");
+            for (var paramName : formalParams) {
+                Libadalang.BaseFormalParamDecl param =
+                        (Libadalang.BaseFormalParamDecl) paramName.pBasicDecl();
+                if (paramName != formalParams[0]) builder.append("; ");
+                builder.append(argName(AdaAPI.getName(paramName))).append(" : ");
+                if (SubpParam.getMode(param) == SubpParam.Mode.INOUT) builder.append("in out ");
+                else if (SubpParam.getMode(param) == SubpParam.Mode.OUT) builder.append("out ");
+                builder.append(param.pFormalType(spec).pFullyQualifiedName());
+            }
+            builder.append(")");
+        }
+        if (!isProcedure) {
+            builder.append(" return ").append(spec.pReturnType(spec).pFullyQualifiedName());
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Return a string of a type definition that corresponds to the subprogram's dispatch function
+     * access type in the C ABI.
+     */
     public String subprogramDispatchType(Subprogram subp) {
         StringBuilder builder = new StringBuilder();
         builder.append(subp.isProcedure() ? "procedure " : "function ")
@@ -580,8 +715,13 @@ public class AdaAPI extends LanguageAPI {
         return builder.toString();
     }
 
-    public String makeShadowReturnDecl(Libadalang.BaseTypeDecl returnedType) {
+    public String makeUpcallReturnDecl(Libadalang.BaseTypeDecl returnedType) {
         return shadowReturnConverter.prepareReturn(returnedType);
+    }
+
+    /** Return the return statement of upcalling functions. */
+    public String makeUpcallReturn(Libadalang.BaseSubpSpec spec) {
+        return shadowReturnConverter.buildReturn(spec);
     }
 
     /** Return the return statement of shadow dispatching functions. */
@@ -592,18 +732,39 @@ public class AdaAPI extends LanguageAPI {
     /**
      * Return a string of the argument for param when calling an extern subprogram from a vtable.
      */
+    public String makeUpcallParamConversion(
+            Libadalang.ParamSpec param, Libadalang.DefiningName name) {
+        return shadowParamConverter.build(param, name);
+    }
+
+    /**
+     * Return a string of the argument for param when calling an extern subprogram from a vtable.
+     */
     public String makeShadowParamConversion(SubpParam param) {
         return shadowParamConverter.build(param);
     }
 
-    public String makeDispatchedArgument(SubpParam param) {
+    private String makeUpcallArgument(Name name, boolean isOutAccess) {
         StringBuilder builder = new StringBuilder();
-
-        builder.append(valueName(param.name));
-        if (param.getType().pIsAccessType(Libadalang.AdaNode.NONE) && param.isOutMode()) {
-            builder.append("'Address");
-        }
+        builder.append(valueName(name));
+        if (isOutAccess) builder.append("'Address");
         return builder.toString();
+    }
+
+    /** Return a string to get the parameter for an upcall. */
+    public String makeUpcallArgument(
+            Libadalang.BaseFormalParamDecl param, Libadalang.DefiningName name) {
+        return makeUpcallArgument(
+                getName(name),
+                param.pFormalType(param).pIsAccessType(Libadalang.AdaNode.NONE)
+                        && SubpParam.isOutMode(param));
+    }
+
+    /** Return a string to get the parameter for an upcall. */
+    public String makeUpcallArgument(SubpParam param) {
+        return makeUpcallArgument(
+                param.name,
+                param.getType().pIsAccessType(Libadalang.AdaNode.NONE) && param.isOutMode());
     }
 
     /**
@@ -615,6 +776,8 @@ public class AdaAPI extends LanguageAPI {
             return "return Interfaces.C.To_C ( Character'Val(0))";
         if (returnType.pIsFloatType(returnType)) return "return 0.0";
         if (returnType.pIsScalarType(returnType)) return "return 0";
+        if (AdaTypeMatcher.isAccessToSubp(returnType))
+            return "return (System.Null_Address, System.Null_Address, System.Null_Address)";
         if (returnType.pIsArrayType(returnType) || AdaTypeMatcher.isArrayAccess(returnType))
             return " return(1, 0, System.Null_Address)";
         if (AdaTypeMatcher.isReturnedAsAddress(returnType)) return "return System.Null_Address";
@@ -628,11 +791,35 @@ public class AdaAPI extends LanguageAPI {
         return "return System.Null_Address";
     }
 
+    /**
+     * Return a string that updates the value of the parameter after the call to the Ada subprogram,
+     * if necessary.
+     */
+    public String syncParamValue(Libadalang.DefiningName param) {
+        return paramUpdater.build(param);
+    }
+
+    /**
+     * Return a string that updates the value of the parameter after the call to the Ada subprogram,
+     * if necessary.
+     */
     public String syncParamValue(SubpParam param) {
         return paramUpdater.build(param);
     }
 
+    /**
+     * Return a string that updates the value of the parameter after the upcall to the user
+     * subprogram, if necessary.
+     */
+    public String syncDispatchParamValue(Libadalang.DefiningName param) {
+        return paramUpdater.buildUpcall(param);
+    }
+
+    /**
+     * Return a string that updates the value of the parameter after the upcall to the user
+     * subprogram, if necessary.
+     */
     public String syncDispatchParamValue(SubpParam param) {
-        return paramUpdater.buildDispatch(param);
+        return paramUpdater.buildUpcall(param);
     }
 }

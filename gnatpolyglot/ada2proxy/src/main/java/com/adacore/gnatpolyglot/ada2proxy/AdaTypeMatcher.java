@@ -15,7 +15,9 @@ public class AdaTypeMatcher {
 
     /** Return whether the BaseTypeDecl is an access type to an array. */
     public static boolean isArrayAccess(Libadalang.BaseTypeDecl typeDecl) {
-        return typeDecl.pIsAccessType(NONE) && typeDecl.pAccessedType(typeDecl).pIsArrayType(NONE);
+        return typeDecl.pIsAccessType(NONE)
+                && !typeDecl.pAccessedType(typeDecl).isNone()
+                && typeDecl.pAccessedType(typeDecl).pIsArrayType(NONE);
     }
 
     /** Return whether the BaseTypeDecl is a controlled type. */
@@ -68,5 +70,10 @@ public class AdaTypeMatcher {
 
     public static boolean isNumber(Libadalang.BaseTypeDecl type) {
         return type.pIsScalarType(NONE) && !isEnum(type);
+    }
+
+    public static boolean isAccessToSubp(Libadalang.BaseTypeDecl type) {
+        return type.pRootType(type) instanceof Libadalang.TypeDecl typeDecl
+                && typeDecl.fTypeDef() instanceof Libadalang.AccessToSubpDef;
     }
 }

@@ -5,6 +5,8 @@
 
 package com.adacore.gnatpolyglot.proxy2cpp.codegen;
 
+import com.adacore.gnatpolyglot.proxy.FunctionDecl;
+import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.PointerTypeExpr;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
@@ -28,9 +30,11 @@ public class ParameterGenerator {
         private Parameter param;
         private String argName;
         private String dataType;
+        private FunctionDecl functionDecl;
 
-        public PointerBufferWorker(Parameter param) {
+        public PointerBufferWorker(Parameter param, FunctionDecl functionDecl) {
             this.param = param;
+            this.functionDecl = functionDecl;
             this.argName = api.toLower(param.name);
             this.dataType = api.cTypename(param.type.referencedType());
         }
@@ -73,6 +77,22 @@ public class ParameterGenerator {
         }
 
         @Override
+        public String functionType(TypeExpr type) {
+            return new StringBuilder(api.cTypename(type.referencedType()))
+                    .append(" ")
+                    .append(getParamBuffer(argName))
+                    .append(" = ")
+                    .append("{")
+                    .append(
+                            CppGenerator.makeReinterpretCast(
+                                    "void *", "&" + api.getCallbackName(param, functionDecl)))
+                    .append(", ")
+                    .append(CppGenerator.makeStaticCast("void *", "&" + argName))
+                    .append(", nullptr};")
+                    .toString();
+        }
+
+        @Override
         public String defaultCase() {
             return "";
         }
@@ -82,9 +102,11 @@ public class ParameterGenerator {
 
         private Parameter param;
         private String argName;
+        private FunctionDecl functionDecl;
 
-        public ConversionWorker(Parameter param) {
+        public ConversionWorker(Parameter param, FunctionDecl functionDecl) {
             this.param = param;
+            this.functionDecl = functionDecl;
             this.argName = api.toLower(param.name);
         }
 
@@ -139,6 +161,11 @@ public class ParameterGenerator {
                 }
 
                 @Override
+                public String functionType(TypeExpr type) {
+                    return pointerType(type);
+                }
+
+                @Override
                 public ProxyContext getContext() {
                     return api.getContext();
                 }
@@ -149,6 +176,11 @@ public class ParameterGenerator {
         public ProxyContext getContext() {
             return api.getContext();
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return getParamBuffer(argName).toString();
+        }
     }
 
     private CppAPI api;
@@ -157,12 +189,12 @@ public class ParameterGenerator {
         this.api = api;
     }
 
-    public String buildPointerBuffer(Parameter param) {
-        return new PointerBufferWorker(param).apply(param.type);
+    public String buildPointerBuffer(Parameter param, FunctionDecl functionDecl) {
+        return new PointerBufferWorker(param, functionDecl).apply(param.type);
     }
 
-    public String buildConversion(Parameter param) {
-        return new ConversionWorker(param).apply(param.type);
+    public String buildConversion(Parameter param, FunctionDecl functionDecl) {
+        return new ConversionWorker(param, functionDecl).apply(param.type);
     }
 
     public String buildPointerValueUpdate(Parameter param) {
@@ -178,8 +210,7 @@ public class ParameterGenerator {
                 return defaultCase();
             }
 
-            @Override
-            public String refType(TypeExpr type) {
+            private String objectRef(TypeExpr type) {
                 if (type.isConst()) return defaultCase();
                 TypeExpr pointedType = type.referencedType().pointedType();
                 String argName = api.toLower(param.name);
@@ -203,6 +234,29 @@ public class ParameterGenerator {
                         .append(dataName)
                         .append("), gnatpolyglot::memory_owner::LIBRARY);")
                         .toString();
+            }
+
+            private String functionRef(TypeExpr type) {
+                if (type.isConst()) return defaultCase();
+                String argName = api.toLower(param.name);
+                return new StringBuilder("if (")
+                        .append(getParamBuffer(argName))
+                        .append(".data != ")
+                        .append(getParamCopy(argName))
+                        .append(".data) {")
+                        .append(argName)
+                        .append(" = ")
+                        .append(
+                                api.buildUpcallLambda(
+                                        (FunctionTypeExpr) type.referencedType(),
+                                        getParamBuffer(argName).toString()))
+                        .append("; }")
+                        .toString();
+            }
+
+            @Override
+            public String refType(TypeExpr type) {
+                return type.referencedType().isFunction() ? functionRef(type) : objectRef(type);
             }
 
             @Override

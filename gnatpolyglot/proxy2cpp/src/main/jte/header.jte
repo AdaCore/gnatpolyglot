@@ -29,6 +29,7 @@ vim: filetype=jtecpp
 #include <array>
 #endif
 
+#include <functional>
 #include <cstdint>
 
 @for (var include : api.getIncludes(module))

@@ -45,7 +45,7 @@ namespace ${api.namespacePath(module)} {
             (${api.cppParameters(functionDecl)}) ${api.getConstMethod(functionDecl)} {
         @for(var param : functionDecl.type.parameters)
             ${api.verifyOwnership(param)}
-            ${api.createPointerBuffer(param)}
+            ${api.createPointerBuffer(param, functionDecl)}
         @endfor
             ${api.makeReturnStatement(functionDecl, api.callCSymbol(functionDecl))};
         }

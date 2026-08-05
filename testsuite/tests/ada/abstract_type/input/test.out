@@ -1,6 +1,6 @@
 Running scanner test.
 Running the scanner...
-test.ads:20:4: warning: Could not bind Test.Unbindable: Access to subprograms are not yet supported
+test.ads:20:4: warning: Could not bind Test.Unbindable: Access to scalar types are not yet supported
 test.ads:22:4: warning: Could not bind Test.Foo: Used type `Test.Unbindable` is not bindable
 Validating the json...
 No error found in the json

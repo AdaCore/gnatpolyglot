@@ -6,6 +6,8 @@
 package com.adacore.gnatpolyglot.proxy2cpp.codegen;
 
 import com.adacore.gnatpolyglot.proxy.FunctionDecl;
+import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
+import com.adacore.gnatpolyglot.proxy.Owner;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2cpp.CppAPI;
@@ -16,13 +18,19 @@ public class ReturnConverter {
     private class Worker implements CppTypeWorker<String> {
 
         private String returnedValue;
-        private FunctionDecl functionDecl;
         private String returnTypename;
+        private Owner returnOwner;
 
         public Worker(FunctionDecl functionDecl, String returnedValue) {
-            this.functionDecl = functionDecl;
             this.returnedValue = returnedValue;
             this.returnTypename = api.cppTypename(functionDecl.type.returnType);
+            this.returnOwner = functionDecl.type.returnOwner;
+        }
+
+        public Worker(FunctionTypeExpr functionType, String returnedValue) {
+            this.returnedValue = returnedValue;
+            this.returnTypename = api.cppTypename(functionType.returnType);
+            this.returnOwner = functionType.returnOwner;
         }
 
         @Override
@@ -70,7 +78,7 @@ public class ReturnConverter {
                                                     CppGenerator.makeNew(
                                                             api.cppTypename(type.pointedType()),
                                                             List.of(returnedValue))),
-                                            api.cppOwner(functionDecl.type.returnOwner))))
+                                            api.cppOwner(returnOwner))))
                     .toString();
         }
 
@@ -119,7 +127,21 @@ public class ReturnConverter {
                     throw new UnsupportedOperationException(
                             "References to pointers are not supported");
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    throw new UnsupportedOperationException(
+                            "References to functions are not supported");
+                }
             }.apply(refType.referencedType());
+        }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            FunctionTypeExpr functionType = (FunctionTypeExpr) type;
+            return new StringBuilder("return ")
+                    .append(api.buildUpcallLambda(functionType, returnedValue))
+                    .toString();
         }
     }
 
@@ -131,5 +153,9 @@ public class ReturnConverter {
 
     public String build(FunctionDecl functionDecl, String returnedValue) {
         return new Worker(functionDecl, returnedValue).apply(functionDecl.type.returnType);
+    }
+
+    public String build(FunctionTypeExpr functionType, String returnedValue) {
+        return new Worker(functionType, returnedValue).apply(functionType.returnType);
     }
 }
