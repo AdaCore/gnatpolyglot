@@ -563,6 +563,9 @@ public class CppAPI {
             builder.append(CppGenerator.makeCall(callee, args)).append(";\n");
             for (var param : functionType.parameters)
                 builder.append(checkPointerValue(param)).append("\n");
+            builder.append("gnatpolyglot::exceptions::")
+                    .append(getProjectName().toLower())
+                    .append("::rethrow_if_exc();\n");
         } else {
             String lambdaReturnedValue = "lambda" + callbackData;
             builder.append(cTypename(functionType.returnType))
@@ -573,6 +576,9 @@ public class CppAPI {
                     .append(";\n");
             for (var param : functionType.parameters)
                 builder.append(checkPointerValue(param)).append("\n");
+            builder.append("gnatpolyglot::exceptions::")
+                    .append(getProjectName().toLower())
+                    .append("::rethrow_if_exc();\n");
             // Create the return statement of the lambda
             builder.append(returnConverter.build(functionType, lambdaReturnedValue)).append(";");
         }

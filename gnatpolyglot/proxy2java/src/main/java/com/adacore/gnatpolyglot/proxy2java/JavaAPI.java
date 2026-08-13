@@ -1030,7 +1030,10 @@ public class JavaAPI extends LanguageAPI {
         String callee = basePackage() + ".Callbacks." + getJavaDownCallbackName(functionType);
         functionType.parameters.stream().map(p -> javaValueName(p.name)).forEach(args::add);
         if (returnsVoid(functionType)) {
-            builder.append(JavaGenerator.makeCall(callee, args)).append(";");
+            builder.append(JavaGenerator.makeCall(callee, args))
+                    .append(";")
+                    .append(basePackage())
+                    .append(".Library.raiseIfException();");
         } else {
             String lambdaReturnedValue = makeTemp(Name.fromCamel("lambda"), "returnedValue");
             builder.append(javaNativeReturnTypename(functionType.returnType))
@@ -1039,6 +1042,8 @@ public class JavaAPI extends LanguageAPI {
                     .append(" = ")
                     .append(JavaGenerator.makeCall(callee, args))
                     .append(";\n")
+                    .append(basePackage())
+                    .append(".Library.raiseIfException();\n")
                     .append(returnConverter.javaReturnStatement(functionType, lambdaReturnedValue));
         }
 
