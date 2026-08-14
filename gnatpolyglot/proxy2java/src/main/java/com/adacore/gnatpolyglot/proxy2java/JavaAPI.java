@@ -24,21 +24,22 @@ import com.adacore.gnatpolyglot.proxy.Role.RoleKind;
 import com.adacore.gnatpolyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.gnatpolyglot.proxy.TypeDecl;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
-import com.adacore.gnatpolyglot.proxy.VTableEntry;
 import com.adacore.gnatpolyglot.proxy2java.codegen.CGenerator;
-import com.adacore.gnatpolyglot.proxy2java.codegen.DispatchParameterConverter;
-import com.adacore.gnatpolyglot.proxy2java.codegen.DispatchReturnConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.DocumentationFormater;
 import com.adacore.gnatpolyglot.proxy2java.codegen.JNITypeSignatureGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.JavaGenerator;
 import com.adacore.gnatpolyglot.proxy2java.codegen.ParameterConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.ReturnConverter;
 import com.adacore.gnatpolyglot.proxy2java.codegen.TypenameGenerator;
+import com.adacore.gnatpolyglot.proxy2java.codegen.UpcallParameterConverter;
+import com.adacore.gnatpolyglot.proxy2java.codegen.UpcallReturnConverter;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class JavaAPI extends LanguageAPI {
 
@@ -55,12 +56,12 @@ public class JavaAPI extends LanguageAPI {
 
     private ReturnConverter returnConverter = new ReturnConverter(this);
 
-    private DispatchReturnConverter dispatchReturnConverter = new DispatchReturnConverter(this);
+    private UpcallReturnConverter dispatchReturnConverter = new UpcallReturnConverter(this);
 
     private ParameterConverter parameterConverter = new ParameterConverter(this);
 
-    private DispatchParameterConverter dispatchParameterConverter =
-            new DispatchParameterConverter(this);
+    private UpcallParameterConverter dispatchParameterConverter =
+            new UpcallParameterConverter(this);
 
     private DocumentationFormater documentationFormater = new DocumentationFormater(this);
 
@@ -261,7 +262,7 @@ public class JavaAPI extends LanguageAPI {
 
     /** Return the native Java name of a type when it's used as a return type. */
     public String javaNativeReturnTypename(TypeExpr type) {
-        return typenameGenerator.javaNativeTypename(type.referencedType());
+        return typenameGenerator.javaNativeReturnTypename(type);
     }
 
     /** Return the JNI name of a type. */
@@ -280,54 +281,106 @@ public class JavaAPI extends LanguageAPI {
     }
 
     /**
-     * Return the name of the function to implement in the JNI layer.
-     *
-     * <p>"_" must be replaced with "_1"
-     *
-     * <p>Non-ascii characters must be replaced with "_0XXXX" with XXXX their unicode value.
+     * Return the name of the function with the given symbol to implement in the JNI layer. This
+     * function does not support array owning classes, consider using {@link #jniName(String,
+     * TypeExpr)} for that purpose.
      */
-    public String jniName(FunctionDecl function) {
+    private String jniName(String symbol, FullyQualifiedName owningClass) {
         StringBuilder builder = new StringBuilder("Java_");
         Function<FullyQualifiedName, String> mangle =
                 (n) -> toJavaLower(n.getLastName()).replace("_", "_1");
-        if (function.role == null) {
-            FullyQualifiedName parent = function.name.getParentFullyQualifiedName();
+        if (context.getModule(owningClass) != null) {
             builder.append(groupId.join(mangle, "", "_", "_"))
                     .append(
-                            parent.join(
+                            owningClass.join(
                                     mangle,
                                     "",
                                     "_",
-                                    "_".concat(parent.getLastName().toPascal().concat("Package"))));
-        } else if (context.isClassType(function.role.type)
-                || context.isException(function.role.type)) {
-            builder.append(javaTypename(function.role.type).replace("_", "_1").replace(".", "_"));
-        } else if (function.role.type.isArray()) {
+                                    "_"
+                                            .concat(
+                                                    owningClass
+                                                            .getLastName()
+                                                            .toPascal()
+                                                            .concat("Package"))));
+        } else {
             builder.append(
-                    javaTypename(function.role.type.elementType())
+                    javaTypename(owningClass.asTypeExpr()).replace("_", "_1").replace(".", "_"));
+        }
+        // All native function handle names start with `$` (Unicode character: 00024)
+        return builder.append("_")
+                .append(symbol.replace("_", "_1").replace("$", "_00024"))
+                .toString();
+    }
+
+    /** Return the name of the function with the given symbol to implement in the JNI layer. */
+    private String jniName(String symbol, TypeExpr roleType) {
+        if (context.isClassType(roleType) || context.isException(roleType)) {
+            return jniName(symbol, roleType.getName());
+        }
+        StringBuilder builder = new StringBuilder("Java_");
+        if (roleType.isArray()) {
+            builder.append(
+                    javaTypename(roleType.elementType())
                             .replace("_", "_1")
                             .replace(".", "_")
                             .concat(
-                                    function.role.type.elementType().isPointer()
+                                    roleType.elementType().isPointer()
                                             ? "_00024PtrArray"
                                             : "_00024Array"));
         } else {
             throw new UnsupportedOperationException("unsupported");
         }
         // All native function handle names start with `$` (Unicode character: 00024)
-        return builder.append("__00024").append(function.symbol.replace("_", "_1")).toString();
+        return builder.append("_")
+                .append(symbol.replace("_", "_1").replace("$", "_00024"))
+                .toString();
     }
 
+    /** Return the name of the function to implement in the JNI layer. */
+    public String jniName(FunctionDecl function) {
+        if (function.role == null) {
+            return jniName("$" + function.symbol, function.name.getParentFullyQualifiedName());
+        } else {
+            return jniName("$" + function.symbol, function.role.type);
+        }
+    }
+
+    public String javaTypeJNISignature(TypeExpr type) {
+        String javaType = javaTypename(type);
+        if (type.isFunction()) {
+            int lastDot = javaType.lastIndexOf(".");
+            return "L%s$%s;"
+                    .formatted(
+                            javaType.substring(0, lastDot).replace(".", "/"),
+                            javaType.substring(lastDot + 1));
+        } else {
+            return "L%s;".formatted(javaTypename(type).replace(".", "/"));
+        }
+    }
+
+    /**
+     * Return a string of the signature for the corresponding function type {@code type}.
+     *
+     * <p>This is used to create {@code methodID} getters in the JNI layer for callback and
+     * dynamic-dispatch upcalls.
+     *
+     * <p>If classDecl is non-null, the function signature is considered to be used for dynamic
+     * dispatch: the class itself is the first argument (jobject back reference of the library
+     * shadow object). Otherwise, the function type is the first argument (corresponding to the
+     * {@code CallbackData.data} field).
+     */
     public String jniSignature(FunctionTypeExpr type, ClassDecl classDecl) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("(")
-                .append(
-                        "L%s;"
-                                .formatted(
-                                        javaTypename(classDecl.name.asTypeExpr())
-                                                .replace(".", "/")));
+        StringBuilder builder = new StringBuilder("(");
+        // The first argument of the signature is a reference to a Java object: either
+        // an object with the corresponding dispatchable function, or a funnction
+        // itself.
+        if (classDecl != null) {
+            builder.append(javaTypeJNISignature(classDecl.name.asTypeExpr()));
+        } else {
+            builder.append(javaTypeJNISignature(type));
+        }
         type.parameters.stream()
-                .skip(1)
+                .skip(classDecl == null ? 0 : 1)
                 .map(p -> p.type)
                 .map(t -> jniTypeSignature(t, false))
                 .forEach(builder::append);
@@ -335,7 +388,8 @@ public class JavaAPI extends LanguageAPI {
         return builder.toString();
     }
 
-    private String jniTypeSignature(TypeExpr type, boolean isReturn) {
+    /** Return the JNI type signature string for {@code type}. */
+    public String jniTypeSignature(TypeExpr type, boolean isReturn) {
         return jniTypeSignatureGenerator.jniTypeSignature(type, isReturn);
     }
 
@@ -355,6 +409,32 @@ public class JavaAPI extends LanguageAPI {
         return CGenerator.makeCall(functionDecl.symbol, args).toString();
     }
 
+    /**
+     * Create a call to the C function held by the {@code addr} field of the {@code callbackData}
+     * struct in the JNI layer.
+     *
+     * <p>A cast to the corresponding function pointer type is performed on-site, as the field is a
+     * {@code void*}.
+     */
+    public String callCPointer(FunctionTypeExpr functionType, String callbackData) {
+        CharSequence ptrType =
+                new StringBuilder(cTypename(functionType.returnType))
+                        .append("(*)(struct callback_data")
+                        .append(functionType.parameters.isEmpty() ? "" : ", ")
+                        .append(
+                                functionType.parameters.stream()
+                                        .map(p -> cTypename(p.type))
+                                        .collect(Collectors.joining(", ")))
+                        .append(")");
+        CharSequence callee = CGenerator.makeCast(ptrType, callbackData + ".addr");
+        List<String> args =
+                Stream.concat(
+                                Stream.of(callbackData),
+                                functionType.parameters.stream().map(p -> jniValueName(p.name)))
+                        .toList();
+        return CGenerator.makeCall(callee, args).toString();
+    }
+
     /** Create a call to the Java native function. */
     public String callJavaNative(FunctionDecl functionDecl, String nativeName) {
         List<String> args =
@@ -368,28 +448,30 @@ public class JavaAPI extends LanguageAPI {
     }
 
     /** Create a call to the method . */
-    public String callJavaDispatch(VTableEntry method) {
+    public String callJavaUpcall(FunctionTypeExpr functionType, String callee, boolean isDispatch) {
         List<String> args =
-                method.functionType.parameters.stream()
-                        .skip(1)
+                functionType.parameters.stream()
+                        .skip(isDispatch ? 1 : 0)
                         .map(p -> javaValueName(p.name))
                         .toList();
-        return new StringBuilder("_self.")
-                .append(JavaGenerator.makeCall(functionName(method.name, true), args))
-                .toString();
+        return JavaGenerator.makeCall(callee, args).toString();
     }
 
-    public String callJNIDispatch(VTableEntry method) {
-        List<String> args = new ArrayList<>(List.of("clazz", "_self"));
-        method.functionType.parameters.stream()
-                .skip(1)
+    /** Return a string that performs a JNI call to the local {@code jobject}. */
+    public String callJNIUpcall(FunctionTypeExpr functionType, boolean isDispatch) {
+        List<String> args = new ArrayList<>(List.of("clazz"));
+        // `_self` always exists in dispatch functions: it is the back reference.
+        if (isDispatch) args.add("_self");
+        else args.add(CGenerator.makeCast("jobject", "_callback_data.data").toString());
+        functionType.parameters.stream()
+                .skip(isDispatch ? 1 : 0)
                 .map(p -> jniValueName(p.name))
                 .forEachOrdered(args::add);
         String envMember;
-        if (context.isClassType(method.functionType.returnType)) {
+        if (context.isClassType(functionType.returnType)) {
             envMember = callStaticTypeMethodJNIName(NativeType.UINT64.typeExpr);
         } else {
-            envMember = callStaticTypeMethodJNIName(method.functionType.returnType);
+            envMember = callStaticTypeMethodJNIName(functionType.returnType);
         }
         return CGenerator.makeJNICall(envMember, "method", args).toString();
     }
@@ -402,13 +484,13 @@ public class JavaAPI extends LanguageAPI {
     }
 
     /** Create the return statement for the function in its JNI layer implementation */
-    public String makeCReturnStatement(FunctionDecl functionDecl, String returnedValue) {
-        return returnConverter.cReturnStatement(functionDecl, returnedValue);
+    public String makeCReturnStatement(FunctionTypeExpr functionType, String returnedValue) {
+        return returnConverter.cReturnStatement(functionType, returnedValue);
     }
 
     /** Create the return statement for the function in its JNI layer implementation */
-    public String makeCDispatchReturnStatement(VTableEntry method, String returnedValue) {
-        return dispatchReturnConverter.cReturnStatement(method, returnedValue);
+    public String makeCUpcallReturnStatement(FunctionTypeExpr functionType, String returnedValue) {
+        return dispatchReturnConverter.cReturnStatement(functionType, returnedValue);
     }
 
     /** Create the return statement for the function in its Java layer implementation */
@@ -416,13 +498,21 @@ public class JavaAPI extends LanguageAPI {
         return returnConverter.javaReturnStatement(functionDecl, returnedValue);
     }
 
-    public String makeJavaDispatchReturnStatement(VTableEntry method, String returnedValue) {
-        return dispatchReturnConverter.javaReturnStatement(method, returnedValue);
+    public String makeJavaUpcallReturnStatement(
+            FunctionTypeExpr functionType, String returnedValue) {
+        return dispatchReturnConverter.javaReturnStatement(functionType, returnedValue);
     }
 
     /** Create the default return statement for the function in its Java layer implementation */
-    public String makeJavaDispatchDefaultReturnStatement(FunctionTypeExpr functionType) {
+    public String makeJavaUpcallDefaultReturnStatement(FunctionTypeExpr functionType) {
         return dispatchReturnConverter.javaDefaultReturnStatement(functionType);
+    }
+
+    /** Return the string to declare arguments in the Java function. */
+    public String javaParameters(FunctionTypeExpr functionType) {
+        return functionType.parameters.stream()
+                .map(p -> "%s %s".formatted(javaTypename(p.type), javaArgName(p.name)))
+                .collect(Collectors.joining(", "));
     }
 
     /** Return the string to declare arguments in the Java function. */
@@ -434,10 +524,18 @@ public class JavaAPI extends LanguageAPI {
     }
 
     /** Return the string to declare arguments in the Java function. */
-    public String javaDispatchParameters(FunctionTypeExpr functionType) {
+    public String javaUpcallParameters(FunctionTypeExpr functionType, boolean isDispatch) {
         return functionType.parameters.stream()
-                .skip(1)
-                .map(p -> ", %s %s".formatted(javaNativeTypename(p.type), javaArgName(p.name)))
+                .skip(isDispatch ? 1 : 0)
+                .map(
+                        p ->
+                                ", %s %s"
+                                        .formatted(
+                                                //
+                                                p.type.isFunction()
+                                                        ? javaNativeReturnTypename(p.type)
+                                                        : javaNativeTypename(p.type),
+                                                javaArgName(p.name)))
                 .collect(Collectors.joining());
     }
 
@@ -453,8 +551,8 @@ public class JavaAPI extends LanguageAPI {
                                                         javaNativeTypename(p.type),
                                                         javaArgName(p.name)))
                         .collect(Collectors.joining(", ")));
-        // In the java world, SHADOW_ALLOC functions have 1 hidden arguments: a reference to the
-        // object. The vtable is generated in the JNI layer.
+        // In the java world, SHADOW_ALLOC functions have 1 hidden arguments: a
+        // reference to the object. The vtable is generated in the JNI layer.
         if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
             builder.append(builder.isEmpty() ? "" : ", ")
                     .append(javaTypename(functionDecl.role.type))
@@ -478,30 +576,48 @@ public class JavaAPI extends LanguageAPI {
                                                                     jniArgName(p.name)))
                                     .collect(Collectors.joining(", ")));
         }
-        // Java passes an additional argument for shadow alloc functions, corresponding to
-        // the object itself.
+        // Java passes an additional argument for shadow alloc functions, corresponding
+        // to the object itself.
         if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
             builder.append(builder.isEmpty() ? "" : ", ").append("jobject _self");
         }
         return builder.toString();
     }
 
-    /** Return the string to declare arguments in the JNI function. */
-    public String jniDispatchParameters(FunctionTypeExpr functionType) {
-        StringBuilder builder = new StringBuilder("void *_self_data, jobject _self");
-        if (functionType.parameters.size() > 1) {
+    /** Return the string to declare arguments in the return JNI callback. */
+    public String jniCallbackParameters(FunctionTypeExpr functiontType) {
+        StringBuilder builder =
+                new StringBuilder("JNIEnv *env, jobject obj, jobject _callback_data");
+        if (!functiontType.parameters.isEmpty()) {
             builder.append(", ")
                     .append(
-                            functionType.parameters.stream()
-                                    .skip(1)
+                            functiontType.parameters.stream()
                                     .map(
                                             p ->
                                                     "%s %s"
                                                             .formatted(
-                                                                    cTypename(p.type),
+                                                                    jniTypename(p.type),
                                                                     jniArgName(p.name)))
                                     .collect(Collectors.joining(", ")));
         }
+        return builder.toString();
+    }
+
+    /** Return the string to declare arguments in the JNI function. */
+    public String jniUpcallParameters(FunctionTypeExpr functionType, boolean isDispatch) {
+        StringBuilder builder = new StringBuilder();
+        if (isDispatch) {
+            builder.append("void *_self_data, jobject _self");
+        } else {
+            builder.append("struct callback_data _callback_data");
+        }
+
+        if (functionType.parameters.size() > (isDispatch ? 1 : 0)) builder.append(", ");
+        builder.append(
+                functionType.parameters.stream()
+                        .skip(isDispatch ? 1 : 0)
+                        .map(p -> "%s %s".formatted(cTypename(p.type), jniArgName(p.name)))
+                        .collect(Collectors.joining(", ")));
         return builder.toString();
     }
 
@@ -512,9 +628,9 @@ public class JavaAPI extends LanguageAPI {
                 functionDecl.type.parameters.stream()
                         .map(p -> "%s %s".formatted(cTypename(p.type), jniArgName(p.name)))
                         .collect(Collectors.joining(", ")));
-        //  The C Symbol expects two additional hidden arguments:
-        //  - The self argument of the class's raw pointer type.
-        //  - The vtable argument of the class' vtable raw pointer type.
+        // The C Symbol expects two additional hidden arguments:
+        // - The self argument of the class's raw pointer type.
+        // - The vtable argument of the class' vtable raw pointer type.
         if (functionDecl.role != null && functionDecl.role.kind == RoleKind.SHADOW_ALLOC) {
             builder.append(builder.isEmpty() ? "" : ", ")
                     .append("void *_self_data, void *_self, void *vtable");
@@ -528,13 +644,13 @@ public class JavaAPI extends LanguageAPI {
     }
 
     /** Create the string to convert the java parameter for calling the native handle. */
-    public String makeJavaDispatchParamConversion(Parameter param) {
-        return dispatchParameterConverter.javaParam(param);
+    public String makeJavaUpcallParamConversion(Parameter param, String callbackName) {
+        return dispatchParameterConverter.javaParam(param, callbackName);
     }
 
     /** Create the string to convert the JNI parameter for calling the C symbol. */
-    public String makeJNIParamConversion(Parameter param) {
-        return parameterConverter.jniParam(param);
+    public String makeJNIParamConversion(Parameter param, FunctionDecl functionDecl) {
+        return parameterConverter.jniParam(param, functionDecl);
     }
 
     /** Create the string to convert the JNI parameter for calling the C symbol. */
@@ -542,11 +658,11 @@ public class JavaAPI extends LanguageAPI {
         return parameterConverter.jniParamUpdate(param);
     }
 
-    public String makeJNIDispatchParamConversion(Parameter param) {
+    public String makeJNIUpcallParamConversion(Parameter param) {
         return dispatchParameterConverter.jniParam(param);
     }
 
-    public String makeJNIDispatchParamUpdate(Parameter param) {
+    public String makeJNIUpcallParamUpdate(Parameter param) {
         return dispatchParameterConverter.jniParamUpdate(param);
     }
 
@@ -771,5 +887,167 @@ public class JavaAPI extends LanguageAPI {
 
     public String refCtorFunctionName(TypeExpr typeExpr) {
         return refFunctionName(typeExpr, "ctor");
+    }
+
+    /** Return the name of the function to get the {@code jclass} for the given type name. */
+    public String jclassFunctionName(FullyQualifiedName name) {
+        Module mod = context.getModule(name);
+        if (mod != null)
+            return packagePath(mod).replace(".", "__")
+                    + "__"
+                    + name.getLastName().toPascal()
+                    + "Package";
+        return javaTypename(name.asTypeExpr()).replace(".", "__");
+    }
+
+    HashMap<FunctionTypeExpr, String> javaNames = new HashMap<>();
+    int nameCounter = 0;
+    HashMap<FunctionTypeExpr, String> javaUpcalls = new HashMap<>();
+    HashMap<FunctionTypeExpr, String> javaDowncalls = new HashMap<>();
+    HashMap<FunctionTypeExpr, String> javaLambdas = new HashMap<>();
+    int functionCounter = 0;
+
+    public String getJavaGenericCallback(TypeExpr type) {
+        FunctionTypeExpr functionType = (FunctionTypeExpr) type.referencedType();
+        String refSuffix = type.isReference() ? ".Ref" : "";
+        String genericParams =
+                Stream.concat(
+                                functionType.parameters.stream().map(p -> p.type),
+                                Stream.of(functionType.returnType))
+                        .map(t -> typenameGenerator.javaTypename(t, true))
+                        .collect(Collectors.joining(", ", "<", ">"));
+        if (functionType.parameters.size() > 10)
+            throw new UnsupportedOperationException("Too many arguments");
+        if (returnsVoid(functionType)) {
+            if (functionType.parameters.size() == 0)
+                return "com.adacore.gnatpolyglot.runtime.Functions.Consumer0" + refSuffix;
+            return "com.adacore.gnatpolyglot.runtime.Functions.Consumer"
+                    + functionType.parameters.size()
+                    + refSuffix
+                    + genericParams;
+        } else
+            return "com.adacore.gnatpolyglot.runtime.Functions.Function"
+                    + functionType.parameters.size()
+                    + refSuffix
+                    + genericParams;
+    }
+
+    public String getJavaCallbackTypename(FunctionTypeExpr functionType) {
+        String typename = javaNames.get(functionType);
+        if (typename == null) {
+            typename = "Callback" + nameCounter++;
+            javaNames.put(functionType, typename);
+        }
+        return typename;
+    }
+
+    /** Return the name of the Java function for Upcalling callbacks. */
+    public String getJavaUpCallbackName(FunctionTypeExpr functionType) {
+        String functionName = javaUpcalls.get(functionType);
+        if (functionName == null) {
+            functionName = "upcall" + functionCounter++;
+            javaUpcalls.put(functionType, functionName);
+        }
+        return functionName;
+    }
+
+    /** Return the name of the Java function for Upcalling callbacks. */
+    public String getJavaDownCallbackName(FunctionTypeExpr functionType) {
+        String functionName = javaDowncalls.get(functionType);
+        if (functionName == null) {
+            functionName = "downcall" + functionCounter++;
+            javaDowncalls.put(functionType, functionName);
+        }
+        return functionName;
+    }
+
+    /**
+     * Return the name of the Java function for returning the lambda of reference callback
+     * parameters.
+     */
+    public String getJavaLambdaName(FunctionTypeExpr functionType) {
+        String functionName = javaLambdas.get(functionType);
+        if (functionName == null) {
+            functionName = "lambda" + functionCounter++;
+            javaLambdas.put(functionType, functionName);
+        }
+        return functionName;
+    }
+
+    /**
+     * Return the name of the Java function for returning the lambda of reference callback
+     * parameters.
+     */
+    public String getJavaLambdaFQN(FunctionTypeExpr functionType) {
+        String functionName = getJavaLambdaName(functionType);
+        return basePackage() + ".Callbacks." + functionName;
+    }
+
+    /**
+     * Return the name of the C function for Upcalling callbacks. This function is used inside
+     * callback data created by the JNI layer and calls the corresponding Java implentation.
+     */
+    public String getJNIUpCallbackName(FunctionTypeExpr functionType) {
+        String javaFunction = getJavaUpCallbackName(functionType);
+        return "JNI_" + basePackage().replace(".", "_") + "_Callbacks_" + javaFunction;
+    }
+
+    /**
+     * Return the name of the JNI function for Upcalling callbacks. It is the JNI implementation of
+     * its corresponding native Java function.
+     */
+    public String getJNIDownCallbackName(FunctionTypeExpr functionType) {
+        String javaFunction = getJavaDownCallbackName(functionType);
+        return "Java_" + basePackage().replace(".", "_") + "_Callbacks_" + javaFunction;
+    }
+
+    /**
+     * Return the name of the C function for returning the lambda of downcalling callback. This
+     * function calls the corresponding Java function that instantiates a Java lambda to perform a
+     * downcall to the given callback data, and returns it.
+     */
+    public String getJNILambdaName(FunctionTypeExpr functionType) {
+        String javaFunction = getJavaLambdaName(functionType);
+        return "JNI_" + basePackage().replace(".", "_") + "_Callbacks_" + javaFunction;
+    }
+
+    /** Return a string of the Java lambda that calls the Java native {@code callee} function. */
+    public String buildCallbackLambda(FunctionTypeExpr functionType, String callbackData) {
+        StringBuilder builder =
+                new StringBuilder("(")
+                        .append(
+                                functionType.parameters.stream()
+                                        .map(p -> javaArgName(p.name))
+                                        .collect(Collectors.joining(", ")))
+                        .append(") -> {");
+        // Make the conversion of java parameters
+        for (var param : functionType.parameters) {
+            builder.append(makeJavaParamConversion(param, false)).append(";");
+        }
+        // Create the call to the native function
+        ArrayList<String> args = new ArrayList<>();
+        args.add(callbackData);
+        String callee = basePackage() + ".Callbacks." + getJavaDownCallbackName(functionType);
+        functionType.parameters.stream().map(p -> javaValueName(p.name)).forEach(args::add);
+        if (returnsVoid(functionType)) {
+            builder.append(JavaGenerator.makeCall(callee, args)).append(";");
+        } else {
+            String lambdaReturnedValue = makeTemp(Name.fromCamel("lambda"), "returnedValue");
+            builder.append(javaNativeReturnTypename(functionType.returnType))
+                    .append(" ")
+                    .append(lambdaReturnedValue)
+                    .append(" = ")
+                    .append(JavaGenerator.makeCall(callee, args))
+                    .append(";\n")
+                    .append(returnConverter.javaReturnStatement(functionType, lambdaReturnedValue));
+        }
+
+        return builder.append("}").toString();
+    }
+
+    /** Return the name of the function of the functional interface. */
+    public String functionalInterfaceMethod(FunctionTypeExpr functionType) {
+        if (returnsVoid(functionType)) return functionType.parameters.size() > 0 ? "accept" : "run";
+        else return functionType.parameters.size() > 0 ? "apply" : "get";
     }
 }

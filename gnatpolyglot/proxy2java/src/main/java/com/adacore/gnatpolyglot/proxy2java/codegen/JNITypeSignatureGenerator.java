@@ -137,7 +137,18 @@ public class JNITypeSignatureGenerator {
                     }
                     return "L%s;".formatted(api.javaTypename(type).replace(".", "/") + suffix);
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    throw new UnsupportedOperationException(
+                            "References to function types in upcalls are not supported");
+                }
             }.apply(refType.referencedType());
+        }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return "Lcom/adacore/gnatpolyglot/runtime/Functions$CallbackData;";
         }
     }
 

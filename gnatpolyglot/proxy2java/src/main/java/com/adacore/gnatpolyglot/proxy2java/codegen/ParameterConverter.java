@@ -5,6 +5,8 @@
 
 package com.adacore.gnatpolyglot.proxy2java.codegen;
 
+import com.adacore.gnatpolyglot.proxy.FunctionDecl;
+import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.Transfer.RequiredOwner;
@@ -114,6 +116,16 @@ public class ParameterConverter {
                             .append(argName)
                             .toString();
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    return new StringBuilder(valueTypename)
+                            .append(" ")
+                            .append(valueName)
+                            .append(" = ")
+                            .append(argName)
+                            .toString();
+                }
             }.apply(type.referencedType());
         }
 
@@ -153,6 +165,16 @@ public class ParameterConverter {
             }
             return builder.toString();
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return new StringBuilder(valueTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(argName)
+                    .toString();
+        }
     }
 
     /**
@@ -162,13 +184,15 @@ public class ParameterConverter {
     private class JNIParamWorker implements JavaTypeWorker<String> {
 
         private Parameter param;
+        private FunctionDecl functionDecl;
 
         private String argName;
         private String valueName;
         private String valueTypename;
 
-        public JNIParamWorker(Parameter param) {
+        public JNIParamWorker(Parameter param, FunctionDecl functionDecl) {
             this.param = param;
+            this.functionDecl = functionDecl;
             this.argName = api.jniArgName(param.name);
             this.valueName = api.jniValueName(param.name);
             this.valueTypename = api.cTypename(param.type);
@@ -324,6 +348,44 @@ public class ParameterConverter {
                             .append(bufferName)
                             .toString();
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    // Create a buffer `struct callback_data` that holds:
+                    // - the functional interface held by the reference
+                    // - the C upcalling function
+                    // - a pointer to the JVM
+                    // A pointer to the buffer is later passed by argument
+                    String vm = api.makeTemp(param.name, "jvm");
+                    String buffer = api.makeTemp(param.name, "buffer");
+                    return new StringBuilder("JavaVM *")
+                            .append(vm)
+                            .append(";")
+                            .append(CGenerator.makeJNICall("GetJavaVM", List.of("&" + vm)))
+                            .append(";\n")
+                            .append(api.cTypename(type))
+                            .append(" ")
+                            .append(buffer)
+                            .append(" = {")
+                            .append(" .addr = ")
+                            .append(api.getJNIUpCallbackName((FunctionTypeExpr) type))
+                            .append(", .data = ")
+                            .append(
+                                    CGenerator.makeJNICall(
+                                            "CallObjectMethod",
+                                            "FunctionRef_get_method(env)",
+                                            List.of(api.jniArgName(param.name))))
+                            .append(", .extra = ")
+                            .append(vm)
+                            .append("}")
+                            .append(";\n")
+                            .append(valueTypename)
+                            .append(" ")
+                            .append(valueName)
+                            .append(" = &")
+                            .append(buffer)
+                            .toString();
+                }
             }.apply(refType.referencedType());
         }
 
@@ -348,6 +410,32 @@ public class ParameterConverter {
                     .append(CGenerator.makeCast(valueTypename, argName))
                     .toString();
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            // Create a `struct callback_data` that holds:
+            // - the functional interface
+            // - the C upcalling function
+            // - a pointer to the JVM
+            String vm = api.makeTemp(param.name, "jvm");
+            return new StringBuilder("JavaVM *")
+                    .append(vm)
+                    .append(";")
+                    .append(CGenerator.makeJNICall("GetJavaVM", List.of("&" + vm)))
+                    .append(";\n")
+                    .append(valueTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = {")
+                    .append(" .addr = ")
+                    .append(api.getJNIUpCallbackName(((FunctionTypeExpr) type)))
+                    .append(", .data = ")
+                    .append(argName)
+                    .append(", .extra = ")
+                    .append(vm)
+                    .append("}")
+                    .toString();
+        }
     }
 
     private JavaAPI api;
@@ -362,8 +450,8 @@ public class ParameterConverter {
     }
 
     /** Create the conversion of a JNI parameter in the C layer. */
-    public String jniParam(Parameter param) {
-        return new JNIParamWorker(param).apply(param.type);
+    public String jniParam(Parameter param, FunctionDecl functionDecl) {
+        return new JNIParamWorker(param, functionDecl).apply(param.type);
     }
 
     /** Create the conversion of a JNI parameter in the C layer. */
@@ -396,24 +484,61 @@ public class ParameterConverter {
 
     public String jniParamUpdate(Parameter param) {
         if (!param.type.isReference()
-                || !param.type.referencedType().isPointer()
+                || !(param.type.referencedType().isPointer()
+                        || param.type.referencedType().isFunction())
                 || (param.type.isReference() && param.type.isConst())) return "";
-        String jobjectConverter =
-                api.getContext().isStringOrArray(param.type.referencedType().pointedType())
-                        ? "gnatpolyglot_proxy2java_to_ArrayData"
-                        : "gnatpolyglot_proxy2java_to_Pointer";
-        // Convert the native data to the corresponding PolyglotData and call the update method
-        // of ObjectRef.
-        return CGenerator.makeJNICall(
-                        "CallVoidMethod",
-                        "ObjectRef_update_method(env)",
-                        List.of(
-                                api.jniArgName(param.name),
-                                CGenerator.makeCall(
-                                        jobjectConverter,
-                                        List.of(
-                                                "env",
-                                                CGenerator.deref(api.jniValueName(param.name))))))
-                .toString();
+        if (param.type.referencedType().isPointer()) {
+            String jobjectConverter =
+                    api.getContext().isStringOrArray(param.type.referencedType().pointedType())
+                            ? "gnatpolyglot_proxy2java_to_ArrayData"
+                            : "gnatpolyglot_proxy2java_to_Pointer";
+            // Convert the native data to the corresponding PolyglotData and call the update
+            // method of ObjectRef.
+            return CGenerator.makeJNICall(
+                            "CallVoidMethod",
+                            "ObjectRef_update_method(env)",
+                            List.of(
+                                    api.jniArgName(param.name),
+                                    CGenerator.makeCall(
+                                            jobjectConverter,
+                                            List.of(
+                                                    "env",
+                                                    CGenerator.deref(
+                                                            api.jniValueName(param.name))))))
+                    .append(";")
+                    .toString();
+        } else {
+            // If the data field was modified, create a lambda that calls the newly-modified
+            // callback data
+            // and update the value held by the reference object.
+            String valueName = api.jniValueName(param.name);
+            return new StringBuilder("if (!")
+                    .append(
+                            CGenerator.makeJNICall(
+                                    "IsSameObject",
+                                    List.of(
+                                            valueName + "->data",
+                                            CGenerator.makeJNICall(
+                                                    "CallObjectMethod",
+                                                    "FunctionRef_get_method(env)",
+                                                    List.of(api.jniArgName(param.name))))))
+                    .append(")")
+                    .append(
+                            CGenerator.makeJNICall(
+                                            "CallVoidMethod",
+                                            "FunctionRef_set_method(env)",
+                                            List.of(
+                                                    api.jniArgName(param.name),
+                                                    CGenerator.makeCall(
+                                                            api.getJNILambdaName(
+                                                                    (FunctionTypeExpr)
+                                                                            param.type
+                                                                                    .referencedType()),
+                                                            List.of(
+                                                                    "env",
+                                                                    CGenerator.deref(valueName)))))
+                                    .append(";"))
+                    .toString();
+        }
     }
 }

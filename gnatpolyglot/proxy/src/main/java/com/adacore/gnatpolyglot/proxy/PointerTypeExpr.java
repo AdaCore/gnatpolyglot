@@ -55,7 +55,7 @@ public class PointerTypeExpr extends TypeExpr {
         if (obj instanceof PointerTypeExpr other) {
             return this.isConst == other.isConst
                     && this.isNonNull == other.isNonNull
-                    && Objects.deepEquals(other, obj);
+                    && Objects.deepEquals(this.typeExpr, other.typeExpr);
         }
         return false;
     }

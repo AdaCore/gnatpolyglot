@@ -7,6 +7,7 @@ Template file to generate a class.
 @import com.adacore.gnatpolyglot.proxy.ClassDecl
 @import com.adacore.gnatpolyglot.proxy.ClassDecl.Inheritability
 @import com.adacore.gnatpolyglot.proxy.FunctionDecl
+@import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr
 @import com.adacore.gnatpolyglot.proxy.Name
 @import com.adacore.gnatpolyglot.proxy.ProxyContext.FunctionMembersEntry
 @import com.adacore.gnatpolyglot.proxy.Role.RoleKind
@@ -216,36 +217,15 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
         String functionName = method.name.toCamel();
     }
 
-    private static ${api.javaNativeReturnTypename(method.functionType.returnType)}
-    dispatch$${functionName} (${className} _self${api.javaDispatchParameters(method.functionType)}) {
-    @for (var param : method.functionType.parameters.stream().skip(1).toList())
-        ${api.makeJavaDispatchParamConversion(param)}
-    @endfor
+    @template.callback(
+        api,
+        (FunctionTypeExpr) method.functionType,
+        "dispatch$" + functionName,
+        true,
+        functionName,
+        className
+    )
 
-        try {
-        @if (api.returnsVoid(method.functionType))
-            ${api.callJavaDispatch(method)};
-        @else
-            ${api.javaReturnTypename(method.functionType.returnType)} valueReturned =
-                ${api.callJavaDispatch(method)};
-            ${api.makeJavaDispatchReturnStatement(method, "valueReturned")}
-        @endif
-        } catch (com.adacore.gnatpolyglot.runtime.ada2java.AdaException exc$e) {
-            com.adacore.gnatpolyglot.runtime.PolyglotKernel.ExceptionInformation.setExceptionData(
-                exc$e._release().getAddress()
-            );
-            ${api.makeJavaDispatchDefaultReturnStatement(method.functionType)}
-        } catch (java.lang.Throwable exc$e) {
-            com.adacore.gnatpolyglot.runtime.PolyglotKernel.ExceptionInformation.setExceptionData(
-                new com.adacore.gnatpolyglot.runtime.ada2java.AdaException(
-                    new com.adacore.gnatpolyglot.runtime.ada2java.PolyglotString(
-                        "Uncaught host language exception"
-                    )
-                )._release().getAddress()
-            );
-            ${api.makeJavaDispatchDefaultReturnStatement(method.functionType)}
-        }
-    }
 @endfor
 @endif
 

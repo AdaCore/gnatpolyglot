@@ -5,6 +5,7 @@
 
 package com.adacore.gnatpolyglot.proxy2java.codegen;
 
+import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.Owner;
 import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
@@ -13,17 +14,19 @@ import com.adacore.gnatpolyglot.proxy.TypeWorker;
 import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
 import java.util.List;
 
-public class DispatchParameterConverter {
+public class UpcallParameterConverter {
 
     private class JavaParamWorker implements JavaTypeWorker<String> {
 
         private Parameter param;
+        private String callbackName;
         private String argName;
         private String valueName;
         private String valueTypename;
 
-        public JavaParamWorker(Parameter param) {
+        public JavaParamWorker(Parameter param, String callbackName) {
             this.param = param;
+            this.callbackName = callbackName;
             this.argName = api.javaArgName(param.name);
             this.valueName = api.javaValueName(param.name);
             this.valueTypename = api.javaTypename(param.type);
@@ -145,6 +148,12 @@ public class DispatchParameterConverter {
                             .append(";")
                             .toString();
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    throw new UnsupportedOperationException(
+                            "References to function types in upcalls are not supported");
+                }
             }.apply(type.referencedType());
         }
 
@@ -187,6 +196,17 @@ public class DispatchParameterConverter {
                     .append(valueName)
                     .append(" = ")
                     .append(JavaGenerator.makeTernary(argName + " == " + nullData, "null", value))
+                    .append(";")
+                    .toString();
+        }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return new StringBuilder(valueTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(api.buildCallbackLambda((FunctionTypeExpr) type, argName))
                     .append(";")
                     .toString();
         }
@@ -338,6 +358,12 @@ public class DispatchParameterConverter {
                             .append(";")
                             .toString();
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    throw new UnsupportedOperationException(
+                            "References to function types in upcalls are not supported");
+                }
             }.apply(type.referencedType());
         }
 
@@ -359,16 +385,30 @@ public class DispatchParameterConverter {
             }
             return builder.append(";").toString();
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return new StringBuilder(valueTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(
+                            CGenerator.makeCall(
+                                    "gnatpolyglot_proxy2java_to_CallbackData",
+                                    List.of("env", argName)))
+                    .append(";")
+                    .toString();
+        }
     }
 
     private JavaAPI api;
 
-    public DispatchParameterConverter(JavaAPI api) {
+    public UpcallParameterConverter(JavaAPI api) {
         this.api = api;
     }
 
-    public String javaParam(Parameter param) {
-        return new JavaParamWorker(param).apply(param.type);
+    public String javaParam(Parameter param, String callbackName) {
+        return new JavaParamWorker(param, callbackName).apply(param.type);
     }
 
     public String jniParam(Parameter param) {

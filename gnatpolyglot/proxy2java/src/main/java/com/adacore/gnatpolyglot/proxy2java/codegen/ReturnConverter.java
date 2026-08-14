@@ -6,8 +6,10 @@
 package com.adacore.gnatpolyglot.proxy2java.codegen;
 
 import com.adacore.gnatpolyglot.proxy.FunctionDecl;
+import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.Owner;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
+import com.adacore.gnatpolyglot.proxy.Role;
 import com.adacore.gnatpolyglot.proxy.Role.RoleKind;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
@@ -24,15 +26,31 @@ public class ReturnConverter {
     private class JavaReturnWorker implements JavaTypeWorker<String> {
 
         private FunctionDecl functionDecl;
+        private FunctionTypeExpr functionType;
         private String returnedValue;
 
         public String javaReturnType;
+        private boolean isMethod;
+        private Role role;
+
+        public JavaReturnWorker(FunctionTypeExpr functionType, String returnedValue) {
+            this.functionDecl = null;
+            this.functionType = functionType;
+            this.returnedValue = returnedValue;
+            this.isMethod = false;
+            this.role = null;
+
+            this.javaReturnType = api.javaReturnTypename(functionType.returnType);
+        }
 
         public JavaReturnWorker(FunctionDecl functionDecl, String returnedValue) {
             this.functionDecl = functionDecl;
+            this.functionType = functionDecl.type;
             this.returnedValue = returnedValue;
+            this.isMethod = api.isMethod(functionDecl);
+            this.role = functionDecl.role;
 
-            this.javaReturnType = api.javaReturnTypename(functionDecl.type.returnType);
+            this.javaReturnType = api.javaReturnTypename(functionType.returnType);
         }
 
         @Override
@@ -59,8 +77,7 @@ public class ReturnConverter {
                                             "com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer",
                                             List.of(
                                                     returnedValue,
-                                                    api.javaOwner(
-                                                            functionDecl.type.returnOwner)))));
+                                                    api.javaOwner(functionType.returnOwner)))));
             // When a getter returns a reference, it implies that the returned object will reference
             // data from a parent structure. In case the parent would become unreferenced before its
             // field, the returned object must hold a reference to its eldest parent object in order
@@ -69,10 +86,10 @@ public class ReturnConverter {
             // By default, `this.parent` is equal to `this`, so we do not need to check which object
             // to refer. This allows the value returned by `a.getB().getC()` to hold a reference to
             // `a`.
-            if (api.isMethod(functionDecl)
-                    && functionDecl.role.kind == RoleKind.GETTER
-                    && functionDecl.type.returnOwner == Owner.STATIC
-                    && functionDecl.type.returnType.isReference()) args.add("this.parent");
+            if (isMethod
+                    && role.kind == RoleKind.GETTER
+                    && functionType.returnOwner == Owner.STATIC
+                    && functionType.returnType.isReference()) args.add("this.parent");
             return new StringBuilder("return ")
                     .append(JavaGenerator.makeNew(javaReturnType, args))
                     .append(";")
@@ -96,7 +113,7 @@ public class ReturnConverter {
             return JavaGenerator.makeMethodCall(
                             returnedValue,
                             "setOwner",
-                            List.of(api.javaOwner(functionDecl.type.returnOwner)))
+                            List.of(api.javaOwner(functionType.returnOwner)))
                     .append(";\n")
                     .append("return ")
                     .append(JavaGenerator.makeNew(api.javaTypename(type), List.of(returnedValue)))
@@ -131,16 +148,14 @@ public class ReturnConverter {
                                 JavaGenerator.makeMethodCall(
                                         returnedValue,
                                         "setOwner",
-                                        List.of(api.javaOwner(functionDecl.type.returnOwner))))
+                                        List.of(api.javaOwner(functionType.returnOwner))))
                         .append(";\n");
             } else {
                 nullData = "0L";
                 pointerData =
                         JavaGenerator.makeNew(
                                 "com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer",
-                                List.of(
-                                        returnedValue,
-                                        api.javaOwner(functionDecl.type.returnOwner)));
+                                List.of(returnedValue, api.javaOwner(functionType.returnOwner)));
             }
 
             // Create an Optional that contain the possibly null object.
@@ -153,7 +168,7 @@ public class ReturnConverter {
             // We cannot wrap the result of array pointer getters inside optionals, or overrding
             // would fail.
             boolean wrapToOptional =
-                    Optional.ofNullable(functionDecl.role)
+                    Optional.ofNullable(role)
                             .map(
                                     r ->
                                             !(r.kind == RoleKind.GETTER
@@ -169,20 +184,28 @@ public class ReturnConverter {
                     .append(";")
                     .toString();
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            FunctionTypeExpr functionType = (FunctionTypeExpr) type;
+            return new StringBuilder("return ")
+                    .append(
+                            JavaGenerator.makeCall(
+                                    api.getJavaLambdaFQN(functionType), List.of(returnedValue)))
+                    .append(";")
+                    .toString();
+        }
     }
 
     /** Type worker that creates the conversion of return values from bound functions to the JVM. */
     private class CReturnWorker implements JavaTypeWorker<String> {
 
-        private FunctionDecl functionDecl;
         private String returnedValue;
         private String jniReturnType;
 
-        public CReturnWorker(FunctionDecl functionDecl, String returnedValue) {
-            this.functionDecl = functionDecl;
+        public CReturnWorker(FunctionTypeExpr functionType, String returnedValue) {
             this.returnedValue = returnedValue;
-
-            this.jniReturnType = api.jniReturnTypename(functionDecl.type.returnType);
+            this.jniReturnType = api.jniReturnTypename(functionType.returnType);
         }
 
         @Override
@@ -263,6 +286,12 @@ public class ReturnConverter {
                     throw new UnsupportedOperationException(
                             "References to pointers are not supported");
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    throw new UnsupportedOperationException(
+                            "References to functions are not supported");
+                }
             }.apply(type.referencedType());
         }
 
@@ -286,6 +315,17 @@ public class ReturnConverter {
         public String pointerType(TypeExpr type) {
             return apply(type.pointedType());
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return new StringBuilder("return ")
+                    .append(
+                            CGenerator.makeCall(
+                                    "gnatpolyglot_proxy2java_to_CallbackData",
+                                    List.of("env", returnedValue)))
+                    .append(";")
+                    .toString();
+        }
     }
 
     private JavaAPI api;
@@ -300,8 +340,13 @@ public class ReturnConverter {
                 .apply(functionDecl.type.returnType);
     }
 
+    /** Create the return statement to return the value from the native function to the user. */
+    public String javaReturnStatement(FunctionTypeExpr functionType, String returnedValue) {
+        return new JavaReturnWorker(functionType, returnedValue).apply(functionType.returnType);
+    }
+
     /** Create the return statement to return the value from the bound function to the JVM. */
-    public String cReturnStatement(FunctionDecl functionDecl, String returnedValue) {
-        return new CReturnWorker(functionDecl, returnedValue).apply(functionDecl.type.returnType);
+    public String cReturnStatement(FunctionTypeExpr functionType, String returnedValue) {
+        return new CReturnWorker(functionType, returnedValue).apply(functionType.returnType);
     }
 }

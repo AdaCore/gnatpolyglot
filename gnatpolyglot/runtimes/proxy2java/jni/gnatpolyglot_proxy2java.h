@@ -25,6 +25,12 @@ struct kernel {
     struct exception_information exc_info;
 };
 
+struct callback_data {
+    void *addr;
+    void *data;
+    void *extra;
+};
+
 extern struct kernel *gnatpolyglot_get_kernel();
 
 jclass PolyglotObject_class(JNIEnv *env);
@@ -48,5 +54,22 @@ jclass ObjectRef_class(JNIEnv *env);
 jmethodID ObjectRef_update_method(JNIEnv *env);
 
 jmethodID ObjectRef_getData_method(JNIEnv *env);
+
+jclass FunctionRef_class(JNIEnv *env);
+
+jmethodID FunctionRef_get_method(JNIEnv *env);
+
+jmethodID FunctionRef_set_method(JNIEnv *env);
+
+jclass CallbackData_class(JNIEnv *env);
+
+jmethodID CallbackData_ctor(JNIEnv *env);
+
+jobject
+gnatpolyglot_proxy2java_to_CallbackData(JNIEnv *env,
+                                        struct callback_data callback_data);
+
+struct callback_data
+gnatpolyglot_proxy2java_to_callback_data(JNIEnv *env, jobject o);
 
 #endif /* ! GNATPOLYGLOT_PROXY2JAVA_H */

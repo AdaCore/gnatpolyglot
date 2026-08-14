@@ -9,6 +9,7 @@ import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
 import com.adacore.gnatpolyglot.proxy.EnumerationDecl;
 import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
+import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeDecl;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
@@ -61,6 +62,16 @@ public class TypenameGenerator {
     /** Type worker that creates the Java typename, generally exposed to the user. */
     private class JavaTypenameWorker implements JavaTypeWorker<String> {
 
+        Boolean useNativeWrappers;
+
+        public JavaTypenameWorker() {
+            this.useNativeWrappers = false;
+        }
+
+        public JavaTypenameWorker(boolean useNativeWrappers) {
+            this.useNativeWrappers = useNativeWrappers;
+        }
+
         @Override
         public ProxyContext getContext() {
             return api.getContext();
@@ -68,7 +79,9 @@ public class TypenameGenerator {
 
         private String getNativeTypename(TypeExpr typeExpr) {
             TypeDecl decl = getContext().getTypeDecl(typeExpr.getName());
-            return api.javaPrimitiveTypename(NativeTypeDecl.class.cast(decl).nativeType);
+            NativeType nativeType = NativeTypeDecl.class.cast(decl).nativeType;
+            if (useNativeWrappers) return nativeWrapperTypename(nativeType);
+            return api.javaPrimitiveTypename(nativeType);
         }
 
         @Override
@@ -162,6 +175,11 @@ public class TypenameGenerator {
                 public String pointerType(TypeExpr type) {
                     return javaTypename(type).concat(".Ref");
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    return javaTypename(type).concat(".Ref");
+                }
             }.apply(type.referencedType());
         }
 
@@ -186,6 +204,13 @@ public class TypenameGenerator {
         @Override
         public String pointerType(TypeExpr type) {
             return javaTypename(type.pointedType());
+        }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return api.basePackage()
+                    + ".Callbacks."
+                    + api.getJavaCallbackTypename((FunctionTypeExpr) type);
         }
     }
 
@@ -272,6 +297,11 @@ public class TypenameGenerator {
                 public String pointerType(TypeExpr type) {
                     return javaTypename(refType);
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    return javaTypename(refType);
+                }
             }.apply(refType.referencedType());
         }
 
@@ -289,6 +319,11 @@ public class TypenameGenerator {
         public String enumType(TypeExpr type) {
             EnumerationDecl enumDecl = (EnumerationDecl) getContext().getTypeDecl(type.getName());
             return api.javaPrimitiveTypename(enumDecl.representationType());
+        }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return javaTypename(type);
         }
     }
 
@@ -375,6 +410,11 @@ public class TypenameGenerator {
                 public String pointerType(TypeExpr type) {
                     return "jobject";
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    return "jobject";
+                }
             }.apply(type.referencedType());
         }
 
@@ -394,6 +434,11 @@ public class TypenameGenerator {
         public String enumType(TypeExpr type) {
             EnumerationDecl enumDecl = (EnumerationDecl) getContext().getTypeDecl(type.getName());
             return api.jniPrimitiveTypename(enumDecl.representationType());
+        }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return "jobject";
         }
     }
 
@@ -483,6 +528,11 @@ public class TypenameGenerator {
                 public String pointerType(TypeExpr type) {
                     return cTypename(type.pointedType()) + "*";
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    return "struct callback_data *";
+                }
             }.apply(type.referencedType());
         }
 
@@ -501,12 +551,22 @@ public class TypenameGenerator {
             EnumerationDecl enumDecl = (EnumerationDecl) getContext().getTypeDecl(type.getName());
             return api.cPrimitiveTypename(enumDecl.representationType());
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return "struct callback_data";
+        }
     }
 
     private JavaAPI api;
 
     public TypenameGenerator(JavaAPI api) {
         this.api = api;
+    }
+
+    /** Return the exposed Java typename of type. */
+    public String javaTypename(TypeExpr type, boolean useNativeWrappers) {
+        return new JavaTypenameWorker(useNativeWrappers).apply(type);
     }
 
     /** Return the exposed Java typename of type. */
@@ -517,6 +577,17 @@ public class TypenameGenerator {
     /** Return the Java native typename of type. */
     public String javaNativeTypename(TypeExpr type) {
         return new JavaNativeTypenameWorker().apply(type);
+    }
+
+    /** Return the Java native typename of type. */
+    public String javaNativeReturnTypename(TypeExpr type) {
+        // The functionnal interface object is passed directly by argument, but a CallbackData
+        // is returned.
+        if (type.isFunction()) return "com.adacore.gnatpolyglot.runtime.Functions.CallbackData";
+        // There is not distinct reference type when returning a value: All objects are returned
+        // under their own type since Java uses references by default, and returning references to
+        // pointers is not supported.
+        return new JavaNativeTypenameWorker().apply(type.referencedType());
     }
 
     /** Return the JNI typename of type. */

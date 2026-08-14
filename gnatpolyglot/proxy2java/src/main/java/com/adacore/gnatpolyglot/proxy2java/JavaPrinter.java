@@ -135,6 +135,13 @@ public class JavaPrinter extends Printer {
                     "library_java.jte", Map.of("api", api, "proxy", proxy), packageSpec);
         }
 
+        // Generate the Callbacks.java file.
+        Path callbacksClass =
+                srcDir.resolve(String.join(File.separator, groupId)).resolve("Callbacks.java");
+        try (FileOutput packageSpec = new FileOutput(callbacksClass)) {
+            templateEngine.render("callbacks.jte", Map.of("api", api, "proxy", proxy), packageSpec);
+        }
+
         Path refsHeader = outputPath.resolve("jni", proxy.name.toLower().concat("__refs.h"));
         try (FileOutput packageSpec = new FileOutput(refsHeader)) {
             templateEngine.render(
@@ -147,6 +154,40 @@ public class JavaPrinter extends Printer {
         try (FileOutput packageSpec = new FileOutput(refsBody)) {
             templateEngine.render(
                     "jni/refs.jte",
+                    Map.of("api", api, "proxy", proxy, "isSource", true),
+                    packageSpec);
+        }
+
+        Path classesHeader = outputPath.resolve("jni", proxy.name.toLower().concat("__classes.h"));
+        try (FileOutput packageSpec = new FileOutput(classesHeader)) {
+            templateEngine.render(
+                    "jni/classes.jte",
+                    Map.of("api", api, "proxy", proxy, "isSource", false),
+                    packageSpec);
+        }
+
+        Path classesBody = outputPath.resolve("jni", proxy.name.toLower().concat("__classes.c"));
+        try (FileOutput packageSpec = new FileOutput(classesBody)) {
+            templateEngine.render(
+                    "jni/classes.jte",
+                    Map.of("api", api, "proxy", proxy, "isSource", true),
+                    packageSpec);
+        }
+
+        Path callbacksHeader =
+                outputPath.resolve("jni", proxy.name.toLower().concat("__callbacks.h"));
+        try (FileOutput packageSpec = new FileOutput(callbacksHeader)) {
+            templateEngine.render(
+                    "jni/callbacks.jte",
+                    Map.of("api", api, "proxy", proxy, "isSource", false),
+                    packageSpec);
+        }
+
+        Path callbacksBody =
+                outputPath.resolve("jni", proxy.name.toLower().concat("__callbacks.c"));
+        try (FileOutput packageSpec = new FileOutput(callbacksBody)) {
+            templateEngine.render(
+                    "jni/callbacks.jte",
                     Map.of("api", api, "proxy", proxy, "isSource", true),
                     packageSpec);
         }

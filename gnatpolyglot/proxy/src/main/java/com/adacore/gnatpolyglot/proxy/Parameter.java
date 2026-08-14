@@ -47,4 +47,9 @@ public class Parameter implements ProxyObject {
         }
         return false;
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, type, transfer);
+    }
 }

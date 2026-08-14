@@ -46,4 +46,9 @@ public class Transfer implements ProxyObject {
         }
         return false;
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(required_owner);
+    }
 }
