@@ -44,15 +44,49 @@ Returning access to tagged types is not supported.
    procedure Unsupported (V : in out T_A);
    function Unsupported return T_A;
 
+.. _limitations-access-to-subprograms:
+
 Access to subprograms (callbacks)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Access-to-subprogram types are not supported, so passing a callback or
-function pointer across the binding is not possible.
+Most access to subprograms are supported, with the exception of returning
+access-to-subprogram types to Ada. Records or arrays with an
+access-to-subprograms component are also not supported.
 
 .. code:: ada
 
-   type Unsupported is access procedure;
+   type Callback is access procedure;
+
+   type Unsupported1 is access function return Callback;
+   type Unsupported2 is access procedure (C: in out Callback);
+
+   type Unsupported3 is array (Positive range <>) of Callback;
+   type Unsupported4 is record
+      Comp : Callback;
+   end record;
+
+Additionally, the value of access to subprograms should not be escaped:
+when passing a function to the Ada library, a local function is created. Its
+lifetime is of the current call, so any copy of this access becomes a dangling
+pointer value.
+
+.. code:: ada
+
+   type Callback is access procedure;
+
+   Global_C : Callback;
+
+   procedure Save (C : Callback) is
+   begin
+      Global_C := C;
+      -- If called by bindings, any use of C becomes invalid after the call.
+   end Save;
+
+   procedure Call is
+   begin
+      -- There is no guarantee at this moment that this call will work.
+      Global_C.all;
+   end Call;
 
 Access to access
 ^^^^^^^^^^^^^^^^
