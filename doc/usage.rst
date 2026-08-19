@@ -28,6 +28,17 @@ supported output languages. Similarly, once a new language backend is
 added, it immediately allows creating bindings for that language from
 all the input languages supported by GNATpolyglot.
 
+Supported languages
+~~~~~~~~~~~~~~~~~~~
+
+Currently, GNATpolyglot supports generating bindings from Ada.
+
+The supported languages to use bindings generated from languages above are:
+
+* C++
+* Java
+* Rust (**beta**)
+
 Generating Proxy IR
 -------------------
 
