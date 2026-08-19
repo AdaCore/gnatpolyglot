@@ -1,7 +1,3 @@
--- This example showcases the use access type in the generated interface, how
--- memory can be managed both manually and automatically if the target language
--- allows it.
-
 with Ada.Unchecked_Deallocation;
 
 package Example is
