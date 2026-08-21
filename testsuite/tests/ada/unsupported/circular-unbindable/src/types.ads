@@ -2,7 +2,7 @@ package Types is
 
    -- Simple recursive record 1
 
-   type Unbindable1 is access procedure;
+   type Unbindable1 is access Integer;
 
    type Rec1;
    type Rec1_Acc is access all Rec1;
@@ -14,7 +14,7 @@ package Types is
 
    -- Simple recursive record 2
 
-   type Unbindable2 is access procedure;
+   type Unbindable2 is access Integer;
 
    type Rec2;
    type Rec2_Acc is access all Rec2;
@@ -26,7 +26,7 @@ package Types is
 
    -- Mutually recursive records 1
 
-   type Unbindable3 is access procedure;
+   type Unbindable3 is access Integer;
 
    type Rec_M11;
    type Rec_M11_Acc is access all Rec_M11;
@@ -46,7 +46,7 @@ package Types is
 
    -- Mutually recursive records 2
 
-   type Unbindable4 is access procedure;
+   type Unbindable4 is access Integer;
 
    type Rec_M21;
    type Rec_M21_Acc is access all Rec_M21;

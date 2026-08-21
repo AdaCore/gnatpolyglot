@@ -36,5 +36,18 @@ package GNATpolyglot is
 
    function Get_Kernel return Kernel_Access;
 
+   type Callback_Data is record
+      Addr : System.Address;
+      -- The address of the function to call
+      Data : System.Address;
+      -- Opaque data to give as first parameter of the call to Callback_Addr.
+      Extra : System.Address;
+      -- Additional opaque data. This data is passed to dispatching functions
+      -- called from the vtable. Its goal is to hold values meant to help with
+      -- upcalling to the user implementations (e.g. hold a reference to a Java
+      -- VM).
+   end record
+   with Convention => C_Pass_By_Copy;
+
 end GNATpolyglot;
 

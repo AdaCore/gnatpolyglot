@@ -270,6 +270,12 @@ access to access types and getters that may return an access component
 do not return references. However, passing access values by reference
 (``out`` parameter) is supported.
 
+Access-to-subprogram
+~~~~~~~~~~~~~~~~~~~~
+
+Most access to subprograms types are supported, but with limitations (see
+:ref:`Limitations <limitations-access-to-subprograms>`)
+
 Subprograms
 -----------
 

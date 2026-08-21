@@ -6,18 +6,28 @@
 package com.adacore.gnatpolyglot.ada2proxy.codegen;
 
 import com.adacore.gnatpolyglot.ada2proxy.AdaAPI;
+import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.SubpParam;
+import com.adacore.gnatpolyglot.proxy.Name;
 import com.adacore.libadalang.Libadalang;
+import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import java.util.List;
 
 public class ParamUpdater {
 
     private class Worker implements TypeWorker<String> {
 
-        private SubpParam param;
+        private boolean isOutMode;
+        private Name name;
 
         public Worker(SubpParam param) {
-            this.param = param;
+            this.isOutMode = param.isOutMode();
+            this.name = param.name;
+        }
+
+        public Worker(Libadalang.DefiningName paramName, Libadalang.BaseFormalParamDecl paramDecl) {
+            this.isOutMode = SubpParam.isOutMode(paramDecl);
+            this.name = AdaAPI.getName(paramName);
         }
 
         @Override
@@ -67,17 +77,16 @@ public class ParamUpdater {
 
         @Override
         public String arrayAccessType(Libadalang.BaseTypeDecl type) {
-            if (!param.isOutMode()) return "";
-            String polyglotArray = api.makeTemp(param.name, "Polyglot_Array");
-            String valueArg = api.valueName(param.name);
-            String eqFunction =
-                    param.getType().pParentBasicDecl().pFullyQualifiedName().concat(".\"=\"");
+            if (!isOutMode) return "";
+            String polyglotArray = api.makeTemp(name, "Polyglot_Array");
+            String valueArg = api.valueName(name);
+            String eqFunction = type.pParentBasicDecl().pFullyQualifiedName().concat(".\"=\"");
             return new StringBuilder("declare\n")
                     .append(polyglotArray)
                     .append(" : ")
-                    .append(api.cInterfaceTypename(param.getType().pAccessedType(param.getType())))
+                    .append(api.cInterfaceTypename(type.pAccessedType(type)))
                     .append(" with Address => ")
-                    .append(api.argName(param.name))
+                    .append(api.argName(name))
                     .append(";\n")
                     .append(AdaGenerator.makeImport(polyglotArray))
                     .append(";\n")
@@ -118,14 +127,67 @@ public class ParamUpdater {
         public String accessType(Libadalang.BaseTypeDecl type) {
             return "";
         }
+
+        @Override
+        public String subpAccessType(BaseTypeDecl type) {
+            if (!isOutMode) return "";
+            String subpName =
+                    name.concat(Name.fromPascalWithUnderscore("Subprogram"))
+                            .toPascalWithUnderscore();
+            String bufferName = api.makeTemp(name, "Buffer");
+            String valueName = api.valueName(name);
+            String converter = api.makeTemp(name, "Converter");
+            StringBuilder builder =
+                    new StringBuilder("declare\n")
+                            .append(
+                                    AdaGenerator.uncheckedConverter(
+                                            converter,
+                                            type.pFullyQualifiedName(),
+                                            "System.Address"))
+                            .append(";\n")
+                            .append(bufferName)
+                            .append(" : ")
+                            .append(api.cInterfaceTypename(type))
+                            .append(" with Address => ")
+                            .append(api.argName(name))
+                            .append(";")
+                            .append(AdaGenerator.makeImport(bufferName))
+                            .append(";\n")
+                            .append("begin\n")
+                            .append("if ")
+                            .append(valueName)
+                            .append(" /= ")
+                            .append(subpName)
+                            .append("'Unrestricted_Access then\n")
+                            .append(bufferName)
+                            .append(" := (")
+                            .append(Callback.callbackCName(type))
+                            .append("'Address")
+                            .append(", ")
+                            .append(AdaGenerator.makeCall(converter, List.of(valueName)))
+                            .append(", System.Null_Address)")
+                            .append(";\n")
+                            .append("end if;")
+                            .append("end;");
+
+            return builder.toString();
+        }
     }
 
-    private class DispatchWorker implements TypeWorker<String> {
+    private class UpcallWorker implements TypeWorker<String> {
 
-        private SubpParam param;
+        boolean isOutMode;
+        Name name;
 
-        public DispatchWorker(SubpParam param) {
-            this.param = param;
+        public UpcallWorker(SubpParam param) {
+            this.isOutMode = param.isOutMode();
+            this.name = param.name;
+        }
+
+        public UpcallWorker(
+                Libadalang.DefiningName paramName, Libadalang.BaseFormalParamDecl paramDecl) {
+            this.isOutMode = SubpParam.isOutMode(paramDecl);
+            this.name = AdaAPI.getName(paramName);
         }
 
         @Override
@@ -175,11 +237,11 @@ public class ParamUpdater {
 
         @Override
         public String arrayAccessType(Libadalang.BaseTypeDecl type) {
-            if (!param.isOutMode()) return "";
-            String fatPtr = api.makeTemp(param.name, "Fat_Pointer");
-            String tmpAccess = api.makeTemp(param.name, "Tmp_Access");
-            String valueName = api.valueName(param.name);
-            String argName = api.argName(param.name);
+            if (!isOutMode) return "";
+            String fatPtr = api.makeTemp(name, "Fat_Pointer");
+            String tmpAccess = api.makeTemp(name, "Tmp_Access");
+            String valueName = api.valueName(name);
+            String argName = api.argName(name);
             return new StringBuilder("declare\n")
                     .append(tmpAccess)
                     .append(" : ")
@@ -214,10 +276,10 @@ public class ParamUpdater {
 
         @Override
         public String accessType(Libadalang.BaseTypeDecl type) {
-            if (!param.isOutMode()) return "";
-            String converter = api.makeTemp(param.name, "Converter");
-            String valueName = api.valueName(param.name);
-            String argName = api.argName(param.name);
+            if (!isOutMode) return "";
+            String converter = api.makeTemp(name, "Converter");
+            String valueName = api.valueName(name);
+            String argName = api.argName(name);
             return new StringBuilder("declare\n")
                     .append(
                             AdaGenerator.uncheckedConverter(
@@ -243,7 +305,19 @@ public class ParamUpdater {
         return new Worker(param).apply(param.getType());
     }
 
-    public String buildDispatch(SubpParam param) {
-        return new DispatchWorker(param).apply(param.getType());
+    public String build(Libadalang.DefiningName paramName) {
+        Libadalang.BaseFormalParamDecl paramDecl =
+                (Libadalang.BaseFormalParamDecl) paramName.pBasicDecl();
+        return new Worker(paramName, paramDecl).apply(paramDecl.pFormalType(paramDecl));
+    }
+
+    public String buildUpcall(SubpParam param) {
+        return new UpcallWorker(param).apply(param.getType());
+    }
+
+    public String buildUpcall(Libadalang.DefiningName paramName) {
+        Libadalang.BaseFormalParamDecl paramDecl =
+                (Libadalang.BaseFormalParamDecl) paramName.pBasicDecl();
+        return new UpcallWorker(paramName, paramDecl).apply(paramDecl.pFormalType(paramDecl));
     }
 }

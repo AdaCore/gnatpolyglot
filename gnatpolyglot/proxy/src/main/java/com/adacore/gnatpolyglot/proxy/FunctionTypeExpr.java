@@ -59,4 +59,8 @@ public class FunctionTypeExpr extends TypeExpr {
         }
         return false;
     }
+
+    public boolean isFunction() {
+        return true;
+    }
 }

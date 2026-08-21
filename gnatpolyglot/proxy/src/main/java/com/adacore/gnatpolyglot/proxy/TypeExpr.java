@@ -63,6 +63,10 @@ public abstract class TypeExpr implements ProxyObject {
         throw new UnsupportedOperationException("Not an ArrayTypeExpr");
     }
 
+    public boolean isFunction() {
+        return false;
+    }
+
     public boolean isArray() {
         return false;
     }

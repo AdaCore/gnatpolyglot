@@ -172,37 +172,13 @@ vim: filetype=jtecpp
         extern "C" {
         <%-- Dispatching functions to call overriden methods --%>
         @for(var method : classDecl.vtable)
-            ${api.cTypename(method.functionType.returnType)}
-            ${className}_${dispatchNames.get(method)} (
-                ${api.dispatchParameters(method.functionType)}
-            ) {
-                ${className} *__self = (${className} *) _self;
-                @for(var param : method.functionType.parameters.stream().skip(1).toList())
-                ${api.convertForDispatch(param)};
-                @endfor
-                try {
-                @if(api.returnsVoid(method.functionType))
-                    ${api.callDispatch(method)};
-                @else
-                    ${api.cppReturnTypename(method.functionType.returnType)} returned_value =
-                      ${api.callDispatch(method)};
-                    ${api.makeReturnFromDispatch(method.functionType, "returned_value")}
-                @endif
-                } catch (gnatpolyglot::ada::exceptions::AdaException &e) {
-                    gnatpolyglot_get_kernel()->exc_info.exception_data = e.release_();
-                    ${api.makeDispatchDefaultReturn(method.functionType)}
-                } catch (...) {
-                    gnatpolyglot::ada::exceptions::AdaException error(
-                        "Uncaught host language exception"
-                    );
-                    gnatpolyglot_get_kernel()->exc_info.exception_data = error.release_();
-                    ${api.makeDispatchDefaultReturn(method.functionType)}
-                }
-
-                @for(var param : method.functionType.parameters.stream().skip(1).toList())
-                ${api.checkDispatchPointerValue(param)};
-                @endfor
-            }
+            @template.callback(
+                api,
+                method.functionType,
+                className + "_" + dispatchNames.get(method),
+                true,
+                method.name.toLower()
+            )
         @endfor
 
         void *${className}_do_internal_clone(void *, ${className} *self, gnatpolyglot::data *data) {
@@ -248,7 +224,7 @@ vim: filetype=jtecpp
             @for(var method : classDecl.vtable)
                 ${api.cTypename(method.functionType.returnType)}
                 (*${dispatchNames.get(method)})
-                (${api.dispatchParameters(method.functionType)});
+                (${api.upcallParameters(method.functionType, true)});
             @endfor
             } _data;
         } ${className}_vtable;

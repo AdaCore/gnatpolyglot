@@ -48,9 +48,17 @@ public class Subprogram extends AdaDeclaration {
         this.owner = owner;
     }
 
-    /** Return the SubpSpec of the origin. */
+    /**
+     * Return the SubpSpec of the decl. If the decl is the type declaration of an access to
+     * subprogram, returns its SubpSpec.
+     */
+    public static Libadalang.BaseSubpSpec getSpec(Libadalang.BasicDecl decl) {
+        return decl.pSubpSpecOrNull(true);
+    }
+
+    /** Instance variant of {@link #getSpec(Libadalang.BasicDecl)}. */
     private Libadalang.BaseSubpSpec getSpec() {
-        return origin.pSubpSpecOrNull(true);
+        return getSpec(origin);
     }
 
     @Override
@@ -76,8 +84,13 @@ public class Subprogram extends AdaDeclaration {
     }
 
     /** Return whether ``funDecl`` is a procedure or a function. */
+    public static boolean isProcedure(Libadalang.BaseSubpSpec spec) {
+        return spec.pReturnType(spec).isNone();
+    }
+
+    /** Return whether ``funDecl`` is a procedure or a function. */
     public boolean isProcedure() {
-        return getReturnType().isNone();
+        return isProcedure(getSpec());
     }
 
     /** Return the return type of the Ada subprogram. */

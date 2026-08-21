@@ -9,13 +9,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CppGenerator {
-    /** Create a static_cast expression. */
-    public static StringBuilder makeStaticCast(CharSequence typename, CharSequence expr) {
-        return new StringBuilder("static_cast<")
+
+    public static StringBuilder makeCast(
+            CharSequence castKind, CharSequence typename, CharSequence expr) {
+        return new StringBuilder(castKind)
+                .append("<")
                 .append(typename)
                 .append(">(")
                 .append(expr)
                 .append(")");
+    }
+
+    /** Create a static_cast expression. */
+    public static StringBuilder makeStaticCast(CharSequence typename, CharSequence expr) {
+        return makeCast("static_cast", typename, expr);
+    }
+
+    /** Create a reinterpret_cast expression. */
+    public static StringBuilder makeReinterpretCast(CharSequence typename, CharSequence expr) {
+        return makeCast("reinterpret_cast", typename, expr);
     }
 
     /** Create a static_cast expression. */

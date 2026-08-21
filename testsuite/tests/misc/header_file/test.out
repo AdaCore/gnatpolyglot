@@ -38,10 +38,25 @@ Checking presence of the user-given header in the following generated source fil
   - java/jni/lib.c:
     // LICENSE
     // 2026
+  - java/jni/lib__callbacks.c:
+    // LICENSE
+    // 2026
+  - java/jni/lib__callbacks.h:
+    // LICENSE
+    // 2026
+  - java/jni/lib__classes.c:
+    // LICENSE
+    // 2026
+  - java/jni/lib__classes.h:
+    // LICENSE
+    // 2026
   - java/jni/lib__refs.c:
     // LICENSE
     // 2026
   - java/jni/lib__refs.h:
+    // LICENSE
+    // 2026
+  - java/src/main/java/com/adacore/liblib/Callbacks.java:
     // LICENSE
     // 2026
   - java/src/main/java/com/adacore/liblib/Library.java:

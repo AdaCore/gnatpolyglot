@@ -31,12 +31,15 @@ public interface TypeWorker<T> {
 
     T refType(TypeExpr type);
 
+    T functionType(TypeExpr type);
+
     default T apply(TypeExpr type) {
         ProxyContext context = getContext();
         if (type.isReference()) return refType(type);
         if (type.isArray()) return arrayType(type);
         if (type.isPointer()) return pointerType(type);
         if (context.isStringType(type)) return stringType(type);
+        if (type.isFunction()) return functionType(type);
         if (type.isName()) {
             TypeDecl typeDecl = context.getTypeDecl(type.getName());
             if (typeDecl instanceof ClassDecl) return classType(type);
@@ -125,8 +128,15 @@ public interface TypeWorker<T> {
         }
 
         @Override
+        default T functionType(TypeExpr type) {
+            return defaultCase();
+        }
+
+        @Override
         default T apply(TypeExpr type) {
-            if (type.isReference() && !type.referencedType().isPointer()) return defaultCase();
+            if (type.isReference()
+                    && !type.referencedType().isPointer()
+                    && !type.referencedType().isFunction()) return defaultCase();
             return TypeWorker.super.apply(type);
         }
     }

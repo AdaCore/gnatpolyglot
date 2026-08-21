@@ -6,6 +6,8 @@
 package com.adacore.gnatpolyglot.ada2proxy.codegen;
 
 import com.adacore.gnatpolyglot.ada2proxy.AdaAPI;
+import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback;
+import com.adacore.gnatpolyglot.ada2proxy.proxy.Subprogram;
 import com.adacore.gnatpolyglot.proxy.Name;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
@@ -296,6 +298,76 @@ public class ParamConverter {
                     .append(" := ")
                     .append(AdaGenerator.makeCall(converter, List.of(argName)))
                     .toString();
+        }
+
+        @Override
+        public String subpAccessType(BaseTypeDecl type) {
+            String cAccessTypename = api.makeTemp(name, "C_Access_Typename");
+            String subpName =
+                    name.concat(Name.fromPascalWithUnderscore("Subprogram"))
+                            .toPascalWithUnderscore();
+            String converter = api.makeTemp(name, "Converter");
+            String convertedAccess = api.makeTemp(name, "Subprogram_Access");
+            Libadalang.BaseSubpSpec spec = Callback.getSpec(type);
+            boolean isProcedure = Subprogram.isProcedure(spec);
+            StringBuilder builder = new StringBuilder();
+
+            String callbackData = argName;
+            if (isOutMode) {
+                // Create a variable of type Callback_Data that uses the address given in the
+                // parameter.
+                callbackData = api.makeTemp(name, "Buffer");
+                builder.append(callbackData)
+                        .append(" : ")
+                        .append(api.cInterfaceTypename(type))
+                        .append(" ")
+                        .append("with Address => ")
+                        .append(argName)
+                        .append(";\n")
+                        .append(AdaGenerator.makeImport(callbackData))
+                        .append(";\n");
+            }
+
+            // Convert the raw address to an access to a subprogram.
+            builder.append("type ")
+                    .append(cAccessTypename)
+                    .append(" is access ")
+                    .append(api.subpSpecCallbackSpec(spec, ""))
+                    .append(" with Convention => C;\n")
+                    .append(
+                            AdaGenerator.uncheckedConverter(
+                                    converter, "System.Address", cAccessTypename))
+                    .append(";\n")
+                    .append(convertedAccess)
+                    .append(" : ")
+                    .append(cAccessTypename)
+                    .append(" := ")
+                    .append(AdaGenerator.makeCall(converter, List.of(callbackData + ".Addr")))
+                    .append(";\n");
+
+            // Create a local function that performs the conversion of Ada values and calls the
+            // given function pointer.
+            // The Ada library will be given an access to this function that should not be escaped.
+
+            if (isProcedure) builder.append("procedure ");
+            else builder.append("function ");
+            builder.append(subpName)
+                    .append(" is new ")
+                    .append(Callback.callbackAdaName(type))
+                    .append("(")
+                    .append(callbackData)
+                    .append(", ")
+                    .append(convertedAccess)
+                    .append(".all)")
+                    .append(";\n");
+            builder.append(valueName)
+                    .append(" : ")
+                    .append(typename)
+                    .append(" := ")
+                    .append(subpName)
+                    .append("'Unrestricted_Access");
+
+            return builder.toString();
         }
     }
 

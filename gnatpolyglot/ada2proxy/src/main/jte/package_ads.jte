@@ -9,6 +9,7 @@ Template file to generate package specs.
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.Array
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaDeclaration
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaException
+@import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.GlobalVariable
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.Package
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.Record
@@ -62,6 +63,8 @@ package ${packageName} is
         @template.array(api, array)
     @elseif(decl instanceof Subtype subtype)
         @template.subtype(api, subtype)
+    @elseif(decl instanceof Callback callback)
+        @template.callback(api, callback, false)
     @endif
 @endfor
 end ${packageName};

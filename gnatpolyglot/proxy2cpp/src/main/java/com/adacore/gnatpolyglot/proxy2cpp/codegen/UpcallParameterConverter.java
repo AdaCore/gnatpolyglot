@@ -5,6 +5,7 @@
 
 package com.adacore.gnatpolyglot.proxy2cpp.codegen;
 
+import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.PointerTypeExpr;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
@@ -12,7 +13,7 @@ import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2cpp.CppAPI;
 import java.util.List;
 
-public class DispatchParameterConverter {
+public class UpcallParameterConverter {
 
     public static String getConverterValue(String name) {
         return "_".concat(name);
@@ -84,6 +85,16 @@ public class DispatchParameterConverter {
                                             CppGenerator.makeNew(
                                                     api.cppTypename(type.pointedType()),
                                                     List.of(argName)))))
+                    .toString();
+        }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return new StringBuilder(cppTypename)
+                    .append(" ")
+                    .append(valueName)
+                    .append(" = ")
+                    .append(api.buildUpcallLambda((FunctionTypeExpr) type, argName))
                     .toString();
         }
 
@@ -163,13 +174,20 @@ public class DispatchParameterConverter {
 
                     return builder.toString();
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    throw new UnsupportedOperationException(
+                            "Unreachable: non-cv function type references in upcalls are not"
+                                    + " supported.");
+                }
             }.apply(refType.referencedType());
         }
     }
 
     CppAPI api;
 
-    public DispatchParameterConverter(CppAPI api) {
+    public UpcallParameterConverter(CppAPI api) {
         this.api = api;
     }
 

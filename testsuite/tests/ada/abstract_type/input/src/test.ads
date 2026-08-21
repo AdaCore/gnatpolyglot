@@ -17,7 +17,7 @@ package Test is
 
    type Not_Heritable is abstract tagged null record;
 
-   type Unbindable is access procedure;
+   type Unbindable is access Integer;
 
    procedure Foo (O: Not_Heritable; P: Unbindable) is null;
 

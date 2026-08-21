@@ -6,6 +6,7 @@
 package com.adacore.gnatpolyglot.ada2proxy.codegen;
 
 import com.adacore.gnatpolyglot.ada2proxy.AdaAPI;
+import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import java.util.List;
@@ -85,6 +86,12 @@ public class ReturnConverter {
                             RETURN_TYPE_CONVERTER, type.pFullyQualifiedName(), "System.Address")
                     .append(";")
                     .toString();
+        }
+
+        @Override
+        public String subpAccessType(BaseTypeDecl type) {
+            // Create a converter function
+            return accessType(type);
         }
     }
 
@@ -199,6 +206,18 @@ public class ReturnConverter {
         public String accessType(Libadalang.BaseTypeDecl type) {
             return new StringBuilder("return ")
                     .append(AdaGenerator.makeCall(RETURN_TYPE_CONVERTER, List.of(returnedValue)))
+                    .toString();
+        }
+
+        @Override
+        public String subpAccessType(BaseTypeDecl type) {
+            // Return the C ABI wrapper alongside the Ada subprogram.
+            return new StringBuilder("return (")
+                    .append(Callback.callbackCName(type))
+                    .append("'Address")
+                    .append(", ")
+                    .append(AdaGenerator.makeCall(RETURN_TYPE_CONVERTER, List.of(returnedValue)))
+                    .append(", System.Null_Address)")
                     .toString();
         }
     }

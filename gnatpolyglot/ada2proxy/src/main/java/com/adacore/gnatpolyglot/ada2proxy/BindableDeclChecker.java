@@ -6,6 +6,7 @@
 package com.adacore.gnatpolyglot.ada2proxy;
 
 import com.adacore.gnatpolyglot.NativeType;
+import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import java.util.Arrays;
@@ -38,6 +39,46 @@ public class BindableDeclChecker {
         }
     }
 
+    private CheckStatus checkSpec(Libadalang.BasicDecl decl, Libadalang.BaseSubpSpec spec) {
+        for (var paramType : spec.pParamTypes(decl)) {
+            checkUse(decl, paramType);
+        }
+        for (var param : spec.pAbstractFormalParams()) {
+            BaseTypeDecl formalType = param.pFormalType(spec);
+            if (param instanceof Libadalang.ParamSpec paramSpec
+                    && formalType.pIsAccessType(spec)
+                    && !AdaTypeMatcher.isAccessToSubp(formalType)
+                    && formalType.pAccessedType(spec).pIsTaggedType(spec)
+                    && (paramSpec.fMode() instanceof Libadalang.ModeOut
+                            || paramSpec.fMode() instanceof Libadalang.ModeInOut)) {
+                throw new UnbindableDeclException(
+                        decl,
+                        "Returning access to tagged types through out parameters is not yet"
+                                + " supported");
+            }
+        }
+        if ((decl.pHasAspect(Libadalang.Symbol.create("Pre'Class"), false, false)
+                        || decl.pHasAspect(Libadalang.Symbol.create("Post'Class"), false, false))
+                && spec.pPrimitiveSubpTaggedType(false).pIsAbstractType())
+            throw new UnbindableDeclException(
+                    decl,
+                    "Primitives of abstract types with classwide dynamic pre/post conditions"
+                            + " are not bindable");
+        Libadalang.BaseTypeDecl returnType = spec.pReturnType(decl);
+        if (!returnType.isNone()) {
+            if (returnType.pIsClasswide())
+                throw new UnbindableDeclException(
+                        decl, "Returning class wide object is not yet supported");
+            checkUse(decl, returnType);
+            if (returnType.pIsAccessType(spec)
+                    && !AdaTypeMatcher.isAccessToSubp(returnType)
+                    && returnType.pAccessedType(spec).pIsTaggedType(spec))
+                throw new UnbindableDeclException(
+                        decl, "Returning access to tagged types is not yet supported");
+        }
+        return CheckStatus.OK;
+    }
+
     private CheckStatus checkType(Libadalang.BaseTypeDecl decl) {
 
         if (decl.pDiscriminantsList(Libadalang.BaseTypeDecl.NONE, Libadalang.AdaNode.NONE).length
@@ -53,7 +94,12 @@ public class BindableDeclChecker {
         if (decl.pIsRecordType(Libadalang.AdaNode.NONE)) {
             for (var shape : decl.pShapes(false, decl)) {
                 for (var comp : shape.components) {
-                    checkUse(decl, comp.pFormalType(decl));
+                    Libadalang.BaseTypeDecl formalType = comp.pFormalType(decl);
+                    checkUse(decl, formalType);
+                    if (AdaTypeMatcher.isAccessToSubp(formalType))
+                        throw new UnbindableDeclException(
+                                decl,
+                                "Record components of type access to subprogram are not supported");
                 }
             }
         }
@@ -80,11 +126,25 @@ public class BindableDeclChecker {
         } else if (decl instanceof Libadalang.AnonymousTypeDecl) {
             throw new UnbindableDeclException(
                     decl, "Anonymous type declarations are not yet supported");
-        } else if (decl.pIsAccessType(Libadalang.AdaNode.NONE)) {
-            if (decl.pRootType(decl) instanceof Libadalang.TypeDecl typeDecl
-                    && typeDecl.fTypeDef() instanceof Libadalang.AccessToSubpDef)
+        } else if (AdaTypeMatcher.isAccessToSubp(decl)) {
+            Libadalang.BaseSubpSpec spec = Callback.getSpec(decl);
+            Libadalang.BaseTypeDecl returnType = spec.pReturnType(spec);
+            if (!returnType.isNone() && AdaTypeMatcher.isAccessToSubp(returnType)) {
                 throw new UnbindableDeclException(
-                        decl, "Access to subprograms are not yet supported");
+                        decl,
+                        "Access to subprograms returning an other access to subprogram are not"
+                                + " bindable");
+            }
+            for (var p : spec.pParamTypes(spec)) {
+                if (AdaTypeMatcher.isAccessToSubp(p)) {
+                    throw new UnbindableDeclException(
+                            decl,
+                            "Access to subprograms with out-access-to-subprogram parameters are not"
+                                    + " bindable");
+                }
+            }
+            checkSpec(decl, spec);
+        } else if (decl.pIsAccessType(Libadalang.AdaNode.NONE)) {
             Libadalang.BaseTypeDecl accessedType =
                     (Libadalang.BaseTypeDecl)
                             decl.pAccessedType(decl).pMostVisiblePart(decl, false);
@@ -122,6 +182,10 @@ public class BindableDeclChecker {
             if (compType.pIsArrayType(decl) || AdaTypeMatcher.isArrayAccess(compType)) {
                 throw new UnbindableDeclException(
                         decl, "Arrays of array or access to arrays are not yet supported");
+            }
+            if (AdaTypeMatcher.isAccessToSubp(compType)) {
+                throw new UnbindableDeclException(
+                        decl, "Arrays of access to subprogram are not supported");
             }
         } else if (decl.equals(decl.pStdWideWideCharType())
                 || decl.equals(decl.pStdWideCharType())) {
@@ -165,40 +229,7 @@ public class BindableDeclChecker {
 
         if (decl.pIsSubprogram()) {
             Libadalang.BaseSubpSpec spec = decl.pSubpSpecOrNull(true);
-            for (var paramType : spec.pParamTypes(decl)) {
-                checkUse(decl, paramType);
-            }
-            for (var param : spec.pAbstractFormalParams()) {
-                if (param instanceof Libadalang.ParamSpec paramSpec
-                        && paramSpec.pFormalType(spec).pIsAccessType(spec)
-                        && paramSpec.pFormalType(spec).pAccessedType(spec).pIsTaggedType(spec)
-                        && (paramSpec.fMode() instanceof Libadalang.ModeOut
-                                || paramSpec.fMode() instanceof Libadalang.ModeInOut)) {
-                    throw new UnbindableDeclException(
-                            decl,
-                            "Returning access to tagged types through out parameters is not yet"
-                                    + " supported");
-                }
-            }
-            if ((decl.pHasAspect(Libadalang.Symbol.create("Pre'Class"), false, false)
-                            || decl.pHasAspect(
-                                    Libadalang.Symbol.create("Post'Class"), false, false))
-                    && spec.pPrimitiveSubpTaggedType(false).pIsAbstractType())
-                throw new UnbindableDeclException(
-                        decl,
-                        "Primitives of abstract types with classwide dynamic pre/post conditions"
-                                + " are not bindable");
-            Libadalang.BaseTypeDecl returnType = spec.pReturnType(decl);
-            if (!returnType.isNone()) {
-                if (returnType.pIsClasswide())
-                    throw new UnbindableDeclException(
-                            decl, "Returning class wide object is not yet supported");
-                checkUse(decl, returnType);
-                if (returnType.pIsAccessType(spec)
-                        && returnType.pAccessedType(spec).pIsTaggedType(spec))
-                    throw new UnbindableDeclException(
-                            decl, "Returning access to tagged types is not yet supported");
-            }
+            checkSpec(decl, spec);
             if (decl instanceof Libadalang.AbstractSubpDecl
                     && spec.pPrimitiveSubpTaggedType(false).isNone()) {
                 throw new UnbindableDeclException(decl, "Cannot bind disabled declarations");

@@ -146,6 +146,10 @@ public class ShadowReturnConverter {
 
         private String typename;
 
+        public BuildWorker(Libadalang.BaseSubpSpec spec) {
+            this.typename = spec.pReturnType(spec).pFullyQualifiedName();
+        }
+
         public BuildWorker(Subprogram subp) {
             this.typename = subp.getReturnType().pFullyQualifiedName();
         }
@@ -248,6 +252,14 @@ public class ShadowReturnConverter {
      */
     public String prepareReturn(Libadalang.BaseTypeDecl returnedType) {
         return new PrepareWorker(returnedType).apply(returnedType);
+    }
+
+    /**
+     * Return a string that creates the return statement when calling an override of `subp`. The
+     * method `prepareReturn` must be called prior to this one.
+     */
+    public String buildReturn(Libadalang.BaseSubpSpec spec) {
+        return new BuildWorker(spec).apply(spec.pReturnType(spec));
     }
 
     /**

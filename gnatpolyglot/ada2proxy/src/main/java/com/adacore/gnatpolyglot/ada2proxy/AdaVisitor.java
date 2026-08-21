@@ -9,6 +9,7 @@ import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaDeclaration;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaException;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.Array;
+import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.Component;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.EnumLiteral;
 import com.adacore.gnatpolyglot.ada2proxy.proxy.EnumType;
@@ -27,6 +28,7 @@ import com.adacore.gnatpolyglot.proxy.Transfer;
 import com.adacore.gnatpolyglot.proxy.Transfer.RequiredOwner;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseRecordDef;
+import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,6 +54,36 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
 
     public AdaVisitor(AdaAPI api) {
         this.api = api;
+    }
+
+    /**
+     * Return the transfer informations necessary for passing a value of type {@code type} through
+     * parameters in the proxy.
+     */
+    public static Transfer getTransfer(Libadalang.BaseTypeDecl type) {
+        // Record value types are given through an address, but later **copied** into the
+        // arguments, so the ownership does not matter. Only access types need some
+        // ownership information.
+        return new Transfer(
+                type.pIsAccessType(Libadalang.AdaNode.NONE)
+                        ? RequiredOwner.LIBRARY
+                        : RequiredOwner.ANY);
+    }
+
+    /** Return the {@link Owner} when a value of type {@code type} is returned in the proxy. */
+    public static Owner getReturnOwner(Libadalang.BaseTypeDecl type) {
+        if (!type.isNone()) {
+            // When returning an access, there is no way to determine whether the pointer is to be
+            // freed by the user or the library at an other moment. The safest way to avoid the any
+            // errors is to making the returning access library owned.
+            if (type.pIsAccessType(Libadalang.AdaNode.NONE)) return Owner.LIBRARY;
+            // Record and Array value types are allocated on the heap before being returned from the
+            // Ada glue. Since the copy is performed after the called Ada function has returned, we
+            // know for sure that the user is the only owner of that heap value.
+            if (AdaTypeMatcher.isBindedAsClass(type) || type.pIsArrayType(Libadalang.AdaNode.NONE))
+                return Owner.USER;
+        }
+        return Owner.UNKNOWN;
     }
 
     /** Turn a fully qualified name into a unique C symbol. */
@@ -434,17 +466,10 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         for (var paramSpec : spec.pAbstractFormalParams()) {
             // Enqueue the parameter's type in case we do not visit it in the required list of
             // units
-            enqueueDecl(paramSpec.pFormalType(node));
+            BaseTypeDecl formalType = paramSpec.pFormalType(node);
+            enqueueDecl(formalType);
 
-            // Record value types are given through an address, but later **copied** into the
-            // arguments, so the ownership does not matter.
-            // TODO Access types: Ownership informations will be necessary when access types are
-            // handled.
-            Transfer transfer =
-                    new Transfer(
-                            paramSpec.pFormalType(node).pIsAccessType(Libadalang.AdaNode.NONE)
-                                    ? RequiredOwner.LIBRARY
-                                    : RequiredOwner.ANY);
+            Transfer transfer = getTransfer(formalType);
 
             // For each parameter declared in the spec, add a parameter.
             for (var p : paramSpec.pDefiningNames())
@@ -455,19 +480,7 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         Libadalang.BaseTypeDecl returnType = spec.pReturnType(node);
         if (!returnType.isNone()) enqueueDecl(returnType);
 
-        Owner returnOwner = Owner.UNKNOWN;
-        if (!returnType.isNone()) {
-            // When returning an access, there is no way to determine whether the pointer is to be
-            // freed by the user or the library at an other moment. The safest way to avoid the any
-            // errors is to making the returning access library owned.
-            if (returnType.pIsAccessType(Libadalang.AdaNode.NONE)) returnOwner = Owner.LIBRARY;
-            // Record and Array value types are allocated on the heap before being returned from the
-            // Ada glue. Since the copy is performed after the called Ada function has returned, we
-            // know for sure that the user is the only owner of that heap value.
-            if (AdaTypeMatcher.isBindedAsClass(returnType)
-                    || returnType.pIsArrayType(Libadalang.AdaNode.NONE)) returnOwner = Owner.USER;
-        }
-
+        Owner returnOwner = getReturnOwner(returnType);
         Name name = AdaAPI.functionProxyName(node.pDefiningName().pCanonicalText().text);
 
         Subprogram subProg = new Subprogram(node, name, parameters, symbol, role, returnOwner);
@@ -762,6 +775,17 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
         EnumType enumType = createEnumType(parentDecl);
         declarations.add(enumType);
         mappedDecls.put(parentDecl, enumType);
+        return null;
+    }
+
+    @Override
+    public Void visit(Libadalang.AccessToSubpDef node) {
+        // Create a Callback object in the AdaProxy. It will be used to create wrapper
+        // subprograms to convert to and from the C ABI in the Proxy library.
+        Libadalang.BaseTypeDecl parentDecl = (Libadalang.BaseTypeDecl) node.pParentBasicDecl();
+        Callback callback = new Callback(parentDecl);
+        declarations.add(callback);
+        mappedDecls.put(parentDecl, callback);
         return null;
     }
 

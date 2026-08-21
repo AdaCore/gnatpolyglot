@@ -372,6 +372,51 @@ alone). Because GC timing is not deterministic, the object also implements
 
    ExamplePackage.recP(null);     // null is accepted
 
+
+Callbacks
+~~~~~~~~~
+
+Callbacks are bound to functional interfaces defined in the 
+``com.adacore.gnatpolyglot.runtime.Functions`` class.
+
+.. warning::
+
+   Since Java does not have variadic generic parameters, only functions with
+   up to 10 parameters are supported.
+
+.. code:: ada
+
+   package Example
+
+      type Rec is record
+         I : Integer;
+      end record;
+
+      type Callback is function (R: Rec) return Integer;
+
+      procedure Foo (C: Callback; R: Rec) is
+      begin
+         C.all (Rec);
+      end Foo;
+
+   end Example;
+
+.. code:: java
+
+   // Example.java
+
+   public class Example {
+
+      public static void foo(Function1<Rec, Integer> c, Rec r);
+
+   }
+
+   // Main.Java
+
+   public static void main(String[] args) {
+       TestPackage.foo(r -> r.getI(), new Rec(4));
+   }
+
 Exceptions
 ----------
 

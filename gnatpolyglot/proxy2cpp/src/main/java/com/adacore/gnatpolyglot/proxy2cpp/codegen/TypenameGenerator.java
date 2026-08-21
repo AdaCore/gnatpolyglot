@@ -7,11 +7,13 @@ package com.adacore.gnatpolyglot.proxy2cpp.codegen;
 
 import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
+import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeDecl;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy.TypeWorker;
 import com.adacore.gnatpolyglot.proxy2cpp.CppAPI;
+import java.util.stream.Collectors;
 
 public class TypenameGenerator {
 
@@ -100,9 +102,29 @@ public class TypenameGenerator {
                             .append(" &");
             return builder.toString();
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            FunctionTypeExpr functionType = (FunctionTypeExpr) type;
+            StringBuilder builder =
+                    new StringBuilder("std::function<")
+                            .append(api.cppReturnTypename(functionType.returnType))
+                            .append("(");
+            builder.append(
+                    functionType.parameters.stream()
+                            .map(p -> api.cppTypename(p.type))
+                            .collect(Collectors.joining(", ")));
+            return builder.append(")>").toString();
+        }
     }
 
     private class CTypenameWorker implements TypeWorker<String> {
+
+        private boolean internal;
+
+        public CTypenameWorker(boolean internal) {
+            this.internal = internal;
+        }
 
         @Override
         public ProxyContext getContext() {
@@ -223,7 +245,17 @@ public class TypenameGenerator {
                         return constness(refType).concat("void *");
                     else return constness(refType).concat("gnatpolyglot::data **");
                 }
+
+                @Override
+                public String functionType(TypeExpr type) {
+                    return cTypename(type) + "*";
+                }
             }.apply(refType.referencedType());
+        }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            return "gnatpolyglot::callback_data";
         }
     }
 
@@ -257,6 +289,6 @@ public class TypenameGenerator {
     }
 
     public String cTypename(TypeExpr type) {
-        return new CTypenameWorker().apply(type);
+        return new CTypenameWorker(false).apply(type);
     }
 }

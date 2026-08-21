@@ -8,17 +8,16 @@ package com.adacore.gnatpolyglot.proxy2java.codegen;
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
-import com.adacore.gnatpolyglot.proxy.VTableEntry;
 import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
 import java.util.List;
 
-public class DispatchReturnConverter {
+public class UpcallReturnConverter {
 
     private class JavaReturnWorker implements JavaTypeWorker<String> {
 
         private String returnedValue;
 
-        public JavaReturnWorker(VTableEntry method, String returnedValue) {
+        public JavaReturnWorker(FunctionTypeExpr functionType, String returnedValue) {
             this.returnedValue = returnedValue;
         }
 
@@ -89,6 +88,12 @@ public class DispatchReturnConverter {
                     .append(");")
                     .toString();
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            throw new UnsupportedOperationException(
+                    "Returning references to function types in upcalls is not supported");
+        }
     }
 
     private class JavaDefaultReturnWorker implements JavaTypeWorker<String> {
@@ -139,6 +144,12 @@ public class DispatchReturnConverter {
             if (getContext().isStringOrArray(type.pointedType())) return "return null;";
             return "return 0L;";
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            throw new UnsupportedOperationException(
+                    "Returning references to function types in upcalls is not supported");
+        }
     }
 
     private class CReturnWorker implements JavaTypeWorker<String> {
@@ -146,9 +157,9 @@ public class DispatchReturnConverter {
         private String returnedValue;
         private String cReturnType;
 
-        public CReturnWorker(VTableEntry method, String returnedValue) {
+        public CReturnWorker(FunctionTypeExpr functionType, String returnedValue) {
             this.returnedValue = returnedValue;
-            this.cReturnType = api.cTypename(method.functionType.returnType);
+            this.cReturnType = api.cTypename(functionType.returnType);
         }
 
         @Override
@@ -221,17 +232,23 @@ public class DispatchReturnConverter {
             }
             return builder.append(";").toString();
         }
+
+        @Override
+        public String functionType(TypeExpr type) {
+            throw new UnsupportedOperationException(
+                    "Returning references to function types in upcalls is not supported");
+        }
     }
 
     private JavaAPI api;
 
-    public DispatchReturnConverter(JavaAPI api) {
+    public UpcallReturnConverter(JavaAPI api) {
         this.api = api;
     }
 
     /** Create the return statement to return the value from the native function to the user. */
-    public String javaReturnStatement(VTableEntry method, String returnedValue) {
-        return new JavaReturnWorker(method, returnedValue).apply(method.functionType.returnType);
+    public String javaReturnStatement(FunctionTypeExpr functionType, String returnedValue) {
+        return new JavaReturnWorker(functionType, returnedValue).apply(functionType.returnType);
     }
 
     /**
@@ -243,7 +260,7 @@ public class DispatchReturnConverter {
     }
 
     /** Create the return statement to return the value from the bound function to the JVM. */
-    public String cReturnStatement(VTableEntry method, String returnedValue) {
-        return new CReturnWorker(method, returnedValue).apply(method.functionType.returnType);
+    public String cReturnStatement(FunctionTypeExpr functionType, String returnedValue) {
+        return new CReturnWorker(functionType, returnedValue).apply(functionType.returnType);
     }
 }

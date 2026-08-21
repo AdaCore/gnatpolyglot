@@ -6,6 +6,7 @@ Template file to generate binded functions.
 --%>
 @import com.adacore.libadalang.Libadalang
 @import com.adacore.gnatpolyglot.ada2proxy.AdaAPI
+@import com.adacore.gnatpolyglot.ada2proxy.AdaTypeMatcher
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.Subprogram
 @param AdaAPI api
 @param Subprogram subp

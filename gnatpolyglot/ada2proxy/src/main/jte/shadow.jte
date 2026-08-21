@@ -5,6 +5,7 @@ vim: filetype=jteada
 Template file to generate shadow types for tagged records.
 --%>
 @import com.adacore.gnatpolyglot.ada2proxy.AdaAPI
+@import com.adacore.gnatpolyglot.ada2proxy.AdaTypeMatcher
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.Subprogram
 @import com.adacore.gnatpolyglot.proxy.FunctionDecl
 @import com.adacore.gnatpolyglot.proxy.Role.RoleKind
@@ -205,15 +206,13 @@ Template file to generate shadow types for tagged records.
          String subpName = method.name.toPascalWithUnderscore();
          String firstParam = api.argName(method.parameters.get(0).name);
       }
+
       ${api.makeShadowOverride(method, shadowTypename)} is
-         use all type Ada.Exceptions.Exception_Occurrence_Access;
          Table : ${recordName}_Vtable
          with Address => ${firstParam}.Shadow.Vtable;
          pragma Import (Ada, Table);
          procedure Free is new Ada.Unchecked_Deallocation
            (${instantiableRecordName}, ${recordAccessName});
-         Exc_Occ_A : Standard.Ada.Exceptions.Exception_Occurrence_Access;
-         Exc_Occ : Standard.Ada.Exceptions.Exception_Occurrence;
       @for(var param : method.parameters.stream().skip(1).toList())
          ${api.makeShadowParamConversion(param)};
       @endfor
@@ -223,42 +222,22 @@ Template file to generate shadow types for tagged records.
             ${firstParam}.Shadow.Self_Data,
             ${firstParam}.Shadow.Self
             @for(var p : method.parameters.stream().skip(1).toList())
-               ,
-               ${api.makeDispatchedArgument(p)}
+               , ${api.makeUpcallArgument(p)}
             @endfor
          );
-         Exc_Occ_A :=
-           GNATpolyglot.Exceptions.Addr_To_Exc
-             (GNATpolyglot.Get_Kernel.Exc_Info.Current_Exception);
-         if Exc_Occ_A /= null then
-            GNATpolyglot.Get_Kernel.Exc_Info.Current_Exception :=
-              System.Null_Address;
-            Standard.Ada.Exceptions.Save_Occurrence (Exc_Occ, Exc_Occ_A.all);
-            GNATpolyglot.Exceptions.Exc_Free (Exc_Occ_A);
-            Standard.Ada.Exceptions.Reraise_Occurrence (Exc_Occ);
-         end if;
+         @template.exception_handler(api, method.getReturnType(), isUpcall = true)
       @else
          Returned_Value : ${api.cInterfaceTypename(method.getReturnType())} :=
             Table.${vtableNames.get(method)} (
                ${firstParam}.Shadow.Self_Data,
                ${firstParam}.Shadow.Self
                @for(var p : method.parameters.stream().skip(1).toList())
-                  ,
-                  ${api.makeDispatchedArgument(p)}
+                  , ${api.makeUpcallArgument(p)}
                @endfor
             );
-         ${api.makeShadowReturnDecl(method.getReturnType())}
+         ${api.makeUpcallReturnDecl(method.getReturnType())}
       begin
-         Exc_Occ_A :=
-           GNATpolyglot.Exceptions.Addr_To_Exc
-             (GNATpolyglot.Get_Kernel.Exc_Info.Current_Exception);
-         if Exc_Occ_A /= null then
-            GNATpolyglot.Get_Kernel.Exc_Info.Current_Exception :=
-              System.Null_Address;
-            Standard.Ada.Exceptions.Save_Occurrence (Exc_Occ, Exc_Occ_A.all);
-            GNATpolyglot.Exceptions.Exc_Free (Exc_Occ_A);
-            Standard.Ada.Exceptions.Reraise_Occurrence (Exc_Occ);
-         end if;
+         @template.exception_handler(api, method.getReturnType(), isUpcall = true)
          ${api.makeShadowReturn(method)};
       @endif
       @for(var param : method.parameters.stream().skip(1).toList())

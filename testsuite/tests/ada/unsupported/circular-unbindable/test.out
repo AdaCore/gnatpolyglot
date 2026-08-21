@@ -1,22 +1,22 @@
 Running scanner test.
 Running the scanner...
-types.ads:5:4: warning: Could not bind Types.Unbindable1: Access to subprograms are not yet supported
+types.ads:5:4: warning: Could not bind Types.Unbindable1: Access to scalar types are not yet supported
 types.ads:10:4: warning: Could not bind Types.Rec1: Used type `Types.Unbindable1` is not bindable
 test.ads:6:4: warning: Could not bind Test.P1: Used type `Types.Rec1` is not bindable
 types.ads:8:4: warning: Could not bind Types.Rec1_Acc: Used type `Types.Rec1` is not bindable
 test.ads:8:4: warning: Could not bind Test.P2: Used type `Types.Rec1_Acc` is not bindable
-types.ads:17:4: warning: Could not bind Types.Unbindable2: Access to subprograms are not yet supported
+types.ads:17:4: warning: Could not bind Types.Unbindable2: Access to scalar types are not yet supported
 types.ads:22:4: warning: Could not bind Types.Rec2: Used type `Types.Unbindable2` is not bindable
 types.ads:20:4: warning: Could not bind Types.Rec2_Acc: Used type `Types.Rec2` is not bindable
 test.ads:11:4: warning: Could not bind Test.P3: Used type `Types.Rec2_Acc` is not bindable
 test.ads:13:4: warning: Could not bind Test.P4: Used type `Types.Rec2` is not bindable
-types.ads:29:4: warning: Could not bind Types.Unbindable3: Access to subprograms are not yet supported
+types.ads:29:4: warning: Could not bind Types.Unbindable3: Access to scalar types are not yet supported
 types.ads:42:4: warning: Could not bind Types.Rec_M12: Used type `Types.Unbindable3` is not bindable
 types.ads:35:4: warning: Could not bind Types.Rec_M12_Acc: Used type `Types.Rec_M12` is not bindable
 types.ads:37:4: warning: Could not bind Types.Rec_M11: Used type `Types.Rec_M12_Acc` is not bindable
 test.ads:16:4: warning: Could not bind Test.P5: Used type `Types.Rec_M11` is not bindable
 test.ads:18:4: warning: Could not bind Test.P6: Used type `Types.Rec_M12_Acc` is not bindable
-types.ads:49:4: warning: Could not bind Types.Unbindable4: Access to subprograms are not yet supported
+types.ads:49:4: warning: Could not bind Types.Unbindable4: Access to scalar types are not yet supported
 types.ads:62:4: warning: Could not bind Types.Rec_M22: Used type `Types.Unbindable4` is not bindable
 types.ads:55:4: warning: Could not bind Types.Rec_M22_Acc: Used type `Types.Rec_M22` is not bindable
 types.ads:57:4: warning: Could not bind Types.Rec_M21: Used type `Types.Rec_M22_Acc` is not bindable

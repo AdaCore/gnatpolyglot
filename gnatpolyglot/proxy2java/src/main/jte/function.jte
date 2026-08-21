@@ -6,6 +6,7 @@ Template file to generate a function.
 --%>
 @import com.adacore.gnatpolyglot.proxy.FunctionDecl
 @import com.adacore.gnatpolyglot.proxy.FunctionDecl.Overridability
+@import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr
 @import com.adacore.gnatpolyglot.proxy2java.JavaAPI
 
 @param JavaAPI api
@@ -27,6 +28,7 @@ Template file to generate a function.
     ${api.javaReturnTypename(function.type.returnType)}
     ${functionName}(${api.javaParameters(function)});
 @else
+
     private static native
     ${api.javaNativeReturnTypename(function.type.returnType)}
     ${nativeFunc}(${api.javaNativeParameters(function)});

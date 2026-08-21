@@ -31,6 +31,10 @@ public interface TypeWorker<T> {
 
     T accessType(Libadalang.BaseTypeDecl type);
 
+    default T subpAccessType(Libadalang.BaseTypeDecl type) {
+        return null;
+    }
+
     default T apply(Libadalang.BaseTypeDecl type) {
         if (AdaTypeMatcher.isNumber(type)) return intType(type);
         if (type.equals(type.pBoolType())) return boolType(type);
@@ -41,6 +45,7 @@ public interface TypeWorker<T> {
         if (AdaTypeMatcher.isPrivate(type)) return privateType(type);
         if (type.pIsRecordType(type)) return recordType(type);
         if (type.pIsArrayType(type)) return arrayType(type);
+        if (AdaTypeMatcher.isAccessToSubp(type)) return subpAccessType(type);
         if (AdaTypeMatcher.isArrayAccess(type)) return arrayAccessType(type);
         if (type.pIsAccessType(type)) return accessType(type);
         throw new RuntimeException("Unreachable: missing case for type %s".formatted(type));

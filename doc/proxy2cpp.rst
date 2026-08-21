@@ -583,6 +583,51 @@ References to Scalar type are still translated to usual C++ references.
        // Undefined behaviour: the view object is no longer valid. The value of the reference is unknown.
    }
 
+Callbacks
+~~~~~~~~~
+
+Callbacks are bound to the ``std::function`` type.
+
+.. code:: ada
+
+   package Example
+
+      type Rec is record
+         I : Integer;
+      end record;
+
+      type Callback is function (R: Rec) return Integer;
+
+      procedure Foo (C: Callback; R: Rec) is
+      begin
+         C.all (Rec);
+      end Foo;
+
+   end Example;
+
+.. code:: cpp
+
+   // example.h
+
+   namespace example {
+      class Rec {
+          int& get_i();
+          void set_i(int i);
+      };
+
+      void foo(std::function<int(example::Rec)> c, const example::Rec &r);
+   } // namespace example
+
+   // main.cpp
+
+   int callback(example::Rec &r) {
+       return r.get_i(); 
+   }
+
+   int main() {
+       foo(&callback, example::Rec{4});
+   }
+
 Exceptions
 ----------
 
