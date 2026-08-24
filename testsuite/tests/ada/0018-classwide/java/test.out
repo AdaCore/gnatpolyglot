@@ -1,0 +1,21 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+pRoot: false
+pRoot: true
+pRootA: false
+pOutRootA: false
+pRootA: true
+pOutRootA: true
+4 != 5
+Optional.empty
+call_callback: false, false
+call_callback: true, false
+call_callback: false, true
+
+Done.

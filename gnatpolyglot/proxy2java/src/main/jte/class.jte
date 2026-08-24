@@ -234,10 +234,51 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
          return !this.getClass().equals(${className}.class);
     }
 
-    <%-- (eng/libadalang/gnatpolyglot#31):
-      -- References to non-final types are not yet supported
-      --%>
-    @if(classDecl.inheritability == Inheritability.FINAL)
+    @if (classDecl.identificator != null)
+    private static native int $${classDecl.identificator}(long data, Ref buffer);
+
+    public static ${className} identify(com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer data) {
+        Ref buffer = new Ref(null);
+        int id = $${classDecl.identificator}(data.getAddress(), buffer);
+        if (data != null || id != -1) {
+            switch (id) {
+            @if (classDecl.inheritability != Inheritability.VIRTUAL)
+                case ${classDecl.id}:
+                    buffer.set(new ${className}(data));
+                    break;
+            @endif
+            @for (var childType : api.getChildTypes(classDecl).stream()
+                            .filter(c -> c.inheritability != Inheritability.VIRTUAL).toList())
+                case ${childType.id}:
+                    buffer.set(
+                        new ${api.javaTypename(childType.name.asTypeExpr())}(data)
+                    );
+                    break;
+            @endfor
+            }
+        }
+        return buffer.get().orElse(null);
+    }
+    @endif
+
+    @if (classDecl.ownerSetter != null)
+
+    private static native
+    void $${classDecl.ownerSetter}(${className} self, long data, int owner);
+
+    @Override
+    public void _setOwner(com.adacore.gnatpolyglot.runtime.PolyglotData.Owner owner) {
+        if (_isShadow()) {
+            $${classDecl.ownerSetter}(
+                this,
+                data.getAddress(),
+                owner == com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER ? 1 : 0
+            );
+        }
+        data.setOwner(owner);
+    }
+    @endif
+
     public static final class Ref extends
             com.adacore.gnatpolyglot.runtime.ObjectRef<${className}> {
 
@@ -249,7 +290,11 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
             super(
                 addr == 0L
                     ? null
+                @if (api.getContext().requiresIdentification(classDecl.name.asTypeExpr()))
+                    : ${className}.identify(
+                @else
                     : new ${className}(
+                @endif
                         new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(
                             addr, com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.LIBRARY
                         )
@@ -266,15 +311,24 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
                     this.obj = null;
                 } else {
                     data.setOwner(com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.LIBRARY);
+                @if (api.getContext().requiresIdentification(classDecl.name.asTypeExpr()))
+                    this.obj = ${className}.identify(
+                        (com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer) data
+                    );
+                @else
                     this.obj = new ${className}(
                         (com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer) data
                     );
+                @endif
                 }
+            } else if (get().map(o -> o._getData() == null).orElse(false)) {
+                // The Ref references an object, but its data is `null`: it was released when a
+                // library call freed the underlying data. It is now a dangling reference.
+                this.obj = null;
             }
         }
 
     }
-    @endif
 
     static {
         ${api.basePackage()}.Library.loadLibrary();

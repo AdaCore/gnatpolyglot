@@ -107,4 +107,63 @@ struct ${className}_vtable ${className}_vtable = {
 @endfor
 };
 
+@if (classDecl.identificator != null)
+
+    int32_t ${classDecl.identificator}(void *data, jobject *buffer);
+
+    JNIEXPORT jint
+    ${api.jniName("$" + classDecl.identificator, classDecl.name)}(
+        JNIEnv *env, jobject obj, jlong data, jobject ref_buffer
+    ) {
+        jobject buffer = NULL;
+        int32_t id = ${classDecl.identificator}((void *)data, &buffer);
+        (*env)->CallVoidMethod(
+            env,
+            ref_buffer,
+            ObjectRef_set_method(env),
+            buffer
+        );
+        return (jint) id;
+    }
+
+@endif
+
+@if (classDecl.ownerSetter != null)
+
+    <%-- Java uses different kinds of Reference to handle garbage collection of jobjects
+      -- in native calls. We must change to a weak reference when the object is user owned
+      -- (the has a reference in the Java world) and delete the previous reference, especially
+      -- if it was a GlobalRef. Not removing a Weak only leads to more memory usage, which we
+      -- still want to avoid.
+      --%>
+
+    void ${classDecl.ownerSetter}(void *data, int32_t owner);
+    void *${classDecl.backRefUpdater}(void *data, void *new_ref);
+
+    JNIEXPORT jint
+    ${api.jniName("$" + classDecl.ownerSetter, classDecl.name)}(
+        JNIEnv *env, jobject obj, jobject self, jlong data, jint owner
+    ) {
+        ${classDecl.ownerSetter}((void *)data, (int32_t)owner);
+
+        jobject new_ref = NULL;
+        if (owner == 1) {
+            new_ref = (*env)->NewWeakGlobalRef(env, self);
+        } else {
+            new_ref = (*env)->NewGlobalRef(env, self);
+        }
+
+        jobject old = ${classDecl.backRefUpdater}((void *)data, (void *)new_ref);
+        switch ((*env)->GetObjectRefType(env, old)) {
+            case JNIGlobalRefType:
+                (*env)->DeleteGlobalRef(env, old);
+                break;
+            case JNIWeakGlobalRefType:
+                (*env)->DeleteWeakGlobalRef(env, old);
+                break;
+        }
+    }
+
+@endif
+
 @endif
