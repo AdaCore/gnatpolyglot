@@ -1,0 +1,21 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+f_root: 0
+f_root: 1
+p_root_a: 0
+p_out_root_a: 0
+p_root_a: 1
+p_out_root_a: 1
+4 != 5
+0
+call_callback: 00
+call_callback: 10
+call_callback: 01
+
+Done.

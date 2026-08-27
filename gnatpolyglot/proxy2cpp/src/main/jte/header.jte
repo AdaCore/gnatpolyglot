@@ -32,7 +32,7 @@ vim: filetype=jtecpp
 #include <functional>
 #include <cstdint>
 
-@for (var include : api.getIncludes(module))
+@for (var include : api.getIncludes(module, false))
 #include "${include}"
 @endfor
 

@@ -7,10 +7,13 @@ package com.adacore.gnatpolyglot.proxy;
 
 import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
+import com.adacore.gnatpolyglot.proxy.ProxyContext.FunctionMembersEntry;
 import com.adacore.gnatpolyglot.proxy.Role.RoleKind;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class ProxyContext {
 
@@ -37,6 +40,13 @@ public class ProxyContext {
 
     /** Map a type to its member functions. */
     private Map<TypeExpr, FunctionMembersEntry> membersEntries = new HashMap<>();
+
+    /**
+     * Map a ClassDecl to its direct childs.
+     *
+     * <p>The map is lazily loaded as {@link ProxyContext#getChildTypes} is called.
+     */
+    private Map<ClassDecl, List<ClassDecl>> childTypes = new HashMap<>();
 
     public ProxyContext() {
         for (var nativeType : NativeType.values())
@@ -128,5 +138,38 @@ public class ProxyContext {
     public boolean isException(TypeExpr typeExpr) {
         return typeExpr instanceof NameTypeExpr name
                 && getTypeDecl(name.name) instanceof ExceptionDecl;
+    }
+
+    /**
+     * Return whether the type requires to be identified in its when hierarchy when passed to the
+     * user.
+     */
+    public boolean requiresIdentification(TypeExpr typeExpr) {
+        return typeExpr.isName()
+                && getTypeDecl(typeExpr.getName()) instanceof ClassDecl c
+                && c.identificator != null;
+    }
+
+    /** Return a list of all the child type of the class, direct and indirect. */
+    public List<ClassDecl> getChildTypes(ClassDecl classDecl) {
+        List<ClassDecl> directChilds = childTypes.get(classDecl);
+        if (directChilds == null) {
+            // Get all the direct childs of the class and register it.
+            directChilds =
+                    types.values().stream()
+                            .filter(
+                                    t ->
+                                            t instanceof ClassDecl c
+                                                    && c.parent != null
+                                                    && getTypeDecl(c.parent).equals(classDecl))
+                            .map(ClassDecl.class::cast)
+                            .toList();
+            childTypes.put(classDecl, directChilds);
+        }
+        // Aggregate the child types recursively.
+        return Stream.concat(
+                        directChilds.stream(),
+                        directChilds.stream().flatMap(c -> getChildTypes(c).stream()))
+                .toList();
     }
 }

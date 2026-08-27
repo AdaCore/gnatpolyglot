@@ -61,6 +61,11 @@ private:
     bool is_shadow() const {
         return false;
     }
+
+    void set_owner(gnatpolyglot::memory_owner) {
+        // NOOP
+    }
+
 };
 
 class polyglot_string::view  {

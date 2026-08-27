@@ -96,14 +96,21 @@ vim: filetype=jtecpp
 
         template <typename U>
         friend class gnatpolyglot::polyglot_ptr;
-    private:
+
+        @if (classDecl.identificator != null)
+        static ${className} *identify(gnatpolyglot::data *data);
+        @endif
 
         /**
          * For internal use.
          * Return whether this object is of a type that inherits ${className},
          * or if it is of the ${className} type.
          */
-        bool is_shadow();
+        virtual bool is_shadow() const;
+
+    private:
+
+        virtual void set_owner(gnatpolyglot::memory_owner owner);
 
     public:
 
@@ -158,6 +165,7 @@ vim: filetype=jtecpp
         char _data[sizeof(${className})];
     };
     @endif
+
 @else
     @if(classDecl.inheritability != Inheritability.FINAL)
         !{
@@ -286,8 +294,47 @@ vim: filetype=jtecpp
         return tmp;
     }
 
-    bool ${className}::is_shadow() {
-        return typeid(${className}).before(typeid(*this));
+    bool ${className}::is_shadow() const {
+        return typeid(${className}) != typeid(*this);
     }
+
+    @if (classDecl.ownerSetter != null)
+    extern "C" void ${classDecl.ownerSetter}(gnatpolyglot::data *data, int32_t owner);
+
+    void ${className}::set_owner(gnatpolyglot::memory_owner owner) {
+        if (is_shadow() && owner != gnatpolyglot::memory_owner::STATIC)
+            ${classDecl.ownerSetter}(data_(), owner == gnatpolyglot::memory_owner::USER ? 1 : 0);
+    }
+    @else
+    void ${className}::set_owner(gnatpolyglot::memory_owner) {
+        // NOOP
+    }
+    @endif
+
+    @if (classDecl.identificator != null)
+    extern "C" std::int32_t ${classDecl.identificator}(gnatpolyglot::data *data, ${className} **buffer);
+
+    ${className} *${className}::identify(gnatpolyglot::data *data) {
+        ${className} *buffer = nullptr;
+        std::int32_t id = ${classDecl.identificator}(data, &buffer);
+        if (data != nullptr || id != -1) {
+            switch (id) {
+            @if (classDecl.inheritability != Inheritability.VIRTUAL)
+                case ${classDecl.id}:
+                    buffer = new ${className}(data);
+                    break;
+            @endif
+            @for (var childType : api.getChildTypes(classDecl).stream()
+                            .filter(c -> c.inheritability != Inheritability.VIRTUAL).toList())
+                case ${childType.id}:
+                    buffer = new ${api.cppTypename(childType.name.asTypeExpr())}(data);
+                    break;
+            @endfor
+            }
+        }
+        return buffer;
+    }
+    @endif
+
 
 @endif
