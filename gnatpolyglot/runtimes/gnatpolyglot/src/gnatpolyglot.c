@@ -6,16 +6,18 @@
 #include "gnatpolyglot.h"
 
 #if __STDC_VERSION__ < 202311L
-    #if __STDC_VERSION__ >= 201112L
-        #include <threads.h>
-    #elif defined(__GNUC__) || defined(__clang__)
+    #if defined(__GNUC__) || defined(__clang__)
         #define thread_local __thread
     #elif defined(_MSC_VER)
         #define thread_local __declspec( thread )
+    #elif __STDC_VERSION__ >= 201112L
+        #include <threads.h>
+    #else
+        #error "thread_local not supported by this compiler"
     #endif
 #endif
 
 struct kernel *gnatpolyglot_get_kernel() {
-    thread_local static struct kernel k = { 0 };
+    static thread_local struct kernel k = { 0 };
     return &k;
 }
