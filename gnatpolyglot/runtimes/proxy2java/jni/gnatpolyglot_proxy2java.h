@@ -53,6 +53,8 @@ jclass ObjectRef_class(JNIEnv *env);
 
 jmethodID ObjectRef_update_method(JNIEnv *env);
 
+jmethodID ObjectRef_set_method(JNIEnv *env);
+
 jmethodID ObjectRef_getData_method(JNIEnv *env);
 
 jclass FunctionRef_class(JNIEnv *env);

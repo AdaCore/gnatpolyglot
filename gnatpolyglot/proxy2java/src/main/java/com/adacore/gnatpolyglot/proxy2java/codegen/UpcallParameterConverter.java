@@ -80,9 +80,7 @@ public class UpcallParameterConverter {
                     .append(" ")
                     .append(valueName)
                     .append(" = ")
-                    .append(
-                            JavaGenerator.makeObjectFromAddress(
-                                    valueTypename, argName, api.javaOwner(Owner.STATIC)))
+                    .append(api.instantiateObject(type, argName, Owner.STATIC))
                     .append(";")
                     .toString();
         }
@@ -187,9 +185,21 @@ public class UpcallParameterConverter {
                         .append(";\n");
             } else {
                 nullData = "0L";
-                value =
-                        JavaGenerator.makeObjectFromAddress(
-                                valueTypename, argName, api.javaOwner(Owner.LIBRARY));
+                if (getContext().requiresIdentification(type.pointedType())) {
+                    value =
+                            JavaGenerator.makeCall(
+                                    api.identificationFunction(type.pointedType()),
+                                    List.of(
+                                            JavaGenerator.makeNew(
+                                                    "com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer",
+                                                    List.of(
+                                                            argName,
+                                                            api.javaOwner(Owner.LIBRARY)))));
+                } else {
+                    value =
+                            JavaGenerator.makeObjectFromAddress(
+                                    valueTypename, argName, api.javaOwner(Owner.LIBRARY));
+                }
             }
             return builder.append(valueTypename)
                     .append(" ")

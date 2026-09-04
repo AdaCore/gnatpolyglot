@@ -193,6 +193,11 @@ private:
     bool is_shadow() const {
         return false;
     }
+
+    void set_owner(gnatpolyglot::memory_owner) {
+        // NOOP
+    }
+
 };
 
 template<typename T>

@@ -19,6 +19,17 @@ package GNATpolyglot.Ada is
    -- Set whether the back-reference to the user value is owned by the library
    -- or the user.
 
+   function Get_Self (Shadow : Shadow_Interface) return System.Address
+   is abstract;
+   -- Return the Self field of the Shadow_Data.
+
+   function Update_Back_Reference
+       (Shadow  : in out Shadow_Interface;
+        New_Ref : System.Address) return System.Address
+   is abstract;
+   -- Set the Self field of the Shadow_Data to New_Ref, and return its previous
+   -- value.
+
    type Clone_Shadow_Type is
      access function
        (Self_Data : System.Address;

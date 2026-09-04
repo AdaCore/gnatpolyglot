@@ -217,6 +217,8 @@ public class ParameterGenerator {
                 CharSequence dataName = getParamBuffer(argName);
                 CharSequence copyName = getParamCopy(argName);
                 String addressAccessor = getContext().isStringOrArray(pointedType) ? ".data" : "";
+                CharSequence objectConstruction =
+                        api.instantiateObject(pointedType, dataName.toString());
                 return new StringBuilder("if (")
                         .append(dataName)
                         .append(addressAccessor)
@@ -226,13 +228,12 @@ public class ParameterGenerator {
                         .append(") ")
                         .append(argName)
                         .append(".reset(")
-                        .append(dataName)
-                        .append(addressAccessor)
-                        .append("== nullptr ? nullptr : new ")
-                        .append(api.cppTypename(pointedType))
-                        .append("(")
-                        .append(dataName)
-                        .append("), gnatpolyglot::memory_owner::LIBRARY);")
+                        .append(
+                                CppGenerator.makeTernary(
+                                        dataName + addressAccessor + " == nullptr",
+                                        "nullptr",
+                                        objectConstruction))
+                        .append(", gnatpolyglot::memory_owner::LIBRARY);")
                         .toString();
             }
 

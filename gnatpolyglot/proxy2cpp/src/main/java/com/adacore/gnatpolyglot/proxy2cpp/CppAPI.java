@@ -387,8 +387,8 @@ public class CppAPI {
         return context.getMembers(decl.name.asTypeExpr());
     }
 
-    public List<String> getIncludes(Module module) {
-        return IncludeCollector.getIncludes(module);
+    public List<String> getIncludes(Module module, boolean bodyIncludes) {
+        return IncludeCollector.getIncludes(module, this, bodyIncludes);
     }
 
     /** Return whether the function overrides a function of the role type parent. */
@@ -583,5 +583,30 @@ public class CppAPI {
             builder.append(returnConverter.build(functionType, lambdaReturnedValue)).append(";");
         }
         return builder.append("}").toString();
+    }
+
+    /** Return all the child type of the class. */
+    public List<ClassDecl> getChildTypes(ClassDecl classDecl) {
+        return context.getChildTypes(classDecl);
+    }
+
+    /** Return the FQN to the function that identifies the type in its hierarchy. */
+    public String identificationFunction(TypeExpr typeExpr) {
+        if (context.isClassType(typeExpr) && context.requiresIdentification(typeExpr)) {
+            return cppTypename(typeExpr) + "::identify";
+        }
+        return null;
+    }
+
+    /**
+     * Return a string that instantiates a type, calling the identificaton function instead of a
+     * constructor when necessary.
+     */
+    public String instantiateObject(TypeExpr type, String data) {
+        if (getContext().requiresIdentification(type)) {
+            return CppGenerator.makeCall(identificationFunction(type), List.of(data)).toString();
+        } else {
+            return CppGenerator.makeNew(cppTypename(type), List.of(data)).toString();
+        }
     }
 }

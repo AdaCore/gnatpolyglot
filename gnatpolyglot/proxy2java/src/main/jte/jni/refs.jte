@@ -20,7 +20,6 @@ Template file to generate the accessors of Ref classes of ClassDecls.
         proxy.modules.stream()
             .flatMap(m -> m.declarations.stream().filter(ClassDecl.class::isInstance))
             .map(c -> (ClassDecl) c)
-            .filter(c -> c.inheritability == Inheritability.FINAL)
             .toList();
 }
 

@@ -32,6 +32,13 @@ public class IncludeCollector {
     private static class Visitor implements ProxyVisitor<Void> {
 
         HashSet<FullyQualifiedName> includedNames = new HashSet<>();
+        private boolean bodyIncludes;
+        private CppAPI api;
+
+        public Visitor(CppAPI api, boolean bodyIncludes) {
+            this.api = api;
+            this.bodyIncludes = bodyIncludes;
+        }
 
         @Override
         public Void visit(Proxy proxy) {
@@ -58,6 +65,11 @@ public class IncludeCollector {
             if (classDecl.parent != null) {
                 FullyQualifiedName parentName = classDecl.parent.getParentFullyQualifiedName();
                 if (parentName != null) includedNames.add(parentName);
+            }
+            if (bodyIncludes && classDecl.identificator != null) {
+                for (var child : api.getChildTypes(classDecl)) {
+                    includedNames.add(child.name.getParentFullyQualifiedName());
+                }
             }
             return null;
         }
@@ -142,8 +154,8 @@ public class IncludeCollector {
         }
     }
 
-    public static List<String> getIncludes(Module module) {
-        Visitor visitor = new Visitor();
+    public static List<String> getIncludes(Module module, CppAPI api, boolean bodyIncludes) {
+        Visitor visitor = new Visitor(api, bodyIncludes);
         visitor.visit(module);
         return visitor.includedNames.stream()
                 .map(n -> n.join(r -> r.getLastName().toLower(), "", "_", ".h"))

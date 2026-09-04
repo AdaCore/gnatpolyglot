@@ -43,20 +43,6 @@ public class BindableDeclChecker {
         for (var paramType : spec.pParamTypes(decl)) {
             checkUse(decl, paramType);
         }
-        for (var param : spec.pAbstractFormalParams()) {
-            BaseTypeDecl formalType = param.pFormalType(spec);
-            if (param instanceof Libadalang.ParamSpec paramSpec
-                    && formalType.pIsAccessType(spec)
-                    && !AdaTypeMatcher.isAccessToSubp(formalType)
-                    && formalType.pAccessedType(spec).pIsTaggedType(spec)
-                    && (paramSpec.fMode() instanceof Libadalang.ModeOut
-                            || paramSpec.fMode() instanceof Libadalang.ModeInOut)) {
-                throw new UnbindableDeclException(
-                        decl,
-                        "Returning access to tagged types through out parameters is not yet"
-                                + " supported");
-            }
-        }
         if ((decl.pHasAspect(Libadalang.Symbol.create("Pre'Class"), false, false)
                         || decl.pHasAspect(Libadalang.Symbol.create("Post'Class"), false, false))
                 && spec.pPrimitiveSubpTaggedType(false).pIsAbstractType())
@@ -66,15 +52,7 @@ public class BindableDeclChecker {
                             + " are not bindable");
         Libadalang.BaseTypeDecl returnType = spec.pReturnType(decl);
         if (!returnType.isNone()) {
-            if (returnType.pIsClasswide())
-                throw new UnbindableDeclException(
-                        decl, "Returning class wide object is not yet supported");
             checkUse(decl, returnType);
-            if (returnType.pIsAccessType(spec)
-                    && !AdaTypeMatcher.isAccessToSubp(returnType)
-                    && returnType.pAccessedType(spec).pIsTaggedType(spec))
-                throw new UnbindableDeclException(
-                        decl, "Returning access to tagged types is not yet supported");
         }
         return CheckStatus.OK;
     }
@@ -148,9 +126,6 @@ public class BindableDeclChecker {
             Libadalang.BaseTypeDecl accessedType =
                     (Libadalang.BaseTypeDecl)
                             decl.pAccessedType(decl).pMostVisiblePart(decl, false);
-            if (accessedType.pIsClasswide())
-                throw new UnbindableDeclException(
-                        decl, "Access to classwide types are not yet supported");
             if (accessedType.pIsAccessType(Libadalang.AdaNode.NONE))
                 throw new UnbindableDeclException(
                         decl, "Access to access types are not yet supported");

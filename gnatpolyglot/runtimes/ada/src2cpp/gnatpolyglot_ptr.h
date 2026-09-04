@@ -27,6 +27,7 @@ enum memory_owner {
 #ifdef __cplusplus
 struct shared_counter {
     int count;
+    bool is_shadow;
     memory_owner owner;
 };
 
@@ -36,12 +37,15 @@ public:
     polyglot_ptr(T* data, memory_owner owner = memory_owner::LIBRARY)
         : _object_data(data)
         , _shared_counter(
-            data == nullptr ? nullptr : new shared_counter{1, owner}
+            data == nullptr
+                ? nullptr
+                : new shared_counter{1, data->is_shadow(), owner }
         )
-    { }
+    {
+        if (*this) _object_data->set_owner(owner);
+    }
     explicit polyglot_ptr(T& data)
-        : _object_data(&data)
-        , _shared_counter(new shared_counter{1, memory_owner::STATIC})
+        : polyglot_ptr(&data, memory_owner::STATIC)
     { }
 
 #if __cplusplus >= 201103L
@@ -129,6 +133,7 @@ public:
         if (_shared_counter != nullptr
                 && _shared_counter->owner != memory_owner::STATIC) {
             _shared_counter->owner = owner;
+            _object_data->set_owner(owner);
         }
     }
 
@@ -159,7 +164,7 @@ public:
                 delete _object_data;
                 _object_data = nullptr;
             } else if (_shared_counter->owner == memory_owner::LIBRARY
-                    && !_object_data->is_shadow()){
+                    && !_shared_counter->is_shadow){
                 // In cases where the ref count reaches 0 and the object is
                 // library owned, the Ada value must not be freed. However,
                 // there exists a C++ value which needs to be freed.

@@ -6,6 +6,7 @@
 package com.adacore.gnatpolyglot.proxy2cpp.codegen;
 
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
+import com.adacore.gnatpolyglot.proxy.Owner;
 import com.adacore.gnatpolyglot.proxy.Parameter;
 import com.adacore.gnatpolyglot.proxy.PointerTypeExpr;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
@@ -64,27 +65,53 @@ public class UpcallParameterConverter {
 
         @Override
         public String classType(TypeExpr type) {
-            return new StringBuilder(api.cppReturnTypename(type.makeReference(false)))
+            String bufferName = getBufferValue(argName);
+            CharSequence objectConstruction =
+                    api.instantiateObject(
+                            type,
+                            CppGenerator.makeConstCast(api.cTypename(type), argName).toString());
+            // Build a polyglot_ptr, library owned: We can't know for sure if a view can hold the
+            // value since the pointer may require identification.
+            String ptrHolder = "___" + argName;
+            String pointerTypename = api.cppTypename(type.makePointer(false, false));
+            String referenceTypename = api.cppTypename(type.makeReference(false));
+            return new StringBuilder(cppTypename)
+                    .append(" *")
+                    .append(ptrHolder)
+                    .append(" = ")
+                    .append(objectConstruction)
+                    .append(";")
+                    .append(pointerTypename)
+                    .append(" ")
+                    .append(bufferName)
+                    .append(" = ")
+                    .append(
+                            CppGenerator.makeCall(
+                                    pointerTypename,
+                                    List.of(
+                                            ptrHolder,
+                                            CppGenerator.makeTernary(
+                                                    ptrHolder + "->is_shadow()",
+                                                    api.cppOwner(Owner.STATIC),
+                                                    api.cppOwner(Owner.LIBRARY)))))
+                    .append(";")
+                    .append(referenceTypename)
                     .append(" ")
                     .append(valueName)
                     .append(" = ")
-                    .append(CppGenerator.makeView(cppTypename, argName))
+                    .append(CppGenerator.deref(bufferName))
                     .toString();
         }
 
         @Override
         public String pointerType(TypeExpr type) {
+            TypeExpr pointedType = type.pointedType();
+            CharSequence objectConstruction = api.instantiateObject(pointedType, argName);
             return new StringBuilder(cppTypename)
                     .append(" ")
                     .append(valueName)
                     .append(" = ")
-                    .append(
-                            CppGenerator.makeCall(
-                                    cppTypename,
-                                    List.of(
-                                            CppGenerator.makeNew(
-                                                    api.cppTypename(type.pointedType()),
-                                                    List.of(argName)))))
+                    .append(CppGenerator.makeCall(cppTypename, List.of(objectConstruction)))
                     .toString();
         }
 
@@ -131,7 +158,7 @@ public class UpcallParameterConverter {
                 @Override
                 public String classType(TypeExpr type) {
                     cppTypename = api.cppTypename(type);
-                    return ConversionWorker.this.apply(type);
+                    return ConversionWorker.this.apply(type.referencedType());
                 }
 
                 @Override
@@ -159,6 +186,8 @@ public class UpcallParameterConverter {
                     } else {
                         builder.append(CppGenerator.deref(argName));
                     }
+                    CharSequence objectConstruction =
+                            api.instantiateObject(pointedType, bufferAccess.toString());
                     builder.append(";\n")
                             .append(cppTypename)
                             .append(" ")
@@ -166,11 +195,7 @@ public class UpcallParameterConverter {
                             .append(" = ")
                             .append(
                                     CppGenerator.makeCall(
-                                            cppTypename,
-                                            List.of(
-                                                    CppGenerator.makeNew(
-                                                            api.cppTypename(pointedType),
-                                                            List.of(bufferAccess)))));
+                                            cppTypename, List.of(objectConstruction)));
 
                     return builder.toString();
                 }

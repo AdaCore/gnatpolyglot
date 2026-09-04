@@ -158,13 +158,12 @@ public class ReturnConverter {
                                 List.of(returnedValue, api.javaOwner(functionType.returnOwner)));
             }
 
+            CharSequence objConstruction =
+                    api.instantiateObject(type.pointedType(), pointerData.toString());
             // Create an Optional that contain the possibly null object.
             StringBuilder ternary =
                     JavaGenerator.makeTernary(
-                            returnedValue + " == " + nullData,
-                            "null",
-                            JavaGenerator.makeNew(
-                                    api.javaTypename(type.pointedType()), List.of(pointerData)));
+                            returnedValue + " == " + nullData, "null", objConstruction);
             // We cannot wrap the result of array pointer getters inside optionals, or overrding
             // would fail.
             boolean wrapToOptional =

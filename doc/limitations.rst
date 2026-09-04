@@ -178,22 +178,6 @@ Arrays indexed by enumeration types are not bindable.
 
    type Unsupported is array (Enum range <>) of Integer;
 
-Classwide objects
-~~~~~~~~~~~~~~~~~
-
-Any access to a classwide object is not supported. Moreover, functions
-that return a classwide object cannot be bound either.
-
-.. code:: ada
-
-   type T is tagged null record;
-
-   type Unsupported_T is access all T'Class;
-
-   function Unsupported return T'Class;
-
-   procedure Support (Obj: T'Class);
-
 Controlled types
 ~~~~~~~~~~~~~~~~
 

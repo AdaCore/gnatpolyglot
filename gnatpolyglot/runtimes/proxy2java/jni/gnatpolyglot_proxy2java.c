@@ -195,6 +195,21 @@ jmethodID ObjectRef_update_method(JNIEnv *env) {
     return m;
 }
 
+jmethodID ObjectRef_set_method(JNIEnv *env) {
+    static jmethodID m = NULL;
+    if (m == NULL) {
+        jclass clazz = ObjectRef_class(env);
+        m = (*env)->GetMethodID(
+            env,
+            clazz,
+            "set",
+            "(Lcom/adacore/gnatpolyglot/runtime/PolyglotObject;)V"
+        );
+    }
+    return m;
+
+}
+
 jmethodID ObjectRef_getData_method(JNIEnv *env) {
     static jmethodID m = NULL;
     if (m == NULL) {

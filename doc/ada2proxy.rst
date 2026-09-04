@@ -180,6 +180,36 @@ Tagged types
 A tagged type is bound as a non-final type and can be inherited in
 generated bindings through the use of a shadow type.
 
+Type identification
+^^^^^^^^^^^^^^^^^^^
+
+Polyglot guarantees that the specific type of a returned classwide value in a
+hierarchy is preserved:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Ada declaration
+     - Java usage
+   * - .. code::ada
+
+          type T is tagged null record;
+          type T_Child is new T with null record;
+
+          function Get_T return T'Class is (T'(null record));
+          function Get_T_Child return T'Class is (T_Child'(null record));
+
+     - .. code::java
+
+          var t1 = getT();
+          assert t1.get().getClass() == T.class;
+
+          var t2 = getTChild();
+          assert t2.get().getClass() == TChild.class;
+
+When a classwide value is returned, the proxy returns it as an access to
+classwide.
+
 Shadow types
 ^^^^^^^^^^^^
 

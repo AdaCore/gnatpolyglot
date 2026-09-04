@@ -20,6 +20,10 @@ vim: filetype=jtecpp
 
 #include "${api.headerFilePath(module).getFileName().toString()}"
 
+@for (var include : api.getIncludes(module, true))
+#include "${include}"
+@endfor
+
 namespace ${api.namespacePath(module)} {
 
 @for (var decl : module.declarations)

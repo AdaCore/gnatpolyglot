@@ -25,6 +25,7 @@ Template file to generate package bodies.
 
 with Ada.Exceptions;
 with Ada.Finalization;
+with Ada.Tags;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Interfaces;

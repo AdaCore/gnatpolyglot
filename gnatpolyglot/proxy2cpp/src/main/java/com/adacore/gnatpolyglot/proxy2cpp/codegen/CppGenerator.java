@@ -20,6 +20,11 @@ public class CppGenerator {
                 .append(")");
     }
 
+    /** Create a const_cast expression. */
+    public static StringBuilder makeConstCast(CharSequence typename, CharSequence expr) {
+        return makeCast("const_cast", typename, expr);
+    }
+
     /** Create a static_cast expression. */
     public static StringBuilder makeStaticCast(CharSequence typename, CharSequence expr) {
         return makeCast("static_cast", typename, expr);

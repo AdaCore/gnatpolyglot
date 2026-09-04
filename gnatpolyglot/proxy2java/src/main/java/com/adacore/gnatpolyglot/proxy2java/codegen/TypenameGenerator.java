@@ -118,6 +118,7 @@ public class TypenameGenerator {
 
         @Override
         public String voidType(TypeExpr type) {
+            if (useNativeWrappers) return "Void";
             return "void";
         }
 

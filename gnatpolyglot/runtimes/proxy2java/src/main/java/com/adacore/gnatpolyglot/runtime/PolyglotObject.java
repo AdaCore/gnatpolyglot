@@ -77,7 +77,7 @@ public abstract class PolyglotObject implements AutoCloseable {
         return data.getOwner();
     }
 
-    public final void _setOwner(Owner owner) {
+    public void _setOwner(Owner owner) {
         data.setOwner(owner);
     }
 

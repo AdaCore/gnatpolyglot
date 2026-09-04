@@ -285,7 +285,7 @@ public class JavaAPI extends LanguageAPI {
      * function does not support array owning classes, consider using {@link #jniName(String,
      * TypeExpr)} for that purpose.
      */
-    private String jniName(String symbol, FullyQualifiedName owningClass) {
+    public String jniName(String symbol, FullyQualifiedName owningClass) {
         StringBuilder builder = new StringBuilder("Java_");
         Function<FullyQualifiedName, String> mangle =
                 (n) -> toJavaLower(n.getLastName()).replace("_", "_1");
@@ -913,7 +913,9 @@ public class JavaAPI extends LanguageAPI {
         String genericParams =
                 Stream.concat(
                                 functionType.parameters.stream().map(p -> p.type),
-                                Stream.of(functionType.returnType))
+                                returnsVoid(functionType)
+                                        ? Stream.of()
+                                        : Stream.of(functionType.returnType))
                         .map(t -> typenameGenerator.javaTypename(t, true))
                         .collect(Collectors.joining(", ", "<", ">"));
         if (functionType.parameters.size() > 10)
@@ -1054,5 +1056,43 @@ public class JavaAPI extends LanguageAPI {
     public String functionalInterfaceMethod(FunctionTypeExpr functionType) {
         if (returnsVoid(functionType)) return functionType.parameters.size() > 0 ? "accept" : "run";
         else return functionType.parameters.size() > 0 ? "apply" : "get";
+    }
+
+    /** Return all the child types of the class. */
+    public List<ClassDecl> getChildTypes(ClassDecl classDecl) {
+        return context.getChildTypes(classDecl);
+    }
+
+    /**
+     * Return the FQN of the function to call to identify the given type when passed to the user.
+     */
+    public String identificationFunction(TypeExpr typeExpr) {
+        if (context.isClassType(typeExpr) && context.requiresIdentification(typeExpr)) {
+            return javaTypename(typeExpr) + ".identify";
+        }
+        return null;
+    }
+
+    public String instantiateObject(TypeExpr type, String data) {
+        if (getContext().requiresIdentification(type)) {
+            return JavaGenerator.makeCall(identificationFunction(type), List.of(data)).toString();
+        } else {
+            return JavaGenerator.makeNew(javaTypename(type), List.of(data)).toString();
+        }
+    }
+
+    public String instantiateObject(TypeExpr type, String data, Owner owner) {
+        if (getContext().requiresIdentification(type)) {
+            return JavaGenerator.makeCall(
+                            identificationFunction(type),
+                            List.of(
+                                    JavaGenerator.makeNew(
+                                            "com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer",
+                                            List.of(data, javaOwner(owner)))))
+                    .toString();
+        } else {
+            return JavaGenerator.makeObjectFromAddress(javaTypename(type), data, javaOwner(owner))
+                    .toString();
+        }
     }
 }

@@ -65,6 +65,24 @@ public class Record extends AdaDeclaration {
     /** List of all the subprogams that have the METHOD role for this type. */
     public ArrayList<Subprogram> methods = new ArrayList<>();
 
+    /** List of all the child types. */
+    public ArrayList<Record> childTypes = new ArrayList<>();
+
+    /**
+     * Value used to identify the type of a classwide object. May be null in the case where the type
+     * is not inheritable or if @{link #getId(AdaAPI)} was not called already.
+     */
+    private Integer id = null;
+
+    /** Function symbol to set the owner of the back reference in the Shadow object. */
+    private String ownerSetterSymbol;
+
+    /** Function symbol to update the back reference of the shadow object. */
+    private String backRefUpdaterSymbol;
+
+    /** Global counter for getting identifier values. */
+    private static int currentId = 0;
+
     public Record(Libadalang.TypeDecl origin, Name name, List<Component> components) {
         super(name);
         this.origin = origin;
@@ -471,9 +489,6 @@ public class Record extends AdaDeclaration {
      * have no controlling parameters other than the first parameter. Lastly, if a primitive was
      * seen as unbindable, then the type is considered final in the proxy.
      *
-     * <p>Until we implement type shadow type identification, we are unable to dispatch on
-     * subprograms that have a classwide parameter formal type
-     *
      * <p>Upcalls that allow Ada to receive an access-to-subprogram is not supported, so mark any of
      * these occurences as non-inheritable.
      */
@@ -493,11 +508,7 @@ public class Record extends AdaDeclaration {
                                                                     param.pFormalType(param)))
                             || Stream.of(spec.pParamTypes(spec))
                                     .skip(1)
-                                    .anyMatch(
-                                            t ->
-                                                    t.equals(origin)
-                                                            || t.pBaseSubtype(origin)
-                                                                    .pIsClasswide());
+                                    .anyMatch(t -> t.equals(origin));
                 };
         return isTaggedType()
                 && Stream.of(origin.pGetPrimitives(false, false)).noneMatch(predicate);
@@ -509,5 +520,38 @@ public class Record extends AdaDeclaration {
 
     public boolean isLimited() {
         return origin.pIsLimitedType();
+    }
+
+    public List<Record> getAllChildTypes() {
+        return Stream.concat(
+                        childTypes.stream(),
+                        childTypes.stream().flatMap(c -> c.getAllChildTypes().stream()))
+                .toList();
+    }
+
+    public String getIdentificatorSymbol(AdaAPI api) {
+        if (!isTaggedType()) return null;
+        return buildMemberSymbol("Type_Identifier");
+    }
+
+    public Integer getId(AdaAPI api) {
+        if (id == null && isTaggedType()) id = currentId++;
+        return id;
+    }
+
+    public String getOwnerSetterSymbol(AdaAPI api) {
+        // The type may be tagged but not inheritable due to a primitive that
+        // cannot be overriden
+        if (ownerSetterSymbol == null && isInheritable(api)) {
+            ownerSetterSymbol = buildMemberSymbol("Owner_Setter");
+        }
+        return ownerSetterSymbol;
+    }
+
+    public String getBackRefUpdaterSymbol(AdaAPI api) {
+        if (backRefUpdaterSymbol == null && isTaggedType()) {
+            backRefUpdaterSymbol = buildMemberSymbol("Back_Ref_Updater");
+        }
+        return backRefUpdaterSymbol;
     }
 }
