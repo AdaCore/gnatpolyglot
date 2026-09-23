@@ -353,7 +353,7 @@ public class ParamConverter {
             else builder.append("function ");
             builder.append(subpName)
                     .append(" is new ")
-                    .append(Callback.callbackAdaName(type))
+                    .append(Callback.callbackAdaFQN(type))
                     .append("(")
                     .append(callbackData)
                     .append(", ")

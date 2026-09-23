@@ -161,7 +161,7 @@ public class ParamUpdater {
                             .append("'Unrestricted_Access then\n")
                             .append(bufferName)
                             .append(" := (")
-                            .append(Callback.callbackCName(type))
+                            .append(Callback.callbackCFQN(type))
                             .append("'Address")
                             .append(", ")
                             .append(AdaGenerator.makeCall(converter, List.of(valueName)))
