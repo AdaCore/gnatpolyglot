@@ -319,8 +319,16 @@ public class JavaAPI extends LanguageAPI {
         }
         StringBuilder builder = new StringBuilder("Java_");
         if (roleType.isArray()) {
+            String elementType = javaTypename(roleType.elementType());
+            if (roleType.elementType().isFunction()) {
+                int lastDot = elementType.lastIndexOf('.');
+                elementType =
+                        elementType.substring(0, lastDot)
+                                + ".00024" // The dot is replaced later to a "_"
+                                + elementType.substring(lastDot + 1);
+            }
             builder.append(
-                    javaTypename(roleType.elementType())
+                    elementType
                             .replace("_", "_1")
                             .replace(".", "_")
                             .concat(
@@ -699,6 +707,11 @@ public class JavaAPI extends LanguageAPI {
     }
 
     /** Return the member functions of a type. */
+    public ProxyContext.FunctionMembersEntry getArrayFunctions(TypeExpr type) {
+        return context.getMembers(type.makeArray());
+    }
+
+    /** Return the member functions of a type. */
     public ProxyContext.FunctionMembersEntry getPtrArrayFunctions(TypeDecl decl) {
         return context.getMembers(decl.name.asTypeExpr().makePointer(false, false).makeArray());
     }
@@ -908,8 +921,9 @@ public class JavaAPI extends LanguageAPI {
     int functionCounter = 0;
 
     public String getJavaGenericCallback(TypeExpr type) {
-        FunctionTypeExpr functionType = (FunctionTypeExpr) type.referencedType();
-        String refSuffix = type.isReference() ? ".Ref" : "";
+        FunctionTypeExpr functionType =
+                (FunctionTypeExpr) (type.isArray() ? type.elementType() : type.referencedType());
+        String typeSuffix = type.isReference() ? ".Ref" : type.isArray() ? ".Array" : "";
         String genericParams =
                 Stream.concat(
                                 functionType.parameters.stream().map(p -> p.type),
@@ -922,15 +936,15 @@ public class JavaAPI extends LanguageAPI {
             throw new UnsupportedOperationException("Too many arguments");
         if (returnsVoid(functionType)) {
             if (functionType.parameters.size() == 0)
-                return "com.adacore.gnatpolyglot.runtime.Functions.Consumer0" + refSuffix;
+                return "com.adacore.gnatpolyglot.runtime.Functions.Consumer0" + typeSuffix;
             return "com.adacore.gnatpolyglot.runtime.Functions.Consumer"
                     + functionType.parameters.size()
-                    + refSuffix
+                    + typeSuffix
                     + genericParams;
         } else
             return "com.adacore.gnatpolyglot.runtime.Functions.Function"
                     + functionType.parameters.size()
-                    + refSuffix
+                    + typeSuffix
                     + genericParams;
     }
 

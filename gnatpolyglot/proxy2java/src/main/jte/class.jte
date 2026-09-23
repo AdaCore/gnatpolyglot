@@ -204,11 +204,11 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
     }
 
 @if (arrayFunctions != null)
-    @template.array_class(api, classDecl, arrayFunctions, false)
+    @template.array_class(api, className, arrayFunctions, false)
 @endif
 
 @if (ptrArrayFunctions != null)
-    @template.array_class(api, classDecl, ptrArrayFunctions, true)
+    @template.array_class(api, className, ptrArrayFunctions, true)
 @endif
 
 @if(classDecl.inheritability != Inheritability.FINAL)

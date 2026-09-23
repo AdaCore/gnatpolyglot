@@ -11,12 +11,11 @@ Template file to generate a class.
 @import com.adacore.gnatpolyglot.proxy2java.JavaAPI
 
 @param JavaAPI api
-@param ClassDecl classDecl
+@param String className
 @param FunctionMembersEntry arrayFunctions
 @param boolean isPtrArray
 
 !{
-    String className = classDecl.name.getLastName().toPascal();
     String arrayName = isPtrArray ? "PtrArray" : "Array";
 }
 
@@ -113,6 +112,13 @@ Template file to generate a class.
 
         @endif
     @endfor
+
+    <%-- Some arrays may not have a setter function. --%>
+    @if (!arrayFunctions.memberFunctions.stream().filter(m -> m.role.kind == RoleKind.SETTER).findFirst().isPresent())
+        public ${className} setUnslided(int index, ${className} element) {
+            throw new UnsupportedOperationException("No setter available");
+        }
+    @endif
 
         !{
             FunctionDecl freeFunc = arrayFunctions.freeFunction;
