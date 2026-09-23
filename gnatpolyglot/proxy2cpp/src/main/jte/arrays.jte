@@ -17,6 +17,14 @@ vim: filetype=jtecpp
 #include "${include}"
 @endfor
 
+#include <cstdint>
+#include <functional>
+#include <gnatpolyglot.h>
+#include <gnatpolyglot_ada_arrays.h>
+#include <gnatpolyglot_ada_exceptions.h>
+
+#include "gnatpolyglot_exceptions_${api.getProjectName().toLower()}.h"
+
 namespace ${api.namespacePath(module)} {
 
 @for (var decl : module.declarations)
@@ -47,7 +55,22 @@ namespace ${api.namespacePath(module)} {
             ${api.verifyOwnership(param)}
             ${api.createPointerBuffer(param, functionDecl)}
         @endfor
-            ${api.makeReturnStatement(functionDecl, api.callCSymbol(functionDecl))};
+        @if (api.returnsVoid(functionDecl.type))
+            ${api.callCSymbol(functionDecl)};
+        @else
+            ${api.cTypename(functionDecl.type.returnType)} returned_value =
+                ${api.callCSymbol(functionDecl)};
+            ${api.makeReturnStatement(functionDecl, "returned_value")};
+        @endif
+        }
+    @endif
+
+    @if (functionDecl.role.kind == RoleKind.GETTER &&
+            functionDecl.role.type.elementType().isFunction())
+        template <>
+        void ${api.cppTypename(functionDecl.role.type)}::set(
+                std::int32_t, ${api.cppTypename(functionDecl.type.returnType.makeReference(true))}) {
+            throw gnatpolyglot::ada::exceptions::ConstraintError("functions cannot be escaped.");
         }
     @endif
 @endfor
