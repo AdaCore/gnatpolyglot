@@ -57,6 +57,13 @@ package GNATpolyglot.Ada.Arrays is
 
    generic
       type C is private;
+      C_Callback : System.Address;
+   function Get_Subp
+     (Self : Polyglot_Array; Index : Interfaces.C.Int)
+        return GNATpolyglot.Callback_Data;
+
+   generic
+      type C is private;
    procedure Set
      (Self : Polyglot_Array; Index : Interfaces.C.Int; New_Val : C);
 

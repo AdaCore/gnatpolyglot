@@ -7,9 +7,12 @@ Template file to generate array related functions of the Ada bindings.
 @import java.util.List
 @import com.adacore.libadalang.Libadalang
 @import com.adacore.gnatpolyglot.ada2proxy.AdaAPI
+@import com.adacore.gnatpolyglot.ada2proxy.AdaTypeMatcher
 @import com.adacore.gnatpolyglot.ada2proxy.ArrayCollector
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.AdaProxy
 @import com.adacore.gnatpolyglot.ada2proxy.proxy.Array
+@import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback
+@import com.adacore.gnatpolyglot.ada2proxy.proxy.Package
 @import com.adacore.gnatpolyglot.proxy.Role.RoleKind
 @import java.util.stream.Collectors
 @param AdaAPI api
@@ -37,6 +40,15 @@ components.stream()
       .collect(Collectors.joining("\n"))
 }
 
+${
+components.stream()
+      .filter(t -> AdaTypeMatcher.isAccessToSubp(t))
+      .map(t -> Package.getProxyUnitName((Libadalang.BasePackageDecl) t.pParentBasicDecl()))
+      .distinct()
+      .map(n -> "with " + n + ";")
+      .collect(Collectors.joining("\n"))
+}
+
 package GNATpolyglot.Ada.Arrays.Non_Native is
 
    @for(var component : components)
@@ -49,7 +61,10 @@ package GNATpolyglot.Ada.Arrays.Non_Native is
             String interfaceType = api.cInterfaceTypename(component);
          }
          @if (f.role.kind == RoleKind.GETTER)
-            @if (component.pIsAccessType(Libadalang.AdaNode.NONE))
+            @if (AdaTypeMatcher.isAccessToSubp(component))
+               function ${subpName} is new Get_Subp
+                 (Standard.${componentTypename}, ${Callback.callbackCFQN(component)}'Address);
+            @elseif (component.pIsAccessType(Libadalang.AdaNode.NONE))
                function ${subpName} is new Get_Access (Standard.${componentTypename});
             @else
                function ${subpName} is new Get (Standard.${componentTypename});

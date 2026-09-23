@@ -209,7 +209,7 @@ public class ProxyValidator implements Callable<Integer> {
                     if (!context.register(functionDecl)) {
                         addDiagnostic(".kind", "a function already has a similar role");
                     }
-                } else if (decl instanceof ExceptionDecl exc) {
+                } else if (decl instanceof ExceptionDecl || role.type instanceof ArrayTypeExpr) {
                     if (!context.register(functionDecl)) {
                         addDiagnostic(".kind", "a function already has a similar role");
                     }

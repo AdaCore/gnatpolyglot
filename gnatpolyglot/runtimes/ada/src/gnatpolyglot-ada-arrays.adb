@@ -174,6 +174,25 @@ package body GNATpolyglot.Ada.Arrays is
       return System.Null_Address;
    end Get_Access;
 
+   --------------
+   -- Get_Subp --
+   --------------
+
+   function Get_Subp
+     (Self : Polyglot_Array; Index : Interfaces.C.Int) return GNATpolyglot.Callback_Data is
+      function Local_Get_Access is new Get_Access (C);
+   begin
+      return
+        (Local_Get_Access (Self, Index),
+         C_Callback,
+         System.Null_Address);
+   exception
+      when E: others =>
+         GNATpolyglot.Exceptions.Raise_Exception
+           (E, GNATpolyglot.Exceptions.Identify_Standard_Exception'Access);
+      return (others => System.Null_Address);
+   end Get_Subp;
+
    ---------
    -- Set --
    ---------

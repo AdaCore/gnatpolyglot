@@ -122,7 +122,7 @@ public class Array extends AdaDeclaration {
 
             // Declare the getter
             TypeExpr getterReturnType =
-                    componentTypeExpr instanceof PointerTypeExpr
+                    componentTypeExpr.isPointer() || componentTypeExpr.isFunction()
                             ? componentTypeExpr
                             : componentTypeExpr.makeReference(false);
             // If the array component is an access type, the owner must be the library: it is
@@ -154,42 +154,44 @@ public class Array extends AdaDeclaration {
                             FunctionDecl.Overridability.FINAL,
                             FunctionDecl.Staticness.NON_STATIC));
 
-            // Declare the setter
-            //
-            // If the component is an access type, the owner must be library: the subprogram
-            // explicitely escapes the pointer.
-            // In other cases, the owner does not mater as the element will be copied, creating a
-            // new instance in the array.
-            functions.add(
-                    new FunctionDecl(
-                            moduleName.append(Name.fromLower("set")),
-                            "Sets the value of the element at ``Index`` to ``New_Val``",
-                            new Role(RoleKind.SETTER, arrayTypeExpr, null),
-                            buildMemberSymbol(componentTypename, "_Setter"),
-                            new FunctionTypeExpr(
-                                    List.of(
-                                            new Parameter(
-                                                    Name.fromLower("self"),
-                                                    arrayTypeExpr.makeReference(false),
-                                                    new Transfer(RequiredOwner.ANY)),
-                                            new Parameter(
-                                                    Name.fromLower("index"),
-                                                    NativeType.SINT32.typeExpr,
-                                                    new Transfer(RequiredOwner.ANY)),
-                                            new Parameter(
-                                                    Name.fromLower("new_val"),
-                                                    arrayTypeExpr.typeExpr.makeReference(true),
-                                                    new Transfer(
-                                                            componentTypeExpr
-                                                                            instanceof
-                                                                            PointerTypeExpr
-                                                                    ? RequiredOwner.LIBRARY
-                                                                    : RequiredOwner.ANY))),
-                                    NativeType.VOID.typeExpr,
-                                    Owner.UNKNOWN),
-                            FunctionDecl.Visibility.PUBLIC,
-                            FunctionDecl.Overridability.FINAL,
-                            FunctionDecl.Staticness.NON_STATIC));
+            // Callbacks cannot be escaped, so do not generate a setter.
+            if (!componentTypeExpr.isFunction()) {
+                // Declare the setter
+                //
+                // If the component is an access type, the owner must be library: the subprogram
+                // explicitely escapes the pointer. In other cases, the owner does not mater as the
+                // element will be copied, creating a new instance in the array.
+                functions.add(
+                        new FunctionDecl(
+                                moduleName.append(Name.fromLower("set")),
+                                "Sets the value of the element at ``Index`` to ``New_Val``",
+                                new Role(RoleKind.SETTER, arrayTypeExpr, null),
+                                buildMemberSymbol(componentTypename, "_Setter"),
+                                new FunctionTypeExpr(
+                                        List.of(
+                                                new Parameter(
+                                                        Name.fromLower("self"),
+                                                        arrayTypeExpr.makeReference(false),
+                                                        new Transfer(RequiredOwner.ANY)),
+                                                new Parameter(
+                                                        Name.fromLower("index"),
+                                                        NativeType.SINT32.typeExpr,
+                                                        new Transfer(RequiredOwner.ANY)),
+                                                new Parameter(
+                                                        Name.fromLower("new_val"),
+                                                        arrayTypeExpr.typeExpr.makeReference(true),
+                                                        new Transfer(
+                                                                componentTypeExpr
+                                                                                instanceof
+                                                                                PointerTypeExpr
+                                                                        ? RequiredOwner.LIBRARY
+                                                                        : RequiredOwner.ANY))),
+                                        NativeType.VOID.typeExpr,
+                                        Owner.UNKNOWN),
+                                FunctionDecl.Visibility.PUBLIC,
+                                FunctionDecl.Overridability.FINAL,
+                                FunctionDecl.Staticness.NON_STATIC));
+            }
         }
         return functions;
     }
