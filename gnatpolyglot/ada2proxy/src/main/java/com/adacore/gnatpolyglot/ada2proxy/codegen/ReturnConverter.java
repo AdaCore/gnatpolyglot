@@ -238,7 +238,7 @@ public class ReturnConverter {
         public String subpAccessType(BaseTypeDecl type) {
             // Return the C ABI wrapper alongside the Ada subprogram.
             return new StringBuilder("return (")
-                    .append(Callback.callbackCName(type))
+                    .append(Callback.callbackCFQN(type))
                     .append("'Address")
                     .append(", ")
                     .append(AdaGenerator.makeCall(RETURN_TYPE_CONVERTER, List.of(returnedValue)))

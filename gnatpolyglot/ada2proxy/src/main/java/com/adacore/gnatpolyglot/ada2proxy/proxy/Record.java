@@ -24,6 +24,7 @@ import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.TypeDef;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -203,6 +204,7 @@ public class Record extends AdaDeclaration {
         List<Parameter> res =
                 getAllComponents().stream()
                         .filter(c -> withDefaults || !c.hasDefaultValue())
+                        .filter(c -> !AdaTypeMatcher.isAccessToSubp(c.getType()))
                         .map(
                                 c ->
                                         new Parameter(
@@ -241,7 +243,14 @@ public class Record extends AdaDeclaration {
             // add the constructor since a copy is forced.
             if (!origin.pIsPrivate()
                     && components.stream().anyMatch(c -> c.hasDefaultValue())
-                    && components.stream().allMatch(c -> c.hasDefaultValue() || !c.isLimited())) {
+                    && components.stream().allMatch(c -> c.hasDefaultValue() || !c.isLimited())
+                    // The first constructor (if it exists) ignores callback components. We need to
+                    // make sure that the ctor with default values does not have the same parameters
+                    // as the first ctor.
+                    && Optional.ofNullable(
+                                    allocFunctions.isEmpty() ? null : allocFunctions.getFirst())
+                            .map(f -> !f.type.parameters.equals(constructorParameters(false)))
+                            .orElse(true)) {
                 this.allocFunctions.add(
                         new FunctionDecl(
                                 getProxyFullyQualifiedName()
@@ -294,7 +303,16 @@ public class Record extends AdaDeclaration {
             // Private types and types that do not thave default values for any of their component
             // do not need a second specialized constructor.
             if (!origin.pIsPrivate()
-                    && getAllComponents().stream().anyMatch(c -> c.hasDefaultValue())) {
+                    && getAllComponents().stream().anyMatch(c -> c.hasDefaultValue())
+                    // The first constructor (if it exists) ignores callback components. We need to
+                    // make sure that the ctor with default values does not have the same parameters
+                    // as the first ctor.
+                    && Optional.ofNullable(
+                                    shadowAllocFunctions.isEmpty()
+                                            ? null
+                                            : shadowAllocFunctions.getFirst())
+                            .map(f -> !f.type.parameters.equals(constructorParameters(false)))
+                            .orElse(true)) {
                 this.shadowAllocFunctions.add(
                         new FunctionDecl(
                                 getProxyFullyQualifiedName()
@@ -403,7 +421,7 @@ public class Record extends AdaDeclaration {
                                 FunctionDecl.Staticness.NON_STATIC));
                 // Create the setter function.
                 TypeExpr setterType = c.getSetterType();
-                if (!c.isLimited()) {
+                if (!c.isLimited() && !AdaTypeMatcher.isAccessToSubp(c.getType())) {
                     componentAccessors.add(
                             new FunctionDecl(
                                     getProxyFullyQualifiedName()

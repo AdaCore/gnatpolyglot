@@ -7,6 +7,7 @@ package com.adacore.gnatpolyglot.ada2proxy.proxy;
 
 import com.adacore.gnatpolyglot.ada2proxy.AdaAPI;
 import com.adacore.libadalang.Libadalang;
+import com.adacore.libadalang.Libadalang.BasicDecl;
 
 public class Callback extends AdaDeclaration {
 
@@ -35,6 +36,28 @@ public class Callback extends AdaDeclaration {
         StringBuilder builder =
                 new StringBuilder(type.pRelativeName().getText() + "_Proxy_C_Callback");
         return builder.toString();
+    }
+
+    /** Return the FQN to use for the C ABI wrapper function, used for returning callbacks. */
+    public static String callbackCFQN(Libadalang.BaseTypeDecl type) {
+        type = type.pRootType(type);
+        BasicDecl parent = type.pParentBasicDecl();
+        Libadalang.BasePackageDecl pack =
+                parent instanceof Libadalang.GenericPackageDecl p
+                        ? p.fPackageDecl()
+                        : (Libadalang.BasePackageDecl) parent;
+        return Package.getProxyUnitName(pack) + "." + callbackCName(type);
+    }
+
+    /** Return the name to use for the Ada wrapper function, used for receiving callbacks. */
+    public static String callbackAdaFQN(Libadalang.BaseTypeDecl type) {
+        type = type.pRootType(type);
+        BasicDecl parent = type.pParentBasicDecl();
+        Libadalang.BasePackageDecl pack =
+                parent instanceof Libadalang.GenericPackageDecl p
+                        ? p.fPackageDecl()
+                        : (Libadalang.BasePackageDecl) parent;
+        return Package.getProxyUnitName(pack) + "." + callbackAdaName(type);
     }
 
     /** Return the name to use for the Ada wrapper function, used for receiving callbacks. */

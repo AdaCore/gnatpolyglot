@@ -6,6 +6,7 @@
 package com.adacore.gnatpolyglot.ada2proxy.codegen;
 
 import com.adacore.gnatpolyglot.ada2proxy.AdaAPI;
+import com.adacore.gnatpolyglot.ada2proxy.proxy.Callback;
 import com.adacore.libadalang.Libadalang;
 import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 import java.util.List;
@@ -90,6 +91,16 @@ public class GetterReturnConverter {
         public String accessType(BaseTypeDecl type) {
             return new StringBuilder("return ")
                     .append(AdaGenerator.makeCall("Return_Type_Converter", List.of(component)))
+                    .toString();
+        }
+
+        @Override
+        public String subpAccessType(BaseTypeDecl type) {
+            return new StringBuilder("return (")
+                    .append(Callback.callbackCFQN(type))
+                    .append("'Address, ")
+                    .append(AdaGenerator.makeCall("Return_Type_Converter", List.of(component)))
+                    .append(", System.Null_Address)")
                     .toString();
         }
     }

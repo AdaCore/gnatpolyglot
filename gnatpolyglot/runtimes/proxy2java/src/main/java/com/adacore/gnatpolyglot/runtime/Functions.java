@@ -36,7 +36,6 @@ public class Functions {
     @FunctionalInterface
     public interface Function1<A, R> extends Function<A, R> {
         class Ref<A, R> extends FunctionRef<Function1<A, R>> {}
-
     }
 
     @FunctionalInterface

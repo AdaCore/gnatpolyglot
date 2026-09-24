@@ -544,6 +544,7 @@ public class AdaAPI extends LanguageAPI {
 
     /** Return the type that must be used when returning from a getter. */
     public String getterReturnTypename(Libadalang.BaseTypeDecl type) {
+        if (AdaTypeMatcher.isAccessToSubp(type)) return cInterfaceTypename(type);
         if (AdaTypeMatcher.isArrayAccess(type))
             return cInterfaceTypename(type.pAccessedType(Libadalang.AdaNode.NONE));
         if (type.pIsArrayType(Libadalang.AdaNode.NONE))
@@ -793,6 +794,7 @@ public class AdaAPI extends LanguageAPI {
     }
 
     public String makeDefaultGetterReturn(Libadalang.BaseTypeDecl returnType) {
+        if (AdaTypeMatcher.isAccessToSubp(returnType)) return makeDefaultReturn(returnType);
         if (returnType.pIsArrayType(Libadalang.AdaNode.NONE)
                 || AdaTypeMatcher.isArrayAccess(returnType))
             return "return (1, 0, System.Null_Address)";

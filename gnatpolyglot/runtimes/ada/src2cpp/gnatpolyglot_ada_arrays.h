@@ -9,6 +9,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
+#include <functional>
+
 #include <gnatpolyglot_ptr.h>
 
 namespace gnatpolyglot::ada::arrays {
@@ -29,17 +31,28 @@ template <typename T, bool = std::is_scalar<T>::value> struct ref_selector;
 template <typename T> struct ref_selector<T, true> {
   using type = T &;
   using iterator_type = T *;
+  static T &deref(iterator_type &i) { return *i; }
 };
 
 // Specialization for non-scalar types: R is T::ref
 template <typename T> struct ref_selector<T, false> {
   using type = typename T::view;
   using iterator_type = type;
+  static T &deref(iterator_type &i) { return *i; }
 };
 
 // Specialization for pointer types: pointers are not returned by reference.
 template <typename T> struct ref_selector<polyglot_ptr<T>, false> {
   using type = polyglot_ptr<T>;
+  using iterator_type = type;
+  static T &deref(iterator_type &i) { return i; }
+};
+
+// Specialization for function types: functions are not returned by reference.
+template <typename ...T> struct ref_selector<std::function<T...>, false> {
+  using type = std::function<T...>;
+  using iterator_type = type;
+  static std::function<T...> &deref(iterator_type &i) { return i; }
 };
 
 template <typename T> class polyglot_array {
@@ -119,7 +132,7 @@ public:
 
         T &operator*() {
             prepare_view();
-            return *_view;
+            return ref_selector<T>::deref(_view);
         }
 
         T *operator->() {

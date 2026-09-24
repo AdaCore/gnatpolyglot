@@ -192,7 +192,7 @@ public class UpcallParamConverter {
                     .append(cTypename)
                     .append(" := ")
                     .append("(")
-                    .append(Callback.callbackCName(type))
+                    .append(Callback.callbackCFQN(type))
                     .append("'Address")
                     .append(", ")
                     .append(AdaGenerator.makeCall(converter, List.of(argName)))

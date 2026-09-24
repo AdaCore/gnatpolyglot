@@ -215,7 +215,8 @@ Template file to generate bindings for record types.
                Converter.To_Pointer (Self);
             Self_Value : ${recordName} renames Self_Access.all;
          @if(componentType.pIsAccessType(Libadalang.AdaNode.NONE)
-               && !AdaTypeMatcher.isArrayAccess(componentType))
+               && !AdaTypeMatcher.isArrayAccess(componentType)
+               || AdaTypeMatcher.isAccessToSubp(componentType))
             function Return_Type_Converter is new Ada.Unchecked_Conversion
               (${componentType.pFullyQualifiedName()}, System.Address);
          @endif

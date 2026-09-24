@@ -74,10 +74,6 @@ public class BindableDeclChecker {
                 for (var comp : shape.components) {
                     Libadalang.BaseTypeDecl formalType = comp.pFormalType(decl);
                     checkUse(decl, formalType);
-                    if (AdaTypeMatcher.isAccessToSubp(formalType))
-                        throw new UnbindableDeclException(
-                                decl,
-                                "Record components of type access to subprogram are not supported");
                 }
             }
         }
@@ -157,10 +153,6 @@ public class BindableDeclChecker {
             if (compType.pIsArrayType(decl) || AdaTypeMatcher.isArrayAccess(compType)) {
                 throw new UnbindableDeclException(
                         decl, "Arrays of array or access to arrays are not yet supported");
-            }
-            if (AdaTypeMatcher.isAccessToSubp(compType)) {
-                throw new UnbindableDeclException(
-                        decl, "Arrays of access to subprogram are not supported");
             }
         } else if (decl.equals(decl.pStdWideWideCharType())
                 || decl.equals(decl.pStdWideCharType())) {

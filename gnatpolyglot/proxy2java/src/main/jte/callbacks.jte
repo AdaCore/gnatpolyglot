@@ -6,6 +6,7 @@ Template file to generate a class for the Callbacks.
 --%>
 @import com.adacore.gnatpolyglot.proxy.Proxy
 @import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr
+@import com.adacore.gnatpolyglot.proxy.ProxyContext.FunctionMembersEntry
 @import com.adacore.gnatpolyglot.proxy2java.JavaAPI
 @import com.adacore.gnatpolyglot.proxy2java.CallbackCollector
 @import java.util.List
@@ -21,6 +22,8 @@ Template file to generate a class for the Callbacks.
 
 package ${api.basePackage()};
 
+import java.util.function.Consumer;
+
 /**
  * Class that holds the necessary functions to perform callbacks.
  */
@@ -32,6 +35,11 @@ public class Callbacks {
     public static interface ${api.getJavaCallbackTypename(callback)}
             extends ${api.getJavaGenericCallback(callback)} {
         class Ref extends ${api.getJavaGenericCallback(callback.makeReference(false))} {}
+
+    !{ FunctionMembersEntry arrayFunctions = api.getArrayFunctions(callback); }
+    @if (arrayFunctions != null)
+        @template.array_class(api, api.getJavaCallbackTypename(callback), arrayFunctions, false)
+    @endif
     }
 
     @template.callback_down(
