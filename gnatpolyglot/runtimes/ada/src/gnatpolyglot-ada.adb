@@ -6,6 +6,7 @@
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Exceptions; use Ada.Exceptions;
 with GNATpolyglot.Exceptions;
+with System; use type System.Address;
 
 package body GNATpolyglot.Ada is
 
@@ -35,6 +36,8 @@ package body GNATpolyglot.Ada is
          Standard.Ada.Exceptions.Save_Occurrence (Exc_Occ, Exc_Occ_A.all);
          GNATpolyglot.Exceptions.Exc_Free (Exc_Occ_A);
          Standard.Ada.Exceptions.Reraise_Occurrence (Exc_Occ);
+      elsif Shadow.Self = System.Null_Address then
+         raise Program_Error with "cloning failed";
       end if;
    end Adjust;
 

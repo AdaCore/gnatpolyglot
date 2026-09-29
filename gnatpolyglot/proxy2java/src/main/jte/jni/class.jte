@@ -64,17 +64,19 @@ struct ${className}_vtable ${className}_vtable;
 void *${className}_do_internal_clone(void *self_data, jobject self, void *data) {
     JavaVM *vm = self_data;
     JNIEnv *env = NULL;
-    (*vm)->AttachCurrentThread(vm, (void **)&env, NULL);
-    jobject clone = (*env)->NewGlobalRef(
-        env,
-        (*env)->CallObjectMethod(
+    if ((*vm)->AttachCurrentThread(vm, (void **)&env, NULL) == 0) {
+        jobject clone = (*env)->NewGlobalRef(
             env,
-            self,
-            PolyglotObject_internal_clone_method(env),
-            (jlong) data
-        )
-    );
-    return clone;
+            (*env)->CallObjectMethod(
+                env,
+                self,
+                PolyglotObject_internal_clone_method(env),
+                (jlong) data
+            )
+        );
+        return clone;
+    }
+    return NULL;
 }
 
 void ${className}_do_internal_free(void *self_data, jobject self) {
@@ -85,13 +87,14 @@ void ${className}_do_internal_free(void *self_data, jobject self) {
     if (self != NULL) {
         JavaVM *vm = self_data;
         JNIEnv *env = NULL;
-        (*vm)->AttachCurrentThread(vm, (void **)&env, NULL);
-        (*env)->CallObjectMethod(
-            env,
-            self,
-            PolyglotObject_internal_release_method(env)
-        );
-        (*env)->DeleteGlobalRef(env, self);
+        if ((*vm)->AttachCurrentThread(vm, (void **)&env, NULL) == 0) {
+            (*env)->CallObjectMethod(
+                env,
+                self,
+                PolyglotObject_internal_release_method(env)
+            );
+            (*env)->DeleteGlobalRef(env, self);
+        }
     }
 }
 
