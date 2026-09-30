@@ -213,16 +213,13 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
 
 @if(classDecl.inheritability != Inheritability.FINAL)
 @for (var method : classDecl.vtable)
-    !{
-        String functionName = method.name.toCamel();
-    }
 
     @template.callback(
         api,
         (FunctionTypeExpr) method.functionType,
-        "dispatch$" + functionName,
+        "dispatch$" + method.name.toCamel(),
         true,
-        functionName,
+        api.functionName(method.name, true),
         className
     )
 
