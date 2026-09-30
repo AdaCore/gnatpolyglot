@@ -12,12 +12,12 @@ public class CharacterRef extends ScalarRef {
 
     public CharacterRef() {
         super(Character.BYTES);
-        this.value.putChar(0, '\0');
+        this.value.put(0, (byte) 0);
     }
 
     public CharacterRef(char value) {
         super(Character.BYTES);
-        this.value.putChar(0, value);
+        this.value.put(0, (byte) value);
     }
 
     /** Internal use only.
@@ -29,15 +29,15 @@ public class CharacterRef extends ScalarRef {
     }
 
     public char getValue() {
-        return value.getChar(0);
+        return (char) (value.get(0) & 0xff);
     }
 
     public void setValue(char value) {
-        this.value.putChar(0, value);
+        this.value.put(0, (byte) value);
     }
 
     @Override
     public String toString() {
-        return Character.toString(value.getChar(0));
+        return Character.toString(getValue());
     }
 }
