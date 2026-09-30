@@ -267,7 +267,7 @@ Template file to generate bindings for record types.
             Buffer := GNATpolyglot.Ada.Shadow_Interface'Class(Acc.all).Get_Self;
             return -1;
          @for (var childType : rec.getAllChildTypes())
-         elsif Acc.all'Tag = ${childType.getFullyQualifiedName()}'Tag then
+         elsif Acc.all in ${childType.getFullyQualifiedName()}'Class then
             return ${childType.getId(api)};
          @endfor
          else
