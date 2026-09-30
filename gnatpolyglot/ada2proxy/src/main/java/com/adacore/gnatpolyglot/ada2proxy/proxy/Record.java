@@ -540,10 +540,11 @@ public class Record extends AdaDeclaration {
         return origin.pIsLimitedType();
     }
 
+    /** Return a list of all child types, including indirect onees, in reverse topological order. */
     public List<Record> getAllChildTypes() {
         return Stream.concat(
-                        childTypes.stream(),
-                        childTypes.stream().flatMap(c -> c.getAllChildTypes().stream()))
+                        childTypes.stream().flatMap(c -> c.getAllChildTypes().stream()),
+                        childTypes.stream())
                 .toList();
     }
 
