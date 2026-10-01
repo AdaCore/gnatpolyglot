@@ -65,15 +65,17 @@ ${callbackName} (
 
 @if (api.returnsVoid(functionType))
     ${api.callJNIUpcall(functionType, isDispatch)};
+    @for (var param : functionType.parameters.stream().skip(isDispatch ? 1 : 0).toList())
+        ${api.makeJNIUpcallParamUpdate(param)}
+    @endfor
 @else
     ${api.jniReturnTypename(functionType.returnType)} valueReturned =
         ${api.callJNIUpcall(functionType, isDispatch)};
+    @for (var param : functionType.parameters.stream().skip(isDispatch ? 1 : 0).toList())
+        ${api.makeJNIUpcallParamUpdate(param)}
+    @endfor
     ${api.makeCUpcallReturnStatement(functionType, "valueReturned")}
 @endif
-
-@for (var param : functionType.parameters.stream().skip(isDispatch ? 1 : 0).toList())
-    ${api.makeJNIUpcallParamUpdate(param)}
-@endfor
 }
 
 @endif

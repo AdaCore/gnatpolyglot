@@ -25,6 +25,11 @@ Template file to generate the accessors of Ref classes of ClassDecls.
 
 @template.text_header()
 
+@if (!isSource)
+#ifndef ${api.getProjectName().toUpper()}__REFS_H
+#define ${api.getProjectName().toUpper()}__REFS_H
+@endif
+
 #include <jni.h>
 
 @for (var clazz : classes)
@@ -134,3 +139,7 @@ Template file to generate the accessors of Ref classes of ClassDecls.
 
 @endif
 @endfor
+
+@if (!isSource)
+#endif /** ! ${api.getProjectName().toUpper()}__REFS_H */
+@endif

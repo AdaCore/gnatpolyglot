@@ -20,11 +20,20 @@ Template file to generate a the JNI and C functions for handling callbacks.
 
 @template.text_header()
 
+@if (!isSource)
+#ifndef ${api.getProjectName().toUpper()}__CALLBACKS_H
+#define ${api.getProjectName().toUpper()}__CALLBACKS_H
+@endif
+
 #include <jni.h>
 #include <stdint.h>
 
 #include "gnatpolyglot_proxy2java.h"
 #include "gnatpolyglot_ada2java.h"
+
+#include "${api.getProjectName().toLower()}__refs.h"
+#include "${api.getProjectName().toLower()}__classes.h"
+#include "${api.getProjectName().toLower()}__callbacks.h"
 
 @if (isSource)
 
@@ -67,3 +76,7 @@ static jclass ${api.getProjectName().toPascal()}_Callbacks_class(JNIEnv *env) {
 )
 
 @endfor
+
+@if (!isSource)
+#endif /** ! ${api.getProjectName().toUpper()}__CALLBACKS_H */
+@endif
