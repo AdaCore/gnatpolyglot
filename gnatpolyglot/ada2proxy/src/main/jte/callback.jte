@@ -106,6 +106,9 @@ Template file to generate callback subprograms.
          , ${api.makeUpcallArgument((Libadalang.BaseFormalParamDecl) name.pBasicDecl(), name)}
       @endfor
       );
+      @for(var name : formalParams)
+         ${api.syncDispatchParamValue(name)}
+      @endfor
       @template.exception_handler(api, spec.pReturnType(spec), isUpcall = true)
    @else
       Returned_Value : ${api.cInterfaceTypename(returnType)} :=
@@ -117,6 +120,9 @@ Template file to generate callback subprograms.
          );
          ${api.makeUpcallReturnDecl(spec.pReturnType(spec))}
    begin
+      @for(var name : formalParams)
+         ${api.syncDispatchParamValue(name)}
+      @endfor
       @template.exception_handler(api, spec.pReturnType(spec), isUpcall = true)
       ${api.makeUpcallReturn(spec)};
    @endif
