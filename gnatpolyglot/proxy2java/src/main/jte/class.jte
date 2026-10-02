@@ -13,6 +13,7 @@ Template file to generate a class.
 @import com.adacore.gnatpolyglot.proxy.Role.RoleKind
 @import com.adacore.gnatpolyglot.proxy2java.JavaAPI
 @import java.util.List
+@import java.util.stream.Collectors;
 
 @param JavaAPI api
 @param ClassDecl classDecl
@@ -28,6 +29,15 @@ Template file to generate a class.
     if (cloneFunction != null) {
         interfaces = " implements Cloneable ";
     }
+    String seal = "";
+    if (classDecl.inheritability == Inheritability.SEALED) {
+        seal = " permits %s ".formatted(
+            api.getChildTypes(classDecl).stream()
+                .filter(c -> api.getContext().getTypeDecl(c.parent) == classDecl)
+                .map(c -> api.javaTypename(c.name.asTypeExpr()))
+                .collect(Collectors.joining(", "))
+        );
+    }
 }
 
 @template.text_header()
@@ -40,7 +50,7 @@ import java.util.function.BiFunction;
 
 ${api.formatDoc(classDecl, 0)}
 public ${api.getOverridability(classDecl)}
-class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
+class ${className} extends ${api.parentClass(classDecl)}${interfaces}${seal}{
 
     /** Internal use only.
      *
@@ -211,7 +221,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}{
     @template.array_class(api, className, ptrArrayFunctions, true)
 @endif
 
-@if(classDecl.inheritability != Inheritability.FINAL)
+@if(classDecl.inheritability.isShadowable())
 @for (var method : classDecl.vtable)
 
     @template.callback(

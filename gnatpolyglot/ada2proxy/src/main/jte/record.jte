@@ -90,7 +90,7 @@ Template file to generate bindings for record types.
       pragma Export (C, ${recordPrefix}_${f.getLastName().toPascalWithUnderscore()}, "${f.symbol}");
     @endfor
 
-   @if(rec.isInheritable(api))
+   @if(rec.isShadowable(api))
       @template.shadow(api, rec, isBody)
    @endif
 
@@ -247,7 +247,7 @@ Template file to generate bindings for record types.
       @endif
     @endfor
 
-   @if(rec.isInheritable(api))
+   @if(rec.isShadowable(api))
       @template.shadow(api, rec, isBody)
    @endif
 

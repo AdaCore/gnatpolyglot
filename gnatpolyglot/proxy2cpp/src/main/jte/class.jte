@@ -167,7 +167,7 @@ vim: filetype=jtecpp
     @endif
 
 @else
-    @if(classDecl.inheritability != Inheritability.FINAL)
+    @if(classDecl.inheritability.isShadowable())
         !{
             Integer i = 0;
             HashMap<VTableEntry, String> dispatchNames = new HashMap<>();

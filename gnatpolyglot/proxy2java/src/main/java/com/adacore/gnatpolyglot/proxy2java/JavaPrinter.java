@@ -72,6 +72,14 @@ public class JavaPrinter extends Printer {
         }
 
         Path srcDir = outputPath.resolve("src", "main", "java");
+
+        // Generate the module-info.java file
+        Path moduleInfo = srcDir.resolve("module-info.java");
+        try (FileOutput moduleInfoFile = new FileOutput(moduleInfo)) {
+            templateEngine.render(
+                    "module_info.jte", Map.of("api", api, "proxy", proxy), moduleInfoFile);
+        }
+
         for (var module : proxy.modules) {
             // Generate the package class that contains free functions of the module.
             Path packageClass = srcDir.resolve(api.filepath(module));

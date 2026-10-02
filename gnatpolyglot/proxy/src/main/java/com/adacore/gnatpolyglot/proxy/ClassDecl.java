@@ -20,6 +20,13 @@ public class ClassDecl extends TypeDecl {
         INHERITABLE,
         @JsonProperty("virtual")
         VIRTUAL,
+        @JsonProperty("sealed")
+        SEALED;
+
+        /** Return whether a shadow type should exist for this Inheritability kind. */
+        public boolean isShadowable() {
+            return this == VIRTUAL || this == INHERITABLE;
+        }
     }
 
     /** Parent class type. */

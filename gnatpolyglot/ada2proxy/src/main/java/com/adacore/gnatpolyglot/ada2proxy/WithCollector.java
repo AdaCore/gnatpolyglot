@@ -144,11 +144,13 @@ public class WithCollector {
             Libadalang.BaseTypeDecl parent = rec.getFirstPrivateParentType();
             if (!parent.isNone()) includeDeclWithProxy(parent);
 
-            if (rec.isInheritable(api)) {
+            if (rec.isShadowable(api)) {
                 // We need to include all types that the shadow type will reach in its overrides.
                 for (var m : rec.getAllMethods()) {
                     m.accept(this);
                 }
+            }
+            if (rec.isTaggedType()) {
                 // The identification function must reach all child types of the type in order
                 // to compare their tag.
                 for (var t : rec.getAllChildTypes()) {

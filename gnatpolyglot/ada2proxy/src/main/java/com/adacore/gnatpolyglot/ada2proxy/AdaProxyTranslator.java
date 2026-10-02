@@ -74,7 +74,13 @@ public class AdaProxyTranslator {
 
         private Inheritability getInheritability(Record rec) {
             if (rec.isAbstract()) return Inheritability.VIRTUAL;
-            if (!rec.isInheritable(api)) return Inheritability.FINAL;
+            if (!rec.isShadowable(api)) {
+                // Some tagged types may not be inheritable due to primitives that are not
+                // overridable, but child types may be present in the proxy. Mark such types as
+                // sealed.
+                if (rec.childTypes.isEmpty()) return Inheritability.FINAL;
+                else return Inheritability.SEALED;
+            }
             return Inheritability.INHERITABLE;
         }
 
@@ -168,16 +174,16 @@ public class AdaProxyTranslator {
         /**
          * Return the vtable for the given class declaration.
          *
-         * <p>Any type that is inheritable or virtual should have a vtable, and if a type is final,
-         * then the `null` list is returned. If a type is not inheritable and not final, it will
-         * still have a vtable, although empty. Minimal vtables always have some function pointers
-         * for freeing and cloning shadow objects.
+         * <p>Any type that is inheritable or virtual should have a vtable, and if a type is sealed
+         * or final, then the `null` list is returned. If a type is not inheritable and not final,
+         * it will still have a vtable, although empty. Minimal vtables always have some function
+         * pointers for freeing and cloning shadow objects.
          */
         private List<VTableEntry> makeVtable(Record classDecl) {
             // Only tagged types can have a vtable.
-            if (getInheritability(classDecl) == Inheritability.FINAL) return null;
+            if (!getInheritability(classDecl).isShadowable()) return null;
             if (getInheritability(classDecl) == Inheritability.VIRTUAL
-                    && !classDecl.isInheritable(api)) return List.of();
+                    && !classDecl.isShadowable(api)) return List.of();
             List<VTableEntry> entries = new ArrayList<>();
             for (var m : classDecl.getAllMethods()) {
                 BaseTypeDecl returnType = m.getReturnType();
@@ -207,7 +213,7 @@ public class AdaProxyTranslator {
                 if (!rec.isAbstract()) declarations.add(rec.getCloneFunction());
             }
             declarations.addAll(rec.getGettersAndSetters());
-            if (rec.isInheritable(api)) {
+            if (rec.isShadowable(api)) {
                 declarations.addAll(rec.getShadowAllocFunctions());
                 if (!rec.isLimited()) declarations.add(rec.getShadowCloneFunction());
             }
