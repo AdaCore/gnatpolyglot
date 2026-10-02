@@ -150,6 +150,18 @@ public class UpcallParameterConverter {
                 }
 
                 @Override
+                public String enumType(TypeExpr type) {
+                    return new StringBuilder(cppTypename)
+                            .append(" ")
+                            .append(valueName)
+                            .append(" = ")
+                            .append(
+                                    CppGenerator.makeReinterpretCast(
+                                            cppTypename, CppGenerator.deref(argName)))
+                            .toString();
+                }
+
+                @Override
                 public String arrayType(TypeExpr type) {
                     cppTypename = api.cppTypename(type);
                     return ConversionWorker.this.apply(type);
