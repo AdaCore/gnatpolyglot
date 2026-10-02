@@ -24,10 +24,14 @@ vim: filetype=jtecpp
         parent = api.cppTypename(classDecl.parent.asTypeExpr());
         inherits = ": public " + parent;
     }
+    String finalSpec = classDecl.inheritability == Inheritability.FINAL
+        ? "final"
+        : "";
+
 }
 
 @if(!isSource)
-    class ${className} ${inherits}{
+    class ${className} ${finalSpec} ${inherits}{
     private:
     @if(!api.isCopyable(classDecl))
         ${className} &operator=(const ${className}&) = delete;
