@@ -290,6 +290,9 @@ Template file to generate shadow types for tagged records.
                , ${api.makeUpcallArgument(p)}
             @endfor
          );
+         @for(var param : method.parameters.stream().skip(1).toList())
+            ${api.syncDispatchParamValue(param)}
+         @endfor
          @template.exception_handler(api, method.getReturnType(), isUpcall = true)
       @else
          Returned_Value : ${api.cInterfaceTypename(method.getReturnType())} :=
@@ -302,12 +305,12 @@ Template file to generate shadow types for tagged records.
             );
          ${api.makeUpcallReturnDecl(method.getReturnType())}
       begin
+         @for(var param : method.parameters.stream().skip(1).toList())
+            ${api.syncDispatchParamValue(param)}
+         @endfor
          @template.exception_handler(api, method.getReturnType(), isUpcall = true)
          ${api.makeShadowReturn(method)};
       @endif
-      @for(var param : method.parameters.stream().skip(1).toList())
-         ${api.syncDispatchParamValue(param)}
-      @endfor
       end ${method.getOriginName()};
    @endfor
 @endif

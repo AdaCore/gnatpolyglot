@@ -24,6 +24,11 @@ Template file to generate JNI jclass getters.
 
 @template.text_header()
 
+@if (!isSource)
+#ifndef ${api.getProjectName().toUpper()}__CLASSES_H
+#define ${api.getProjectName().toUpper()}__CLASSES_H
+@endif
+
 #include <jni.h>
 
 @for (var pack : proxy.modules)
@@ -76,3 +81,7 @@ jclass ${functionName}(JNIEnv *env) {
 
 @endif
 @endfor
+
+@if (!isSource)
+#endif /** ! ${api.getProjectName().toUpper()}__CLASSES_H */
+@endif

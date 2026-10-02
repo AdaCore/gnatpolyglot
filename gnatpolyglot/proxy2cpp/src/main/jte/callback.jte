@@ -25,6 +25,12 @@ vim: filetype=jtecpp
         callee = "(*__callback)";
         calleeType = api.cppTypename(functionType);
     }
+
+    gg.jte.Content update = @`
+        @for(var param : functionType.parameters.stream().skip(isDispatch ? 1 : 0).toList())
+            ${api.checkDispatchPointerValue(param)};
+        @endfor
+    `;
 }
 
 static
@@ -48,24 +54,24 @@ ${callbackName} (
     try {
     @if(api.returnsVoid(functionType))
         ${api.makeUpcall(functionType, callee, isDispatch)};
+        ${update}
     @else
         ${api.cppReturnTypename(functionType.returnType)} returned_value =
           ${api.makeUpcall(functionType, callee, isDispatch)};
+        ${update}
         ${api.makeReturnFromDispatch(functionType, "returned_value")}
     @endif
     } catch (gnatpolyglot::ada::exceptions::AdaException &e) {
+        ${update}
         gnatpolyglot_get_kernel()->exc_info.exception_data = e.release_();
         ${api.makeDispatchDefaultReturn(functionType)}
     } catch (...) {
+        ${update}
         gnatpolyglot::ada::exceptions::AdaException error(
             "Uncaught host language exception"
         );
         gnatpolyglot_get_kernel()->exc_info.exception_data = error.release_();
         ${api.makeDispatchDefaultReturn(functionType)}
     }
-
-    @for(var param : functionType.parameters.stream().skip(isDispatch ? 1 : 0).toList())
-    ${api.checkDispatchPointerValue(param)};
-    @endfor
 }
 
