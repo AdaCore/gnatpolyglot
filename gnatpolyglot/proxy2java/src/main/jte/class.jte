@@ -26,7 +26,7 @@ Template file to generate a class.
     FunctionDecl cloneFunction = api.getCloneCtor(classDecl, RoleKind.ALLOC);
     FunctionDecl shadowCloneFunction = api.getCloneCtor(classDecl, RoleKind.SHADOW_ALLOC);
     String interfaces = "";
-    if (cloneFunction != null) {
+    if (cloneFunction != null || shadowCloneFunction != null) {
         interfaces = " implements Cloneable ";
     }
     String seal = "";
@@ -168,15 +168,17 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}${seal}{
     @template.function(api, members.copyFunction, functionName = name)
 @endif
 
-@if (cloneFunction != null)
-    !{
-        String nativeFunc = "$%s".formatted(cloneFunction.symbol);
-    }
-
+@if (cloneFunction != null || shadowCloneFunction != null)
     <%-- The Object.clone function is protected by default. Make it public if possible --%>
     @Override
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
+    }
+@endif
+
+@if (cloneFunction != null)
+    !{
+        String nativeFunc = "$%s".formatted(cloneFunction.symbol);
     }
 
     protected Function<com.adacore.gnatpolyglot.runtime.PolyglotData, Long> _getClone() {
