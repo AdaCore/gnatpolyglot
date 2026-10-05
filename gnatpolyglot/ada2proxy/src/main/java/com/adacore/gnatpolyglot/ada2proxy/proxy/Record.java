@@ -513,8 +513,15 @@ public class Record extends AdaDeclaration {
     public boolean isInheritable(AdaAPI api) {
         Predicate<Libadalang.BasicDecl> predicate =
                 p -> {
+                    // pGetPrimitives may return primitives in the private part. Always fetch the
+                    // public one.
+                    Libadalang.BasicDecl previous = p.pPreviousPartForDecl(false);
+                    p = previous.isNone() ? p : previous;
                     Libadalang.BaseSubpSpec spec = p.pSubpSpecOrNull(false);
                     Libadalang.BaseTypeDecl returnType = spec.pReturnType(spec);
+                    Libadalang.Symbol[] symbols = p.pFullyQualifiedNameArray(false);
+                    String name = symbols[symbols.length - 1].text;
+                    if (name.equals("\"=\"") || name.equals("\"/=\"")) return false;
                     return api.getDeclChecker().seenUnbindable(p)
                             || spec.pReturnType(spec).equals(origin)
                             || (!returnType.isNone() && AdaTypeMatcher.isAccessToSubp(returnType))

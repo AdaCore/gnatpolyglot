@@ -68,4 +68,11 @@ package body Test is
       return Arr;
    end Get_Arr;
 
+   package body Nested is
+
+      function Get_Cont return Cont is
+      (Ada.Finalization.Controlled with C => new Rec'(5, 6), Generation => 1);
+
+   end Nested;
+
 end Test;

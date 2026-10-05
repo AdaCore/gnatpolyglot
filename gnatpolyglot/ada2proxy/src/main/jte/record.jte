@@ -92,7 +92,6 @@ Template file to generate bindings for record types.
 
    @if(rec.isInheritable(api))
       @template.shadow(api, rec, isBody)
-
    @endif
 
    @if(rec.isTaggedType())

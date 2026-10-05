@@ -1,8 +1,11 @@
 import com.adacore.libtest.test.TestPackage;
+import com.adacore.libtest.test.nested.NestedPackage;
 import com.adacore.libtest.test.Cont;
 import com.adacore.libtest.test.ContWrapper;
 
 public class Main {
+
+    static class InheritsControlled extends Cont { }
 
     public static void main(String[] args) throws Throwable {
         try (
@@ -15,6 +18,13 @@ public class Main {
                 cont2.p();
                 foo.p();
             }
+        }
+        System.out.println();
+
+        try(
+            InheritsControlled cont = new InheritsControlled();
+        ) {
+            cont.p();
         }
         System.out.println();
 
@@ -46,7 +56,7 @@ public class Main {
         System.out.println();
 
         try(
-            Cont cont = TestPackage.getCont();
+            Cont cont = NestedPackage.getCont();
             Cont cont2 = new Cont(cont);
         ) {
             cont.p();
