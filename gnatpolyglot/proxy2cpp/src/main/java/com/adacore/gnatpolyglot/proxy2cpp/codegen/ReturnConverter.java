@@ -108,6 +108,18 @@ public class ReturnConverter {
                 }
 
                 @Override
+                public String enumType(TypeExpr type) {
+                    return new StringBuilder("return *")
+                            .append(
+                                    CppGenerator.makeReinterpretCast(
+                                            new StringBuilder(refType.isConst() ? "const " : "")
+                                                    .append(api.cppTypename(type))
+                                                    .append("*"),
+                                            returnedValue))
+                            .toString();
+                }
+
+                @Override
                 public String arrayType(TypeExpr type) {
                     return new StringBuilder("return ")
                             .append(CppGenerator.makeView(api.cppTypename(type), returnedValue))

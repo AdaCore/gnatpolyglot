@@ -5,6 +5,7 @@
 
 package com.adacore.gnatpolyglot.proxy2cpp.codegen;
 
+import com.adacore.gnatpolyglot.proxy.EnumerationDecl;
 import com.adacore.gnatpolyglot.proxy.FunctionDecl;
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.Parameter;
@@ -143,6 +144,15 @@ public class ParameterGenerator {
                 @Override
                 public String numberType(TypeExpr type) {
                     return new StringBuilder("&").append(argName).toString();
+                }
+
+                @Override
+                public String enumType(TypeExpr type) {
+                    EnumerationDecl enumDecl =
+                            (EnumerationDecl) getContext().getTypeDecl(type.getName());
+                    return CppGenerator.makeReinterpretCast(
+                                    api.getEnumSizeType(enumDecl).concat("*"), "&".concat(argName))
+                            .toString();
                 }
 
                 @Override

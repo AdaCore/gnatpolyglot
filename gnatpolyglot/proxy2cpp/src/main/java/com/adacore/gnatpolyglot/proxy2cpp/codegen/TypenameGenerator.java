@@ -7,6 +7,7 @@ package com.adacore.gnatpolyglot.proxy2cpp.codegen;
 
 import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
+import com.adacore.gnatpolyglot.proxy.EnumerationDecl;
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeDecl;
@@ -220,7 +221,12 @@ public class TypenameGenerator {
 
                 @Override
                 public String enumType(TypeExpr type) {
-                    return "void *";
+                    EnumerationDecl enumDecl =
+                            (EnumerationDecl) getContext().getTypeDecl(type.getName());
+                    return new StringBuilder(constness(refType))
+                            .append(api.getEnumSizeType(enumDecl))
+                            .append("*")
+                            .toString();
                 }
 
                 @Override
