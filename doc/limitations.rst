@@ -432,6 +432,40 @@ supported.
 
    type Unsupported_Str is arrays (Positive range <>) of Wide_Character;
 
+Returning classwide objects from upcalls
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Classwide objects returned as value type (non-access) by upcalls should not
+be escaped. Since returning classwide value cannot be represented in most
+language, Ada2Proxy turns returning such values to an access-to-classwide.
+When such non-access value is returned by an upcall to user code, the value is
+copied from the heap to a local value. The returned value is then freed,
+leading to any previously escaped values now holding a dangling pointer.
+
+.. code:: ada
+
+   type T is tagged null record;
+   type T_A is access T'Class;
+
+   type CB is access function return T'Class;
+   type CBA is access function return T_A;
+
+   function Call_CB () return T'Class;
+
+.. code:: cpp
+
+   int main() {
+       gnatpolyglot::polyglot_ptr<T> foo{};
+       call_cb([]() -> gnatpolyglot::polyglot_ptr<T> {
+           foo.reset(new T{}, gnatpolyglot::memory_owner::USER);
+           return foo; // error: the value held by `foo` is freed.
+       });
+       call_cba([]() -> gnatpolyglot::polyglot_ptr<T> {
+           foo.reset(new T{}, gnatpolyglot::memory_owner::LIBRARY);
+           return foo; // OK
+       });
+   }
+
 Proxy2Cpp
 ---------
 
