@@ -17,7 +17,10 @@ public class Main {
         @Override
         public Optional<Rec> rootRec(Rec acc) {
             System.out.println("Java got: " + acc.getI());
-            return Optional.of(new Rec(40));
+            return Optional.of(new Rec(40)).map(obj -> {
+                obj._setOwner(Owner.LIBRARY);
+                return obj;
+            });
         }
 
         @Override
