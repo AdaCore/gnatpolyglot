@@ -6,6 +6,7 @@
 package com.adacore.gnatpolyglot.proxy2cpp.codegen;
 
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
+import com.adacore.gnatpolyglot.proxy.Owner;
 import com.adacore.gnatpolyglot.proxy.PointerTypeExpr;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
@@ -54,11 +55,31 @@ public class UpcallReturnConverter {
 
         @Override
         public String pointerType(TypeExpr type) {
-            return new StringBuilder("if (")
+            StringBuilder builder =
+                    new StringBuilder("if (").append(returnedValue).append(".get() == nullptr) {");
+            if (type.isNonNull()) {
+                builder.append(
+                        "throw gnatpolyglot::ada::exceptions::ConstraintError(\"returning null"
+                                + " value is not allowed\");");
+            } else {
+                builder.append(api.makeDispatchDefaultReturn(functionType));
+            }
+            return builder.append("} else if (")
                     .append(returnedValue)
-                    .append(".get() == nullptr) {")
-                    .append(api.makeDispatchDefaultReturn(functionType))
-                    .append("} else { return ")
+                    .append(".get_owner() != ")
+                    .append(api.cppOwner(functionType.returnOwner))
+                    .append(") { ")
+                    .append(
+                            "throw gnatpolyglot::ada::exceptions::ConstraintError(\"return value"
+                                    + " owner should be ")
+                    .append(api.cppOwner(functionType.returnOwner))
+                    .append("\");\n")
+                    .append("} else { ")
+                    .append(returnedValue)
+                    .append(".set_owner(")
+                    .append(api.cppOwner(Owner.LIBRARY))
+                    .append(");\n")
+                    .append("return ")
                     .append(returnedValue)
                     .append(".get()->data_() ;}")
                     .toString();
