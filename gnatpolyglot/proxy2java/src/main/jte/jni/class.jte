@@ -110,6 +110,8 @@ struct ${className}_vtable ${className}_vtable = {
 @endfor
 };
 
+@endif
+
 @if (classDecl.identificator != null)
 
     int32_t ${classDecl.identificator}(void *data, jobject *buffer);
@@ -166,7 +168,5 @@ struct ${className}_vtable ${className}_vtable = {
                 break;
         }
     }
-
-@endif
 
 @endif

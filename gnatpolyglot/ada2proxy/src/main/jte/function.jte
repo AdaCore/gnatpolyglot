@@ -27,6 +27,8 @@ Template file to generate binded functions.
       (${api.cInterfaceParameters(subp)})
     @endif
       return ${returnType} is
+      ${api.subpSpecAdaCallbackSpec(subp.getSpec(), "Local_Function")}
+        renames ${subp.getOriginFullyQualifiedName()};
    begin
       declare
     @for(var p : subp.parameters)
@@ -44,7 +46,7 @@ Template file to generate binded functions.
          return Value_Returned : ${returnType} :=
            Return_Type_Converter
              (new ${subp.getReturnType().pFullyQualifiedName()}'
-               (${api.call(subp)})) do
+               (${api.call(subp, "Local_Function")})) do
           @for(var p : subp.parameters)
             ${api.syncParamValue(p)}
           @endfor
@@ -52,7 +54,7 @@ Template file to generate binded functions.
          end return;
    @else
          Value_Returned : ${subp.getReturnType().pFullyQualifiedName()} :=
-            ${api.call(subp)};
+            ${api.call(subp, "Local_Function")};
       begin
        @for(var p : subp.parameters)
          ${api.syncParamValue(p)}

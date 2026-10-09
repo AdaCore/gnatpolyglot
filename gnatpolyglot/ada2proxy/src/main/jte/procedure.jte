@@ -23,13 +23,15 @@ Template file to generate binded procedures.
       (${api.cInterfaceParameters(subp)})
     @endif
    is
+      ${api.subpSpecAdaCallbackSpec(subp.getSpec(), "Local_Procedure")}
+        renames ${subp.getOriginFullyQualifiedName()};
    begin
       declare
     @for(var p : subp.parameters)
       ${api.makeParamConversion(p)};
     @endfor
    begin
-      ${api.call(subp)};
+      ${api.call(subp, "Local_Procedure")};
     @for(var p : subp.parameters)
       ${api.syncParamValue(p)}
     @endfor
