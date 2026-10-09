@@ -223,9 +223,6 @@ Template file to generate shadow types for tagged records.
                others => <>
             );
          begin
-            @if(rec.isControlled() && allocFunc.type.parameters.isEmpty())
-            ${rec.getFullyQualifiedName()} (Tmp.all).Initialize;
-            @endif
             return Converter.To_Address (Converter.Object_Pointer (Tmp));
          end;
       @template.exception_handler(api, rec.getOrigin())

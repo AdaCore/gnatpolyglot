@@ -18,7 +18,8 @@ public:
         std::cout << "f_root: "
                   << (dynamic_cast<const ::test::Child *>(&r2) != nullptr)
                   << "\n";
-        return gnatpolyglot::polyglot_ptr<test::Root>(new test::Root(r2));
+        return gnatpolyglot::polyglot_ptr<test::Root>(
+                new test::Root(r2), gnatpolyglot::memory_owner::USER);
     }
 
     void p_root_a(gnatpolyglot::polyglot_ptr<test::Root> r2) const override {

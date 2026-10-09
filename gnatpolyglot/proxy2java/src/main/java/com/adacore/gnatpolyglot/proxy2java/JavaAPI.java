@@ -9,7 +9,6 @@ import com.adacore.gnatpolyglot.LanguageAPI;
 import com.adacore.gnatpolyglot.NativeType;
 import com.adacore.gnatpolyglot.NativeType.NativeTypeDecl;
 import com.adacore.gnatpolyglot.proxy.ClassDecl;
-import com.adacore.gnatpolyglot.proxy.ClassDecl.Inheritability;
 import com.adacore.gnatpolyglot.proxy.Declaration;
 import com.adacore.gnatpolyglot.proxy.EnumerationDecl;
 import com.adacore.gnatpolyglot.proxy.FullyQualifiedName;
@@ -693,6 +692,7 @@ public class JavaAPI extends LanguageAPI {
             case FINAL -> "final";
             case INHERITABLE -> "";
             case VIRTUAL -> "abstract";
+            case SEALED -> "sealed";
         };
     }
 
@@ -843,7 +843,7 @@ public class JavaAPI extends LanguageAPI {
             throw new IllegalArgumentException("Function does not have the role ALLOC");
         }
         ClassDecl classDecl = (ClassDecl) context.getTypeDecl(alloc.role.type.getName());
-        if (classDecl.inheritability == Inheritability.FINAL) return null;
+        if (!classDecl.inheritability.isShadowable()) return null;
         return getMembers(classDecl).allocFunctions.stream()
                 .filter(a -> a.role.kind == RoleKind.SHADOW_ALLOC && a.type.equals(alloc.type))
                 .findFirst()

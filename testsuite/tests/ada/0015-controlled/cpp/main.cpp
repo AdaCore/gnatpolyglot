@@ -2,8 +2,12 @@
 
 #include "gnatpolyglot_ada_arrays.h"
 #include "test.h"
+#include "test_nested.h"
 
-class InheritsControlled : public test::Cont { };
+class InheritsControlled : public test::Cont {
+public:
+    InheritsControlled() : test::Cont(this) {}
+};
 
 int main() {
     {
@@ -43,7 +47,7 @@ int main() {
     }
     std::cout << std::endl;
     {
-        test::Cont cont = test::get_cont();
+        test::Cont cont = test::nested::get_cont();
         test::Cont cont2 = cont;
         cont.p();
         cont2.p();

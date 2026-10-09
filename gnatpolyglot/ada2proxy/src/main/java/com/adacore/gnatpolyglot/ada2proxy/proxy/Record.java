@@ -501,7 +501,7 @@ public class Record extends AdaDeclaration {
     }
 
     /**
-     * Return whether the type should be inheritable in the proxy.
+     * Return whether the type should be inheritable in the proxy, and have a shadow type.
      *
      * <p>In order to be inheritable, a type should be tagged, and none of its primitives should
      * have no controlling parameters other than the first parameter. Lastly, if a primitive was
@@ -510,11 +510,18 @@ public class Record extends AdaDeclaration {
      * <p>Upcalls that allow Ada to receive an access-to-subprogram is not supported, so mark any of
      * these occurences as non-inheritable.
      */
-    public boolean isInheritable(AdaAPI api) {
+    public boolean isShadowable(AdaAPI api) {
         Predicate<Libadalang.BasicDecl> predicate =
                 p -> {
+                    // pGetPrimitives may return primitives in the private part. Always fetch the
+                    // public one.
+                    Libadalang.BasicDecl previous = p.pPreviousPartForDecl(false);
+                    p = previous.isNone() ? p : previous;
                     Libadalang.BaseSubpSpec spec = p.pSubpSpecOrNull(false);
                     Libadalang.BaseTypeDecl returnType = spec.pReturnType(spec);
+                    Libadalang.Symbol[] symbols = p.pFullyQualifiedNameArray(false);
+                    String name = symbols[symbols.length - 1].text;
+                    if (name.equals("\"=\"") || name.equals("\"/=\"")) return false;
                     return api.getDeclChecker().seenUnbindable(p)
                             || spec.pReturnType(spec).equals(origin)
                             || (!returnType.isNone() && AdaTypeMatcher.isAccessToSubp(returnType))
@@ -561,7 +568,7 @@ public class Record extends AdaDeclaration {
     public String getOwnerSetterSymbol(AdaAPI api) {
         // The type may be tagged but not inheritable due to a primitive that
         // cannot be overriden
-        if (ownerSetterSymbol == null && isInheritable(api)) {
+        if (ownerSetterSymbol == null && isShadowable(api)) {
             ownerSetterSymbol = buildMemberSymbol("Owner_Setter");
         }
         return ownerSetterSymbol;

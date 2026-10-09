@@ -14,8 +14,6 @@ package Test is
       C : Cont;
    end record;
 
-   function Get_Cont return Cont;
-
    procedure P (Value: Cont);
 
    procedure P_Make_Copy (Value: Cont'Class);
@@ -37,6 +35,12 @@ package Test is
 
    function Get_Arr return Cont_Array;
 
+   package Nested is
+
+      function Get_Cont return Cont;
+
+   end Nested;
+
 private
 
    type Rec_Access is access all Rec;
@@ -45,8 +49,5 @@ private
       C : Rec_Access;
       Generation : Positive := 1;
    end record;
-
-   function Get_Cont return Cont is
-   (Ada.Finalization.Controlled with C => new Rec'(5, 6), Generation => 1);
 
 end Test;

@@ -74,3 +74,6 @@ Checking presence of the user-given header in the following generated source fil
   - java/src/main/java/com/adacore/liblib/lib/LibPackage.java:
     // LICENSE
     // 2026
+  - java/src/main/java/module-info.java:
+    // LICENSE
+    // 2026

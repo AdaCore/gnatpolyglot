@@ -43,6 +43,11 @@ public abstract class TypeExpr implements ProxyObject {
                 || (this instanceof PointerTypeExpr ptr && ptr.isConst);
     }
 
+    /** Return whether the type is NonNull. */
+    public boolean isNonNull() {
+        return this instanceof PointerTypeExpr ptr && ptr.isNonNull || !isPointer();
+    }
+
     public TypeExpr referencedType() {
         return this;
     }

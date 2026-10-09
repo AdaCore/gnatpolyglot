@@ -14,7 +14,7 @@ Template file to generate a function.
 @param JavaAPI api
 @param ClassDecl classDecl
 
-@if(classDecl.inheritability != Inheritability.FINAL)
+@if(classDecl.inheritability.isShadowable())
 
 !{
     String className = classDecl.getLastName().toPascal();

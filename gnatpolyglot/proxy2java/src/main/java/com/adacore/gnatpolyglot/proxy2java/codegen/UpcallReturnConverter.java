@@ -6,6 +6,7 @@
 package com.adacore.gnatpolyglot.proxy2java.codegen;
 
 import com.adacore.gnatpolyglot.proxy.FunctionTypeExpr;
+import com.adacore.gnatpolyglot.proxy.Owner;
 import com.adacore.gnatpolyglot.proxy.ProxyContext;
 import com.adacore.gnatpolyglot.proxy.TypeExpr;
 import com.adacore.gnatpolyglot.proxy2java.JavaAPI;
@@ -16,8 +17,10 @@ public class UpcallReturnConverter {
     private class JavaReturnWorker implements JavaTypeWorker<String> {
 
         private String returnedValue;
+        private FunctionTypeExpr functionType;
 
         public JavaReturnWorker(FunctionTypeExpr functionType, String returnedValue) {
+            this.functionType = functionType;
             this.returnedValue = returnedValue;
         }
 
@@ -76,17 +79,58 @@ public class UpcallReturnConverter {
         @Override
         public String pointerType(TypeExpr type) {
             boolean isArray = getContext().isStringOrArray(type.pointedType());
+            // Lambda that sets the owner of the value to LIBRARY and returns the data.
+            // This avoids the garbage collector from freeing the underlying data before it is
+            // copied by the upcalling function.
             String lambda =
-                    "$value -> "
+                    "$value -> {"
+                            + JavaGenerator.makeMethodCall(
+                                    "$value", "_setOwner", List.of(api.javaOwner(Owner.LIBRARY)))
+                            + "; return "
                             + JavaGenerator.makeGetData("$value")
-                            + (isArray ? "" : ".getAddress()");
+                            + (isArray ? "" : ".getAddress()")
+                            + ";}";
             String defaultValue = isArray ? "null" : "0L";
-            return new StringBuilder("return ")
-                    .append(JavaGenerator.makeMethodCall(returnedValue, "map", List.of(lambda)))
-                    .append(".orElse(")
-                    .append(defaultValue)
-                    .append(");")
-                    .toString();
+            String javaOwner = api.javaOwner(functionType.returnOwner);
+            StringBuilder builder =
+                    new StringBuilder("if (")
+                            .append(
+                                    JavaGenerator.makeMethodCall(
+                                            returnedValue,
+                                            "map",
+                                            List.of("$value-> $value._getOwner() != " + javaOwner)))
+                            .append(".orElse(false)) {")
+                            .append("throw ")
+                            .append(
+                                    JavaGenerator.makeNew(
+                                            "com.adacore.gnatpolyglot.runtime.ada2java.ConstraintError",
+                                            List.of(
+                                                    JavaGenerator.makeNew(
+                                                            "com.adacore.gnatpolyglot.runtime.ada2java.PolyglotString",
+                                                            List.of(
+                                                                    "\"return value owner should be"
+                                                                            + " "
+                                                                            + javaOwner
+                                                                            + "\"")))))
+                            .append(";}\n");
+            builder.append("return ")
+                    .append(JavaGenerator.makeMethodCall(returnedValue, "map", List.of(lambda)));
+            if (type.isNonNull()) {
+                builder.append(
+                        ".orElseThrow(() -> "
+                                + JavaGenerator.makeNew(
+                                        "com.adacore.gnatpolyglot.runtime.ada2java.ConstraintError",
+                                        List.of(
+                                                JavaGenerator.makeNew(
+                                                        "com.adacore.gnatpolyglot.runtime.ada2java.PolyglotString",
+                                                        List.of(
+                                                                "\"returning null value is not"
+                                                                        + " allowed\""))))
+                                + ")");
+            } else {
+                builder.append(".orElse(").append(defaultValue).append(")");
+            }
+            return builder.append(";").toString();
         }
 
         @Override
