@@ -169,7 +169,7 @@ public class AdaAPI extends LanguageAPI {
                 boolean hasConst = false;
                 if (rootType.fTypeDef() instanceof Libadalang.TypeAccessDef access)
                     hasConst = access.fHasConstant().pAsBool();
-                return makeTypeExpr(typeDecl.pAccessedType(decl)).makePointer(hasNonNull, hasConst);
+                return makeTypeExpr(typeDecl.pAccessedType(decl)).makePointer(hasConst, hasNonNull);
             }
         }
         return makeProxyFullyQualifiedName(decl).asTypeExpr();

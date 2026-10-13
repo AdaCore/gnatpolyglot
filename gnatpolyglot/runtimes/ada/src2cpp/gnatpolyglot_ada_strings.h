@@ -62,7 +62,7 @@ private:
         return false;
     }
 
-    void set_owner(gnatpolyglot::memory_owner) {
+    void set_owner(gnatpolyglot::memory_owner) const {
         // NOOP
     }
 

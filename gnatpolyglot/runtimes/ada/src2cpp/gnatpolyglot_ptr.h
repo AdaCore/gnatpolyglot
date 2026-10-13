@@ -9,6 +9,7 @@
 #include <cstddef>
 #ifdef __cplusplus
 
+#include <type_traits>
 
 namespace gnatpolyglot {
 #endif 
@@ -171,8 +172,12 @@ public:
                 // Shadow objects are able to free this C++ value from the
                 // binded library through a callback provided in the vtable, so
                 // do not free the C++ value in that case.
-                _object_data->release_();
-                delete _object_data;
+                //
+                // Calling `operator delete` instead of using the `delete`
+                // operator frees the object without calling the destructor.
+                operator delete(
+                    const_cast<typename std::remove_const<T>::type *>(
+                        _object_data));
             }
             delete _shared_counter;
             _shared_counter = nullptr;
