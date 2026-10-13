@@ -377,7 +377,8 @@ Callbacks
 ~~~~~~~~~
 
 Callbacks are bound to functional interfaces defined in the 
-``com.adacore.gnatpolyglot.runtime.Functions`` class.
+``com.adacore.gnatpolyglot.runtime.Functions`` class. As for regular functions,
+a callback returning a pointer returns a ``java.util.Optional<T>``.
 
 .. warning::
 
