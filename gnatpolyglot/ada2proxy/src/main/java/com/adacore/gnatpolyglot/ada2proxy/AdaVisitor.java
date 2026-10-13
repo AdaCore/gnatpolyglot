@@ -316,7 +316,8 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                                 Name.fromLower(
                                         subp.getReturnType()
                                                 .pCanonicalFullyQualifiedName()
-                                                .replace(".", "_"));
+                                                .replace(".", "_")
+                                                .replace("'", "_"));
                     }
                     subp.name = prefix.concat(subp.name);
                 }

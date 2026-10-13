@@ -478,21 +478,10 @@ public class AdaAPI extends LanguageAPI {
     }
 
     /** Create a string to call a function from the proxy. */
-    public String call(Subprogram subp) {
-        // (eng/toolchain/gnat#1918): Avoid calling the "/=" subpgram. It may be rejected by GNAT.
-        // Instead, call the "=" operator and negate the result.
-        String subpFQN = subp.getOriginFullyQualifiedName();
-        Libadalang.BaseTypeDecl returnType = subp.getReturnType();
-        boolean isImplicitNeq =
-                subpFQN.endsWith("\"/=\"") && returnType.equals(returnType.pBoolType());
-        if (isImplicitNeq) subpFQN = subpFQN.replace("/=", "=");
-        String call =
-                AdaGenerator.makeCall(
-                                subpFQN,
-                                subp.parameters.stream().map(p -> getParamForCall(p)).toList())
-                        .toString();
-        if (isImplicitNeq) return "not " + call;
-        return call;
+    public String call(Subprogram subp, String localName) {
+        return AdaGenerator.makeCall(
+                        localName, subp.parameters.stream().map(p -> getParamForCall(p)).toList())
+                .toString();
     }
 
     /**
@@ -659,6 +648,9 @@ public class AdaAPI extends LanguageAPI {
                         (Libadalang.BaseFormalParamDecl) paramName.pBasicDecl();
                 if (paramName != formalParams[0]) builder.append("; ");
                 builder.append(argName(AdaAPI.getName(paramName))).append(" : ");
+                if (param instanceof Libadalang.ParamSpec p
+                        && p.fHasAliased() instanceof Libadalang.AliasedPresent)
+                    builder.append("aliased ");
                 if (SubpParam.getMode(param) == SubpParam.Mode.INOUT) builder.append("in out ");
                 else if (SubpParam.getMode(param) == SubpParam.Mode.OUT) builder.append("out ");
                 builder.append(param.pFormalType(spec).pFullyQualifiedName());

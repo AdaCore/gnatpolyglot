@@ -40,13 +40,11 @@ library project GNATpolyglot_Proxy2Java is
    end Compiler;
 
    Gnatpolyglot_Lib := external ("GNATPOLYGLOT_LIB", external ("PROXY_LIB"));
-   for Library_Options use ("-l" & Gnatpolyglot_Lib);
 
    Gnatpolyglot_Lib_Location := external
        ("GNATPOLYGLOT_LIB_LOCATION", external ("PROXY_LIB_LOCATION"));
 
-   package Linker is
-      for Linker_Options use ("-L" & Gnatpolyglot_Lib_Location);
-   end Linker;
+   for Library_Options use
+      ("-L" & Gnatpolyglot_Lib_Location, "-l" & Gnatpolyglot_Lib);
 
 end GNATpolyglot_Proxy2Java;

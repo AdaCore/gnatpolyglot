@@ -57,7 +57,7 @@ public class Subprogram extends AdaDeclaration {
     }
 
     /** Instance variant of {@link #getSpec(Libadalang.BasicDecl)}. */
-    private Libadalang.BaseSubpSpec getSpec() {
+    public Libadalang.BaseSubpSpec getSpec() {
         return getSpec(origin);
     }
 
