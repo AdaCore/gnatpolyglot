@@ -97,6 +97,7 @@ public class ByteArray extends PolyglotArray<Byte> {
                 if (data == null) {
                     this.obj = null;
                 } else {
+                    data.setOwner(Owner.LIBRARY);
                     this.obj = new ByteArray(
                             (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
                 }

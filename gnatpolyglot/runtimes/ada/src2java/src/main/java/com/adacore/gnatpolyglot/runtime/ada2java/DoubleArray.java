@@ -97,6 +97,7 @@ public class DoubleArray extends PolyglotArray<Double> {
                 if (data == null) {
                     this.obj = null;
                 } else {
+                    data.setOwner(Owner.LIBRARY);
                     this.obj = new DoubleArray(
                             (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
                 }

@@ -97,6 +97,7 @@ public class FloatArray extends PolyglotArray<Float> {
                 if (data == null) {
                     this.obj = null;
                 } else {
+                    data.setOwner(Owner.LIBRARY);
                     this.obj = new FloatArray(
                             (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
                 }

@@ -97,6 +97,7 @@ public class ShortArray extends PolyglotArray<Short> {
                 if (data == null) {
                     this.obj = null;
                 } else {
+                    data.setOwner(Owner.LIBRARY);
                     this.obj = new ShortArray(
                             (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
                 }
