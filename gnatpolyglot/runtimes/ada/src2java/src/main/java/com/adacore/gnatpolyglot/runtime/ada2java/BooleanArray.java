@@ -97,6 +97,7 @@ public class BooleanArray extends PolyglotArray<Boolean> {
                 if (data == null) {
                     this.obj = null;
                 } else {
+                    data.setOwner(Owner.LIBRARY);
                     this.obj = new BooleanArray(
                             (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
                 }

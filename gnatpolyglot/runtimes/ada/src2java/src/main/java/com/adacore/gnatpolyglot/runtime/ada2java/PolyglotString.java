@@ -129,6 +129,7 @@ public class PolyglotString extends PolyglotObject implements CharSequence {
         protected void update(PolyglotData data) {
             PolyglotData oldData = get().map(o -> o._getData()).orElse(null);
             if (!Objects.deepEquals(data, oldData)) {
+                if (data != null) data.setOwner(Owner.LIBRARY);
                 this.obj = new PolyglotString(
                         (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
             }

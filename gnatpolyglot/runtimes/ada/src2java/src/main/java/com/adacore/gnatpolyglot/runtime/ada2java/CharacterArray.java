@@ -97,6 +97,7 @@ public class CharacterArray extends PolyglotArray<Character> {
                 if (data == null) {
                     this.obj = null;
                 } else {
+                    data.setOwner(Owner.LIBRARY);
                     this.obj = new CharacterArray(
                             (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
                 }

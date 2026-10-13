@@ -97,6 +97,7 @@ public class IntegerArray extends PolyglotArray<Integer> {
                 if (data == null) {
                     this.obj = null;
                 } else {
+                    data.setOwner(Owner.LIBRARY);
                     this.obj = new IntegerArray(
                             (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
                 }

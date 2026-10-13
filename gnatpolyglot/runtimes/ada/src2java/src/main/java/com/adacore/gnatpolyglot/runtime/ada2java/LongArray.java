@@ -97,6 +97,7 @@ public class LongArray extends PolyglotArray<Long> {
                 if (data == null) {
                     this.obj = null;
                 } else {
+                    data.setOwner(Owner.LIBRARY);
                     this.obj = new LongArray(
                             (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data);
                 }

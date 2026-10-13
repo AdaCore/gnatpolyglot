@@ -171,6 +171,7 @@ Template file to generate a class.
                     if (data == null) {
                         this.obj = null;
                     } else {
+                        data.setOwner(com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.LIBRARY);
                         this.obj = new ${arrayName}(
                             (com.adacore.gnatpolyglot.runtime.ada2java.ArrayData) data
                         );
