@@ -41,13 +41,12 @@ library project GNATpolyglot_Ada2Java is
 
    Gnatpolyglot_Ada2Proxy_Lib := external
        ("GNATPOLYGLOT_ADA2PROXY_LIB", external ("PROXY_LIB"));
-   for Library_Options use ("-l" & Gnatpolyglot_Ada2Proxy_Lib);
 
    Gnatpolyglot_Ada2Proxy_Lib_Location := external
        ("GNATPOLYGLOT_ADA2PROXY_LIB_LOCATION", external ("PROXY_LIB_LOCATION"));
 
-   package Linker is
-      for Linker_Options use ("-L" & Gnatpolyglot_Ada2Proxy_Lib_Location);
-   end Linker;
+   for Library_Options use
+      ("-L" & Gnatpolyglot_Ada2Proxy_Lib_Location,
+       "-l" & Gnatpolyglot_Ada2Proxy_Lib);
 
 end GNATpolyglot_Ada2Java;

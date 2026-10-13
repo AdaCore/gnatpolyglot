@@ -66,14 +66,13 @@ library project ${proxy.name.toPascalWithUnderscore()}_JNI is
    ${proxy.name.toPascal()}_Lib := external
       ("PROXY_LIB",
        "${proxy.name.toLower()}_proxy_agg");
-   for Library_Options use ("-l" & ${proxy.name.toPascal()}_Lib);
 
    ${proxy.name.toPascal()}_Lib_Location := external
      ("PROXY_LIB_LOCATION",
       "${proxyLocation}/lib_agg/" & Library_Kind & "/" & Build_Mode);
 
-   package Linker is
-      for Linker_Options use ("-L" & ${proxy.name.toPascal()}_Lib_Location);
-   end Linker;
+   for Library_Options use
+      ("-L" & ${proxy.name.toPascal()}_Lib_Location,
+       "-l" & ${proxy.name.toPascal()}_Lib);
 
 end ${proxy.name.toPascalWithUnderscore()}_JNI;
