@@ -102,7 +102,7 @@ vim: filetype=jtecpp
         friend class gnatpolyglot::polyglot_ptr;
 
         @if (classDecl.identificator != null)
-        static ${className} *identify(gnatpolyglot::data *data);
+        static ${className} *identify(const gnatpolyglot::data *data);
         @endif
 
         /**
@@ -114,7 +114,7 @@ vim: filetype=jtecpp
 
     private:
 
-        virtual void set_owner(gnatpolyglot::memory_owner owner);
+        virtual void set_owner(gnatpolyglot::memory_owner owner) const;
 
     public:
 
@@ -305,33 +305,34 @@ vim: filetype=jtecpp
     @if (classDecl.ownerSetter != null)
     extern "C" void ${classDecl.ownerSetter}(gnatpolyglot::data *data, int32_t owner);
 
-    void ${className}::set_owner(gnatpolyglot::memory_owner owner) {
+    void ${className}::set_owner(gnatpolyglot::memory_owner owner) const {
         if (is_shadow() && owner != gnatpolyglot::memory_owner::STATIC)
             ${classDecl.ownerSetter}(data_(), owner == gnatpolyglot::memory_owner::USER ? 1 : 0);
     }
     @else
-    void ${className}::set_owner(gnatpolyglot::memory_owner) {
+    void ${className}::set_owner(gnatpolyglot::memory_owner) const {
         // NOOP
     }
     @endif
 
     @if (classDecl.identificator != null)
-    extern "C" std::int32_t ${classDecl.identificator}(gnatpolyglot::data *data, ${className} **buffer);
 
-    ${className} *${className}::identify(gnatpolyglot::data *data) {
+    extern "C" std::int32_t ${classDecl.identificator}(const gnatpolyglot::data *data, ${className} **buffer);
+
+    ${className} *${className}::identify(const gnatpolyglot::data *data) {
         ${className} *buffer = nullptr;
         std::int32_t id = ${classDecl.identificator}(data, &buffer);
         if (data != nullptr || id != -1) {
             switch (id) {
             @if (classDecl.inheritability != Inheritability.VIRTUAL)
                 case ${classDecl.id}:
-                    buffer = new ${className}(data);
+                    buffer = new ${className}(const_cast<gnatpolyglot::data *>(data));
                     break;
             @endif
             @for (var childType : api.getChildTypes(classDecl).stream()
                             .filter(c -> c.inheritability != Inheritability.VIRTUAL).toList())
                 case ${childType.id}:
-                    buffer = new ${api.cppTypename(childType.name.asTypeExpr())}(data);
+                    buffer = new ${api.cppTypename(childType.name.asTypeExpr())}(const_cast<gnatpolyglot::data *>(data));
                     break;
             @endfor
             }
