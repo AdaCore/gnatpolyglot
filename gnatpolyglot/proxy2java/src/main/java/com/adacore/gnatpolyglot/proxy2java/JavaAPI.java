@@ -926,11 +926,11 @@ public class JavaAPI extends LanguageAPI {
         String typeSuffix = type.isReference() ? ".Ref" : type.isArray() ? ".Array" : "";
         String genericParams =
                 Stream.concat(
-                                functionType.parameters.stream().map(p -> p.type),
+                                functionType.parameters.stream()
+                                        .map(p -> typenameGenerator.javaTypename(p.type, true)),
                                 returnsVoid(functionType)
                                         ? Stream.of()
-                                        : Stream.of(functionType.returnType))
-                        .map(t -> typenameGenerator.javaTypename(t, true))
+                                        : Stream.of(javaCallbackReturnTypename(functionType)))
                         .collect(Collectors.joining(", ", "<", ">"));
         if (functionType.parameters.size() > 10)
             throw new UnsupportedOperationException("Too many arguments");
@@ -946,6 +946,16 @@ public class JavaAPI extends LanguageAPI {
                     + functionType.parameters.size()
                     + typeSuffix
                     + genericParams;
+    }
+
+    /**
+     * Return the boxed Java name of the result type of a callback. As for regular functions,
+     * pointer results are optional.
+     */
+    private String javaCallbackReturnTypename(FunctionTypeExpr functionType) {
+        TypeExpr returnType = functionType.returnType;
+        String javaTypeName = typenameGenerator.javaTypename(returnType, true);
+        return returnType.isPointer() ? "java.util.Optional<" + javaTypeName + ">" : javaTypeName;
     }
 
     public String getJavaCallbackTypename(FunctionTypeExpr functionType) {
