@@ -89,6 +89,21 @@ public class SubpParam implements AdaProxyObject {
         return getMode(origin);
     }
 
+    /** Return whether the type of {@code paramDecl} has a null exclusion ({@code not null T}). */
+    public static boolean hasNotNull(Libadalang.BaseFormalParamDecl paramDecl) {
+        return paramDecl instanceof Libadalang.ParamSpec param
+                && param.fTypeExpr() instanceof Libadalang.SubtypeIndication subtype
+                && subtype.fHasNotNull().pAsBool();
+    }
+
+    /**
+     * Instance variant of {@link
+     * #hasNotNull(com.adacore.libadalang.Libadalang.BaseFormalParamDecl)}.
+     */
+    public boolean hasNotNull() {
+        return hasNotNull(origin);
+    }
+
     /** Return whether {@code paramDecl} is aliased */
     public static boolean isAliased(Libadalang.BaseFormalParamDecl paramDecl) {
         return paramDecl instanceof Libadalang.ParamSpec param && param.fHasAliased().pAsBool();
