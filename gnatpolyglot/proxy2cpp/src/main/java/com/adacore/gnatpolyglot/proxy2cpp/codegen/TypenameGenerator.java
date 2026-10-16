@@ -249,7 +249,8 @@ public class TypenameGenerator {
                     if (refType.isConst()) return cTypename(type);
                     else if (getContext().isStringOrArray(type.pointedType()))
                         return constness(refType).concat("void *");
-                    else return constness(refType).concat("gnatpolyglot::data **");
+                    // Keep the constness of the pointed data in the referenced pointer
+                    else return constness(type).concat("gnatpolyglot::data **");
                 }
 
                 @Override

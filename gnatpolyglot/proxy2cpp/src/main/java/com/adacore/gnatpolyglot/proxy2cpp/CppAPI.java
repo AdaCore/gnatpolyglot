@@ -603,10 +603,24 @@ public class CppAPI {
      * constructor when necessary.
      */
     public String instantiateObject(TypeExpr type, String data) {
+        return instantiateObject(type, data, false);
+    }
+
+    /**
+     * Same as {@link #instantiateObject(TypeExpr, String)}, {@code isConst} telling whether data
+     * comes from a pointer to a constant.
+     */
+    public String instantiateObject(TypeExpr type, String data, boolean isConst) {
         if (getContext().requiresIdentification(type)) {
             return CppGenerator.makeCall(identificationFunction(type), List.of(data)).toString();
         } else {
-            return CppGenerator.makeNew(cppTypename(type), List.of(data)).toString();
+            // Objects hold non-const data: constness is enforced by the type of the pointer
+            // holding the object (e.g. polyglot_ptr<const T>).
+            CharSequence objectData =
+                    isConst && !getContext().isStringOrArray(type)
+                            ? CppGenerator.makeConstCast(cTypename(type), data)
+                            : data;
+            return CppGenerator.makeNew(cppTypename(type), List.of(objectData)).toString();
         }
     }
 }

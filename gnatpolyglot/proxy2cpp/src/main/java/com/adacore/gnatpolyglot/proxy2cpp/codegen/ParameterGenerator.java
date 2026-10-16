@@ -228,7 +228,8 @@ public class ParameterGenerator {
                 CharSequence copyName = getParamCopy(argName);
                 String addressAccessor = getContext().isStringOrArray(pointedType) ? ".data" : "";
                 CharSequence objectConstruction =
-                        api.instantiateObject(pointedType, dataName.toString());
+                        api.instantiateObject(
+                                pointedType, dataName.toString(), type.referencedType().isConst());
                 return new StringBuilder("if (")
                         .append(dataName)
                         .append(addressAccessor)
