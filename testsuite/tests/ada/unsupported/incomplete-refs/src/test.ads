@@ -3,7 +3,7 @@ package Test is
    type A;
    type B is access all A;
 
-   type A (I: Integer) is null record;
+   type A is access all Integer;
 
    type C;
    type D is access all C;

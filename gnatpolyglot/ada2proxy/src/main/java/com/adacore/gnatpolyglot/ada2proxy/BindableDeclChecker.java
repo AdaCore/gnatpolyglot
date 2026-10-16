@@ -59,9 +59,9 @@ public class BindableDeclChecker {
 
     private CheckStatus checkType(Libadalang.BaseTypeDecl decl) {
 
-        if (decl.pDiscriminantsList(Libadalang.BaseTypeDecl.NONE, Libadalang.AdaNode.NONE).length
-                != 0) {
-            throw new UnbindableDeclException(decl, "Discriminated types are not yet supported");
+        if (decl.pIsRecordType(decl) && decl.pShapes(false, decl).length != 1) {
+            throw new UnbindableDeclException(
+                    decl, "Discriminated types with multiple shapes are not supported");
         }
 
         if (decl.pIsTaggedType(Libadalang.AdaNode.NONE)) {

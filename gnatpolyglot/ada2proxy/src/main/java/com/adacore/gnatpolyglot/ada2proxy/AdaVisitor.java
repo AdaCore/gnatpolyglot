@@ -561,7 +561,20 @@ public class AdaVisitor extends Libadalang.DefaultVisitor<Void> {
                 }
             }
         }
-        rec = new Record(parentDecl, AdaAPI.getName(parentDecl.pDefiningName()), components);
+        // Add the discriminants. They are considered unmodifiable and will not have a setter.
+        ArrayList<Component> discriminants = new ArrayList<>();
+        for (var disc : parentDecl.pDiscriminantsList(Libadalang.BaseTypeDecl.NONE, parentDecl)) {
+            enqueueDecl(disc.pFormalType(recordDef));
+            for (var name : disc.pDefiningNames()) {
+                discriminants.add(new Component(disc, AdaAPI.getName(name)));
+            }
+        }
+        rec =
+                new Record(
+                        parentDecl,
+                        AdaAPI.getName(parentDecl.pDefiningName()),
+                        components,
+                        discriminants);
         mappedDecls.put(parentDecl, rec);
         return rec;
     }

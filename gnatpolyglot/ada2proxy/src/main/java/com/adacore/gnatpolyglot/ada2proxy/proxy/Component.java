@@ -15,18 +15,20 @@ import com.adacore.libadalang.Libadalang.BaseTypeDecl;
 public class Component implements AdaProxyObject {
 
     /** Origin node in the LAL tree. */
-    private final Libadalang.ComponentDecl origin;
+    private final Libadalang.BaseFormalParamDecl origin;
 
     /** Name of the Ada component */
     public Name name;
 
-    public Component(Libadalang.ComponentDecl origin, Name name) {
+    public Component(Libadalang.BaseFormalParamDecl origin, Name name) {
         this.origin = origin;
         this.name = name;
     }
 
     public boolean hasDefaultValue() {
-        return !origin.fDefaultExpr().isNone()
+        return (origin instanceof Libadalang.ComponentDecl comp && !comp.fDefaultExpr().isNone())
+                || (origin instanceof Libadalang.DiscriminantSpec disc
+                        && !disc.fDefaultExpr().isNone())
                 // Component who are of a controlled type implicitely have a default value.
                 || AdaTypeMatcher.isControlledType(origin.pFormalType(origin));
     }
@@ -54,7 +56,7 @@ public class Component implements AdaProxyObject {
         TypeExpr typeExpr = AdaAPI.makeTypeExpr(type);
         return type.pIsAccessType(Libadalang.AdaNode.NONE)
                 ? typeExpr
-                : typeExpr.makeReference(false);
+                : typeExpr.makeReference(!isModifiable());
     }
 
     /** Return the type of the component. */
@@ -64,6 +66,10 @@ public class Component implements AdaProxyObject {
 
     public boolean isLimited() {
         return getType().pIsLimitedType();
+    }
+
+    public boolean isModifiable() {
+        return !(origin instanceof Libadalang.DiscriminantSpec);
     }
 
     @Override
