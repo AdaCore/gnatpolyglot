@@ -49,11 +49,17 @@ public class UpcallReturnConverter {
 
         @Override
         public String classType(TypeExpr type) {
+            // The library takes the ownership of the returned data: always give it a copy, as
+            // records are returned by value. The returned object may be a view on one of the
+            // arguments, or an object the user keeps using after the call.
+            CharSequence owned =
+                    JavaGenerator.makeCast(
+                            api.javaTypename(type),
+                            JavaGenerator.makeMethodCall(returnedValue, "clone", List.of()));
             return new StringBuilder("return ")
                     .append(
                             JavaGenerator.makeMethodCall(
-                                    JavaGenerator.makeMethodCall(
-                                            returnedValue, "_release", List.of()),
+                                    JavaGenerator.makeMethodCall(owned, "_release", List.of()),
                                     "getAddress",
                                     List.of()))
                     .append(";")
