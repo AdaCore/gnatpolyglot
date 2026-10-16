@@ -2,6 +2,7 @@
 
 #include "pkg.h"
 
+using gnatpolyglot::ada::arrays::polyglot_array;
 namespace ps = gnatpolyglot::ada::strings;
 
 // An override returning the record it received
@@ -41,6 +42,23 @@ int main() {
     Child_Field c_field;
     pkg::call_echo(c_field);
     std::cout << "after override: " << c_field.field.get_i() << "\n";
+
+    // The same for arrays: callbacks returning the array they received,
+    // then an array that remains in use after the call.
+    pkg::call_int_array([](const polyglot_array<int32_t> &a) { return a; });
+    polyglot_array<int32_t> outer_array(1, 1);
+    outer_array.set(1, 7);
+    pkg::call_int_array(
+        [&outer_array](const polyglot_array<int32_t> &) { return outer_array; });
+    std::cout << "after callback: " << outer_array.get(1) << "\n";
+
+    pkg::call_rec_array([](const polyglot_array<pkg::Rec> &a) { return a; });
+    polyglot_array<pkg::Rec> outer_rec_array(1, 1);
+    outer_rec_array.set(1, pkg::Rec(8));
+    pkg::call_rec_array([&outer_rec_array](const polyglot_array<pkg::Rec> &) {
+        return outer_rec_array;
+    });
+    std::cout << "after callback: " << outer_rec_array.get(1)->get_i() << "\n";
 
     // The same for strings: a callback returning the string it received,
     // then a string that remains in use after the call.

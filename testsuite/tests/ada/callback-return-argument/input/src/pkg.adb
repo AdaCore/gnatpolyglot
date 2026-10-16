@@ -16,6 +16,18 @@ package body Pkg is
       Put_Line (R.I'Image);
    end Call_Echo;
 
+   procedure Call_Int_Array (C : Int_Array_Callback) is
+      A : constant Int_Array := C.all ((1 => 3));
+   begin
+      Put_Line (A (A'First)'Image);
+   end Call_Int_Array;
+
+   procedure Call_Rec_Array (C : Rec_Array_Callback) is
+      A : constant Rec_Array := C.all ((1 => (I => 4)));
+   begin
+      Put_Line (A (A'First).I'Image);
+   end Call_Rec_Array;
+
    procedure Call_String (C : String_Callback) is
       S : constant String := C.all ("A");
    begin

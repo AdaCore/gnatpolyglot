@@ -23,6 +23,23 @@ package Pkg is
    --  Call Echo with a record whose component is 2, and print the component
    --  of the record it returns.
 
+   --  Callbacks returning arrays. Each Call_* procedure calls C with a
+   --  one-element array, and prints the first element it returns.
+
+   type Int_Array is array (Positive range <>) of Integer;
+
+   type Int_Array_Callback is access function (A : Int_Array) return Int_Array;
+
+   procedure Call_Int_Array (C : Int_Array_Callback);
+   --  Call C with (1 => 3)
+
+   type Rec_Array is array (Positive range <>) of Rec;
+
+   type Rec_Array_Callback is access function (A : Rec_Array) return Rec_Array;
+
+   procedure Call_Rec_Array (C : Rec_Array_Callback);
+   --  Call C with (1 => (I => 4))
+
    --  A callback returning a string
 
    type String_Callback is access function (S : String) return String;

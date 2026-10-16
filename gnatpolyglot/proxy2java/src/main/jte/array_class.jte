@@ -67,6 +67,14 @@ Template file to generate a class.
         }
     @endfor
 
+    @if (arrayFunctions.allocFunctions.stream().anyMatch(f -> f.type.parameters.size() == 1))
+        <%-- The allocation function with one parameter creates a copy --%>
+        @Override
+        public ${arrayName} clone() {
+            return new ${arrayName}(this);
+        }
+    @endif
+
     @for (var method : arrayFunctions.memberFunctions)
         !{
             String functionName = method.name.getLastName().toCamel();

@@ -40,7 +40,7 @@ public class UpcallReturnConverter {
         }
 
         @Override
-        public String stringType(TypeExpr type) {
+        public String arrayType(TypeExpr type) {
             // Same as for records: always give a copy to the library, which takes its ownership
             CharSequence owned =
                     JavaGenerator.makeCast(
@@ -48,14 +48,6 @@ public class UpcallReturnConverter {
                             JavaGenerator.makeMethodCall(returnedValue, "clone", List.of()));
             return new StringBuilder("return ")
                     .append(JavaGenerator.makeMethodCall(owned, "_release", List.of()))
-                    .append(";")
-                    .toString();
-        }
-
-        @Override
-        public String arrayType(TypeExpr type) {
-            return new StringBuilder("return ")
-                    .append(JavaGenerator.makeMethodCall(returnedValue, "_release", List.of()))
                     .append(";")
                     .toString();
         }
