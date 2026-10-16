@@ -379,24 +379,6 @@ takes default values in consideration will be generated.
        // Rec2(const Rec1&) is not defined.
    };
 
-Nested packages
-~~~~~~~~~~~~~~~
-
-Although child packages are supported, nested packages are not yet
-supported.
-
-.. code:: ada
-
-   package Example is
-
-      package Unsupported is
-      end Unsupported;
-
-   end Example;
-
-   package Example.Supported is
-   end Example.Supported;
-
 Class-wide contracts on abstract primitives
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
