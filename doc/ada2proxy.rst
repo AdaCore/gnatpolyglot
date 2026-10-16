@@ -166,8 +166,6 @@ getter, and setter when possible.
 Generated getters return a reference when supported, so the setter may
 not always be necessary.
 
-As a limitation, GNATpolyglot does not yet support discriminant components.
-
 Private types
 ^^^^^^^^^^^^^
 

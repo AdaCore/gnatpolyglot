@@ -247,11 +247,25 @@ controlled types was disabled.
 Discriminated types
 ~~~~~~~~~~~~~~~~~~~
 
-Discriminated types are not yet supported.
+Discriminated types with multiple shapes are not supported.
 
 .. code:: ada
 
-   type Unsupported (I: Integer) is null record;
+   type Supported (I : Integer) is record
+      S : String (1 .. I);
+   end record;
+
+   type Unsupported (I : Integer) is record
+      case I is
+          when 1 =>
+             J : Integer;
+          when others =>
+             null;
+      end case;
+   end record;
+
+Getters are generated to retrieve the value of discriminants. No setters will
+be generated as these values cannot be modified.
 
 Fixed point types
 ~~~~~~~~~~~~~~~~~
