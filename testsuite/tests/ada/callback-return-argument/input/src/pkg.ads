@@ -23,4 +23,12 @@ package Pkg is
    --  Call Echo with a record whose component is 2, and print the component
    --  of the record it returns.
 
+   --  A callback returning a string
+
+   type String_Callback is access function (S : String) return String;
+
+   procedure Call_String (C : String_Callback);
+   --  Call C with "A", and print the first character of the string it
+   --  returns.
+
 end Pkg;

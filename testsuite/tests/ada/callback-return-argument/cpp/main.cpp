@@ -2,6 +2,8 @@
 
 #include "pkg.h"
 
+namespace ps = gnatpolyglot::ada::strings;
+
 // An override returning the record it received
 class Child : public pkg::T {
 public:
@@ -39,5 +41,13 @@ int main() {
     Child_Field c_field;
     pkg::call_echo(c_field);
     std::cout << "after override: " << c_field.field.get_i() << "\n";
+
+    // The same for strings: a callback returning the string it received,
+    // then a string that remains in use after the call.
+    pkg::call_string([](const ps::polyglot_string &s) { return s; });
+    ps::polyglot_string outer_string = ps::from_string("B");
+    pkg::call_string(
+        [&outer_string](const ps::polyglot_string &) { return outer_string; });
+    std::cout << "after callback: " << ps::to_string(outer_string) << "\n";
     return 0;
 }

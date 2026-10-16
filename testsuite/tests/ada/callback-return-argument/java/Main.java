@@ -1,3 +1,4 @@
+import com.adacore.gnatpolyglot.runtime.ada2java.PolyglotString;
 import com.adacore.libtest.pkg.PkgPackage;
 import com.adacore.libtest.pkg.Rec;
 import com.adacore.libtest.pkg.T;
@@ -33,5 +34,12 @@ public class Main {
         ChildField cField = new ChildField();
         PkgPackage.callEcho(cField);
         System.out.println("after override: " + cField.field.getI());
+
+        // The same for strings: a callback returning the string it received,
+        // then a string that remains in use after the call.
+        PkgPackage.callString(s -> s);
+        PolyglotString outerString = new PolyglotString("B");
+        PkgPackage.callString(s -> outerString);
+        System.out.println("after callback: " + outerString);
     }
 }

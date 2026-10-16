@@ -12,5 +12,8 @@ Running test main program...
 after callback: 5
  6
 after override: 6
+A
+B
+after callback: B
 
 Done.

@@ -25,6 +25,10 @@ public:
 public:
     polyglot_string(string_data data) :_data(data) {}
     polyglot_string(const char* str);
+    polyglot_string(const polyglot_string &other);
+    polyglot_string(polyglot_string &&other) : _data(other.release_()) {}
+    polyglot_string &operator=(const polyglot_string &other);
+    polyglot_string &operator=(polyglot_string &&other);
     ~polyglot_string();
 
     char &at(std::int32_t index);

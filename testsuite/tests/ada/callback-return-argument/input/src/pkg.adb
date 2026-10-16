@@ -16,4 +16,10 @@ package body Pkg is
       Put_Line (R.I'Image);
    end Call_Echo;
 
+   procedure Call_String (C : String_Callback) is
+      S : constant String := C.all ("A");
+   begin
+      Put_Line (S (S'First) & "");
+   end Call_String;
+
 end Pkg;

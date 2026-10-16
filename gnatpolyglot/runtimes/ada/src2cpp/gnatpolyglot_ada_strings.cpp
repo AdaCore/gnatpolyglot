@@ -25,6 +25,30 @@ polyglot_string::~polyglot_string() {
   gnatpolyglot__ada__strings__string_free(this->_data);
 }
 
+extern "C" string_data gnatpolyglot__ada__strings__string_clone(string_data data);
+
+polyglot_string::polyglot_string(const polyglot_string &other)
+    : _data(gnatpolyglot__ada__strings__string_clone(other._data)) {}
+
+polyglot_string &polyglot_string::operator=(const polyglot_string &other) {
+  // Clone before freeing: other may share the data of this string (e.g. a
+  // view on it), and this string must never refer to freed data.
+  string_data copy = gnatpolyglot__ada__strings__string_clone(other._data);
+  gnatpolyglot__ada__strings__string_free(this->_data);
+  this->_data = copy;
+  return *this;
+}
+
+polyglot_string &polyglot_string::operator=(polyglot_string &&other) {
+  // Same as above: do not free the data taken from other if it is shared
+  // with this string.
+  string_data data = other.release_();
+  if (data.data != this->_data.data)
+    gnatpolyglot__ada__strings__string_free(this->_data);
+  this->_data = data;
+  return *this;
+}
+
 extern "C" void *gnatpolyglot__ada__strings__string_get(string_data,
                                                         std::int32_t i);
 char &polyglot_string::at(std::int32_t index) {
