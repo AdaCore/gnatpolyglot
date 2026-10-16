@@ -251,7 +251,9 @@ vim: filetype=jtecpp
         @else
             : ${parent}(${api.callCSymbol(alloc)})
         @endif
-        {}
+        {
+            gnatpolyglot::exceptions::${api.getProjectName().toLower()}::rethrow_if_exc();
+        }
     @endfor
 
     ${className}::${className}(gnatpolyglot::data *data)
