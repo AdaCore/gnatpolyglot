@@ -206,7 +206,15 @@ Template file to generate shadow types for tagged records.
             package Converter is new
               System.Address_To_Access_Conversions (${instantiableRecordName});
             Tmp : ${shadowAccess} := new ${shadowTypename}'(
+               <%-- Without component values (the only parameters of allocating
+                    functions), use the record itself as the ancestor part, so
+                    that it is default-initialized (calling its Initialize for
+                    controlled types) as for "new T". --%>
+               @if(!allocFunc.type.parameters.isEmpty())
                ${rec.extensionAggregate(true)}
+               @else
+               ${rec.getOrigin().pFullyQualifiedName()} with
+               @endif
                @for(var p : allocFunc.type.parameters)
                   @if(rec.getComponent(p.name) != null)
                      ${p.name.toPascalWithUnderscore()} =>
