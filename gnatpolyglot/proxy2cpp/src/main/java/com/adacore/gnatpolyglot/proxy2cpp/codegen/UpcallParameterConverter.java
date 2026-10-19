@@ -106,7 +106,8 @@ public class UpcallParameterConverter {
         @Override
         public String pointerType(TypeExpr type) {
             TypeExpr pointedType = type.pointedType();
-            CharSequence objectConstruction = api.instantiateObject(pointedType, argName);
+            CharSequence objectConstruction =
+                    api.instantiateObject(pointedType, argName, type.isConst());
             return new StringBuilder(cppTypename)
                     .append(" ")
                     .append(valueName)
@@ -199,7 +200,8 @@ public class UpcallParameterConverter {
                         builder.append(CppGenerator.deref(argName));
                     }
                     CharSequence objectConstruction =
-                            api.instantiateObject(pointedType, bufferAccess.toString());
+                            api.instantiateObject(
+                                    pointedType, bufferAccess.toString(), type.isConst());
                     builder.append(";\n")
                             .append(cppTypename)
                             .append(" ")

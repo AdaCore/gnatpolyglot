@@ -65,7 +65,8 @@ public class ReturnConverter {
             // pointers, we must access the `data` field of the struct.
             TypeExpr pointedType = type.pointedType();
             String arrayDataAccess = getContext().isStringOrArray(pointedType) ? ".data" : "";
-            CharSequence objectConstruction = api.instantiateObject(pointedType, returnedValue);
+            CharSequence objectConstruction =
+                    api.instantiateObject(pointedType, returnedValue, type.isConst());
             return new StringBuilder("return ")
                     .append(
                             CppGenerator.makeCall(
