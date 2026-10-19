@@ -24,6 +24,11 @@ public class JavaGenerator {
         return new StringBuilder("new ").append(CGenerator.makeCall(typename, args));
     }
 
+    /** Generate a cast of the given expression to the given type. */
+    public static StringBuilder makeCast(CharSequence type, CharSequence expr) {
+        return CGenerator.makeCast(type, expr);
+    }
+
     public static StringBuilder makeGetData(CharSequence expr) {
         return new StringBuilder(expr).append("._getData()");
     }

@@ -14,6 +14,9 @@ extern void gnatpolyglot__ada__strings_free_c_chars_ptr(char *cstr);
 
 extern void gnatpolyglot__ada__strings__string_free(struct array_data data);
 
+extern struct array_data
+gnatpolyglot__ada__strings__string_clone(struct array_data data);
+
 extern void *gnatpolyglot__ada__strings__string_get(struct array_data data,
                                                     int i);
 
@@ -47,6 +50,19 @@ Java_com_adacore_gnatpolyglot_runtime_ada2java_PolyglotString_stringFree(
     JNIEnv *env, jclass clazz, jobject self) {
   struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
   gnatpolyglot__ada__strings__string_free(data);
+}
+
+/**
+ * Java native method implementation
+ * Class: com.adacore.gnatpolyglot.runtime.ada2java.PolyglotString
+ * Method: stringClone
+ */
+JNIEXPORT jobject
+Java_com_adacore_gnatpolyglot_runtime_ada2java_PolyglotString_stringClone(
+    JNIEnv *env, jclass clazz, jobject self) {
+  struct array_data data = gnatpolyglot_proxy2java_to_array_data(env, self);
+  struct array_data res = gnatpolyglot__ada__strings__string_clone(data);
+  return gnatpolyglot_proxy2java_to_ArrayData(env, res);
 }
 
 /**

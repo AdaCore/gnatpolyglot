@@ -103,6 +103,15 @@ public class PolyglotString extends PolyglotObject implements CharSequence {
         return (data) -> { stringFree((ArrayData) data); };
     }
 
+    private static native ArrayData stringClone(ArrayData data);
+
+    @Override
+    public PolyglotString clone() {
+        ArrayData data = stringClone(_getData());
+        data.setOwner(Owner.USER);
+        return new PolyglotString(data);
+    }
+
     static private native String toJavaString(ArrayData str);
 
     @Override
