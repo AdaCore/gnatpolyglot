@@ -480,6 +480,25 @@ leading to any previously escaped values now holding a dangling pointer.
        });
    }
 
+Task types and Protected types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Protected types and Task types are not supported.
+
+.. code:: ada
+
+    protected type Unsupported_1 is
+    end Unsupported_1;
+
+    protected Unsupported_2 is
+    end Unsupported_2;
+
+    task type Unsupported_3 is
+    end Unsupported_3;
+
+    task Unsupported_4 is
+    end Unsupported_4;
+
 Proxy2Cpp
 ---------
 

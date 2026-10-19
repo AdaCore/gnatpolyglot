@@ -1,0 +1,10 @@
+Running scanner test.
+Running the scanner...
+test.ads:3:5: warning: Could not bind Test.Prot: Protected types are not supported
+test.ads:6:5: warning: Could not bind Test.Prot_2: Protected declarations are not supported
+test.ads:9:5: warning: Could not bind Test.Tas: Task types are not supported
+test.ads:12:5: warning: Could not bind Test.Tas_2: Task declarations are not supported
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.
