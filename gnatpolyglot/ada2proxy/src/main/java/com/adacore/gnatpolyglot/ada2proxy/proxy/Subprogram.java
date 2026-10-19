@@ -98,6 +98,20 @@ public class Subprogram extends AdaDeclaration {
         return getSpec().pReturnType(origin);
     }
 
+    /** Return whether the return type of {@code spec} has a null exclusion. */
+    public static boolean returnsNotNull(Libadalang.BaseSubpSpec spec) {
+        return spec instanceof Libadalang.SubpSpec subpSpec
+                && subpSpec.fSubpReturns() instanceof Libadalang.SubtypeIndication subtype
+                && subtype.fHasNotNull().pAsBool();
+    }
+
+    /**
+     * Instance variant of {@link #returnsNotNull(com.adacore.libadalang.Libadalang.BaseSubpSpec)}.
+     */
+    public boolean returnsNotNull() {
+        return returnsNotNull(getSpec());
+    }
+
     /** Return whether the subprogram is final or can be overriden. */
     public Overridability getOverridability() {
         if (origin instanceof Libadalang.AbstractSubpDecl) return Overridability.ABSTRACT;

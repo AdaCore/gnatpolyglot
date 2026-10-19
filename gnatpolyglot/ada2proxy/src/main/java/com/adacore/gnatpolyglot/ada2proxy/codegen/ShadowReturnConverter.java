@@ -147,11 +147,17 @@ public class ShadowReturnConverter {
         private String typename;
 
         public BuildWorker(Libadalang.BaseSubpSpec spec) {
-            this.typename = spec.pReturnType(spec).pFullyQualifiedName();
+            // The result subtype must statically match the one of the upcalling function
+            this.typename =
+                    (Subprogram.returnsNotNull(spec) ? "not null " : "")
+                            + spec.pReturnType(spec).pFullyQualifiedName();
         }
 
         public BuildWorker(Subprogram subp) {
-            this.typename = subp.getReturnType().pFullyQualifiedName();
+            // The result subtype must statically match the one of the upcalling function
+            this.typename =
+                    (subp.returnsNotNull() ? "not null " : "")
+                            + subp.getReturnType().pFullyQualifiedName();
         }
 
         private StringBuilder common() {

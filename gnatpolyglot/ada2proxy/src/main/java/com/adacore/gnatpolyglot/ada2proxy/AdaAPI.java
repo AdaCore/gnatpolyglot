@@ -653,12 +653,15 @@ public class AdaAPI extends LanguageAPI {
                     builder.append("aliased ");
                 if (SubpParam.getMode(param) == SubpParam.Mode.INOUT) builder.append("in out ");
                 else if (SubpParam.getMode(param) == SubpParam.Mode.OUT) builder.append("out ");
+                if (SubpParam.hasNotNull(param)) builder.append("not null ");
                 builder.append(param.pFormalType(spec).pFullyQualifiedName());
             }
             builder.append(")");
         }
         if (!isProcedure) {
-            builder.append(" return ").append(spec.pReturnType(spec).pFullyQualifiedName());
+            builder.append(" return ");
+            if (Subprogram.returnsNotNull(spec)) builder.append("not null ");
+            builder.append(spec.pReturnType(spec).pFullyQualifiedName());
         }
         return builder.toString();
     }
@@ -703,16 +706,19 @@ public class AdaAPI extends LanguageAPI {
             builder.append("; ").append(argName(param.name)).append(" : ");
             if (param.getMode() == SubpParam.Mode.INOUT) builder.append("in out ");
             else if (param.getMode() == SubpParam.Mode.OUT) builder.append("out ");
+            if (param.hasNotNull()) builder.append("not null ");
             if (param.getType().equals(controllingType)) builder.append(shadowTypename);
             else builder.append(param.getType().pFullyQualifiedName());
         }
         builder.append(")");
-        if (!subp.isProcedure())
-            builder.append("return ")
-                    .append(
-                            subp.getReturnType().equals(controllingType)
-                                    ? shadowTypename
-                                    : subp.getReturnType().pFullyQualifiedName());
+        if (!subp.isProcedure()) {
+            builder.append("return ");
+            if (subp.returnsNotNull()) builder.append("not null ");
+            builder.append(
+                    subp.getReturnType().equals(controllingType)
+                            ? shadowTypename
+                            : subp.getReturnType().pFullyQualifiedName());
+        }
         return builder.toString();
     }
 
