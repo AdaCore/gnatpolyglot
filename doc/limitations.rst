@@ -247,11 +247,25 @@ controlled types was disabled.
 Discriminated types
 ~~~~~~~~~~~~~~~~~~~
 
-Discriminated types are not yet supported.
+Discriminated types with multiple shapes are not supported.
 
 .. code:: ada
 
-   type Unsupported (I: Integer) is null record;
+   type Supported (I : Integer) is record
+      S : String (1 .. I);
+   end record;
+
+   type Unsupported (I : Integer) is record
+      case I is
+          when 1 =>
+             J : Integer;
+          when others =>
+             null;
+      end case;
+   end record;
+
+Getters are generated to retrieve the value of discriminants. No setters will
+be generated as these values cannot be modified.
 
 Fixed point types
 ~~~~~~~~~~~~~~~~~
@@ -447,6 +461,25 @@ leading to any previously escaped values now holding a dangling pointer.
            return foo; // OK
        });
    }
+
+Task types and Protected types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Protected types and Task types are not supported.
+
+.. code:: ada
+
+    protected type Unsupported_1 is
+    end Unsupported_1;
+
+    protected Unsupported_2 is
+    end Unsupported_2;
+
+    task type Unsupported_3 is
+    end Unsupported_3;
+
+    task Unsupported_4 is
+    end Unsupported_4;
 
 Proxy2Cpp
 ---------

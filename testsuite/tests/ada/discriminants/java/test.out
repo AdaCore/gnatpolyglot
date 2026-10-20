@@ -1,0 +1,19 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+1 2
+2 2 2
+2 3
+abc
+caught: test-proxy_package.adb:84 length check failed
+null
+abc
+1 5
+3
+
+Done.

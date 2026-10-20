@@ -59,9 +59,9 @@ public class BindableDeclChecker {
 
     private CheckStatus checkType(Libadalang.BaseTypeDecl decl) {
 
-        if (decl.pDiscriminantsList(Libadalang.BaseTypeDecl.NONE, Libadalang.AdaNode.NONE).length
-                != 0) {
-            throw new UnbindableDeclException(decl, "Discriminated types are not yet supported");
+        if (decl.pIsRecordType(decl) && decl.pShapes(false, decl).length != 1) {
+            throw new UnbindableDeclException(
+                    decl, "Discriminated types with multiple shapes are not supported");
         }
 
         if (decl.pIsTaggedType(Libadalang.AdaNode.NONE)) {
@@ -78,8 +78,25 @@ public class BindableDeclChecker {
             }
         }
 
+        if (decl instanceof Libadalang.ProtectedTypeDecl) {
+            throw new UnbindableDeclException(decl, "Protected types are not supported");
+        }
+
+        if (decl instanceof Libadalang.TaskTypeDecl) {
+            throw new UnbindableDeclException(decl, "Task types are not supported");
+        }
+
+        for (var disc : decl.pDiscriminantsList(Libadalang.BaseTypeDecl.NONE, decl)) {
+            Libadalang.BaseTypeDecl formalType = disc.pFormalType(decl);
+            checkUse(decl, formalType);
+        }
+
         // For other type, we must ignore any type derivation
-        decl = decl.pRootType(decl);
+        Libadalang.BaseTypeDecl rootDecl = decl.pRootType(decl);
+        if (!rootDecl.equals(decl)) {
+            checkUse(decl, rootDecl);
+        }
+        decl = rootDecl;
 
         if (decl.pIsInterfaceType(Libadalang.AdaNode.NONE))
             throw new UnbindableDeclException(decl, "Interfaces are not yet supported");
@@ -187,6 +204,14 @@ public class BindableDeclChecker {
                 .filter(d -> !d.isNone())
                 .anyMatch(Libadalang.DefiningName::pIsGhostCode)) {
             throw new UnbindableDeclException(decl, "Ghost code declarations are not bindable");
+        }
+
+        if (decl instanceof Libadalang.SingleProtectedDecl) {
+            throw new UnbindableDeclException(decl, "Protected declarations are not supported");
+        }
+
+        if (decl instanceof Libadalang.SingleTaskDecl) {
+            throw new UnbindableDeclException(decl, "Task declarations are not supported");
         }
 
         if (decl instanceof Libadalang.GenericDecl

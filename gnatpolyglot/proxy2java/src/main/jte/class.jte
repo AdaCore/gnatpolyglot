@@ -106,6 +106,7 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}${seal}{
                 com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.USER
             )
         );
+        ${api.basePackage()}.Library.raiseIfException();
     }
 
     @else
@@ -139,6 +140,8 @@ class ${className} extends ${api.parentClass(classDecl)}${interfaces}${seal}{
         } else {
            addr = ${api.callJavaNative(alloc, nativeFunc)};
         }
+
+        ${api.basePackage()}.Library.raiseIfException();
 
         _setData(
             new com.adacore.gnatpolyglot.runtime.PolyglotData.Pointer(

@@ -228,7 +228,9 @@ public class AdaProxyTranslator {
                         parentType,
                         8,
                         getInheritability(rec),
-                        rec.components.stream().map(c -> (Field) c.accept(this)).toList(),
+                        rec.getComponentsAndDiscriminants().stream()
+                                .map(c -> (Field) c.accept(this))
+                                .toList(),
                         makeVtable(rec),
                         rec.getIdentificatorSymbol(api),
                         rec.getId(api),

@@ -1,0 +1,10 @@
+Running scanner test.
+Running the scanner...
+test.ads:3:5: warning: Could not bind Test.Prot: Protected types are not supported
+test.ads:6:5: warning: Could not bind Test.ST: Used type `Test.Prot` is not bindable
+test.ads:7:5: warning: Could not bind Test.STA: Used type `Test.ST` is not bindable
+test.ads:9:5: warning: Could not bind Test.Unsupp: Used type `Test.STA` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

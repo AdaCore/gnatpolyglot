@@ -36,6 +36,9 @@ public class Record extends AdaDeclaration {
     /** List of all components. */
     public List<Component> components;
 
+    /** List of discriminants components. */
+    public List<Component> discriminants;
+
     /** Parent type. */
     public Record parent;
 
@@ -84,10 +87,15 @@ public class Record extends AdaDeclaration {
     /** Global counter for getting identifier values. */
     private static int currentId = 0;
 
-    public Record(Libadalang.TypeDecl origin, Name name, List<Component> components) {
+    public Record(
+            Libadalang.TypeDecl origin,
+            Name name,
+            List<Component> components,
+            List<Component> discriminants) {
         super(name);
         this.origin = origin;
         this.components = components;
+        this.discriminants = discriminants;
         this.parent = null;
     }
 
@@ -114,7 +122,10 @@ public class Record extends AdaDeclaration {
 
     /** Return the component with the given name. */
     public Component getComponent(Name name) {
-        return getAllComponents().stream().filter(c -> c.name.equals(name)).findFirst().get();
+        return Stream.concat(this.discriminants.stream(), getAllComponents().stream())
+                .filter(c -> c.name.equals(name))
+                .findFirst()
+                .get();
     }
 
     /**
@@ -202,7 +213,7 @@ public class Record extends AdaDeclaration {
 
     private List<Parameter> constructorParameters(boolean withDefaults) {
         List<Parameter> res =
-                getAllComponents().stream()
+                Stream.concat(this.discriminants.stream(), getAllComponents().stream())
                         .filter(c -> withDefaults || !c.hasDefaultValue())
                         .filter(c -> !AdaTypeMatcher.isAccessToSubp(c.getType()))
                         .map(
@@ -241,16 +252,7 @@ public class Record extends AdaDeclaration {
             // do not need a second specialized constructor.
             // If a component does not have a default value and is a limited type, then we cannot
             // add the constructor since a copy is forced.
-            if (!origin.pIsPrivate()
-                    && components.stream().anyMatch(c -> c.hasDefaultValue())
-                    && components.stream().allMatch(c -> c.hasDefaultValue() || !c.isLimited())
-                    // The first constructor (if it exists) ignores callback components. We need to
-                    // make sure that the ctor with default values does not have the same parameters
-                    // as the first ctor.
-                    && Optional.ofNullable(
-                                    allocFunctions.isEmpty() ? null : allocFunctions.getFirst())
-                            .map(f -> !f.type.parameters.equals(constructorParameters(false)))
-                            .orElse(true)) {
+            if (hasDefaultCtor()) {
                 this.allocFunctions.add(
                         new FunctionDecl(
                                 getProxyFullyQualifiedName()
@@ -271,6 +273,18 @@ public class Record extends AdaDeclaration {
             }
         }
         return this.allocFunctions;
+    }
+
+    private boolean hasDefaultCtor() {
+        return getComponentsAndDiscriminants().stream().anyMatch(c -> c.hasDefaultValue())
+                && getComponentsAndDiscriminants().stream()
+                        .allMatch(c -> c.hasDefaultValue() || !c.isLimited())
+                // The first constructor (if it exists) ignores callback components. We need to
+                // make sure that the ctor with default values does not have the same parameters
+                // as the first ctor.
+                && Optional.ofNullable(allocFunctions.isEmpty() ? null : allocFunctions.getFirst())
+                        .map(f -> !f.type.parameters.equals(constructorParameters(false)))
+                        .orElse(true);
     }
 
     /** Return the allocating function of the shadow type, or generate a new one if necessary. */
@@ -300,19 +314,7 @@ public class Record extends AdaDeclaration {
                             FunctionDecl.Overridability.FINAL,
                             FunctionDecl.Staticness.NON_STATIC));
 
-            // Private types and types that do not thave default values for any of their component
-            // do not need a second specialized constructor.
-            if (!origin.pIsPrivate()
-                    && getAllComponents().stream().anyMatch(c -> c.hasDefaultValue())
-                    // The first constructor (if it exists) ignores callback components. We need to
-                    // make sure that the ctor with default values does not have the same parameters
-                    // as the first ctor.
-                    && Optional.ofNullable(
-                                    shadowAllocFunctions.isEmpty()
-                                            ? null
-                                            : shadowAllocFunctions.getFirst())
-                            .map(f -> !f.type.parameters.equals(constructorParameters(false)))
-                            .orElse(true)) {
+            if (hasDefaultCtor()) {
                 this.shadowAllocFunctions.add(
                         new FunctionDecl(
                                 getProxyFullyQualifiedName()
@@ -396,7 +398,7 @@ public class Record extends AdaDeclaration {
         if (componentAccessors == null) {
             componentAccessors = new ArrayList<>(components.size() * 2);
 
-            for (var c : components) {
+            for (var c : getComponentsAndDiscriminants()) {
                 TypeExpr getterReturnType = c.getGetterType();
                 // Create the getter function.
                 componentAccessors.add(
@@ -421,7 +423,9 @@ public class Record extends AdaDeclaration {
                                 FunctionDecl.Staticness.NON_STATIC));
                 // Create the setter function.
                 TypeExpr setterType = c.getSetterType();
-                if (!c.isLimited() && !AdaTypeMatcher.isAccessToSubp(c.getType())) {
+                if (!c.isLimited()
+                        && c.isModifiable()
+                        && !AdaTypeMatcher.isAccessToSubp(c.getType())) {
                     componentAccessors.add(
                             new FunctionDecl(
                                     getProxyFullyQualifiedName()
@@ -553,6 +557,10 @@ public class Record extends AdaDeclaration {
                         childTypes.stream().flatMap(c -> c.getAllChildTypes().stream()),
                         childTypes.stream())
                 .toList();
+    }
+
+    public List<Component> getComponentsAndDiscriminants() {
+        return Stream.concat(discriminants.stream(), components.stream()).toList();
     }
 
     public String getIdentificatorSymbol(AdaAPI api) {

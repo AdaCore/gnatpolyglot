@@ -138,6 +138,9 @@ public class WithCollector {
             for (var c : rec.getAllComponents()) {
                 checkDecl(c.getType());
             }
+            for (var disc : rec.discriminants) {
+                checkDecl(disc.getType());
+            }
 
             // It is necessary to with the package that contains the first private parent
             // type for extension aggregate.
