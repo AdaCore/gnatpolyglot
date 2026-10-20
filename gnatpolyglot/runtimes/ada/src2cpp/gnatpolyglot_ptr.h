@@ -64,8 +64,14 @@ public:
             _shared_counter->count += 1;
     }
 
-    /** Copy constructor to create a shared_ptr from a child type. */
-    template <typename U = T>
+    /**
+     * Copy constructor to create a polyglot_ptr from a child type, or from a
+     * non-const type. Only enabled for such types, so that other conversions
+     * (e.g. removing constness) are rejected by overload resolution.
+     */
+    template <typename U = T,
+              typename = typename std::enable_if<
+                  std::is_convertible<U *, T *>::value>::type>
     polyglot_ptr(const polyglot_ptr<U> &other)
         : _object_data(other._object_data)
         , _shared_counter(other._shared_counter)
@@ -84,7 +90,9 @@ public:
         return *this;
     }
 
-    template <typename U>
+    template <typename U,
+              typename = typename std::enable_if<
+                  std::is_convertible<U *, T *>::value>::type>
     polyglot_ptr &operator=(const polyglot_ptr<U> &other)
     {
         reset();
