@@ -1,0 +1,32 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Pub:
+Initialize Pub
+PubChild:
+Initialize Pub
+PubValue():
+Initialize Pub_Value
+PubValue(1):
+PubValueChild():
+Initialize Pub_Value
+PubValueChild(1):
+Priv:
+Initialize Priv
+PrivChild:
+Initialize Priv
+PubInherit:
+Initialize Priv
+PubInheritChild:
+Initialize Priv
+PubOverride:
+Initialize Pub_Override
+PubOverrideChild:
+Initialize Pub_Override
+
+Done.
