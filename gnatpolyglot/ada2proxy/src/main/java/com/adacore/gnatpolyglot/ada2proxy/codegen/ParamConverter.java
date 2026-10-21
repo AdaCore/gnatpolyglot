@@ -19,15 +19,22 @@ public class ParamConverter {
         private Name name;
         private boolean isOutMode;
         private boolean isAliased;
+        private boolean isStored;
 
         private String argName;
         private String valueName;
         private String typename;
 
-        public Worker(Name name, BaseTypeDecl type, boolean isOutMode, boolean isAliased) {
+        public Worker(
+                Name name,
+                BaseTypeDecl type,
+                boolean isOutMode,
+                boolean isAliased,
+                boolean isStored) {
             this.name = name;
             this.isOutMode = isOutMode;
             this.isAliased = isAliased;
+            this.isStored = isStored;
 
             // Common values
             this.argName = api.argName(name);
@@ -223,6 +230,46 @@ public class ParamConverter {
             StringBuilder builder = new StringBuilder();
             Libadalang.BaseTypeDecl arrayType = type.pAccessedType(type);
             String arrayTypename = arrayType.pFullyQualifiedName();
+            if (isStored && !isOutMode) {
+                // The value outlives the call, so its bounds cannot be those of a constrained
+                // array type local to the current subprogram: point to the bounds stored before
+                // the data of the heap-allocated array instead, as in ParamUpdater.
+                String fatPtr = api.makeTemp(name, "Fat_Pointer");
+                String overlay = api.makeTemp(name, "Fat_Pointer_Overlay");
+                builder.append(fatPtr)
+                        .append(" : constant GNATpolyglot.Ada.Arrays.Fat_Pointer := (")
+                        .append(argName)
+                        .append(".Data, ")
+                        .append(
+                                AdaGenerator.makeCall(
+                                        "System.Storage_Elements.\"-\"",
+                                        List.of(
+                                                argName.concat(".Data"),
+                                                arrayTypename.concat("'Descriptor_Size / 8"))))
+                        .append(");\n")
+                        .append(overlay)
+                        .append(" : ")
+                        .append(typename)
+                        .append(" with Address => ")
+                        .append(fatPtr)
+                        .append("'Address;\n")
+                        .append(AdaGenerator.makeImport(overlay))
+                        .append(";\n")
+                        .append(valueName)
+                        .append(" : ")
+                        .append(typename)
+                        .append(" := ")
+                        .append(
+                                AdaGenerator.makeConditionalExpr(
+                                        AdaGenerator.makeCall(
+                                                "System.\"=\"",
+                                                List.of(
+                                                        argName.concat(".Data"),
+                                                        "System.Null_Address")),
+                                        "null",
+                                        overlay));
+                return builder.toString();
+            }
             String constrainedArray = arrayTypename;
             String arrayDataType = api.cInterfaceTypename(arrayType);
             if (isOutMode) {
@@ -379,6 +426,19 @@ public class ParamConverter {
 
     public String build(
             Name name, Libadalang.BaseTypeDecl type, boolean isOutMode, boolean isAliased) {
-        return new Worker(name, type, isOutMode, isAliased).apply(type);
+        return build(name, type, isOutMode, isAliased, false);
+    }
+
+    /**
+     * Same as {@link #build(Name, Libadalang.BaseTypeDecl, boolean, boolean)}, {@code isStored}
+     * telling whether the converted value outlives the call (e.g. stored by a setter).
+     */
+    public String build(
+            Name name,
+            Libadalang.BaseTypeDecl type,
+            boolean isOutMode,
+            boolean isAliased,
+            boolean isStored) {
+        return new Worker(name, type, isOutMode, isAliased, isStored).apply(type);
     }
 }
