@@ -1,0 +1,15 @@
+Running scanner test.
+Running the scanner...
+test.ads:3:4: warning: Could not bind Test.Fixed: Constrained array types are not supported
+test.ads:4:4: warning: Could not bind Test.Make_Fixed: Used type `Test.Fixed` is not bindable
+test.ads:5:4: warning: Could not bind Test.Take_Fixed: Used type `Test.Fixed` is not bindable
+test.ads:8:4: warning: Could not bind Test.Dynamic: Constrained array types are not supported
+test.ads:9:4: warning: Could not bind Test.Make_Dynamic: Used type `Test.Dynamic` is not bindable
+test.ads:12:4: warning: Could not bind Test.Derived: Constrained array types are not supported
+test.ads:13:4: warning: Could not bind Test.Make_Derived: Used type `Test.Derived` is not bindable
+test.ads:22:4: warning: Could not bind Test.Derived_From_Window: Constrained array types are not supported
+test.ads:23:4: warning: Could not bind Test.Make_Derived_From_Window: Used type `Test.Derived_From_Window` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

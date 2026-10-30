@@ -161,11 +161,29 @@ not supported.
 Constrained arrays
 ^^^^^^^^^^^^^^^^^^
 
-Constrained arrays are not yet supported.
+Constrained array type declarations, including constrained derived types, are
+not yet supported. They and declarations that depend on them are skipped with
+a warning.
 
 .. code:: ada
 
    type Unsupported is array (1 .. 10) of Integer;
+
+The scanner currently still accepts constrained objects and constrained
+subtypes of an unconstrained array type:
+
+.. code:: ada
+
+   type Unconstrained_Array is array (Positive range <>) of Integer;
+   Object : Unconstrained_Array (1 .. 10);
+   subtype Window is Unconstrained_Array (1 .. 10);
+
+This acceptance does not imply full support in the generated bindings. These
+objects need not store their bounds immediately before their elements. Although
+ordinary array views can use the explicitly exported bounds, existing access
+conversion paths assume adjacent bounds. In particular, passing an access to
+such an object through an ``out`` or ``in out`` callback parameter can corrupt
+the bounds, even when the callback leaves the parameter unchanged.
 
 Enumeration index
 ^^^^^^^^^^^^^^^^^

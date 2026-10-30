@@ -91,6 +91,16 @@ public class BindableDeclChecker {
             checkUse(decl, formalType);
         }
 
+        // Check before resolving the root type: a constrained derivation of an
+        // unconstrained array is also unsupported. This check is limited to type
+        // declarations; accepting constrained objects or subtypes here does not
+        // establish that they are supported through every ABI conversion path.
+        if (decl instanceof Libadalang.TypeDecl
+                && decl.pIsArrayType(Libadalang.AdaNode.NONE)
+                && decl.pIsDefiniteSubtype(Libadalang.AdaNode.NONE)) {
+            throw new UnbindableDeclException(decl, "Constrained array types are not supported");
+        }
+
         // For other type, we must ignore any type derivation
         Libadalang.BaseTypeDecl rootDecl = decl.pRootType(decl);
         if (!rootDecl.equals(decl)) {
