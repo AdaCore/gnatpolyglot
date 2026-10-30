@@ -230,8 +230,7 @@ public class Record extends AdaDeclaration {
     public List<FunctionDecl> getAllocFunctions() {
         if (this.allocFunctions != null) return this.allocFunctions;
         this.allocFunctions = new ArrayList<>(2);
-        if (!isAbstract()
-                && !(origin.fDiscriminants() instanceof Libadalang.UnknownDiscriminantPart)) {
+        if (!isAbstract() && !hasUnknownDiscriminants()) {
             NameTypeExpr type = getTypeExpr();
             List<Component> components = getAllComponents();
             if (components.stream().noneMatch(c -> c.isLimited())) {
@@ -540,7 +539,27 @@ public class Record extends AdaDeclaration {
                                     .anyMatch(t -> t.equals(origin));
                 };
         return isTaggedType()
+                && !hasUnknownDiscriminants()
                 && Stream.of(origin.pGetPrimitives(false, false)).noneMatch(predicate);
+    }
+
+    /**
+     * Unknown discriminants make a view indefinite without exposing any named discriminants. These
+     * semantic queries also cover discriminants inherited without a discriminant part. Check the
+     * previous private view too, so a completion does not expose constructors or shadows for an
+     * opaque partial view. Incomplete forward declarations do not hide a public completion's known
+     * discriminants. Known discriminants without defaults remain supported.
+     */
+    private boolean hasUnknownDiscriminants() {
+        return Stream.of(origin, origin.pPreviousPart(false))
+                .filter(view -> !view.isNone())
+                .anyMatch(
+                        view ->
+                                !view.pIsDefiniteSubtype(view)
+                                        && view.pDiscriminantsList(
+                                                                Libadalang.BaseTypeDecl.NONE, view)
+                                                        .length
+                                                == 0);
     }
 
     public boolean isControlled() {
