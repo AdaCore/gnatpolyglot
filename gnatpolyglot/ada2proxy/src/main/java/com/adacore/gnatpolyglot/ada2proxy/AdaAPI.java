@@ -443,7 +443,16 @@ public class AdaAPI extends LanguageAPI {
      * new value of the setter for ``component`` into the actual Ada type.
      */
     public String makeParamConversion(Component component) {
-        return makeParamConversion(component.name, component.getType(), false, false);
+        // Component values are stored in the record
+        return paramConverter.build(component.name, component.getType(), false, false, true);
+    }
+
+    /**
+     * Create an entity that is the conversion from a C interface type parameter into the actual Ada
+     * type, for a value which outlives the call (e.g. the new value of a setter).
+     */
+    public String makeStoredParamConversion(Name name, Libadalang.BaseTypeDecl type) {
+        return paramConverter.build(name, type, false, false, true);
     }
 
     /**
