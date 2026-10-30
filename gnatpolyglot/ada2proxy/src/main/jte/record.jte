@@ -23,7 +23,7 @@ Template file to generate bindings for record types.
     String recordName = rec.isAbstract()
         ? rec.getClasswideFullyQualifiedName()
         : rec.getFullyQualifiedName();
-    String recordPrefix = recordName.replace(".", "_");
+    String recordPrefix = rec.getFullyQualifiedName().replace(".", "_");
     String recordAccessName = rec.name.toPascalWithUnderscore() + "_Access";
     String cwAccessName = rec.name.toPascalWithUnderscore() + "_Classwide";
     FunctionDecl freeFunc = rec.getFreeFunction();

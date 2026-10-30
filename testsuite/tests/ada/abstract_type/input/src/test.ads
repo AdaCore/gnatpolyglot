@@ -27,4 +27,8 @@ package Test is
 
    procedure Foo (O1: Not_Heritable; R: Root_Class) is null;
 
+   type Abstract_With_Component is abstract tagged record
+      X : Integer;
+   end record;
+   --  Check that generates code compiles for abstract record with components
 end Test;
