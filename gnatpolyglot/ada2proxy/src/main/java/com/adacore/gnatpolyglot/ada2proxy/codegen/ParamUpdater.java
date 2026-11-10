@@ -256,9 +256,13 @@ public class ParamUpdater {
                                     "System.Storage_Elements.\"-\"",
                                     List.of(
                                             valueName.concat(".Data"),
-                                            type.pAccessedType(type)
-                                                    .pFullyQualifiedName()
-                                                    .concat("'Descriptor_Size / 8"))))
+                                            AdaGenerator.makeCall(
+                                                    "System.Storage_Elements.\"/\"",
+                                                    List.of(
+                                                            type.pAccessedType(type)
+                                                                    .pFullyQualifiedName()
+                                                                    .concat("'Descriptor_Size"),
+                                                            "8")))))
                     .append(");\n")
                     .append("for ")
                     .append(fatPtr)

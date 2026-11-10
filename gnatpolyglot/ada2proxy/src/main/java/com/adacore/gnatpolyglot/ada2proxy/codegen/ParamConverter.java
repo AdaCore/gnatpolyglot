@@ -245,7 +245,13 @@ public class ParamConverter {
                                         "System.Storage_Elements.\"-\"",
                                         List.of(
                                                 argName.concat(".Data"),
-                                                arrayTypename.concat("'Descriptor_Size / 8"))))
+                                                AdaGenerator.makeCall(
+                                                        "System.Storage_Elements.\"/\"",
+                                                        List.of(
+                                                                type.pAccessedType(type)
+                                                                        .pFullyQualifiedName()
+                                                                        .concat("'Descriptor_Size"),
+                                                                "8")))))
                         .append(");\n")
                         .append(overlay)
                         .append(" : ")
