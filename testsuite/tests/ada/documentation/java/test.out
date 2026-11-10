@@ -67,6 +67,14 @@ void
 p() {
 
 /**
+ * @foo doc
+ *
+ */
+public static
+void
+incorrectFormat() {
+
+/**
  * @param a must be owned by LIBRARY
  * @return {@link com.adacore.libtest.test.T} owned by {@link com.adacore.gnatpolyglot.runtime.PolyglotData.Owner.LIBRARY}
  */
