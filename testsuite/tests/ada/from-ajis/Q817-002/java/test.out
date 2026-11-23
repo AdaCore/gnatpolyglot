@@ -1,0 +1,23 @@
+Running printer test.
+Running the scanner...
+hello.ads:20:4: warning: Could not bind Hello.Root_Interface: Interfaces are not yet supported
+hello.ads:22:4: warning: Could not bind Hello.Get_Root_Value: Used type `Hello.Root_Interface` is not bindable
+hello.ads:24:4: warning: Could not bind Hello.Derived_Interface: Interfaces are not yet supported
+hello.ads:26:4: warning: Could not bind Hello.Get_Derived_Value: Used type `Hello.Derived_Interface` is not bindable
+hello.ads:29:4: warning: Could not bind Hello.Get_Rpgi_Value: Used type `Hello.Derived_Interface` is not bindable
+hello.ads:20:4: warning: Could not bind Hello.Root_Interface'Class: Interfaces are not yet supported
+hello.ads:32:4: warning: Could not bind Hello.Get_Ada_Root: Used type `Hello.Root_Interface'Class` is not bindable
+hello.ads:24:4: warning: Could not bind Hello.Derived_Interface'Class: Interfaces are not yet supported
+hello.ads:34:4: warning: Could not bind Hello.Get_Ada_Derived: Used type `Hello.Derived_Interface'Class` is not bindable
+hello.ads:36:4: warning: Could not bind Hello.Call_Interfaces: Used type `Hello.Root_Interface'Class` is not bindable
+hello.ads:39:4: warning: Could not bind Hello.Derived_Interface_Bis: Interfaces are not yet supported
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+Hello ! Interfaces are : 
+ 1961  1995 3990
+
+Done.

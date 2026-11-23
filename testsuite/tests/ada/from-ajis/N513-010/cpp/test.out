@@ -1,0 +1,45 @@
+Running printer test.
+Running the scanner...
+hello.ads:30:4: warning: Could not bind Hello.Lang_Specific_Database: Interfaces are not yet supported
+hello.ads:31:4: warning: Could not bind Hello.Get_Entity: Used type `Hello.Lang_Specific_Database` is not bindable
+a-iteint.ads:24:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.Forward_Iterator: Interfaces are not yet supported
+a-iteint.ads:26:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.First: Used type `Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.Forward_Iterator` is not bindable
+a-iteint.ads:28:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.Next: Used type `Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.Forward_Iterator` is not bindable
+a-iteint.ads:32:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.Reversible_Iterator: Interfaces are not yet supported
+a-iteint.ads:35:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.Last: Used type `Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.Reversible_Iterator` is not bindable
+a-iteint.ads:37:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.Previous: Used type `Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.Reversible_Iterator` is not bindable
+hello.ads:30:4: warning: Could not bind Hello.Lang_Specific_Database'Class: Interfaces are not yet supported
+a-cihama.ads:121:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Element: Used type `Hello.Lang_Specific_Database'Class` is not bindable
+a-cihama.ads:124:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Replace_Element: Used type `Hello.Lang_Specific_Database'Class` is not bindable
+a-cihama.ads:132:18: warning: Could not bind <| AnonymousTypeDecl ["None"] a-cihama.ads:132:18-133:68 [hello.ads:36:4] |>: Anonymous type declarations are not yet supported
+a-cihama.ads:130:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Query_Element: Used type `<| AnonymousTypeDecl ["None"] a-cihama.ads:132:18-133:68 [hello.ads:36:4] |>` is not bindable
+a-cihama.ads:140:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-cihama.ads:140:19-141:76 [hello.ads:36:4] |>: Anonymous type declarations are not yet supported
+a-cihama.ads:137:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Update_Element: Used type `<| AnonymousTypeDecl ["None"] a-cihama.ads:140:19-141:76 [hello.ads:36:4] |>` is not bindable
+a-cihama.ads:146:18: warning: Could not bind <| AnonymousTypeDecl ["None"] a-cihama.ads:146:18-146:55 [hello.ads:36:4] |>: Anonymous type declarations are not yet supported
+a-cihama.ads:145:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Constant_Reference_Type: Used type `<| AnonymousTypeDecl ["None"] a-cihama.ads:146:18-146:55 [hello.ads:36:4] |>` is not bindable
+a-cihama.ads:151:17: warning: Could not bind <| AnonymousTypeDecl ["None"] a-cihama.ads:151:17-151:45 [hello.ads:36:4] |>: Anonymous type declarations are not yet supported
+a-cihama.ads:150:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Reference_Type: Used type `<| AnonymousTypeDecl ["None"] a-cihama.ads:151:17-151:45 [hello.ads:36:4] |>` is not bindable
+a-cihama.ads:155:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Constant_Reference: Used type `Hello.Lang_Specific_Databases_Maps.Constant_Reference_Type` is not bindable
+a-cihama.ads:160:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Reference: Used type `Hello.Lang_Specific_Databases_Maps.Reference_Type` is not bindable
+a-cihama.ads:165:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Constant_Reference: Used type `Hello.Lang_Specific_Databases_Maps.Constant_Reference_Type` is not bindable
+a-cihama.ads:170:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Reference: Used type `Hello.Lang_Specific_Databases_Maps.Reference_Type` is not bindable
+a-cihama.ads:183:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Insert: Used type `Hello.Lang_Specific_Database'Class` is not bindable
+a-cihama.ads:201:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Insert: Used type `Hello.Lang_Specific_Database'Class` is not bindable
+a-cihama.ads:212:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Include: Used type `Hello.Lang_Specific_Database'Class` is not bindable
+a-cihama.ads:223:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Replace: Used type `Hello.Lang_Specific_Database'Class` is not bindable
+a-cihama.ads:281:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Element: Used type `Hello.Lang_Specific_Database'Class` is not bindable
+a-cihama.ads:298:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-cihama.ads:298:19-298:64 [hello.ads:36:4] |>: Anonymous type declarations are not yet supported
+a-cihama.ads:296:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Iterate: Used type `<| AnonymousTypeDecl ["None"] a-cihama.ads:298:19-298:64 [hello.ads:36:4] |>` is not bindable
+a-iteint.ads:24:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.Forward_Iterator'Class: Interfaces are not yet supported
+a-cihama.ads:301:4: warning: Could not bind Hello.Lang_Specific_Databases_Maps.Iterate: Used type `Hello.Lang_Specific_Databases_Maps.Map_Iterator_Interfaces.Forward_Iterator'Class` is not bindable
+hello.ads:51:14: warning: Could not bind <AnonymousTypeDecl ["None"] hello.ads:51:14-51:49>: Anonymous type declarations are not yet supported
+hello.ads:50:4: warning: Could not bind Hello.Get_Entity: Used type `<AnonymousTypeDecl ["None"] hello.ads:51:14-51:49>` is not bindable
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+OK
+
+Done.

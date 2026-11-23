@@ -1,0 +1,22 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+AFTER P1, r is 55
+INPUT IS  2007
+AFTER P2, obj is 2007
+AFTER P2, r is 999
+IN P_ACC, X is 10
+OUTPUT IS  2007
+AFTER P1_T, r is 55
+INPUT_T IS  2007
+AFTER P2_T, obj is 2007
+AFTER P2_T, r is 999
+IN P_T_ACC, X is 10
+OUTPUT_T IS  2007
+
+Done.

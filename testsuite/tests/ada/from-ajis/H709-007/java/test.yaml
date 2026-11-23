@@ -1,0 +1,10 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: java
+test_file: Main.java
+
+output_lib_flags: [ "-XLIBRARY_KIND=relocatable", "-XLIBRARY_STANDALONE=standard"]
+
+control:
+- [XFAIL, "True", "bug: the getter of the discriminant I and the bound function Get_I are both get_i(), which does not compile (ajis-bugs/disc-getter-clashes-function)"]

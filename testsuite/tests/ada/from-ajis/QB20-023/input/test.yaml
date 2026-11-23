@@ -1,0 +1,7 @@
+driver: scan2proxy
+
+input_lang: ada
+project_file: test.gpr
+
+control:
+- [XFAIL, "True", "bug: subprograms using an unbound type are kept, giving an invalid proxy (Say)"]

@@ -1,0 +1,8 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+control:
+- [XFAIL, "True", "bug: \"=\" called in the subtype's package (ajis-bugs/proxy-equality-wrong-package); limitation: derived access types are not supported"]

@@ -1,0 +1,8 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+control:
+- [XFAIL, "True", "limitation: anonymous access types are not yet supported (Clone_2, Call, Call2)"]

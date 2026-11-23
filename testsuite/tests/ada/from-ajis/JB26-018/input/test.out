@@ -1,0 +1,12 @@
+Running scanner test.
+Running the scanner...
+test.ads:7:26: warning: Could not bind <AnonymousTypeDecl ["None"] test.ads:7:26-7:34>: Anonymous type declarations are not yet supported
+test.ads:7:4: warning: Could not bind Test.Clone_2: Used type `<AnonymousTypeDecl ["None"] test.ads:7:26-7:34>` is not bindable
+test.ads:11:24: warning: Could not bind <AnonymousTypeDecl ["None"] test.ads:11:24-11:38>: Anonymous type declarations are not yet supported
+test.ads:11:4: warning: Could not bind Test.Call: Used type `<AnonymousTypeDecl ["None"] test.ads:11:24-11:38>` is not bindable
+test.ads:17:25: warning: Could not bind <AnonymousTypeDecl ["None"] test.ads:17:25-17:40>: Anonymous type declarations are not yet supported
+test.ads:17:4: warning: Could not bind Test.Call2: Used type `<AnonymousTypeDecl ["None"] test.ads:17:25-17:40>` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

@@ -1,0 +1,7 @@
+import com.adacore.libtest.test.TestPackage;
+
+public class Main {
+    public static void main(String[] args) {
+        var b = new TestPackage.Bla();
+    }
+}

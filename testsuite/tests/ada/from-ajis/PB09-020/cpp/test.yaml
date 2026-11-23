@@ -1,0 +1,8 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+control:
+- [XFAIL, "True", "bug: the shadow wrapper copies the limited object returned by a dispatching primitive (F2, F3, F5, F6, F8, F9)"]

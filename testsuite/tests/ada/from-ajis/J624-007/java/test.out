@@ -1,0 +1,16 @@
+Running printer test.
+Running the scanner...
+test.ads:2:21: warning: Could not bind <AnonymousTypeDecl ["None"] test.ads:2:21-2:35>: Anonymous type declarations are not yet supported
+test.ads:2:4: warning: Could not bind Test.P: Used type `<AnonymousTypeDecl ["None"] test.ads:2:21-2:35>` is not bindable
+test.ads:5:11: warning: Could not bind <AnonymousTypeDecl ["None"] test.ads:5:11-5:25>: Anonymous type declarations are not yet supported
+test.ads:4:4: warning: Could not bind Test.R: Used type `<AnonymousTypeDecl ["None"] test.ads:5:11-5:25>` is not bindable
+test.ads:8:4: warning: Could not bind Test.Acc: Access to scalar types are not yet supported
+test.ads:10:4: warning: Could not bind Test.P2: Used type `Test.Acc` is not bindable
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+
+Done.

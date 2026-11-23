@@ -1,0 +1,8 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+control:
+- [XFAIL, "True", "limitation: enumerations with character literals are not supported; bug: subprograms using an unbound type are kept, giving an invalid proxy (Say)"]

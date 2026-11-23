@@ -1,0 +1,26 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+[JAVA - 1] null
+[ADA - 1] NULL
+[JAVA - 2] null
+[ADA - 2] NULL
+INIT [3]
+[JAVA - 3] null
+INIT [3]
+[ADA - 3] NOT NULL
+[JAVA - 4] null
+[ADA - 4] NOT NULL
+INIT [3]
+[JAVA - 3] null
+INIT [3]
+[ADA - 3] NOT NULL
+[JAVA - 4] null
+[ADA - 4] NOT NULL
+
+Done.

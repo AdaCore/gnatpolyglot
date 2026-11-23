@@ -1,0 +1,7 @@
+driver: scan2proxy
+
+input_lang: ada
+project_file: test.gpr
+
+control:
+- [XFAIL, "True", "bug: scanner crashes on incomplete Parameter_Array; interfaces and anonymous access are also unsupported"]

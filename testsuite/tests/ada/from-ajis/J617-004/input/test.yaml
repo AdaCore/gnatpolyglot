@@ -1,0 +1,7 @@
+driver: scan2proxy
+
+input_lang: ada
+project_file: test.gpr
+
+control:
+- [XFAIL, "True", "proxy calls the abstract \"=\" statically on Test.Root views: call to abstract function must be dispatching (ajis-bugs/multiple-controlling-params-static-call)"]

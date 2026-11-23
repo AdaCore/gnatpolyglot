@@ -1,0 +1,18 @@
+Running scanner test.
+Running the scanner...
+xref_abstract_entities_cursor.ads:19:4: warning: Could not bind Xref_Abstract_Entities_Cursor.Abstract_Entities_Cursor'Class: Interfaces are not yet supported
+xref_abstract_entities_cursor.ads:25:4: warning: Could not bind Xref_Abstract_Entities_Cursor.Get_All_Called_Entities: Used type `Xref_Abstract_Entities_Cursor.Abstract_Entities_Cursor'Class` is not bindable
+xref_abstract_entities_cursor.ads:33:4: warning: Could not bind Xref_Abstract_Entities_Cursor.Abstract_Entities_Cursor: Interfaces are not yet supported
+xref_abstract_entities_cursor.ads:34:4: warning: Could not bind Xref_Abstract_Entities_Cursor.At_End: Used type `Xref_Abstract_Entities_Cursor.Abstract_Entities_Cursor` is not bindable
+xref_abstract_entities_cursor.ads:37:4: warning: Could not bind Xref_Abstract_Entities_Cursor.Base_Entities_Cursor: Used type `Xref_Abstract_Entities_Cursor.Abstract_Entities_Cursor` is not bindable
+xref_abstract_entities_cursor.ads:39:4: warning: Could not bind Xref_Abstract_Entities_Cursor.At_End: Used type `Xref_Abstract_Entities_Cursor.Base_Entities_Cursor` is not bindable
+xref_abstract_entities_cursor.ads:42:50: warning: Could not bind <AnonymousTypeDecl ["None"] xref_abstract_entities_cursor.ads:42:50-42:74>: Anonymous type declarations are not yet supported
+xref_abstract_entities_cursor.ads:42:4: warning: Could not bind Xref_Abstract_Entities_Cursor.Should_Be_Bound: Used type `<AnonymousTypeDecl ["None"] xref_abstract_entities_cursor.ads:42:50-42:74>` is not bindable
+xref_parameter_array.ads:36:50: warning: Could not bind <AnonymousTypeDecl ["None"] xref_parameter_array.ads:36:50-36:74>: Anonymous type declarations are not yet supported
+xref_parameter_array.ads:36:4: warning: Could not bind Xref_Parameter_Array.Should_Be_Bound: Used type `<AnonymousTypeDecl ["None"] xref_parameter_array.ads:36:50-36:74>` is not bindable
+xref_root_reference_iterator.ads:35:50: warning: Could not bind <AnonymousTypeDecl ["None"] xref_root_reference_iterator.ads:35:50-35:74>: Anonymous type declarations are not yet supported
+xref_root_reference_iterator.ads:35:4: warning: Could not bind Xref_Root_Reference_Iterator.Should_Be_Bound: Used type `<AnonymousTypeDecl ["None"] xref_root_reference_iterator.ads:35:50-35:74>` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

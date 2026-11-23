@@ -1,0 +1,17 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+A
+C
+B
+V1, Java callback: A
+V3, Java callback: C
+V2, Ada callback: E
+V3, Ada callback: F
+
+Done.

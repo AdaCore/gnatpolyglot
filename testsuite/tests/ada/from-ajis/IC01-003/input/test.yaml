@@ -1,0 +1,7 @@
+driver: scan2proxy
+
+input_lang: ada
+project_file: test.gpr
+
+control:
+- [XFAIL, "True", "bug: the shadow allocation of a private type constraining the discriminant of its parent gives the discriminant twice (ajis-bugs/disc-private-child-constraint-shadow)"]

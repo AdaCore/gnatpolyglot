@@ -1,0 +1,66 @@
+Running scanner test.
+Running the scanner...
+a-iteint.ads:24:4: warning: Could not bind Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Forward_Iterator: Interfaces are not yet supported
+a-iteint.ads:26:4: warning: Could not bind Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.First: Used type `Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Forward_Iterator` is not bindable
+a-iteint.ads:28:4: warning: Could not bind Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Next: Used type `Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Forward_Iterator` is not bindable
+a-iteint.ads:32:4: warning: Could not bind Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator: Interfaces are not yet supported
+a-iteint.ads:35:4: warning: Could not bind Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Last: Used type `Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator` is not bindable
+a-iteint.ads:37:4: warning: Could not bind Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Previous: Used type `Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator` is not bindable
+a-convec.ads:242:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-convec.ads:242:19-242:69 [hello.ads:17:4] |>: Anonymous type declarations are not yet supported
+a-convec.ads:239:4: warning: Could not bind Hello.Combo_Switch_Vectors.Query_Element: Used type `<| AnonymousTypeDecl ["None"] a-convec.ads:242:19-242:69 [hello.ads:17:4] |>` is not bindable
+a-convec.ads:252:18: warning: Could not bind <| AnonymousTypeDecl ["None"] a-convec.ads:252:18-252:68 [hello.ads:17:4] |>: Anonymous type declarations are not yet supported
+a-convec.ads:250:4: warning: Could not bind Hello.Combo_Switch_Vectors.Query_Element: Used type `<| AnonymousTypeDecl ["None"] a-convec.ads:252:18-252:68 [hello.ads:17:4] |>` is not bindable
+a-convec.ads:262:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-convec.ads:262:19-262:76 [hello.ads:17:4] |>: Anonymous type declarations are not yet supported
+a-convec.ads:259:4: warning: Could not bind Hello.Combo_Switch_Vectors.Update_Element: Used type `<| AnonymousTypeDecl ["None"] a-convec.ads:262:19-262:76 [hello.ads:17:4] |>` is not bindable
+a-convec.ads:279:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-convec.ads:279:19-279:76 [hello.ads:17:4] |>: Anonymous type declarations are not yet supported
+a-convec.ads:276:4: warning: Could not bind Hello.Combo_Switch_Vectors.Update_Element: Used type `<| AnonymousTypeDecl ["None"] a-convec.ads:279:19-279:76 [hello.ads:17:4] |>` is not bindable
+a-convec.ads:294:17: warning: Could not bind <| AnonymousTypeDecl ["None"] a-convec.ads:294:17-294:54 [hello.ads:17:4] |>: Anonymous type declarations are not yet supported
+a-convec.ads:293:4: warning: Could not bind Hello.Combo_Switch_Vectors.Constant_Reference_Type: Used type `<| AnonymousTypeDecl ["None"] a-convec.ads:294:17-294:54 [hello.ads:17:4] |>` is not bindable
+a-convec.ads:299:17: warning: Could not bind <| AnonymousTypeDecl ["None"] a-convec.ads:299:17-299:45 [hello.ads:17:4] |>: Anonymous type declarations are not yet supported
+a-convec.ads:298:4: warning: Could not bind Hello.Combo_Switch_Vectors.Reference_Type: Used type `<| AnonymousTypeDecl ["None"] a-convec.ads:299:17-299:45 [hello.ads:17:4] |>` is not bindable
+a-convec.ads:303:4: warning: Could not bind Hello.Combo_Switch_Vectors.Constant_Reference: Used type `Hello.Combo_Switch_Vectors.Constant_Reference_Type` is not bindable
+a-convec.ads:308:4: warning: Could not bind Hello.Combo_Switch_Vectors.Reference: Used type `Hello.Combo_Switch_Vectors.Reference_Type` is not bindable
+a-convec.ads:313:4: warning: Could not bind Hello.Combo_Switch_Vectors.Constant_Reference: Used type `Hello.Combo_Switch_Vectors.Constant_Reference_Type` is not bindable
+a-convec.ads:318:4: warning: Could not bind Hello.Combo_Switch_Vectors.Reference: Used type `Hello.Combo_Switch_Vectors.Reference_Type` is not bindable
+a-convec.ads:656:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-convec.ads:656:19-656:64 [hello.ads:17:4] |>: Anonymous type declarations are not yet supported
+a-convec.ads:654:4: warning: Could not bind Hello.Combo_Switch_Vectors.Iterate: Used type `<| AnonymousTypeDecl ["None"] a-convec.ads:656:19-656:64 [hello.ads:17:4] |>` is not bindable
+a-convec.ads:664:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-convec.ads:664:19-664:64 [hello.ads:17:4] |>: Anonymous type declarations are not yet supported
+a-convec.ads:662:4: warning: Could not bind Hello.Combo_Switch_Vectors.Reverse_Iterate: Used type `<| AnonymousTypeDecl ["None"] a-convec.ads:664:19-664:64 [hello.ads:17:4] |>` is not bindable
+a-iteint.ads:32:4: warning: Could not bind Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator'Class: Interfaces are not yet supported
+a-convec.ads:669:4: warning: Could not bind Hello.Combo_Switch_Vectors.Iterate: Used type `Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator'Class` is not bindable
+a-convec.ads:672:4: warning: Could not bind Hello.Combo_Switch_Vectors.Iterate: Used type `Hello.Combo_Switch_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator'Class` is not bindable
+a-convec.ads:675:4: warning: Could not bind Hello.Combo_Switch_Vectors.Generic_Sorting: Generic declarations are not bindable
+a-iteint.ads:24:4: warning: Could not bind Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Forward_Iterator: Interfaces are not yet supported
+a-iteint.ads:26:4: warning: Could not bind Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.First: Used type `Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Forward_Iterator` is not bindable
+a-iteint.ads:28:4: warning: Could not bind Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Next: Used type `Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Forward_Iterator` is not bindable
+a-iteint.ads:32:4: warning: Could not bind Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator: Interfaces are not yet supported
+a-iteint.ads:35:4: warning: Could not bind Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Last: Used type `Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator` is not bindable
+a-iteint.ads:37:4: warning: Could not bind Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Previous: Used type `Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator` is not bindable
+a-coinve.ads:123:17: warning: Could not bind <| AnonymousTypeDecl ["None"] a-coinve.ads:123:17-123:54 [hello.ads:20:4] |>: Anonymous type declarations are not yet supported
+a-coinve.ads:122:4: warning: Could not bind Hello.Switch_Description_Vectors.Constant_Reference_Type: Used type `<| AnonymousTypeDecl ["None"] a-coinve.ads:123:17-123:54 [hello.ads:20:4] |>` is not bindable
+a-coinve.ads:128:17: warning: Could not bind <| AnonymousTypeDecl ["None"] a-coinve.ads:128:17-128:45 [hello.ads:20:4] |>: Anonymous type declarations are not yet supported
+a-coinve.ads:127:4: warning: Could not bind Hello.Switch_Description_Vectors.Reference_Type: Used type `<| AnonymousTypeDecl ["None"] a-coinve.ads:128:17-128:45 [hello.ads:20:4] |>` is not bindable
+a-coinve.ads:132:4: warning: Could not bind Hello.Switch_Description_Vectors.Constant_Reference: Used type `Hello.Switch_Description_Vectors.Constant_Reference_Type` is not bindable
+a-coinve.ads:137:4: warning: Could not bind Hello.Switch_Description_Vectors.Reference: Used type `Hello.Switch_Description_Vectors.Reference_Type` is not bindable
+a-coinve.ads:142:4: warning: Could not bind Hello.Switch_Description_Vectors.Constant_Reference: Used type `Hello.Switch_Description_Vectors.Constant_Reference_Type` is not bindable
+a-coinve.ads:147:4: warning: Could not bind Hello.Switch_Description_Vectors.Reference: Used type `Hello.Switch_Description_Vectors.Reference_Type` is not bindable
+a-coinve.ads:177:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-coinve.ads:177:19-177:69 [hello.ads:20:4] |>: Anonymous type declarations are not yet supported
+a-coinve.ads:174:4: warning: Could not bind Hello.Switch_Description_Vectors.Query_Element: Used type `<| AnonymousTypeDecl ["None"] a-coinve.ads:177:19-177:69 [hello.ads:20:4] |>` is not bindable
+a-coinve.ads:181:18: warning: Could not bind <| AnonymousTypeDecl ["None"] a-coinve.ads:181:18-181:68 [hello.ads:20:4] |>: Anonymous type declarations are not yet supported
+a-coinve.ads:179:4: warning: Could not bind Hello.Switch_Description_Vectors.Query_Element: Used type `<| AnonymousTypeDecl ["None"] a-coinve.ads:181:18-181:68 [hello.ads:20:4] |>` is not bindable
+a-coinve.ads:186:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-coinve.ads:186:19-186:76 [hello.ads:20:4] |>: Anonymous type declarations are not yet supported
+a-coinve.ads:183:4: warning: Could not bind Hello.Switch_Description_Vectors.Update_Element: Used type `<| AnonymousTypeDecl ["None"] a-coinve.ads:186:19-186:76 [hello.ads:20:4] |>` is not bindable
+a-coinve.ads:191:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-coinve.ads:191:19-191:76 [hello.ads:20:4] |>: Anonymous type declarations are not yet supported
+a-coinve.ads:188:4: warning: Could not bind Hello.Switch_Description_Vectors.Update_Element: Used type `<| AnonymousTypeDecl ["None"] a-coinve.ads:191:19-191:76 [hello.ads:20:4] |>` is not bindable
+a-coinve.ads:365:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-coinve.ads:365:19-365:64 [hello.ads:20:4] |>: Anonymous type declarations are not yet supported
+a-coinve.ads:363:4: warning: Could not bind Hello.Switch_Description_Vectors.Iterate: Used type `<| AnonymousTypeDecl ["None"] a-coinve.ads:365:19-365:64 [hello.ads:20:4] |>` is not bindable
+a-iteint.ads:32:4: warning: Could not bind Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator'Class: Interfaces are not yet supported
+a-coinve.ads:367:4: warning: Could not bind Hello.Switch_Description_Vectors.Iterate: Used type `Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator'Class` is not bindable
+a-coinve.ads:370:4: warning: Could not bind Hello.Switch_Description_Vectors.Iterate: Used type `Hello.Switch_Description_Vectors.Vector_Iterator_Interfaces.Reversible_Iterator'Class` is not bindable
+a-coinve.ads:377:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-coinve.ads:377:19-377:64 [hello.ads:20:4] |>: Anonymous type declarations are not yet supported
+a-coinve.ads:375:4: warning: Could not bind Hello.Switch_Description_Vectors.Reverse_Iterate: Used type `<| AnonymousTypeDecl ["None"] a-coinve.ads:377:19-377:64 [hello.ads:20:4] |>` is not bindable
+a-coinve.ads:379:4: warning: Could not bind Hello.Switch_Description_Vectors.Generic_Sorting: Generic declarations are not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

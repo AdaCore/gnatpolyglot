@@ -1,0 +1,8 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+control:
+- [XFAIL, "True", "bug: null access-to-record callback parameter seen as non-null (ajis-bugs/cpp-callback-null-access-record); open question: AJIS escape-check output"]

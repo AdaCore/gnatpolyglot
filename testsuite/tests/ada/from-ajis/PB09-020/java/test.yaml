@@ -1,0 +1,10 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: java
+test_file: Main.java
+
+output_lib_flags: [ "-XLIBRARY_KIND=relocatable", "-XLIBRARY_STANDALONE=standard"]
+
+control:
+- [XFAIL, "True", "bug: the shadow wrapper copies the limited object returned by a dispatching primitive (F2, F3, F5, F6, F8, F9)"]

@@ -1,0 +1,10 @@
+Running scanner test.
+Running the scanner...
+dispatching_iterators_generic.ads:17:1: warning: Could not bind Dispatching_Iterators_Generic: Generic declarations are not bindable
+dispatching_iterators_generic.ads:83:4: warning: Could not bind Iterable_Containers.Integer_Iterators.Current_Element: Primitives of abstract types with classwide dynamic pre/post conditions are not bindable
+dispatching_iterators_generic.ads:97:14: warning: Could not bind <| AnonymousTypeDecl ["None"] dispatching_iterators_generic.ads:97:14-97:38 [iterable_containers.ads:21:4] |>: Anonymous type declarations are not yet supported
+dispatching_iterators_generic.ads:96:4: warning: Could not bind Iterable_Containers.Integer_Iterators.Next: Used type `<| AnonymousTypeDecl ["None"] dispatching_iterators_generic.ads:97:14-97:38 [iterable_containers.ads:21:4] |>` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

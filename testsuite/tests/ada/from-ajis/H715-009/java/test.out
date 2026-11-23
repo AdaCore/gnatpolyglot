@@ -1,0 +1,22 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+BEFORE COPY
+PROXY CLONED !
+AFTER COPY
+false
+class Main$TChild
+777, 888
+BEFORE COPY
+PROXY CLONED !
+AFTER COPY
+false
+class Main$TChild
+777, 999
+
+Done.

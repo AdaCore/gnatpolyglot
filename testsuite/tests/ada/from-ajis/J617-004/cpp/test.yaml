@@ -1,0 +1,8 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+control:
+- [XFAIL, "True", "proxy calls the abstract \"=\" statically on Test.Root views: call to abstract function must be dispatching (ajis-bugs/multiple-controlling-params-static-call)"]

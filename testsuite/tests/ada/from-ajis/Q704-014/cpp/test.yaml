@@ -1,0 +1,8 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+control:
+- [XFAIL, "True", "unsupported dependency: Ada.Containers.Formal_Doubly_Linked_Lists moved to the SPARK library; original Ada does not compile"]

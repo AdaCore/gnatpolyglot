@@ -1,0 +1,27 @@
+Running scanner test.
+Running the scanner...
+a-iteint.ads:24:4: warning: Could not bind Hello.File_Info_Sets.Set_Iterator_Interfaces.Forward_Iterator: Interfaces are not yet supported
+a-iteint.ads:26:4: warning: Could not bind Hello.File_Info_Sets.Set_Iterator_Interfaces.First: Used type `Hello.File_Info_Sets.Set_Iterator_Interfaces.Forward_Iterator` is not bindable
+a-iteint.ads:28:4: warning: Could not bind Hello.File_Info_Sets.Set_Iterator_Interfaces.Next: Used type `Hello.File_Info_Sets.Set_Iterator_Interfaces.Forward_Iterator` is not bindable
+a-iteint.ads:32:4: warning: Could not bind Hello.File_Info_Sets.Set_Iterator_Interfaces.Reversible_Iterator: Interfaces are not yet supported
+a-iteint.ads:35:4: warning: Could not bind Hello.File_Info_Sets.Set_Iterator_Interfaces.Last: Used type `Hello.File_Info_Sets.Set_Iterator_Interfaces.Reversible_Iterator` is not bindable
+a-iteint.ads:37:4: warning: Could not bind Hello.File_Info_Sets.Set_Iterator_Interfaces.Previous: Used type `Hello.File_Info_Sets.Set_Iterator_Interfaces.Reversible_Iterator` is not bindable
+a-ciorse.ads:99:18: warning: Could not bind <| AnonymousTypeDecl ["None"] a-ciorse.ads:99:18-99:68 [hello.ads:24:4] |>: Anonymous type declarations are not yet supported
+a-ciorse.ads:97:4: warning: Could not bind Hello.File_Info_Sets.Query_Element: Used type `<| AnonymousTypeDecl ["None"] a-ciorse.ads:99:18-99:68 [hello.ads:24:4] |>` is not bindable
+a-ciorse.ads:102:17: warning: Could not bind <| AnonymousTypeDecl ["None"] a-ciorse.ads:102:17-102:54 [hello.ads:24:4] |>: Anonymous type declarations are not yet supported
+a-ciorse.ads:101:4: warning: Could not bind Hello.File_Info_Sets.Constant_Reference_Type: Used type `<| AnonymousTypeDecl ["None"] a-ciorse.ads:102:17-102:54 [hello.ads:24:4] |>` is not bindable
+a-ciorse.ads:106:4: warning: Could not bind Hello.File_Info_Sets.Constant_Reference: Used type `Hello.File_Info_Sets.Constant_Reference_Type` is not bindable
+a-ciorse.ads:225:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-ciorse.ads:225:19-225:64 [hello.ads:24:4] |>: Anonymous type declarations are not yet supported
+a-ciorse.ads:223:4: warning: Could not bind Hello.File_Info_Sets.Iterate: Used type `<| AnonymousTypeDecl ["None"] a-ciorse.ads:225:19-225:64 [hello.ads:24:4] |>` is not bindable
+a-ciorse.ads:229:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-ciorse.ads:229:19-229:64 [hello.ads:24:4] |>: Anonymous type declarations are not yet supported
+a-ciorse.ads:227:4: warning: Could not bind Hello.File_Info_Sets.Reverse_Iterate: Used type `<| AnonymousTypeDecl ["None"] a-ciorse.ads:229:19-229:64 [hello.ads:24:4] |>` is not bindable
+a-iteint.ads:32:4: warning: Could not bind Hello.File_Info_Sets.Set_Iterator_Interfaces.Reversible_Iterator'Class: Interfaces are not yet supported
+a-ciorse.ads:231:4: warning: Could not bind Hello.File_Info_Sets.Iterate: Used type `Hello.File_Info_Sets.Set_Iterator_Interfaces.Reversible_Iterator'Class` is not bindable
+a-ciorse.ads:235:4: warning: Could not bind Hello.File_Info_Sets.Iterate: Used type `Hello.File_Info_Sets.Set_Iterator_Interfaces.Reversible_Iterator'Class` is not bindable
+a-ciorse.ads:251:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-ciorse.ads:251:19-251:69 [hello.ads:24:4] |>: Anonymous type declarations are not yet supported
+a-ciorse.ads:248:4: warning: Could not bind Hello.File_Info_Sets.Query_Element: Used type `<| AnonymousTypeDecl ["None"] a-ciorse.ads:251:19-251:69 [hello.ads:24:4] |>` is not bindable
+a-ciorse.ads:259:4: warning: Could not bind Hello.File_Info_Sets.Generic_Keys: Generic declarations are not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.
