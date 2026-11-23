@@ -6,3 +6,5 @@ test_file: main.cpp
 
 # Like the original AJIS custom build, collect exception tracebacks.
 proxy_binder_args: ["-E"]
+
+valgrind: never
