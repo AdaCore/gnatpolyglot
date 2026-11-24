@@ -1,6 +1,7 @@
 stages:
   - auto
   - manual
+  - gitleaks
 
 check_issue:
   stage: auto
@@ -76,3 +77,8 @@ x86-windows:
     - image:visual-studio-2022
     - platform:x86_64-windows-2022
     - cpu:8
+
+include:
+  - component: $CI_SERVER_FQDN/it/gitlab-templates/gitleaks@~latest
+    inputs:
+      stage: gitleaks
