@@ -1,0 +1,9 @@
+Running scanner test.
+Running the scanner...
+hello_impl.ads:5:35: warning: Could not bind <AnonymousTypeDecl ["None"] hello_impl.ads:5:35-5:51>: Anonymous type declarations are not yet supported
+hello_impl.ads:5:4: warning: Could not bind Hello.P: Used type `<AnonymousTypeDecl ["None"] hello_impl.ads:5:35-5:51>` is not bindable
+hello_impl.ads:5:4: warning: Could not bind Hello_Impl.P: Used type `<AnonymousTypeDecl ["None"] hello_impl.ads:5:35-5:51>` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

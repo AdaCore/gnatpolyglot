@@ -1,0 +1,9 @@
+Running scanner test.
+Running the scanner...
+g.ads:1:1: warning: Could not bind G: Generic declarations are not bindable
+g.ads:6:19: warning: Could not bind <| AnonymousTypeDecl ["None"] g.ads:6:19-6:59 [p.ads:4:4] |>: Anonymous type declarations are not yet supported
+g.ads:3:4: warning: Could not bind P.I.Add: Used type `<| AnonymousTypeDecl ["None"] g.ads:6:19-6:59 [p.ads:4:4] |>` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

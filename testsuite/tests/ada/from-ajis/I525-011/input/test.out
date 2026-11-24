@@ -1,0 +1,31 @@
+Running scanner test.
+Running the scanner...
+a-iteint.ads:24:4: warning: Could not bind P.Lists.List_Iterator_Interfaces.Forward_Iterator: Interfaces are not yet supported
+a-iteint.ads:26:4: warning: Could not bind P.Lists.List_Iterator_Interfaces.First: Used type `P.Lists.List_Iterator_Interfaces.Forward_Iterator` is not bindable
+a-iteint.ads:28:4: warning: Could not bind P.Lists.List_Iterator_Interfaces.Next: Used type `P.Lists.List_Iterator_Interfaces.Forward_Iterator` is not bindable
+a-iteint.ads:32:4: warning: Could not bind P.Lists.List_Iterator_Interfaces.Reversible_Iterator: Interfaces are not yet supported
+a-iteint.ads:35:4: warning: Could not bind P.Lists.List_Iterator_Interfaces.Last: Used type `P.Lists.List_Iterator_Interfaces.Reversible_Iterator` is not bindable
+a-iteint.ads:37:4: warning: Could not bind P.Lists.List_Iterator_Interfaces.Previous: Used type `P.Lists.List_Iterator_Interfaces.Reversible_Iterator` is not bindable
+a-cdlili.ads:97:18: warning: Could not bind <| AnonymousTypeDecl ["None"] a-cdlili.ads:97:18-97:68 [p.ads:5:4] |>: Anonymous type declarations are not yet supported
+a-cdlili.ads:95:4: warning: Could not bind P.Lists.Query_Element: Used type `<| AnonymousTypeDecl ["None"] a-cdlili.ads:97:18-97:68 [p.ads:5:4] |>` is not bindable
+a-cdlili.ads:102:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-cdlili.ads:102:19-102:76 [p.ads:5:4] |>: Anonymous type declarations are not yet supported
+a-cdlili.ads:99:4: warning: Could not bind P.Lists.Update_Element: Used type `<| AnonymousTypeDecl ["None"] a-cdlili.ads:102:19-102:76 [p.ads:5:4] |>` is not bindable
+a-cdlili.ads:105:18: warning: Could not bind <| AnonymousTypeDecl ["None"] a-cdlili.ads:105:18-105:55 [p.ads:5:4] |>: Anonymous type declarations are not yet supported
+a-cdlili.ads:104:4: warning: Could not bind P.Lists.Constant_Reference_Type: Used type `<| AnonymousTypeDecl ["None"] a-cdlili.ads:105:18-105:55 [p.ads:5:4] |>` is not bindable
+a-cdlili.ads:110:17: warning: Could not bind <| AnonymousTypeDecl ["None"] a-cdlili.ads:110:17-110:45 [p.ads:5:4] |>: Anonymous type declarations are not yet supported
+a-cdlili.ads:109:4: warning: Could not bind P.Lists.Reference_Type: Used type `<| AnonymousTypeDecl ["None"] a-cdlili.ads:110:17-110:45 [p.ads:5:4] |>` is not bindable
+a-cdlili.ads:114:4: warning: Could not bind P.Lists.Constant_Reference: Used type `P.Lists.Constant_Reference_Type` is not bindable
+a-cdlili.ads:119:4: warning: Could not bind P.Lists.Reference: Used type `P.Lists.Reference_Type` is not bindable
+a-iteint.ads:32:4: warning: Could not bind P.Lists.List_Iterator_Interfaces.Reversible_Iterator'Class: Interfaces are not yet supported
+a-cdlili.ads:180:4: warning: Could not bind P.Lists.Iterate: Used type `P.Lists.List_Iterator_Interfaces.Reversible_Iterator'Class` is not bindable
+a-cdlili.ads:183:4: warning: Could not bind P.Lists.Iterate: Used type `P.Lists.List_Iterator_Interfaces.Reversible_Iterator'Class` is not bindable
+a-cdlili.ads:242:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-cdlili.ads:242:19-242:64 [p.ads:5:4] |>: Anonymous type declarations are not yet supported
+a-cdlili.ads:240:4: warning: Could not bind P.Lists.Iterate: Used type `<| AnonymousTypeDecl ["None"] a-cdlili.ads:242:19-242:64 [p.ads:5:4] |>` is not bindable
+a-cdlili.ads:246:19: warning: Could not bind <| AnonymousTypeDecl ["None"] a-cdlili.ads:246:19-246:64 [p.ads:5:4] |>: Anonymous type declarations are not yet supported
+a-cdlili.ads:244:4: warning: Could not bind P.Lists.Reverse_Iterate: Used type `<| AnonymousTypeDecl ["None"] a-cdlili.ads:246:19-246:64 [p.ads:5:4] |>` is not bindable
+a-cdlili.ads:248:4: warning: Could not bind P.Lists.Generic_Sorting: Generic declarations are not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+p-lists_proxy_package.adb:309:24: warning: "Empty" is only defined in Ada 2022 [-gnatwy]
+Done.

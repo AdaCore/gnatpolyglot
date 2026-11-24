@@ -278,7 +278,8 @@ def compile_lib(
     input_lang: str,
     lib_location: str,
     extra_args: list[str] | None = None,
-    deps : list[CompilationResult] = []
+    deps : list[CompilationResult] = [],
+    binder_args: list[str] | None = None,
 ) -> list[CompilationResult]:
     """
     Compile the generated library at the given path.
@@ -296,6 +297,7 @@ def compile_lib(
             "-gnatwI",
             "--gpr=2",
             *extra_args,
+            *(["-bargs", *binder_args] if binder_args else []),
         ])
         inspect = json.loads(run(
             [
@@ -426,6 +428,11 @@ class PrinterConfig():
     @property
     def output_lib_flags(self) -> list[str]:
         return self._cfg.get("output_lib_flags", [])
+
+    @property
+    def proxy_binder_args(self) -> list[str]:
+        """Options for the binder of the generated Ada proxy library."""
+        return self._cfg.get("proxy_binder_args", [])
 
 
 def run_printer(output_lang: str, proxy_file: str, output_path: str) -> None:

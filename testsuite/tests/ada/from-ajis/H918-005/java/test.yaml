@@ -1,0 +1,10 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: java
+test_file: Main.java
+
+output_lib_flags: [ "-XLIBRARY_KIND=relocatable", "-XLIBRARY_STANDALONE=standard"]
+
+control:
+- [XFAIL, "True", "bug: host-allocated Controlled array produces extra Finalize calls and can corrupt the heap (ajis-bugs/array-of-controlled-free)"]

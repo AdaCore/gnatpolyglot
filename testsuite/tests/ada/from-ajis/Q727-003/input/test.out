@@ -1,0 +1,10 @@
+Running scanner test.
+Running the scanner...
+hello.ads:22:14: warning: Could not bind <AnonymousTypeDecl ["None"] hello.ads:22:14-22:50>: Anonymous type declarations are not yet supported
+hello.ads:21:4: warning: Could not bind Hello.Reference_Type: Used type `<AnonymousTypeDecl ["None"] hello.ads:22:14-22:50>` is not bindable
+hello.ads:29:14: warning: Could not bind <AnonymousTypeDecl ["None"] hello.ads:29:14-29:55>: Anonymous type declarations are not yet supported
+hello.ads:28:4: warning: Could not bind Hello.Reference_Type_Not_Tagged: Used type `<AnonymousTypeDecl ["None"] hello.ads:29:14-29:55>` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

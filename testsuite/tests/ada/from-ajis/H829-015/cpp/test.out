@@ -1,0 +1,17 @@
+Running printer test.
+Running the scanner...
+test.ads:17:4: warning: Could not bind Test.A_P: Access to subprograms are not yet supported
+test.ads:21:4: warning: Could not bind Test.Storable_A_P: Used type `Test.A_P` is not bindable
+test.ads:23:4: warning: Could not bind Test.Call_A_P_Check: Used type `Test.A_P` is not bindable
+test.ads:25:4: warning: Could not bind Test.Call_A_P_No_Check: Used type `Test.A_P` is not bindable
+test.ads:27:4: warning: Could not bind Test.Other_Callback: Access to subprograms are not yet supported
+test.ads:29:4: warning: Could not bind Test.Call_Other_Callback: Used type `Test.Other_Callback` is not bindable
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+P from Ada
+
+Done.

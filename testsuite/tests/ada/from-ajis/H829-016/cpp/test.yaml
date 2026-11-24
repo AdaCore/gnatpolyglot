@@ -1,0 +1,7 @@
+driver: proxy2print
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+control:
+- [XFAIL, "True", "bug: host exception thrown in a callback is replaced by a generic one (ajis-bugs/host-exception-through-callback)"]

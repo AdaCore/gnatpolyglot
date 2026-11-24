@@ -1,0 +1,9 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+# Get_Std_Output returns the limited type Ada.Text_IO.File_Type by value,
+# which relies on copy elision, only guaranteed in C++17 and above.
+main_cflags: ["-Wall", "-Wextra", "-Werror", "-std=c++17"]

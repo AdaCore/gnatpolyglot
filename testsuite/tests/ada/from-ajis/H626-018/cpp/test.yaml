@@ -1,0 +1,8 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+control:
+- [XFAIL, "True", "bug: exception raised by Finalize kills the process (ajis-bugs/finalize-exception-default-free)"]

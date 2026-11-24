@@ -1,0 +1,10 @@
+Running scanner test.
+Running the scanner...
+Validating the json...
+No error found in the json
+Trying to compile the library...
+test.adb:46:07: warning: unreachable code [enabled by default]
+test.adb:58:07: warning: unreachable code [enabled by default]
+test.adb:46:07: warning: unreachable code [enabled by default]
+test.adb:58:07: warning: unreachable code [enabled by default]
+Done.

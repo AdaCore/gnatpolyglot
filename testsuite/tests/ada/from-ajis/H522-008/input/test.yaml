@@ -1,0 +1,7 @@
+driver: scan2proxy
+
+input_lang: ada
+project_file: test.gpr
+
+control:
+- [XFAIL, "True", "bug: \"=\" called in the subtype's package (ajis-bugs/proxy-equality-wrong-package); limitation: derived access types are not supported"]

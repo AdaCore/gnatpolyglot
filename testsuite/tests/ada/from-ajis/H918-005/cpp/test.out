@@ -1,0 +1,24 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+INITIALIZE
+INITIALIZE
+ 41
+ 42
+ADJUST
+ADJUST
+FINALIZE
+FINALIZE
+ 43
+ 44
+FINALIZE
+FINALIZE
+FINALIZE
+FINALIZE
+
+Done.

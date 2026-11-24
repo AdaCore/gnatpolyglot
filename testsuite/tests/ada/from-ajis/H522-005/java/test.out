@@ -1,0 +1,17 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+ROOT: class com.adacore.libtest.test.Root
+CHILD 1: class com.adacore.libtest.test.Child1
+class com.adacore.libtest.test.Root
+class com.adacore.libtest.test.Child1
+class com.adacore.libtest.test.Root
+class com.adacore.libtest.test.Child1
+class com.adacore.libtest.test.Child1
+
+Done.

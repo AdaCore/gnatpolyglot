@@ -1,0 +1,17 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+r.D.F1 = 0
+r.E.F1 = 2
+arr [1] = 0
+arr [2] = 1
+arr [3] = 2
+Global_Var.F1 = 0
+Global_Var.F2 = 1
+
+Done.

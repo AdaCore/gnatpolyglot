@@ -1,0 +1,11 @@
+Running scanner test.
+Running the scanner...
+gen.ads:3:1: warning: Could not bind Gen: Generic declarations are not bindable
+gen.ads:15:19: warning: Could not bind <| AnonymousTypeDecl ["None"] gen.ads:15:19-15:64 [hello.ads:5:4] |>: Anonymous type declarations are not yet supported
+gen.ads:13:4: warning: Could not bind Hello.I.Iterate: Used type `<| AnonymousTypeDecl ["None"] gen.ads:15:19-15:64 [hello.ads:5:4] |>` is not bindable
+gen.ads:19:19: warning: Could not bind <| AnonymousTypeDecl ["None"] gen.ads:19:19-19:64 [hello.ads:5:4] |>: Anonymous type declarations are not yet supported
+gen.ads:17:4: warning: Could not bind Hello.I.Reverse_Iterate: Used type `<| AnonymousTypeDecl ["None"] gen.ads:19:19-19:64 [hello.ads:5:4] |>` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

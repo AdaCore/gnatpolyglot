@@ -1,0 +1,12 @@
+Running scanner test.
+Running the scanner...
+jtp.ads:8:31: warning: Could not bind <AnonymousTypeDecl ["None"] jtp.ads:8:31-8:45>: Anonymous type declarations are not yet supported
+jtp.ads:8:5: warning: Could not bind Jtp.Get_Sensor: Used type `<AnonymousTypeDecl ["None"] jtp.ads:8:31-8:45>` is not bindable
+jtp_sensor.ads:6:40: warning: Could not bind <AnonymousTypeDecl ["None"] jtp_sensor.ads:6:40-6:58>: Anonymous type declarations are not yet supported
+jtp_sensor.ads:6:5: warning: Could not bind Jtp_Sensor.Get_Slant_Range: Used type `<AnonymousTypeDecl ["None"] jtp_sensor.ads:6:40-6:58>` is not bindable
+jtp_sensor.ads:9:36: warning: Could not bind <AnonymousTypeDecl ["None"] jtp_sensor.ads:9:36-9:54>: Anonymous type declarations are not yet supported
+jtp_sensor.ads:9:4: warning: Could not bind Jtp_Sensor.Non_Abstract: Used type `<AnonymousTypeDecl ["None"] jtp_sensor.ads:9:36-9:54>` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

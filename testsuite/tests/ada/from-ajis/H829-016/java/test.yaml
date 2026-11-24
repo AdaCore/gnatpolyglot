@@ -1,0 +1,9 @@
+driver: proxy2print
+input_proxy: ../input/
+output_lang: java
+test_file: Main.java
+
+output_lib_flags: [ "-XLIBRARY_KIND=relocatable", "-XLIBRARY_STANDALONE=standard"]
+
+control:
+- [XFAIL, "True", "bug: host exception thrown in a callback is replaced by a generic one (ajis-bugs/host-exception-through-callback)"]

@@ -1,0 +1,14 @@
+Running scanner test.
+Running the scanner...
+s-string.ads:52:4: warning: Could not bind System.Strings.String_List: Arrays of array or access to arrays are not yet supported
+s-string.ads:53:4: warning: Could not bind System.Strings.String_List_Access: Used type `System.Strings.String_List` is not bindable
+s-string.ads:56:4: warning: Could not bind System.Strings.Free: Used type `System.Strings.String_List_Access` is not bindable
+system.ads:77:4: warning: Could not bind System."<": Intrinsics are not bindable
+system.ads:78:4: warning: Could not bind System."<=": Intrinsics are not bindable
+system.ads:79:4: warning: Could not bind System.">": Intrinsics are not bindable
+system.ads:80:4: warning: Could not bind System.">=": Intrinsics are not bindable
+system.ads:81:4: warning: Could not bind System."=": Intrinsics are not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

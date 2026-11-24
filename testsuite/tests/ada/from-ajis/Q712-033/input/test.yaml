@@ -1,0 +1,7 @@
+driver: scan2proxy
+
+input_lang: ada
+project_file: test.gpr
+
+control:
+- [XFAIL, "True", "bug: subtypes of a class-wide type break the proxy (ST1_Classwide not declared)"]

@@ -28,7 +28,8 @@ compile_lib(scfg.input_lang, scfg.project_file, scfg.input_lib_flags)
 proxy_lib = compile_lib(
     scfg.input_lang,
     get_proxy_lib_file(scfg.input_lang, input_proxy_location),
-    pcfg.output_lib_flags or scfg.output_lib_flags
+    pcfg.output_lib_flags or scfg.output_lib_flags,
+    binder_args=pcfg.proxy_binder_args,
 )
 
 output_proxy_location = os.path.join("output_proxy")

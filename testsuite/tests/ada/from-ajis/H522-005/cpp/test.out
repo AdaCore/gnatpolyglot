@@ -1,0 +1,17 @@
+Running printer test.
+Running the scanner...
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+ROOT: Root
+CHILD 1: Child1
+Root
+Child1
+Root
+Child1
+Child1
+
+Done.

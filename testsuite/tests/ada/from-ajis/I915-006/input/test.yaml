@@ -1,0 +1,7 @@
+driver: scan2proxy
+
+input_lang: ada
+project_file: test.gpr
+
+control:
+- [XFAIL, "True", "bug: an object named like its enclosing package breaks proxy compilation (ajis-bugs/proxy-global-hides-package)"]

@@ -1,0 +1,11 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+# Bound the known hang during Controlled-array cleanup.
+timeout: 60
+
+control:
+- [XFAIL, "True", "bug: host-allocated Controlled array hangs during destruction (ajis-bugs/array-of-controlled-free)"]

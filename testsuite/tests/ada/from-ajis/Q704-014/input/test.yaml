@@ -1,0 +1,7 @@
+driver: scan2proxy
+
+input_lang: ada
+project_file: test.gpr
+
+control:
+- [XFAIL, "True", "unsupported dependency: Ada.Containers.Formal_Doubly_Linked_Lists moved to the SPARK library; original Ada does not compile"]

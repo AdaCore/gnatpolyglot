@@ -1,0 +1,17 @@
+Running printer test.
+Running the scanner...
+test.ads:23:4: warning: Could not bind Test.Ptr_F: Access to subprograms are not yet supported
+test.ads:24:4: warning: Could not bind Test.Ptr_P: Access to subprograms are not yet supported
+test.ads:26:4: warning: Could not bind Test.Call_F: Used type `Test.Ptr_F` is not bindable
+test.ads:28:4: warning: Could not bind Test.Call_P: Used type `Test.Ptr_P` is not bindable
+Compiling the library...
+Running the printer...
+Compiling the library
+Compiling test main program...
+Running test main program...
+
+[1] OK
+[2] OK
+[3] OK
+
+Done.

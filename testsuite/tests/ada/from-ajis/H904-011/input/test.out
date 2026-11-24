@@ -1,0 +1,9 @@
+Running scanner test.
+Running the scanner...
+test.ads:5:4: warning: Could not bind Test.An_Unconstrained_Array: Arrays indexed by enumeration types are not bindable
+test.ads:7:4: warning: Could not bind Test.A_Constrained_Array: Constrained array types are not supported
+test.ads:9:4: warning: Could not bind Test.Display: Used type `Test.An_Unconstrained_Array` is not bindable
+Validating the json...
+No error found in the json
+Trying to compile the library...
+Done.

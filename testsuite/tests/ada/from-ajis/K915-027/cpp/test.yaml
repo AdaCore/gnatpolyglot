@@ -1,0 +1,8 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: c++
+test_file: main.cpp
+
+control:
+- [XFAIL, "True", "bug: multi-dimensional arrays are bound as one-dimensional arrays (see doc/limitations.rst); Rec1 has no default constructor"]

@@ -1,0 +1,10 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: java
+test_file: Main.java
+
+output_lib_flags: [ "-XLIBRARY_KIND=relocatable", "-XLIBRARY_STANDALONE=standard"]
+
+control:
+- [XFAIL, "True", "bug: circular dependency between the proxy of a package and of its instantiation using one of its types (ajis-bugs/proxy-instantiation-circular-dependency); bug: objects declared in generic instantiations are not bound (Gen_Inst.X, ajis-bugs/proxy-instantiation-objects)"]

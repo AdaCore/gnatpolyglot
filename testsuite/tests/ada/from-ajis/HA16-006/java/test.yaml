@@ -1,0 +1,10 @@
+driver: proxy2print
+
+input_proxy: ../input/
+output_lang: java
+test_file: Main.java
+
+output_lib_flags: [ "-XLIBRARY_KIND=relocatable", "-XLIBRARY_STANDALONE=standard"]
+
+control:
+- [XFAIL, "True", "open question: AJIS allocator checks have no equivalent; bug: access-to-classwide Ref written by Ada is STATIC (ajis-bugs/java-ref-owner-after-ada-write)"]
